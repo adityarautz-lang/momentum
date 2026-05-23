@@ -32,7 +32,6 @@ import {
 } from "@/utils/storage";
 
 import {
-  Archive,
   CheckCircle2,
   Circle,
   LayoutGrid,
@@ -93,8 +92,11 @@ export default function Home() {
   const [archive, setArchive] =
     useState<any[]>([]);
 
+  const [completedToday, setCompletedToday] =
+    useState<any[]>([]);
+
   const [themeColor, setThemeColor] =
-    useState("#111111");
+    useState("#A78BFA");
 
   const [darkMode, setDarkMode] =
     useState(false);
@@ -129,12 +131,12 @@ export default function Home() {
   const [newCategory, setNewCategory] =
     useState("");
 
-    const [editingTaskId, setEditingTaskId] =
+  const [editingTaskId, setEditingTaskId] =
     useState<string | null>(null);
-  
+
   const [editingText, setEditingText] =
     useState("");
-  
+
   const [editingPriorityId, setEditingPriorityId] =
     useState<string | null>(null);
 
@@ -159,12 +161,16 @@ export default function Home() {
     const saved = loadState();
 
     if (saved) {
-      const parsed: AppState = saved;
+      const parsed: any = saved;
 
       setCategories(parsed.categories);
       setDarkMode(parsed.darkMode);
       setThemeColor(parsed.themeColor);
       setArchive(parsed.archive);
+
+      setCompletedToday(
+        parsed.completedToday || []
+      );
 
       if (
         parsed.categories &&
@@ -197,12 +203,14 @@ export default function Home() {
       darkMode,
       themeColor,
       archive,
-    });
+      completedToday,
+    } as any);
   }, [
     categories,
     darkMode,
     themeColor,
     archive,
+    completedToday,
     isLoaded,
   ]);
 
@@ -322,6 +330,26 @@ export default function Home() {
       rect.top + rect.height / 2
     );
 
+    const task =
+      categories[categoryIndex].tasks[
+        taskIndex
+      ];
+
+    const completedTask = {
+      ...task,
+
+      completedAt:
+        new Date().toISOString(),
+
+      category:
+        categories[categoryIndex].title,
+    };
+
+    setCompletedToday((prev) => [
+      completedTask,
+      ...prev,
+    ]);
+
     setCategories((prev) =>
       prev.map((category, cIndex) => {
         if (
@@ -333,24 +361,9 @@ export default function Home() {
           ...category,
 
           tasks:
-            category.tasks.map(
-              (
-                task,
-                tIndex
-              ) => {
-                if (
-                  tIndex !==
-                  taskIndex
-                )
-                  return task;
-
-                return {
-                  ...task,
-
-                  completed:
-                    !task.completed,
-                };
-              }
+            category.tasks.filter(
+              (_, tIndex) =>
+                tIndex !== taskIndex
             ),
         };
       })
@@ -358,132 +371,98 @@ export default function Home() {
   };
 
   /* ------------------------------------------------ */
-/* Edit Task */
-/* ------------------------------------------------ */
-
-const updateTaskTitle = (
-  taskId: string,
-  value: string
-) => {
-  setCategories((prev) =>
-    prev.map((category) => ({
-      ...category,
-
-      tasks: category.tasks.map(
-        (task) =>
-          task.id === taskId
-            ? {
-                ...task,
-                title: value,
-              }
-            : task
-      ),
-    }))
-  );
-};
-
-const updateTaskPriority = (
-
-  
-  taskId: string,
-  priority: Priority
-) => {
-  setCategories((prev) =>
-    prev.map((category) => ({
-      ...category,
-
-      tasks: category.tasks.map(
-        (task) =>
-          task.id === taskId
-            ? {
-                ...task,
-                priority,
-              }
-            : task
-      ),
-    }))
-  );
-};
-
-const deleteTask = (
-  taskId: string
-) => {
-  setCategories((prev) =>
-    prev.map((category) => ({
-      ...category,
-
-      tasks: category.tasks.filter(
-        (task) =>
-          task.id !== taskId
-      ),
-    }))
-  );
-};
-
-  /* ------------------------------------------------ */
-  /* Archive Tasks */
+  /* Edit Task */
   /* ------------------------------------------------ */
 
-  const archiveCompletedTasks =
-    () => {
-      const completedTasks =
-        categories.flatMap(
-          (category) =>
-            category.tasks
-              .filter(
-                (task) =>
-                  task.completed
-              )
-              .map((task) => ({
-                ...task,
+  const updateTaskTitle = (
+    taskId: string,
+    value: string
+  ) => {
+    setCategories((prev) =>
+      prev.map((category) => ({
+        ...category,
 
-                category:
-                  category.title,
+        tasks:
+          category.tasks.map(
+            (task) =>
+              task.id ===
+              taskId
+                ? {
+                    ...task,
+                    title: value,
+                  }
+                : task
+          ),
+      }))
+    );
+  };
 
-                completedAt:
-                  new Date().toISOString(),
-              }))
-        );
+  const updateTaskPriority = (
+    taskId: string,
+    priority: Priority
+  ) => {
+    setCategories((prev) =>
+      prev.map((category) => ({
+        ...category,
 
-      if (
-        completedTasks.length === 0
-      )
-        return;
+        tasks:
+          category.tasks.map(
+            (task) =>
+              task.id ===
+              taskId
+                ? {
+                    ...task,
+                    priority,
+                  }
+                : task
+          ),
+      }))
+    );
+  };
 
-      setTimeout(() => {
-        setCategories((prev) =>
-          prev.map(
-            (category) => ({
-              ...category,
+  const deleteTask = (
+    taskId: string
+  ) => {
+    setCategories((prev) =>
+      prev.map((category) => ({
+        ...category,
 
-              tasks:
-                category.tasks.filter(
-                  (task) =>
-                    !task.completed
-                ),
-            })
-          )
-        );
+        tasks:
+          category.tasks.filter(
+            (task) =>
+              task.id !== taskId
+          ),
+      }))
+    );
+  };
 
-        setArchive((prev) => [
-          ...completedTasks,
-          ...prev,
-        ]);
+  /* ------------------------------------------------ */
+  /* Archive Completed Today */
+  /* ------------------------------------------------ */
 
-        setArchiveToast(
-          `${completedTasks.length} task${
-            completedTasks.length >
-            1
-              ? "s"
-              : ""
-          } archived`
-        );
+  const archiveCompletedToday = () => {
+    if (completedToday.length === 0)
+      return;
 
-        setTimeout(() => {
-          setArchiveToast("");
-        }, 2200);
-      }, 700);
-    };
+    setArchive((prev) => [
+      ...completedToday,
+      ...prev,
+    ]);
+
+    setCompletedToday([]);
+
+    setArchiveToast(
+      `${completedToday.length} completed item${
+        completedToday.length > 1
+          ? "s"
+          : ""
+      } archived`
+    );
+
+    setTimeout(() => {
+      setArchiveToast("");
+    }, 2200);
+  };
 
   /* ------------------------------------------------ */
   /* Add Category */
@@ -591,296 +570,267 @@ const deleteTask = (
             "current" && (
             <>
               {/* Quick Add */}
-              <div
-                className={`p-4 rounded-3xl mb-8 ${glass}`}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_220px_180px_120px] gap-3">
-                  {/* Task Input */}
-                  <input
-  value={newTask}
-  onChange={(e) =>
-    setNewTask(
-      e.target.value
-    )
-  }
-  onKeyDown={(e) => {
-    if (e.key === "Enter") {
-      addTask();
-    }
-  }}
-  placeholder="What do you want to get done?"
-  className={`h-11 px-4 rounded-2xl outline-none transition-all ${input}`}
-/>
+             {/* Quick Add */}
+<div
+  className={`p-4 rounded-3xl mb-8 ${glass}`}
+>
+  <div className="grid grid-cols-1 md:grid-cols-[1fr_220px_180px_120px] gap-3">
+    {/* Task Input */}
+    <input
+      value={newTask}
+      onChange={(e) =>
+        setNewTask(
+          e.target.value
+        )
+      }
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          addTask();
+        }
+      }}
+      placeholder="What do you want to get done?"
+      className={`h-11 px-4 rounded-2xl outline-none transition-all ${input}`}
+    />
 
-                  {/* Category Selector */}
-                  <div
-                    className="relative"
-                    ref={categoryMenuRef}
-                  >
-                    <button
-                      onClick={() => {
-                        setShowPriorityMenu(
-                          false
-                        );
+    {/* Category Selector */}
+    <div
+      className="relative"
+      ref={categoryMenuRef}
+    >
+      <button
+        onClick={() => {
+          setShowPriorityMenu(
+            false
+          );
 
-                        setShowCategoryMenu(
-                          !showCategoryMenu
-                        );
+          setShowCategoryMenu(
+            !showCategoryMenu
+          );
+        }}
+        className={`h-11 w-full px-4 rounded-2xl flex items-center justify-between transition-all ${input}`}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-2.5 h-2.5 rounded-full"
+            style={{
+              backgroundColor:
+                themeColor,
+            }}
+          />
+
+          <span className="text-sm font-[500]">
+            {selectedCategory}
+          </span>
+        </div>
+
+        <span className="opacity-40 text-xs">
+          ▼
+        </span>
+      </button>
+
+      <AnimatePresence>
+        {showCategoryMenu && (
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: -8,
+              scale: 0.96,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+            }}
+            exit={{
+              opacity: 0,
+              y: -8,
+              scale: 0.96,
+            }}
+            transition={{
+              duration: 0.18,
+            }}
+            className={`absolute top-14 left-0 w-full rounded-3xl p-2 z-50 backdrop-blur-2xl border shadow-[0_10px_40px_rgba(0,0,0,0.16)] ${glass} ${border}`}
+          >
+            {categories.map(
+              (category) => (
+                <button
+                  key={category.id}
+                  onClick={() => {
+                    setSelectedCategory(
+                      category.title
+                    );
+
+                    setShowCategoryMenu(
+                      false
+                    );
+                  }}
+                  className={`w-full h-11 px-4 rounded-2xl flex items-center justify-between text-left transition ${
+                    selectedCategory ===
+                    category.title
+                      ? "bg-white/10"
+                      : "hover:bg-white/[0.06]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{
+                        backgroundColor:
+                          themeColor,
                       }}
-                      className={`h-11 w-full px-4 rounded-2xl flex items-center justify-between transition-all ${input}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-2.5 h-2.5 rounded-full"
-                          style={{
-                            backgroundColor:
-                              themeColor,
-                          }}
-                        />
+                    />
 
-                        <span className="text-sm font-[500]">
-                          {
-                            selectedCategory
-                          }
-                        </span>
-                      </div>
-
-                      <span className="opacity-40 text-xs">
-                        ▼
-                      </span>
-                    </button>
-
-                    <AnimatePresence>
-                      {showCategoryMenu && (
-                        <motion.div
-                          initial={{
-                            opacity: 0,
-                            y: -8,
-                            scale: 0.96,
-                          }}
-                          animate={{
-                            opacity: 1,
-                            y: 0,
-                            scale: 1,
-                          }}
-                          exit={{
-                            opacity: 0,
-                            y: -8,
-                            scale: 0.96,
-                          }}
-                          transition={{
-                            duration: 0.18,
-                          }}
-                          className={`absolute top-14 left-0 w-full rounded-3xl p-2 z-50 backdrop-blur-2xl border shadow-[0_10px_40px_rgba(0,0,0,0.16)] ${glass} ${border}`}
-                        >
-                          {categories.map(
-                            (
-                              category
-                            ) => (
-                              <button
-                                key={
-                                  category.id
-                                }
-                                onClick={() => {
-                                  setSelectedCategory(
-                                    category.title
-                                  );
-
-                                  setShowCategoryMenu(
-                                    false
-                                  );
-                                }}
-                                className={`w-full h-11 px-4 rounded-2xl flex items-center justify-between text-left transition ${
-                                  selectedCategory ===
-                                  category.title
-                                    ? "bg-white/10"
-                                    : "hover:bg-white/[0.06]"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div
-                                    className="w-2.5 h-2.5 rounded-full"
-                                    style={{
-                                      backgroundColor:
-                                        themeColor,
-                                    }}
-                                  />
-
-                                  <span className="text-sm font-[500]">
-                                    {
-                                      category.title
-                                    }
-                                  </span>
-                                </div>
-
-                                {selectedCategory ===
-                                  category.title && (
-                                  <span>
-                                    ✓
-                                  </span>
-                                )}
-                              </button>
-                            )
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    <span className="text-sm font-[500]">
+                      {
+                        category.title
+                      }
+                    </span>
                   </div>
 
-                  {/* Priority Selector */}
-                  <div
-                    className="relative"
-                    ref={priorityMenuRef}
-                  >
-                    <button
-                      onClick={() => {
-                        setShowCategoryMenu(
-                          false
-                        );
+                  {selectedCategory ===
+                    category.title && (
+                    <span>
+                      ✓
+                    </span>
+                  )}
+                </button>
+              )
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
 
-                        setShowPriorityMenu(
-                          !showPriorityMenu
-                        );
-                      }}
-                      className={`h-11 w-full px-4 rounded-2xl flex items-center justify-between transition-all ${input}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-2.5 h-2.5 rounded-full ${
-                            selectedPriority ===
-                            "High"
-                              ? "bg-red-500"
-                              : selectedPriority ===
-                                "Medium"
-                              ? "bg-amber-500"
-                              : "bg-emerald-500"
-                          }`}
-                        />
+    {/* Priority Selector */}
+    <div
+      className="relative"
+      ref={priorityMenuRef}
+    >
+      <button
+        onClick={() => {
+          setShowCategoryMenu(
+            false
+          );
 
-                        <span className="text-sm font-[500]">
-                          {
-                            selectedPriority
-                          }
-                        </span>
-                      </div>
+          setShowPriorityMenu(
+            !showPriorityMenu
+          );
+        }}
+        className={`h-11 w-full px-4 rounded-2xl flex items-center justify-between transition-all ${input}`}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-2.5 h-2.5 rounded-full ${
+              selectedPriority ===
+              "High"
+                ? "bg-red-500"
+                : selectedPriority ===
+                  "Medium"
+                ? "bg-amber-500"
+                : "bg-emerald-500"
+            }`}
+          />
 
-                      <span className="opacity-40 text-xs">
-                        ▼
-                      </span>
-                    </button>
+          <span className="text-sm font-[500]">
+            {selectedPriority}
+          </span>
+        </div>
 
-                    <AnimatePresence>
-                      {showPriorityMenu && (
-                        <motion.div
-                          initial={{
-                            opacity: 0,
-                            y: -8,
-                            scale: 0.96,
-                          }}
-                          animate={{
-                            opacity: 1,
-                            y: 0,
-                            scale: 1,
-                          }}
-                          exit={{
-                            opacity: 0,
-                            y: -8,
-                            scale: 0.96,
-                          }}
-                          transition={{
-                            duration: 0.18,
-                          }}
-                          className={`absolute top-14 left-0 w-full rounded-3xl p-2 z-50 backdrop-blur-2xl border shadow-[0_10px_40px_rgba(0,0,0,0.16)] ${glass} ${border}`}
-                        >
-                          {[
-                            "Low",
-                            "Medium",
-                            "High",
-                          ].map(
-                            (
-                              priority
-                            ) => (
-                              <button
-                                key={
-                                  priority
-                                }
-                                onClick={() => {
-                                  setSelectedPriority(
-                                    priority as Priority
-                                  );
+        <span className="opacity-40 text-xs">
+          ▼
+        </span>
+      </button>
 
-                                  setShowPriorityMenu(
-                                    false
-                                  );
-                                }}
-                                className={`w-full h-11 px-4 rounded-2xl flex items-center justify-between text-left transition ${
-                                  selectedPriority ===
-                                  priority
-                                    ? "bg-white/10"
-                                    : "hover:bg-white/[0.06]"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div
-                                    className={`w-2.5 h-2.5 rounded-full ${
-                                      priority ===
-                                      "High"
-                                        ? "bg-red-500"
-                                        : priority ===
-                                          "Medium"
-                                        ? "bg-amber-500"
-                                        : "bg-emerald-500"
-                                    }`}
-                                  />
-
-                                  <span className="text-sm font-[500]">
-                                    {
-                                      priority
-                                    }
-                                  </span>
-                                </div>
-
-                                {selectedPriority ===
-                                  priority && (
-                                  <span>
-                                    ✓
-                                  </span>
-                                )}
-                              </button>
-                            )
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Add Button */}
-                  <button
-                    onClick={addTask}
-                    className="h-11 rounded-2xl text-white font-[600] transition-all hover:scale-[1.02] active:scale-[0.98]"
-                    style={{
-                      backgroundColor:
-                        themeColor,
-                    }}
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-
-              {/* Archive CTA */}
+      <AnimatePresence>
+        {showPriorityMenu && (
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: -8,
+              scale: 0.96,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+            }}
+            exit={{
+              opacity: 0,
+              y: -8,
+              scale: 0.96,
+            }}
+            transition={{
+              duration: 0.18,
+            }}
+            className={`absolute top-14 left-0 w-full rounded-3xl p-2 z-50 backdrop-blur-2xl border shadow-[0_10px_40px_rgba(0,0,0,0.16)] ${glass} ${border}`}
+          >
+            {[
+              "Low",
+              "Medium",
+              "High",
+            ].map((priority) => (
               <button
-                onClick={
-                  archiveCompletedTasks
-                }
-                className={`mb-6 h-10 px-5 rounded-2xl flex items-center gap-3 ${glass}`}
-              >
-                <Archive size={16} />
+                key={priority}
+                onClick={() => {
+                  setSelectedPriority(
+                    priority as Priority
+                  );
 
-                <span className="text-sm font-[600]">
-                  Archive Completed
-                </span>
+                  setShowPriorityMenu(
+                    false
+                  );
+                }}
+                className={`w-full h-11 px-4 rounded-2xl flex items-center justify-between text-left transition ${
+                  selectedPriority ===
+                  priority
+                    ? "bg-white/10"
+                    : "hover:bg-white/[0.06]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-2.5 h-2.5 rounded-full ${
+                      priority ===
+                      "High"
+                        ? "bg-red-500"
+                        : priority ===
+                          "Medium"
+                        ? "bg-amber-500"
+                        : "bg-emerald-500"
+                    }`}
+                  />
+
+                  <span className="text-sm font-[500]">
+                    {priority}
+                  </span>
+                </div>
+
+                {selectedPriority ===
+                  priority && (
+                  <span>
+                    ✓
+                  </span>
+                )}
               </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+
+    {/* Add Button */}
+    <button
+      onClick={addTask}
+      className="h-11 rounded-2xl text-white font-[600] transition-all hover:scale-[1.02] active:scale-[0.98]"
+      style={{
+        backgroundColor:
+          themeColor,
+      }}
+    >
+      Add
+    </button>
+  </div>
+</div>
 
               {/* Categories */}
               <div className="space-y-8">
@@ -928,189 +878,314 @@ const deleteTask = (
                             taskIndex
                           ) => (
                             <motion.div
-                            key={task.id}
-                            className={`h-[60px] px-5 flex items-center justify-between border-b last:border-none ${border}`}
-                          >
-                            {/* Left */}
-                            <div className="flex items-center gap-3">
-                              {/* Complete */}
-                              <button
-                                onClick={(e) =>
-                                  toggleTask(
-                                    categoryIndex,
-                                    taskIndex,
+                              key={
+                                task.id
+                              }
+                              className={`h-[60px] px-5 flex items-center justify-between border-b last:border-none ${border}`}
+                            >
+                              {/* Left */}
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={(
                                     e
-                                  )
-                                }
-                              >
-                                {task.completed ? (
-                                  <CheckCircle2
-                                    size={20}
-                                    className="text-green-500"
-                                  />
-                                ) : (
+                                  ) =>
+                                    toggleTask(
+                                      categoryIndex,
+                                      taskIndex,
+                                      e
+                                    )
+                                  }
+                                >
                                   <Circle
-                                    size={20}
+                                    size={
+                                      20
+                                    }
                                     className={
                                       darkMode
                                         ? "text-white/20"
                                         : "text-gray-300"
                                     }
                                   />
-                                )}
-                              </button>
-                          
-                              {/* Editable Text */}
-                              {editingTaskId === task.id ? (
-                                <input
-                                  autoFocus
-                                  value={editingText}
-                                  onChange={(e) =>
-                                    setEditingText(
-                                      e.target.value
-                                    )
-                                  }
-                                  onBlur={() => {
-                                    updateTaskTitle(
-                                      task.id,
+                                </button>
+
+                                {editingTaskId ===
+                                task.id ? (
+                                  <input
+                                    autoFocus
+                                    value={
                                       editingText
-                                    );
-                          
-                                    setEditingTaskId(null);
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
+                                    }
+                                    onChange={(
+                                      e
+                                    ) =>
+                                      setEditingText(
+                                        e
+                                          .target
+                                          .value
+                                      )
+                                    }
+                                    onBlur={() => {
                                       updateTaskTitle(
                                         task.id,
                                         editingText
                                       );
-                          
-                                      setEditingTaskId(null);
-                                    }
-                          
-                                    if (e.key === "Escape") {
-                                      setEditingTaskId(null);
-                                    }
-                                  }}
-                                  className={`bg-transparent outline-none text-[14px] font-[500] ${
-                                    task.completed
-                                      ? "line-through opacity-50"
-                                      : ""
-                                  }`}
-                                />
-                              ) : (
-                                <p
-                                  onClick={() => {
-                                    setEditingTaskId(
-                                      task.id
-                                    );
-                          
-                                    setEditingText(
+
+                                      setEditingTaskId(
+                                        null
+                                      );
+                                    }}
+                                    onKeyDown={(
+                                      e
+                                    ) => {
+                                      if (
+                                        e.key ===
+                                        "Enter"
+                                      ) {
+                                        updateTaskTitle(
+                                          task.id,
+                                          editingText
+                                        );
+
+                                        setEditingTaskId(
+                                          null
+                                        );
+                                      }
+
+                                      if (
+                                        e.key ===
+                                        "Escape"
+                                      ) {
+                                        setEditingTaskId(
+                                          null
+                                        );
+                                      }
+                                    }}
+                                    className="bg-transparent outline-none text-[14px] font-[500]"
+                                  />
+                                ) : (
+                                  <p
+                                    onClick={() => {
+                                      setEditingTaskId(
+                                        task.id
+                                      );
+
+                                      setEditingText(
+                                        task.title
+                                      );
+                                    }}
+                                    className="text-[14px] font-[500] cursor-text"
+                                  >
+                                    {
                                       task.title
-                                    );
-                                  }}
-                                  className={`text-[14px] font-[500] cursor-text ${
-                                    task.completed
-                                      ? "line-through opacity-50"
-                                      : ""
-                                  }`}
-                                >
-                                  {task.title}
-                                </p>
-                              )}
-                            </div>
-                          
-                            {/* Right */}
-                            <div className="flex items-center gap-3">
-                              {/* Editable Priority */}
-                              <div className="relative">
+                                    }
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Right */}
+                              <div className="flex items-center gap-3">
+                                <div className="relative">
+                                  <button
+                                    onClick={() =>
+                                      setEditingPriorityId(
+                                        editingPriorityId ===
+                                          task.id
+                                          ? null
+                                          : task.id
+                                      )
+                                    }
+                                    className={`text-xs px-3 py-1 rounded-full font-[600] ${
+                                      task.priority ===
+                                      "High"
+                                        ? "bg-red-50 text-red-500"
+                                        : task.priority ===
+                                          "Medium"
+                                        ? "bg-amber-50 text-amber-600"
+                                        : "bg-emerald-50 text-emerald-600"
+                                    }`}
+                                  >
+                                    {
+                                      task.priority
+                                    }
+                                  </button>
+
+                                  <AnimatePresence>
+                                    {editingPriorityId ===
+                                      task.id && (
+                                      <motion.div
+                                        initial={{
+                                          opacity: 0,
+                                          y: -6,
+                                          scale: 0.96,
+                                        }}
+                                        animate={{
+                                          opacity: 1,
+                                          y: 0,
+                                          scale: 1,
+                                        }}
+                                        exit={{
+                                          opacity: 0,
+                                          y: -6,
+                                          scale: 0.96,
+                                        }}
+                                        className={`absolute top-10 right-0 w-[120px] p-2 rounded-2xl backdrop-blur-2xl border z-50 ${glass} ${border}`}
+                                      >
+                                        {[
+                                          "Low",
+                                          "Medium",
+                                          "High",
+                                        ].map(
+                                          (
+                                            priority
+                                          ) => (
+                                            <button
+                                              key={
+                                                priority
+                                              }
+                                              onClick={() => {
+                                                updateTaskPriority(
+                                                  task.id,
+                                                  priority as Priority
+                                                );
+
+                                                setEditingPriorityId(
+                                                  null
+                                                );
+                                              }}
+                                              className="w-full h-9 rounded-xl text-sm hover:bg-white/[0.06]"
+                                            >
+                                              {
+                                                priority
+                                              }
+                                            </button>
+                                          )
+                                        )}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+
                                 <button
                                   onClick={() =>
-                                    setEditingPriorityId(
-                                      editingPriorityId ===
-                                        task.id
-                                        ? null
-                                        : task.id
+                                    deleteTask(
+                                      task.id
                                     )
                                   }
-                                  className={`text-xs px-3 py-1 rounded-full font-[600] ${
-                                    task.priority ===
-                                    "High"
-                                      ? "bg-red-50 text-red-500"
-                                      : task.priority ===
-                                        "Medium"
-                                      ? "bg-amber-50 text-amber-600"
-                                      : "bg-emerald-50 text-emerald-600"
-                                  }`}
+                                  className="opacity-30 hover:opacity-100 transition"
                                 >
-                                  {task.priority}
+                                  <Trash2
+                                    size={
+                                      16
+                                    }
+                                  />
                                 </button>
-                          
-                                <AnimatePresence>
-                                  {editingPriorityId ===
-                                    task.id && (
-                                    <motion.div
-                                      initial={{
-                                        opacity: 0,
-                                        y: -6,
-                                        scale: 0.96,
-                                      }}
-                                      animate={{
-                                        opacity: 1,
-                                        y: 0,
-                                        scale: 1,
-                                      }}
-                                      exit={{
-                                        opacity: 0,
-                                        y: -6,
-                                        scale: 0.96,
-                                      }}
-                                      className={`absolute top-10 right-0 w-[120px] p-2 rounded-2xl backdrop-blur-2xl border z-50 ${glass} ${border}`}
-                                    >
-                                      {[
-                                        "Low",
-                                        "Medium",
-                                        "High",
-                                      ].map((priority) => (
-                                        <button
-                                          key={priority}
-                                          onClick={() => {
-                                            updateTaskPriority(
-                                              task.id,
-                                              priority as Priority
-                                            );
-                          
-                                            setEditingPriorityId(
-                                              null
-                                            );
-                                          }}
-                                          className="w-full h-9 rounded-xl text-sm hover:bg-white/[0.06] transition"
-                                        >
-                                          {priority}
-                                        </button>
-                                      ))}
-                                    </motion.div>
-                                  )}
-                                </AnimatePresence>
                               </div>
-                          
-                              {/* Delete */}
-                              <button
-                                onClick={() =>
-                                  deleteTask(task.id)
-                                }
-                                className="opacity-30 hover:opacity-100 transition"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </motion.div>
+                            </motion.div>
                           )
                         )}
                       </div>
                     </div>
                   )
                 )}
+              </div>
+
+              {/* Completed Today */}
+              <div className="mt-14">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <h2
+                      className="text-[13px] uppercase tracking-[0.14em] font-[700]"
+                      style={{
+                        color:
+                          themeColor,
+                      }}
+                    >
+                      Completed Today
+                    </h2>
+
+                    <div
+                      className="w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center"
+                      style={{
+                        backgroundColor:
+                          themeColor,
+                      }}
+                    >
+                      {
+                        completedToday.length
+                      }
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={
+                      archiveCompletedToday
+                    }
+                    className={`h-10 px-5 rounded-2xl flex items-center gap-3 text-sm font-[600] transition ${
+                      completedToday.length ===
+                      0
+                        ? "opacity-30 pointer-events-none"
+                        : ""
+                    } ${glass}`}
+                  >
+                    Archive All
+                  </button>
+                </div>
+
+                <div
+                  className={`rounded-3xl overflow-hidden ${glass}`}
+                >
+                  {completedToday.length ===
+                    0 && (
+                    <div className="p-6 text-sm opacity-40">
+                      Nothing completed
+                      yet.
+                    </div>
+                  )}
+
+                  {completedToday.map(
+                    (task) => (
+                      <motion.div
+                        key={
+                          task.id
+                        }
+                        initial={{
+                          opacity: 0,
+                          y: 10,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                        }}
+                        className={`h-[60px] px-5 flex items-center justify-between border-b last:border-none ${border}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <CheckCircle2
+                            size={18}
+                            className="text-green-500"
+                          />
+
+                          <div>
+                            <p className="text-[14px] font-[500]">
+                              {
+                                task.title
+                              }
+                            </p>
+
+                            <p className="text-[11px] opacity-40">
+                              {
+                                task.category
+                              }
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-xs opacity-40">
+                          Done
+                        </div>
+                      </motion.div>
+                    )
+                  )}
+                </div>
               </div>
             </>
           )}
