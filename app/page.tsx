@@ -150,7 +150,10 @@ export default function Home() {
   const categoryMenuRef =
     useRef<HTMLDivElement>(null);
 
-  const priorityMenuRef =
+    const priorityMenuRef =
+    useRef<HTMLDivElement>(null);
+  
+  const themePickerRef =
     useRef<HTMLDivElement>(null);
 
   /* ------------------------------------------------ */
@@ -238,6 +241,15 @@ export default function Home() {
         )
       ) {
         setShowPriorityMenu(false);
+      }
+      
+      if (
+        themePickerRef.current &&
+        !themePickerRef.current.contains(
+          event.target as Node
+        )
+      ) {
+        setShowThemePicker(false);
       }
     };
 
@@ -541,28 +553,17 @@ export default function Home() {
       />
 
       <div className="flex">
-        <Sidebar
-          darkMode={darkMode}
-          setDarkMode={
-            setDarkMode
-          }
-          selectedView={
-            selectedView
-          }
-          setSelectedView={
-            setSelectedView
-          }
-          themeColor={themeColor}
-          setThemeColor={
-            setThemeColor
-          }
-          showThemePicker={
-            showThemePicker
-          }
-          setShowThemePicker={
-            setShowThemePicker
-          }
-        />
+      <Sidebar
+  darkMode={darkMode}
+  setDarkMode={setDarkMode}
+  selectedView={selectedView}
+  setSelectedView={setSelectedView}
+  themeColor={themeColor}
+  setThemeColor={setThemeColor}
+  showThemePicker={showThemePicker}
+  setShowThemePicker={setShowThemePicker}
+  themePickerRef={themePickerRef}
+/>
 
         <div className="flex-1 px-8 py-8">
           {/* Current View */}

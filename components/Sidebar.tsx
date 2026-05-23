@@ -16,23 +16,29 @@ import {
 } from "framer-motion";
 
 const themes = [
-  "black", // soft violet
-  "White", // soft violet
-  "#A78BFA", // soft violet
-  "#F9A8D4", // pastel pink
+  "#111111", // obsidian
+  "#FFFFFF", // clean white
+
+  "#A78BFA", // violet
+  "#6D28D9", // deep indigo
+
   "#93C5FD", // pastel blue
-  "#86EFAC", // mint green
-  "#FCD34D", // warm yellow
-  "#FDBA74", // peach orange
+  "#2563EB", // royal blue
+
+  "#A7F3D0", // mint
+  "#059669", // emerald
+
+  "#FDBA74", // peach
+  "#EA580C", // orange
+
+  "#FDA4AF", // blush
+  "#E11D48", // crimson
+
   "#67E8F9", // cyan
-  "#C4B5FD", // lavender
-  "#FDA4AF", // blush rose
-  "#99F6E4", // aqua mint
-  "#D8B4FE", // lilac
-  "#BFDBFE", // ice blue
-  "#FDE68A", // pastel amber
-  "#FBCFE8", // soft magenta
-  "#BBF7D0", // soft green
+  "#0891B2", // teal
+
+  "#FDE68A", // butter yellow
+  "#CA8A04", // gold
 ];
 
 export default function Sidebar({
@@ -43,7 +49,8 @@ export default function Sidebar({
   themeColor,
   setThemeColor,
   showThemePicker,
-  setShowThemePicker,
+setShowThemePicker,
+themePickerRef,
 }: any) {
   const glass = darkMode
     ? "bg-white/[0.05]"
@@ -123,8 +130,11 @@ export default function Sidebar({
       {/* Controls */}
       <div className="space-y-3">
         {/* Theme */}
-        <div className="relative">
-          <button
+        <div
+  className="relative"
+  ref={themePickerRef}
+>
+            <button
             onClick={() =>
               setShowThemePicker(
                 !showThemePicker
