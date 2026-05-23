@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #f5f7fb;
+  color: #111827;
+  font-family: Inter, sans-serif;
+}
+
+.card {
+  @apply bg-white rounded-3xl shadow-sm p-5;
+}
