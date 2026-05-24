@@ -31,6 +31,7 @@ import {
 } from "@/utils/storage";
 
 import {
+  Calendar,
   CheckCircle2,
   Circle,
   LayoutGrid,
@@ -155,13 +156,16 @@ export default function Home() {
   /* ------------------------------------------------ */
 
   const categoryMenuRef =
-    useRef<HTMLDivElement>(null);
+  useRef<HTMLDivElement>(null);
 
-  const priorityMenuRef =
-    useRef<HTMLDivElement>(null);
+const priorityMenuRef =
+  useRef<HTMLDivElement>(null);
 
-  const themePickerRef =
-    useRef<HTMLDivElement>(null);
+const themePickerRef =
+  useRef<HTMLDivElement>(null);
+
+const dueDateInputRef =
+  useRef<HTMLInputElement>(null);
 
   /* ------------------------------------------------ */
   /* Load State */
@@ -1149,20 +1153,39 @@ const todayDate = (() => {
                     </AnimatePresence>
                   </div>
 
-            {/* Due Date */}
-<div className={`relative h-11 rounded-2xl ${input}`}>
-  {!newDueDate && (
-    <span
-      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-[600] z-10"
-      style={{
-        color: themeColor,
-      }}
-    >
-      Pick date
-    </span>
-  )}
+        {/* Due Date */}
+<div
+  onClick={() => {
+    dueDateInputRef.current?.focus();
+
+    (
+      dueDateInputRef.current as any
+    )?.showPicker?.();
+  }}
+  className={`relative h-11 rounded-2xl cursor-pointer flex items-center gap-2 px-4 ${input}`}
+>
+  <Calendar
+    size={16}
+    style={{
+      color: themeColor,
+    }}
+  />
+
+  <span
+    className="text-sm font-[600] pointer-events-none"
+    style={{
+      color: darkMode
+        ? "#ffffff"
+        : "#000000",
+    }}
+  >
+    {newDueDate
+      ? formatDueDate(newDueDate)
+      : "Due date"}
+  </span>
 
   <input
+    ref={dueDateInputRef}
     type="date"
     value={newDueDate}
     onChange={(e) =>
@@ -1170,11 +1193,7 @@ const todayDate = (() => {
         e.target.value
       )
     }
-    className={`absolute inset-0 h-11 w-full px-4 rounded-2xl outline-none bg-transparent transition-all ${
-      !newDueDate
-        ? "opacity-0"
-        : "opacity-100"
-    }`}
+    className="absolute inset-0 h-11 w-full cursor-pointer opacity-0"
     style={{
       colorScheme: darkMode
         ? "dark"
