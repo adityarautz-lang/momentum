@@ -17,7 +17,7 @@ import {
 
 const themes = [
   "#111111", // obsidian
-  "#FFFFFF", // clean white
+  // "#FFFFFF", // clean white
 
   "#A78BFA", // violet
   "#6D28D9", // deep indigo
