@@ -8,6 +8,7 @@ import {
   Palette,
   Sun,
   Tag,
+  Flag,
 } from "lucide-react";
 
 import {
@@ -102,6 +103,8 @@ themePickerRef,
             label: "Categories",
             icon: Tag,
           },
+          
+        
         ].map((item) => (
           <motion.button
             whileHover={{
