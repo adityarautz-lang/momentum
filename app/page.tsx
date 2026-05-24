@@ -131,14 +131,11 @@ export default function Home() {
   const [newCategory, setNewCategory] =
     useState("");
 
-  const [editingTaskId, setEditingTaskId] =
-    useState<string | null>(null);
-
-  const [editingText, setEditingText] =
-    useState("");
-
-  const [editingPriorityId, setEditingPriorityId] =
-    useState<string | null>(null);
+    const [selectedTask, setSelectedTask] =
+    useState<any>(null);
+  
+  const [isEditModalOpen, setIsEditModalOpen] =
+    useState(false);
 
   const [isLoaded, setIsLoaded] =
     useState(false);
@@ -382,55 +379,7 @@ export default function Home() {
     );
   };
 
-  /* ------------------------------------------------ */
-  /* Edit Task */
-  /* ------------------------------------------------ */
-
-  const updateTaskTitle = (
-    taskId: string,
-    value: string
-  ) => {
-    setCategories((prev) =>
-      prev.map((category) => ({
-        ...category,
-
-        tasks:
-          category.tasks.map(
-            (task) =>
-              task.id ===
-              taskId
-                ? {
-                    ...task,
-                    title: value,
-                  }
-                : task
-          ),
-      }))
-    );
-  };
-
-  const updateTaskPriority = (
-    taskId: string,
-    priority: Priority
-  ) => {
-    setCategories((prev) =>
-      prev.map((category) => ({
-        ...category,
-
-        tasks:
-          category.tasks.map(
-            (task) =>
-              task.id ===
-              taskId
-                ? {
-                    ...task,
-                    priority,
-                  }
-                : task
-          ),
-      }))
-    );
-  };
+  
 
   const deleteTask = (
     taskId: string
@@ -438,15 +387,65 @@ export default function Home() {
     setCategories((prev) =>
       prev.map((category) => ({
         ...category,
-
-        tasks:
-          category.tasks.filter(
-            (task) =>
-              task.id !== taskId
-          ),
+  
+        tasks: category.tasks.filter(
+          (task) =>
+            task.id !== taskId
+        ),
       }))
     );
   };
+
+  const saveTaskChanges = (
+    updatedTask: any,
+    originalCategory: string
+  ) => {
+    setCategories((prev) => {
+      let removedTask: any =
+        updatedTask;
+  
+      const cleaned =
+        prev.map((category) => ({
+          ...category,
+  
+          tasks:
+            category.tasks.filter(
+              (task) =>
+                task.id !==
+                updatedTask.id
+            ),
+        }));
+  
+      return cleaned.map(
+        (category) => {
+          if (
+            category.title ===
+            updatedTask.category
+          ) {
+            return {
+              ...category,
+  
+              tasks: [
+                {
+                  ...removedTask,
+                },
+  
+                ...category.tasks,
+              ],
+            };
+          }
+  
+          return category;
+        }
+      );
+    });
+  
+    setIsEditModalOpen(false);
+  
+    setSelectedTask(null);
+  };
+  
+ 
 
   /* ------------------------------------------------ */
   /* Archive Completed Today */
@@ -568,9 +567,9 @@ export default function Home() {
         <div className="flex-1 px-8 py-8">
           {/* Current View */}
           {selectedView ===
-            "current" && (
-            <>
-              {/* Quick Add */}
+  "current" && (
+  <>
+          
              {/* Quick Add */}
 <div
   className={`p-4 rounded-3xl mb-8 ${glass}`}
@@ -648,10 +647,11 @@ export default function Home() {
               scale: 0.96,
             }}
             transition={{
-              duration: 0.18,
+              type: "spring",
+              stiffness: 280,
+              damping: 22,
             }}
-            className={`absolute top-14 left-0 w-full rounded-3xl p-2 z-50 backdrop-blur-2xl border shadow-[0_10px_40px_rgba(0,0,0,0.16)] ${glass} ${border}`}
-          >
+            className={`absolute top-[56px] left-0 w-full rounded-[28px] p-2 z-50 border backdrop-blur-3xl bg-white/[0.08] dark:bg-black/40 shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden ${border}`}          >
             {categories.map(
               (category) => (
                 <button
@@ -665,11 +665,11 @@ export default function Home() {
                       false
                     );
                   }}
-                  className={`w-full h-11 px-4 rounded-2xl flex items-center justify-between text-left transition ${
+                  className={`w-full h-11 px-4 rounded-[20px] flex items-center justify-between text-left transition ${
                     selectedCategory ===
                     category.title
                       ? "bg-white/10"
-                      : "hover:bg-white/[0.06]"
+                      : "hover:bg-white/[0.10] hover:scale-[1.01]"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -761,9 +761,11 @@ export default function Home() {
               scale: 0.96,
             }}
             transition={{
-              duration: 0.18,
+              type: "spring",
+              stiffness: 280,
+              damping: 22,
             }}
-            className={`absolute top-14 left-0 w-full rounded-3xl p-2 z-50 backdrop-blur-2xl border shadow-[0_10px_40px_rgba(0,0,0,0.16)] ${glass} ${border}`}
+            className={`absolute top-14 left-0 w-full rounded-3xl p-2 z-50 backdrop-blur-3xl border shadow-[0_10px_40px_rgba(0,0,0,0.16)] ${glass} ${border}`}
           >
             {[
               "Low",
@@ -781,11 +783,11 @@ export default function Home() {
                     false
                   );
                 }}
-                className={`w-full h-11 px-4 rounded-2xl flex items-center justify-between text-left transition ${
+                className={`w-full h-11 px-4 rounded-[20px] flex items-center justify-between text-left transition ${
                   selectedPriority ===
                   priority
                     ? "bg-white/10"
-                    : "hover:bg-white/[0.06]"
+                    : "hover:bg-white/[0.10] hover:scale-[1.01]"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -909,178 +911,52 @@ export default function Home() {
                                   />
                                 </button>
 
-                                {editingTaskId ===
-                                task.id ? (
-                                  <input
-                                    autoFocus
-                                    value={
-                                      editingText
-                                    }
-                                    onChange={(
-                                      e
-                                    ) =>
-                                      setEditingText(
-                                        e
-                                          .target
-                                          .value
-                                      )
-                                    }
-                                    onBlur={() => {
-                                      updateTaskTitle(
-                                        task.id,
-                                        editingText
-                                      );
+                                <p
+  onClick={() => {
+    setSelectedTask({
+      ...task,
 
-                                      setEditingTaskId(
-                                        null
-                                      );
-                                    }}
-                                    onKeyDown={(
-                                      e
-                                    ) => {
-                                      if (
-                                        e.key ===
-                                        "Enter"
-                                      ) {
-                                        updateTaskTitle(
-                                          task.id,
-                                          editingText
-                                        );
+      category:
+        category.title,
+    });
 
-                                        setEditingTaskId(
-                                          null
-                                        );
-                                      }
-
-                                      if (
-                                        e.key ===
-                                        "Escape"
-                                      ) {
-                                        setEditingTaskId(
-                                          null
-                                        );
-                                      }
-                                    }}
-                                    className="bg-transparent outline-none text-[14px] font-[500]"
-                                  />
-                                ) : (
-                                  <p
-                                    onClick={() => {
-                                      setEditingTaskId(
-                                        task.id
-                                      );
-
-                                      setEditingText(
-                                        task.title
-                                      );
-                                    }}
-                                    className="text-[14px] font-[500] cursor-text"
-                                  >
-                                    {
-                                      task.title
-                                    }
-                                  </p>
-                                )}
+    setIsEditModalOpen(true);
+  }}
+  className="text-[14px] font-[500] cursor-pointer hover:opacity-70 transition"
+>
+  {task.title}
+</p>
                               </div>
 
-                              {/* Right */}
-                              <div className="flex items-center gap-3">
-                                <div className="relative">
-                                  <button
-                                    onClick={() =>
-                                      setEditingPriorityId(
-                                        editingPriorityId ===
-                                          task.id
-                                          ? null
-                                          : task.id
-                                      )
-                                    }
-                                    className={`text-xs px-3 py-1 rounded-full font-[600] ${
-                                      task.priority ===
-                                      "High"
-                                        ? "bg-red-50 text-red-500"
-                                        : task.priority ===
-                                          "Medium"
-                                        ? "bg-amber-50 text-amber-600"
-                                        : "bg-emerald-50 text-emerald-600"
-                                    }`}
-                                  >
-                                    {
-                                      task.priority
-                                    }
-                                  </button>
+                           
+{/* Right */}
+<div className="flex items-center gap-3">
 
-                                  <AnimatePresence>
-                                    {editingPriorityId ===
-                                      task.id && (
-                                      <motion.div
-                                        initial={{
-                                          opacity: 0,
-                                          y: -6,
-                                          scale: 0.96,
-                                        }}
-                                        animate={{
-                                          opacity: 1,
-                                          y: 0,
-                                          scale: 1,
-                                        }}
-                                        exit={{
-                                          opacity: 0,
-                                          y: -6,
-                                          scale: 0.96,
-                                        }}
-                                        className={`absolute top-10 right-0 w-[120px] p-2 rounded-2xl backdrop-blur-2xl border z-50 ${glass} ${border}`}
-                                      >
-                                        {[
-                                          "Low",
-                                          "Medium",
-                                          "High",
-                                        ].map(
-                                          (
-                                            priority
-                                          ) => (
-                                            <button
-                                              key={
-                                                priority
-                                              }
-                                              onClick={() => {
-                                                updateTaskPriority(
-                                                  task.id,
-                                                  priority as Priority
-                                                );
+  {/* Priority Display */}
+  <div
+    className={`text-xs px-3 py-1 rounded-full font-[600] ${
+      task.priority ===
+      "High"
+        ? "bg-red-50 text-red-500"
+        : task.priority ===
+          "Medium"
+        ? "bg-amber-50 text-amber-600"
+        : "bg-emerald-50 text-emerald-600"
+    }`}
+  >
+    {task.priority}
+  </div>
 
-                                                setEditingPriorityId(
-                                                  null
-                                                );
-                                              }}
-                                              className="w-full h-9 rounded-xl text-sm hover:bg-white/[0.06]"
-                                            >
-                                              {
-                                                priority
-                                              }
-                                            </button>
-                                          )
-                                        )}
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                </div>
-
-                                <button
-                                  onClick={() =>
-                                    deleteTask(
-                                      task.id
-                                    )
-                                  }
-                                  className="opacity-30 hover:opacity-100 transition"
-                                >
-                                  <Trash2
-                                    size={
-                                      16
-                                    }
-                                  />
-                                </button>
-                              </div>
+  {/* Delete */}
+  <button
+    onClick={() =>
+      deleteTask(task.id)
+    }
+    className="opacity-30 hover:opacity-100 transition"
+  >
+    <Trash2 size={16} />
+  </button>
+</div>
                             </motion.div>
                           )
                         )}
@@ -1090,15 +966,14 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Completed Today */}
-              <div className="mt-14">
+                          {/* Completed Today */}
+                          <div className="mt-14">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <h2
                       className="text-[13px] uppercase tracking-[0.14em] font-[700]"
                       style={{
-                        color:
-                          themeColor,
+                        color: themeColor,
                       }}
                     >
                       Completed Today
@@ -1111,9 +986,7 @@ export default function Home() {
                           themeColor,
                       }}
                     >
-                      {
-                        completedToday.length
-                      }
+                      {completedToday.length}
                     </div>
                   </div>
 
@@ -1146,9 +1019,7 @@ export default function Home() {
                   {completedToday.map(
                     (task) => (
                       <motion.div
-                        key={
-                          task.id
-                        }
+                        key={task.id}
                         initial={{
                           opacity: 0,
                           y: 10,
@@ -1167,15 +1038,11 @@ export default function Home() {
 
                           <div>
                             <p className="text-[14px] font-[500]">
-                              {
-                                task.title
-                              }
+                              {task.title}
                             </p>
 
                             <p className="text-[11px] opacity-40">
-                              {
-                                task.category
-                              }
+                              {task.category}
                             </p>
                           </div>
                         </div>
@@ -1338,6 +1205,172 @@ export default function Home() {
           )}
         </div>
       </div>
+      <AnimatePresence>
+  {isEditModalOpen &&
+    selectedTask && (
+      <motion.div
+        initial={{
+          opacity: 0,
+        }}
+        animate={{
+          opacity: 1,
+        }}
+        exit={{
+          opacity: 0,
+        }}
+        className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-6"
+        onClick={() =>
+          setIsEditModalOpen(
+            false
+          )
+        }
+      >
+        <motion.div
+          initial={{
+            opacity: 0,
+            scale: 0.88,
+            y: 24,
+            filter: "blur(12px)",
+          }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            filter: "blur(0px)",
+          }}
+          exit={{
+            opacity: 0,
+            scale: 0.92,
+            y: 16,
+            filter: "blur(8px)",
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 240,
+            damping: 24,
+          }}
+          onClick={(e) =>
+            e.stopPropagation()
+          }
+          className={`w-full max-w-[560px] rounded-[36px] p-6 border backdrop-blur-3xl shadow-[0_30px_120px_rgba(0,0,0,0.35)] ${glass} ${border}`}
+        >
+          <div className="mb-6">
+  <h2 className="text-[28px] font-[700] tracking-[-0.04em] mb-1">
+    Edit Task
+  </h2>
+
+  <p className="text-sm opacity-40">
+    Update details and organize your workflow.
+  </p>
+</div>
+
+          <div className="space-y-4">
+
+            {/* Title */}
+            <input
+              value={
+                selectedTask.title
+              }
+              onChange={(e) =>
+                setSelectedTask({
+                  ...selectedTask,
+                  title:
+                    e.target.value,
+                })
+              }
+              className={`w-full h-12 px-4 rounded-2xl outline-none ${input}`}
+            />
+
+            {/* Category */}
+            <select
+              value={
+                selectedTask.category
+              }
+              onChange={(e) =>
+                setSelectedTask({
+                  ...selectedTask,
+                  category:
+                    e.target.value,
+                })
+              }
+              className={`w-full h-12 px-4 rounded-2xl outline-none ${input}`}
+            >
+              {categories.map(
+                (category) => (
+                  <option
+                    key={category.id}
+                    value={
+                      category.title
+                    }
+                  >
+                    {category.title}
+                  </option>
+                )
+              )}
+            </select>
+
+            {/* Priority */}
+            <select
+              value={
+                selectedTask.priority
+              }
+              onChange={(e) =>
+                setSelectedTask({
+                  ...selectedTask,
+                  priority:
+                    e.target
+                      .value,
+                })
+              }
+              className={`w-full h-12 px-4 rounded-2xl outline-none ${input}`}
+            >
+              <option value="Low">
+                Low
+              </option>
+
+              <option value="Medium">
+                Medium
+              </option>
+
+              <option value="High">
+                High
+              </option>
+            </select>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={() =>
+                  setIsEditModalOpen(
+                    false
+                  )
+                }
+                className={`flex-1 h-12 rounded-2xl font-[600] ${glass}`}
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() =>
+                  saveTaskChanges(
+                    selectedTask,
+                    selectedTask.category
+                  )
+                }
+                className="flex-1 h-12 rounded-2xl text-white font-[600]"
+                style={{
+                  backgroundColor:
+                    themeColor,
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+</AnimatePresence>
     </main>
   );
 }
