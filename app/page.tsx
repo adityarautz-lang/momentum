@@ -966,8 +966,31 @@ export default function Home() {
                 )}
               </div>
 
-                          {/* Completed Today */}
-                          <div className="mt-14">
+                         {/* Divider */}
+<div className="my-14 relative">
+  <div
+    className={`h-[2px] w-full rounded-full ${
+      darkMode
+        ? "bg-white/[0.08]"
+        : "bg-black/[0.08]"
+    }`}
+  />
+
+  <div
+    className="absolute left-1/2 -translate-x-1/2 -top-[10px] px-4 text-[11px] uppercase tracking-[0.18em] font-[700] backdrop-blur-xl rounded-full"
+    style={{
+      color: themeColor,
+      backgroundColor: darkMode
+        ? "#0f1115"
+        : "#f5f5f3",
+    }}
+  >
+    Progress
+  </div>
+</div>
+
+{/* Completed Today */}
+<div className="mt-2">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <h2
