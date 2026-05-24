@@ -1149,17 +1149,39 @@ const todayDate = (() => {
                     </AnimatePresence>
                   </div>
 
-                  {/* Due Date */}
-<input
-  type="date"
-  value={newDueDate}
-  onChange={(e) =>
-    setNewDueDate(
-      e.target.value
-    )
-  }
-  className={`h-11 px-4 rounded-2xl outline-none transition-all ${input}`}
-/>
+             {/* Due Date */}
+<div className="relative">
+  {!newDueDate && (
+    <span
+      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-[600]"
+      style={{
+        color: themeColor,
+      }}
+    >
+      Due date
+    </span>
+  )}
+
+  <input
+    type="date"
+    value={newDueDate}
+    onChange={(e) =>
+      setNewDueDate(
+        e.target.value
+      )
+    }
+    className={`h-11 w-full px-4 rounded-2xl outline-none transition-all ${input} ${
+      !newDueDate
+        ? "text-transparent"
+        : ""
+    }`}
+    style={{
+      colorScheme: darkMode
+        ? "dark"
+        : "light",
+    }}
+  />
+</div>
 
                   {/* Add Button */}
                   <button
