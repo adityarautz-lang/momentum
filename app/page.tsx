@@ -129,7 +129,13 @@ export default function Home() {
   const [selectedPriority, setSelectedPriority] =
     useState<Priority>("Low");
 
-  const [newCategory, setNewCategory] =
+    const [newCategory, setNewCategory] =
+    useState("");
+  
+  const [editingCategoryId, setEditingCategoryId] =
+    useState<string | null>(null);
+  
+  const [editingCategoryTitle, setEditingCategoryTitle] =
     useState("");
 
   const [selectedTask, setSelectedTask] =
@@ -564,6 +570,111 @@ export default function Home() {
     );
 
     setNewCategory("");
+  };
+
+
+  const renameCategory = (
+    categoryId: string
+  ) => {
+    if (!editingCategoryTitle.trim()) return;
+  
+    const oldCategory =
+      categories.find(
+        (category) =>
+          category.id === categoryId
+      );
+  
+    if (!oldCategory) return;
+  
+    const newTitle =
+      editingCategoryTitle.trim();
+  
+    setCategories((prev) =>
+      prev.map((category) =>
+        category.id === categoryId
+          ? {
+              ...category,
+              title: newTitle,
+            }
+          : category
+      )
+    );
+  
+    if (
+      selectedCategory ===
+      oldCategory.title
+    ) {
+      setSelectedCategory(newTitle);
+    }
+  
+    setCompletedToday((prev) =>
+      prev.map((task) =>
+        task.category === oldCategory.title
+          ? {
+              ...task,
+              category: newTitle,
+            }
+          : task
+      )
+    );
+  
+    setArchive((prev) =>
+      prev.map((task) =>
+        task.category === oldCategory.title
+          ? {
+              ...task,
+              category: newTitle,
+            }
+          : task
+      )
+    );
+  
+    setEditingCategoryId(null);
+    setEditingCategoryTitle("");
+  };
+  
+  const deleteCategory = (
+    categoryId: string
+  ) => {
+    const categoryToDelete =
+      categories.find(
+        (category) =>
+          category.id === categoryId
+      );
+  
+    if (!categoryToDelete) return;
+  
+    const confirmed = window.confirm(
+      `Delete "${categoryToDelete.title}" and all tasks inside it?`
+    );
+  
+    if (!confirmed) return;
+  
+    const remainingCategories =
+      categories.filter(
+        (category) =>
+          category.id !== categoryId
+      );
+  
+    setCategories(
+      remainingCategories
+    );
+  
+    if (
+      selectedCategory ===
+      categoryToDelete.title
+    ) {
+      setSelectedCategory(
+        remainingCategories[0]?.title || ""
+      );
+    }
+  
+    if (
+      editingCategoryId === categoryId
+    ) {
+      setEditingCategoryId(null);
+      setEditingCategoryTitle("");
+    }
   };
 
   /* ------------------------------------------------ */
@@ -1601,33 +1712,126 @@ export default function Home() {
                 {categories.map(
                   (category) => (
                     <div
-                      key={
-                        category.id
-                      }
-                      className={`h-[72px] px-6 flex items-center justify-between border-b last:border-none ${border}`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <LayoutGrid
-                          size={
-                            18
+                    key={
+                      category.id
+                    }
+                    className={`min-h-[72px] px-6 py-3 flex items-center justify-between border-b last:border-none ${border}`}
+                  >
+                    <div className="flex items-center gap-4 flex-1">
+                      <LayoutGrid
+                        size={
+                          18
+                        }
+                      />
+                  
+                      {editingCategoryId ===
+                      category.id ? (
+                        <input
+                          autoFocus
+                          value={
+                            editingCategoryTitle
                           }
+                          onChange={(e) =>
+                            setEditingCategoryTitle(
+                              e.target.value
+                            )
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              renameCategory(
+                                category.id
+                              );
+                            }
+                  
+                            if (e.key === "Escape") {
+                              setEditingCategoryId(
+                                null
+                              );
+                  
+                              setEditingCategoryTitle(
+                                ""
+                              );
+                            }
+                          }}
+                          className={`h-10 px-3 rounded-xl outline-none flex-1 max-w-[320px] ${input}`}
                         />
-
-                        <p className="text-[15px] font-[600]">
-                          {
-                            category.title
-                          }
-                        </p>
-                      </div>
-
-                      <div className="text-sm opacity-50">
-                        {
-                          category.tasks
-                            .length
-                        }{" "}
-                        tasks
-                      </div>
+                      ) : (
+                        <div>
+                          <p
+                            onClick={() => {
+                              setEditingCategoryId(
+                                category.id
+                              );
+                  
+                              setEditingCategoryTitle(
+                                category.title
+                              );
+                            }}
+                            className="text-[15px] font-[600] cursor-pointer hover:opacity-70 transition"
+                          >
+                            {
+                              category.title
+                            }
+                          </p>
+                  
+                          <p className="text-xs opacity-40 mt-1">
+                            {
+                              category.tasks.length
+                            }{" "}
+                            tasks
+                          </p>
+                        </div>
+                      )}
                     </div>
+                  
+                    <div className="flex items-center gap-2">
+                      {editingCategoryId ===
+                      category.id ? (
+                        <>
+                          <button
+                            onClick={() =>
+                              renameCategory(
+                                category.id
+                              )
+                            }
+                            className="h-9 px-4 rounded-xl text-sm font-[600] text-white"
+                            style={{
+                              backgroundColor:
+                                themeColor,
+                            }}
+                          >
+                            Save
+                          </button>
+                  
+                          <button
+                            onClick={() => {
+                              setEditingCategoryId(
+                                null
+                              );
+                  
+                              setEditingCategoryTitle(
+                                ""
+                              );
+                            }}
+                            className={`h-9 px-4 rounded-xl text-sm font-[600] ${glass}`}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() =>
+                            deleteCategory(
+                              category.id
+                            )
+                          }
+                          className="w-9 h-9 rounded-xl flex items-center justify-center opacity-35 hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 transition"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   )
                 )}
               </div>
