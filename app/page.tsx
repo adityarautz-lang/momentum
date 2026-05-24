@@ -519,6 +519,25 @@ export default function Home() {
     }, 2200);
   };
 
+  const clearArchive = () => {
+    if (archive.length === 0) return;
+  
+    const confirmed = window.confirm(
+      "Clear all archived items permanently?"
+    );
+  
+    if (!confirmed) return;
+  
+    setArchive([]);
+  
+    setArchiveToast(
+      "Archived items cleared"
+    );
+  
+    setTimeout(() => {
+      setArchiveToast("");
+    }, 2200);
+  };
   /* ------------------------------------------------ */
   /* Add Category */
   /* ------------------------------------------------ */
@@ -1450,64 +1469,74 @@ export default function Home() {
             </>
           )}
 
-          {/* Archive View */}
-          {selectedView ===
-            "archive" && (
-            <div>
-              <h2 className="text-[32px] font-[700] mb-8">
-                Archived Items
-              </h2>
+         {/* Archive View */}
+{selectedView ===
+  "archive" && (
+  <div>
+    <div className="flex items-center justify-between mb-8">
+      <div>
+        <h2 className="text-[32px] font-[700]">
+          Archived Items
+        </h2>
 
-              <div
-                className={`rounded-3xl overflow-hidden ${glass}`}
-              >
-                {archive.length ===
-                  0 && (
-                  <div className="p-10 opacity-50 text-sm">
-                    No archived items
-                    yet.
-                  </div>
-                )}
+        <p className="text-sm opacity-40 mt-1">
+          Completed work saved for reference.
+        </p>
+      </div>
 
-                {archive.map(
-                  (task) => (
-                    <div
-                      key={
-                        task.id
-                      }
-                      className={`min-h-[88px] px-6 py-4 flex items-center justify-between border-b last:border-none ${border}`}
-                    >
-                      <div>
-                        <p className="text-[15px] font-[600] mb-1">
-                          {
-                            task.title
-                          }
-                        </p>
+      <button
+        onClick={clearArchive}
+        disabled={archive.length === 0}
+        className={`h-11 px-5 rounded-2xl text-sm font-[600] transition ${
+          archive.length === 0
+            ? "opacity-30 cursor-not-allowed"
+            : "hover:scale-[1.02] active:scale-[0.98]"
+        } ${glass}`}
+      >
+        Clear All
+      </button>
+    </div>
 
-                        <div className="flex items-center gap-3 text-xs opacity-50">
-                          <span>
-                            {
-                              task.category
-                            }
-                          </span>
+    <div
+      className={`rounded-3xl overflow-hidden ${glass}`}
+    >
+      {archive.length === 0 && (
+        <div className="p-10 opacity-50 text-sm">
+          No archived items yet.
+        </div>
+      )}
 
-                          <span>
-                            {new Date(
-                              task.completedAt
-                            ).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
+      {archive.map((task) => (
+        <div
+          key={task.id}
+          className={`min-h-[88px] px-6 py-4 flex items-center justify-between border-b last:border-none ${border}`}
+        >
+          <div>
+            <p className="text-[15px] font-[600] mb-1">
+              {task.title}
+            </p>
 
-                      <div className="text-xs opacity-40">
-                        Archived
-                      </div>
-                    </div>
-                  )
-                )}
-              </div>
+            <div className="flex items-center gap-3 text-xs opacity-50">
+              <span>
+                {task.category}
+              </span>
+
+              <span>
+                {new Date(
+                  task.completedAt
+                ).toLocaleDateString()}
+              </span>
             </div>
-          )}
+          </div>
+
+          <div className="text-xs opacity-40">
+            Archived
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
           {/* Categories View */}
           {selectedView ===
