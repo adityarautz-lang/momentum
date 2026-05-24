@@ -109,10 +109,10 @@ export default function Home() {
   const [selectedView, setSelectedView] =
     useState("current");
 
-  const [taskViewMode, setTaskViewMode] =
-    useState<"category" | "priority">(
-      "category"
-    );
+    const [taskViewMode, setTaskViewMode] =
+    useState<
+      "category" | "priority" | "dueToday"
+    >("category");
 
   const [archiveToast, setArchiveToast] =
     useState("");
@@ -120,7 +120,10 @@ export default function Home() {
   const [firecrackers, setFirecrackers] =
     useState<Firecracker[]>([]);
 
-  const [newTask, setNewTask] =
+    const [newTask, setNewTask] =
+    useState("");
+  
+  const [newDueDate, setNewDueDate] =
     useState("");
 
   const [selectedCategory, setSelectedCategory] =
@@ -337,6 +340,8 @@ export default function Home() {
                 title: newTask.trim(),
                 priority:
                   selectedPriority,
+                dueDate:
+                  newDueDate || undefined,
                 completed: false,
               },
 
@@ -348,9 +353,9 @@ export default function Home() {
         return category;
       })
     );
-
     setNewTask("");
-  };
+    setNewDueDate("");
+    };
 
   /* ------------------------------------------------ */
   /* Toggle Task */
@@ -477,6 +482,8 @@ export default function Home() {
                     updatedTask.title.trim(),
                   priority:
                     updatedTask.priority,
+                  dueDate:
+                    updatedTask.dueDate || undefined,
                   completed: false,
                 },
 
@@ -689,13 +696,42 @@ export default function Home() {
     ? "bg-white/[0.06] text-white"
     : "bg-[#f7f7f5] text-black";
 
-  const border = darkMode
+    const border = darkMode
     ? "border-white/[0.06]"
     : "border-black/[0.04]";
+  
+    const modalSelect = darkMode
+  ? "bg-[#171a20] text-white"
+  : "bg-[#f7f7f5] text-black";
 
-  const modalSelect = darkMode
-    ? "bg-[#171a20] text-white"
-    : "bg-[#f7f7f5] text-black";
+const formatDueDate = (
+  dueDate?: string
+) => {
+  if (!dueDate) return "";
+
+  return new Date(
+    `${dueDate}T00:00:00`
+  ).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+};
+
+const todayDate = (() => {
+  const date = new Date();
+
+  const year = date.getFullYear();
+
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+})();
 
   /* ------------------------------------------------ */
   /* Loading */
@@ -807,6 +843,22 @@ export default function Home() {
                   >
                     Priorities
                   </button>
+
+                  <button
+  onClick={() =>
+    setTaskViewMode(
+      "dueToday"
+    )
+  }
+  className={`h-10 px-4 rounded-xl text-sm font-[600] transition ${
+    taskViewMode ===
+    "dueToday"
+      ? "bg-white text-black"
+      : "opacity-50 hover:opacity-100"
+  }`}
+>
+  Due Today
+</button>
                 </div>
               </div>
 
@@ -814,7 +866,7 @@ export default function Home() {
               <div
                 className={`p-4 rounded-3xl mb-8 ${glass}`}
               >
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_220px_180px_120px] gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_220px_180px_180px_120px] gap-3">
                   {/* Task Input */}
                   <input
                     value={newTask}
@@ -1076,6 +1128,18 @@ export default function Home() {
                     </AnimatePresence>
                   </div>
 
+                  {/* Due Date */}
+<input
+  type="date"
+  value={newDueDate}
+  onChange={(e) =>
+    setNewDueDate(
+      e.target.value
+    )
+  }
+  className={`h-11 px-4 rounded-2xl outline-none transition-all ${input}`}
+/>
+
                   {/* Add Button */}
                   <button
                     onClick={addTask}
@@ -1177,27 +1241,35 @@ export default function Home() {
                                     />
                                   </button>
 
-                                  <p
-                                    onClick={() => {
-                                      setSelectedTask(
-                                        {
-                                          ...task,
+                                  <div>
+  <p
+    onClick={() => {
+      setSelectedTask(
+        {
+          ...task,
 
-                                          category:
-                                            category.title,
-                                        }
-                                      );
+          category:
+            category.title,
+        }
+      );
 
-                                      setIsEditModalOpen(
-                                        true
-                                      );
-                                    }}
-                                    className="text-[14px] font-[500] cursor-pointer hover:opacity-70 transition"
-                                  >
-                                    {
-                                      task.title
-                                    }
-                                  </p>
+      setIsEditModalOpen(
+        true
+      );
+    }}
+    className="text-[14px] font-[500] cursor-pointer hover:opacity-70 transition"
+  >
+    {
+      task.title
+    }
+  </p>
+
+  {task.dueDate && (
+    <p className="text-[11px] opacity-40 mt-1">
+      Due {formatDueDate(task.dueDate)}
+    </p>
+  )}
+</div>
                                 </div>
 
                                 {/* Right */}
@@ -1403,10 +1475,11 @@ export default function Home() {
                                     </p>
 
                                     <p className="text-[11px] opacity-40 mt-1">
-                                      {
-                                        task.category
-                                      }
-                                    </p>
+  {task.category}
+  {task.dueDate
+    ? ` • Due ${formatDueDate(task.dueDate)}`
+    : ""}
+</p>
                                   </div>
                                 </div>
 
@@ -1452,6 +1525,170 @@ export default function Home() {
                   })}
                 </div>
               )}
+
+{taskViewMode ===
+  "dueToday" && (
+  <div className="space-y-8">
+    <div className="flex items-center gap-3 mb-4">
+      <h2
+        className="text-[13px] uppercase tracking-[0.14em] font-[700]"
+        style={{
+          color: themeColor,
+        }}
+      >
+        Due Today
+      </h2>
+
+      <div
+        className="w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center"
+        style={{
+          backgroundColor:
+            themeColor,
+        }}
+      >
+        {
+          categories.flatMap(
+            (category) =>
+              category.tasks.filter(
+                (task) =>
+                  task.dueDate ===
+                  todayDate
+              )
+          ).length
+        }
+      </div>
+    </div>
+
+    <div
+      className={`rounded-3xl overflow-hidden ${glass}`}
+    >
+      {categories.flatMap(
+        (category) =>
+          category.tasks.filter(
+            (task) =>
+              task.dueDate ===
+              todayDate
+          )
+      ).length === 0 && (
+        <div className="p-6 text-sm opacity-40">
+          Nothing due today.
+        </div>
+      )}
+
+      {categories
+        .flatMap((category) =>
+          category.tasks
+            .filter(
+              (task) =>
+                task.dueDate ===
+                todayDate
+            )
+            .map((task) => ({
+              ...task,
+              category:
+                category.title,
+            }))
+        )
+        .map((task) => (
+          <motion.div
+            key={task.id}
+            className={`h-[68px] px-5 flex items-center justify-between border-b last:border-none ${border}`}
+          >
+            <div className="flex items-center gap-4">
+              <button
+                onClick={(e) => {
+                  const categoryIndex =
+                    categories.findIndex(
+                      (category) =>
+                        category.title ===
+                        task.category
+                    );
+
+                  const taskIndex =
+                    categories[
+                      categoryIndex
+                    ]?.tasks.findIndex(
+                      (currentTask) =>
+                        currentTask.id ===
+                        task.id
+                    );
+
+                  if (
+                    categoryIndex !== -1 &&
+                    taskIndex !== -1
+                  ) {
+                    toggleTask(
+                      categoryIndex,
+                      taskIndex,
+                      e
+                    );
+                  }
+                }}
+              >
+                <Circle
+                  size={18}
+                  className={
+                    darkMode
+                      ? "text-white/20"
+                      : "text-gray-300"
+                  }
+                />
+              </button>
+
+              <div>
+                <p
+                  onClick={() => {
+                    setSelectedTask({
+                      ...task,
+                    });
+
+                    setIsEditModalOpen(
+                      true
+                    );
+                  }}
+                  className="text-[15px] font-[600] cursor-pointer hover:opacity-70 transition"
+                >
+                  {task.title}
+                </p>
+
+                <p className="text-[11px] opacity-40 mt-1">
+                  {task.category} • Due{" "}
+                  {formatDueDate(
+                    task.dueDate
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div
+                className={`text-xs px-3 py-1 rounded-full font-[600] ${
+                  task.priority ===
+                  "High"
+                    ? "bg-red-50 text-red-500"
+                    : task.priority ===
+                      "Medium"
+                    ? "bg-amber-50 text-amber-600"
+                    : "bg-emerald-50 text-emerald-600"
+                }`}
+              >
+                {task.priority}
+              </div>
+
+              <button
+                onClick={() =>
+                  deleteTask(task.id)
+                }
+                className="opacity-30 hover:opacity-100 transition"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </motion.div>
+        ))}
+    </div>
+  </div>
+)}
 
               {/* Divider */}
               <div className="my-14 relative">
@@ -1562,10 +1799,11 @@ export default function Home() {
                             </p>
 
                             <p className="text-[11px] opacity-40">
-                              {
-                                task.category
-                              }
-                            </p>
+  {task.category}
+  {task.dueDate
+    ? ` • Due ${formatDueDate(task.dueDate)}`
+    : ""}
+</p>
                           </div>
                         </div>
 
@@ -1628,15 +1866,23 @@ export default function Home() {
             </p>
 
             <div className="flex items-center gap-3 text-xs opacity-50">
-              <span>
-                {task.category}
-              </span>
+            <span>
+  {
+    task.category
+  }
+</span>
 
-              <span>
-                {new Date(
-                  task.completedAt
-                ).toLocaleDateString()}
-              </span>
+{task.dueDate && (
+  <span>
+    Due {formatDueDate(task.dueDate)}
+  </span>
+)}
+
+<span>
+  {new Date(
+    task.completedAt
+  ).toLocaleDateString()}
+</span>
             </div>
           </div>
 
@@ -1989,6 +2235,22 @@ export default function Home() {
                       High
                     </option>
                   </select>
+
+                  {/* Due Date */}
+<input
+  type="date"
+  value={
+    selectedTask.dueDate || ""
+  }
+  onChange={(e) =>
+    setSelectedTask({
+      ...selectedTask,
+      dueDate:
+        e.target.value,
+    })
+  }
+  className={`w-full h-12 px-4 rounded-2xl outline-none ${modalSelect}`}
+/>
 
                   {/* Actions */}
                   <div className="flex gap-3 pt-4">

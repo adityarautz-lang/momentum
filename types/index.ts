@@ -8,20 +8,13 @@ export type Task = {
   title: string;
   priority: Priority;
   completed: boolean;
+  dueDate?: string;
 };
 
 export type Category = {
   id: string;
   title: string;
   tasks: Task[];
-};
-
-export type ArchivedTask = {
-  id: string;
-  title: string;
-  priority: Priority;
-  category: string;
-  completedAt: string;
 };
 
 export type Firecracker = {
@@ -34,5 +27,6 @@ export type AppState = {
   categories: Category[];
   darkMode: boolean;
   themeColor: string;
-  archive: ArchivedTask[];
+  archive: any[];
+  completedToday?: any[];
 };
