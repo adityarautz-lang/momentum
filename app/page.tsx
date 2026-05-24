@@ -812,39 +812,53 @@ const todayDate = (() => {
                 <div
                   className={`p-1 rounded-2xl flex items-center gap-1 ${glass}`}
                 >
-                  <button
-                    onClick={() =>
-                      setTaskViewMode(
-                        "category"
-                      )
-                    }
-                    className={`h-10 px-4 rounded-xl text-sm font-[600] transition ${
-                      taskViewMode ===
-                      "category"
-                        ? "bg-white text-black"
-                        : "opacity-50 hover:opacity-100"
-                    }`}
-                  >
-                    Categories
-                  </button>
+                 <button
+  onClick={() =>
+    setTaskViewMode(
+      "category"
+    )
+  }
+  className={`h-10 px-4 rounded-xl text-sm font-[600] transition ${
+    taskViewMode ===
+    "category"
+      ? "text-white shadow-sm"
+      : "opacity-50 hover:opacity-100"
+  }`}
+  style={
+    taskViewMode === "category"
+      ? {
+          backgroundColor: themeColor,
+        }
+      : undefined
+  }
+>
+  Categories
+</button>
 
-                  <button
-                    onClick={() =>
-                      setTaskViewMode(
-                        "priority"
-                      )
-                    }
-                    className={`h-10 px-4 rounded-xl text-sm font-[600] transition ${
-                      taskViewMode ===
-                      "priority"
-                        ? "bg-white text-black"
-                        : "opacity-50 hover:opacity-100"
-                    }`}
-                  >
-                    Priorities
-                  </button>
+<button
+  onClick={() =>
+    setTaskViewMode(
+      "priority"
+    )
+  }
+  className={`h-10 px-4 rounded-xl text-sm font-[600] transition ${
+    taskViewMode ===
+    "priority"
+      ? "text-white shadow-sm"
+      : "opacity-50 hover:opacity-100"
+  }`}
+  style={
+    taskViewMode === "priority"
+      ? {
+          backgroundColor: themeColor,
+        }
+      : undefined
+  }
+>
+  Priorities
+</button>
 
-                  <button
+<button
   onClick={() =>
     setTaskViewMode(
       "dueToday"
@@ -853,9 +867,16 @@ const todayDate = (() => {
   className={`h-10 px-4 rounded-xl text-sm font-[600] transition ${
     taskViewMode ===
     "dueToday"
-      ? "bg-white text-black"
+      ? "text-white shadow-sm"
       : "opacity-50 hover:opacity-100"
   }`}
+  style={
+    taskViewMode === "dueToday"
+      ? {
+          backgroundColor: themeColor,
+        }
+      : undefined
+  }
 >
   Due Today
 </button>
