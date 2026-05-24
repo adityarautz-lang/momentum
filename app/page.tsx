@@ -6,7 +6,10 @@ import {
   useRef,
 } from "react";
 
-import { Plus_Jakarta_Sans } from "next/font/google";
+import {
+  Plus_Jakarta_Sans,
+  DM_Sans,
+} from "next/font/google";
 
 import {
   motion,
@@ -44,6 +47,10 @@ import {
 /* ------------------------------------------------ */
 
 const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+});
+
+const dmSans = DM_Sans({
   subsets: ["latin"],
 });
 
@@ -110,6 +117,10 @@ export default function Home() {
   const [selectedView, setSelectedView] =
     useState("current");
 
+    const [selectedFont, setSelectedFont] =
+    useState<"jakarta" | "arial" | "dmSans">(
+      "jakarta"
+    );
     const [taskViewMode, setTaskViewMode] =
     useState<
       "category" | "priority" | "dueToday"
@@ -188,7 +199,11 @@ const dueDateInputRef =
       setThemeColor(
         parsed.themeColor || "#A78BFA"
       );
-
+      
+      setSelectedFont(
+        parsed.selectedFont || "jakarta"
+      );
+      
       setArchive(
         parsed.archive || []
       );
@@ -231,6 +246,7 @@ const dueDateInputRef =
       categories,
       darkMode,
       themeColor,
+      selectedFont,
       archive,
       completedToday,
     } as any);
@@ -238,6 +254,7 @@ const dueDateInputRef =
     categories,
     darkMode,
     themeColor,
+    selectedFont,
     archive,
     completedToday,
     isLoaded,
@@ -693,20 +710,27 @@ const dueDateInputRef =
   /* ------------------------------------------------ */
 
   const glass = darkMode
-    ? "bg-white/[0.05]"
-    : "bg-white/75";
+  ? "bg-white/[0.05]"
+  : "bg-white/75";
 
-  const input = darkMode
-    ? "bg-white/[0.06] text-white"
-    : "bg-[#f7f7f5] text-black";
+const input = darkMode
+  ? "bg-white/[0.06] text-white"
+  : "bg-[#f7f7f5] text-black";
 
-    const border = darkMode
-    ? "border-white/[0.06]"
-    : "border-black/[0.04]";
-  
-    const modalSelect = darkMode
+const border = darkMode
+  ? "border-white/[0.06]"
+  : "border-black/[0.04]";
+
+const modalSelect = darkMode
   ? "bg-[#171a20] text-white"
   : "bg-[#f7f7f5] text-black";
+
+  const fontClass =
+  selectedFont === "arial"
+    ? ""
+    : selectedFont === "dmSans"
+    ? dmSans.className
+    : jakarta.className;
 
 const formatDueDate = (
   dueDate?: string
@@ -749,12 +773,20 @@ const todayDate = (() => {
 
   return (
     <main
-      className={`${jakarta.className} min-h-screen transition-colors duration-500 ${
-        darkMode
-          ? "bg-[#0f1115] text-white"
-          : "bg-[#f5f5f3] text-black"
-      }`}
-    >
+    className={`${fontClass} min-h-screen transition-colors duration-500 ${
+      darkMode
+        ? "bg-[#0f1115] text-white"
+        : "bg-[#f5f5f3] text-black"
+    }`}
+    style={
+      selectedFont === "arial"
+        ? {
+            fontFamily:
+              "Arial, Helvetica, sans-serif",
+          }
+        : undefined
+    }
+  >
       <FirecrackerLayer
         firecrackers={
           firecrackers
@@ -768,31 +800,33 @@ const todayDate = (() => {
       />
 
       <div className="flex">
-        <Sidebar
-          darkMode={darkMode}
-          setDarkMode={
-            setDarkMode
-          }
-          selectedView={
-            selectedView
-          }
-          setSelectedView={
-            setSelectedView
-          }
-          themeColor={themeColor}
-          setThemeColor={
-            setThemeColor
-          }
-          showThemePicker={
-            showThemePicker
-          }
-          setShowThemePicker={
-            setShowThemePicker
-          }
-          themePickerRef={
-            themePickerRef
-          }
-        />
+      <Sidebar
+  darkMode={darkMode}
+  setDarkMode={
+    setDarkMode
+  }
+  selectedView={
+    selectedView
+  }
+  setSelectedView={
+    setSelectedView
+  }
+  themeColor={themeColor}
+  setThemeColor={
+    setThemeColor
+  }
+  showThemePicker={
+    showThemePicker
+  }
+  setShowThemePicker={
+    setShowThemePicker
+  }
+  themePickerRef={
+    themePickerRef
+  }
+  selectedFont={selectedFont}
+  setSelectedFont={setSelectedFont}
+/>
 
         <div className="flex-1 px-8 py-8">
           {/* Current View */}
@@ -811,6 +845,8 @@ const todayDate = (() => {
                     your momentum.
                   </p>
                 </div>
+
+                <div className="flex items-center gap-3">
 
                 {/* Toggle */}
                 <div
@@ -882,10 +918,13 @@ const todayDate = (() => {
       : undefined
   }
 >
-  Due Today
+Due Today
 </button>
-                </div>
+</div>
+
+
               </div>
+            </div>
 
               {/* Quick Add */}
               <div

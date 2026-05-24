@@ -8,7 +8,6 @@ import {
   Palette,
   Sun,
   Tag,
-  Flag,
 } from "lucide-react";
 
 import {
@@ -50,8 +49,10 @@ export default function Sidebar({
   themeColor,
   setThemeColor,
   showThemePicker,
-setShowThemePicker,
-themePickerRef,
+  setShowThemePicker,
+  themePickerRef,
+  selectedFont,
+  setSelectedFont,
 }: any) {
   const glass = darkMode
     ? "bg-white/[0.05]"
@@ -240,6 +241,62 @@ themePickerRef,
             </span>
           </div>
         </button>
+
+        <div className="mt-4">
+  <p className="text-[11px] uppercase tracking-[0.16em] font-[700] opacity-40 mb-2">
+    Font
+  </p>
+
+  <div
+    className={`p-1 rounded-2xl flex flex-col gap-1 ${
+      darkMode
+        ? "bg-white/[0.05]"
+        : "bg-black/[0.04]"
+    }`}
+  >
+   <button
+  onClick={() =>
+    setSelectedFont("arial")
+  }
+  className={`h-10 px-3 rounded-xl text-xs font-[700] transition text-left ${
+    selectedFont === "arial"
+      ? "text-white"
+      : "opacity-50 hover:opacity-100"
+  }`}
+  style={
+    selectedFont === "arial"
+      ? {
+          backgroundColor:
+            themeColor,
+        }
+      : undefined
+  }
+>
+  Arial
+</button>
+
+    <button
+      onClick={() =>
+        setSelectedFont("dmSans")
+      }
+      className={`h-10 px-3 rounded-xl text-xs font-[700] transition text-left ${
+        selectedFont === "dmSans"
+          ? "text-white"
+          : "opacity-50 hover:opacity-100"
+      }`}
+      style={
+        selectedFont === "dmSans"
+          ? {
+              backgroundColor:
+                themeColor,
+            }
+          : undefined
+      }
+    >
+      DM Sans
+    </button>
+  </div>
+</div>
       </div>
     </aside>
   );
