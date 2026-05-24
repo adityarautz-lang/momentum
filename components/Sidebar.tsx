@@ -68,7 +68,7 @@ themePickerRef,
       {/* Logo */}
       <div className="mb-10">
         <p className="text-sm opacity-50 mb-2">
-          Productivity reimagined
+          Productivity simplified
         </p>
 
         <h1 className="text-[32px] font-[700] tracking-[-0.05em]">

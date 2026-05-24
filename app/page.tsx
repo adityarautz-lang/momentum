@@ -1149,16 +1149,16 @@ const todayDate = (() => {
                     </AnimatePresence>
                   </div>
 
-             {/* Due Date */}
-<div className="relative">
+            {/* Due Date */}
+<div className={`relative h-11 rounded-2xl ${input}`}>
   {!newDueDate && (
     <span
-      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-[600]"
+      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-[600] z-10"
       style={{
         color: themeColor,
       }}
     >
-      Due date
+      Pick date
     </span>
   )}
 
@@ -1170,10 +1170,10 @@ const todayDate = (() => {
         e.target.value
       )
     }
-    className={`h-11 w-full px-4 rounded-2xl outline-none transition-all ${input} ${
+    className={`absolute inset-0 h-11 w-full px-4 rounded-2xl outline-none bg-transparent transition-all ${
       !newDueDate
-        ? "text-transparent"
-        : ""
+        ? "opacity-0"
+        : "opacity-100"
     }`}
     style={{
       colorScheme: darkMode
