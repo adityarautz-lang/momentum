@@ -40,6 +40,7 @@ const mulish = Mulish({
   weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
+
 /* ------------------------------------------------ */
 /* Initial Data */
 /* ------------------------------------------------ */
@@ -739,29 +740,23 @@ export default function Home() {
 
   const glass = darkMode
     ? "bg-white/[0.055] backdrop-blur-2xl"
-    : "bg-white/75 backdrop-blur-2xl";
+    : "bg-[#fffaf0]/70 backdrop-blur-2xl";
 
-  const strongerGlass = darkMode
+    const strongerGlass = darkMode
     ? "bg-white/[0.065] border-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl"
-    : "bg-white/85 border-black/[0.05] shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur-2xl";
-
-  const elevatedSurface = darkMode
-    ? "bg-white/[0.08] border-white/[0.1] shadow-[0_30px_100px_rgba(0,0,0,0.38)] backdrop-blur-2xl"
-    : "bg-white/95 border-black/[0.06] shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur-2xl";
-
-  const mutedSurface = darkMode ? "bg-white/[0.045]" : "bg-black/[0.035]";
+    : "bg-white border-black/[0.05] shadow-[0_24px_70px_rgba(15,23,42,0.08)]";
 
   const input = darkMode
     ? "bg-white/[0.07] text-white placeholder:text-white/35 border border-white/[0.06]"
-    : "bg-white/80 text-black placeholder:text-black/35 border border-black/[0.05]";
+    : "bg-[#f8f2e8]/85 text-[#171717] placeholder:text-[#171717]/35 border border-[#2f2618]/[0.07]";
 
-  const border = darkMode ? "border-white/[0.075]" : "border-black/[0.055]";
+  const border = darkMode ? "border-white/[0.075]" : "border-[#2f2618]/[0.07]";
 
   const modalSelect = darkMode
     ? "bg-[#171a20] text-white"
     : "bg-[#f7f7f5] text-black";
 
-    const fontClass = mulish.className;
+  const fontClass = mulish.className;
 
   /* ------------------------------------------------ */
   /* Firecracker */
@@ -1200,182 +1195,187 @@ export default function Home() {
 
   return (
     <main
-    className={`${fontClass} min-h-screen overflow-hidden transition-colors duration-500 ${
-        darkMode
-          ? "bg-[radial-gradient(circle_at_top_right,_rgba(167,139,250,0.18),_transparent_32%),linear-gradient(135deg,_#080b12_0%,_#111827_48%,_#0b0f17_100%)] text-white"
-          : "bg-[radial-gradient(circle_at_top_right,_rgba(167,139,250,0.18),_transparent_30%),linear-gradient(135deg,_#f8f7f4_0%,_#ffffff_48%,_#f1f5f9_100%)] text-black"
-      }`}
-      // style={{
-      //   fontFamily:
-      //     '"Google Sans", "Product Sans", Roboto, Arial, sans-serif',
-      // }}
-    >
+  className={`${fontClass} min-h-screen overflow-hidden transition-colors duration-500 ${
+    darkMode
+      ? "bg-[radial-gradient(circle_at_top_right,_rgba(167,139,250,0.18),_transparent_32%),linear-gradient(135deg,_#080b12_0%,_#111827_48%,_#0b0f17_100%)] text-white"
+      : "bg-white text-black"
+  }`}
+>
       <FirecrackerLayer firecrackers={firecrackers} themeColor={themeColor} />
       <Toast message={archiveToast} darkMode={darkMode} />
 
       <div className="flex min-h-screen">
-        <Sidebar
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-          selectedView={selectedView}
-          setSelectedView={setSelectedView}
-          themeColor={themeColor}
-          inboxCount={inboxTasks.length}
-        />
+        <div className="hidden lg:block">
+          <Sidebar
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            selectedView={selectedView}
+            setSelectedView={setSelectedView}
+            themeColor={themeColor}
+            inboxCount={inboxTasks.length}
+          />
+        </div>
 
-        <div className="flex-1 px-6 py-6 xl:px-10 xl:py-8">
-          <div className="mx-auto max-w-[1440px]">
-          {selectedView === "today" && (
-            <TodayView
-              darkMode={darkMode}
-              setDarkMode={setDarkMode}
-              themeColor={themeColor}
-              glass={glass}
-              strongerGlass={strongerGlass}
-              border={border}
-              input={input}
-              allTasks={allTasks}
-              prioritizedTasks={prioritizedTasks}
-              highPriorityCount={highPriorityCount}
-              dueSoonCount={dueSoonCount}
-              completionPercent={completionPercent}
-              suggestedDateCount={suggestedDateCount}
-              completedToday={completedToday}
-              newTask={newTask}
-              setNewTask={setNewTask}
-              addTask={addTask}
-              toggleTaskById={toggleTaskById}
-              deleteTask={deleteTask}
-              acceptSuggestedDateById={acceptSuggestedDateById}
-              setSelectedTask={setSelectedTask}
-              setIsEditModalOpen={setIsEditModalOpen}
-              archiveCompletedToday={archiveCompletedToday}
-              restoreCompletedTask={restoreCompletedTask}
-            />
-          )}
+        <div className="min-w-0 flex-1 px-4 pb-28 pt-4 sm:px-6 sm:py-6 xl:px-10 xl:py-8">
+          <div className="mx-auto w-full max-w-[1440px]">
+            {selectedView === "today" && (
+              <TodayView
+                darkMode={darkMode}
+                setDarkMode={setDarkMode}
+                themeColor={themeColor}
+                glass={glass}
+                strongerGlass={strongerGlass}
+                border={border}
+                allTasks={allTasks}
+                prioritizedTasks={prioritizedTasks}
+                highPriorityCount={highPriorityCount}
+                dueSoonCount={dueSoonCount}
+                completionPercent={completionPercent}
+                suggestedDateCount={suggestedDateCount}
+                completedToday={completedToday}
+                newTask={newTask}
+                setNewTask={setNewTask}
+                addTask={addTask}
+                toggleTaskById={toggleTaskById}
+                deleteTask={deleteTask}
+                acceptSuggestedDateById={acceptSuggestedDateById}
+                setSelectedTask={setSelectedTask}
+                setIsEditModalOpen={setIsEditModalOpen}
+                archiveCompletedToday={archiveCompletedToday}
+                restoreCompletedTask={restoreCompletedTask}
+              />
+            )}
 
-          {selectedView === "priorities" && (
-            <PrioritiesView
-              darkMode={darkMode}
-              border={border}
-              className={strongerGlass}
-              themeColor={themeColor}
-              viewMode={priorityViewMode}
-              setViewMode={setPriorityViewMode}
-              highPriorityTasks={highPriorityTasks}
-              mediumPriorityTasks={mediumPriorityTasks}
-              lowPriorityTasks={lowPriorityTasks}
-              toggleTaskById={toggleTaskById}
-              deleteTask={deleteTask}
-              setSelectedTask={setSelectedTask}
-              setIsEditModalOpen={setIsEditModalOpen}
-            />
-          )}
+            {selectedView === "priorities" && (
+              <PrioritiesView
+                darkMode={darkMode}
+                border={border}
+                className={strongerGlass}
+                themeColor={themeColor}
+                viewMode={priorityViewMode}
+                setViewMode={setPriorityViewMode}
+                highPriorityTasks={highPriorityTasks}
+                mediumPriorityTasks={mediumPriorityTasks}
+                lowPriorityTasks={lowPriorityTasks}
+                toggleTaskById={toggleTaskById}
+                deleteTask={deleteTask}
+                setSelectedTask={setSelectedTask}
+                setIsEditModalOpen={setIsEditModalOpen}
+              />
+            )}
 
-          {selectedView === "upcoming" && (
-            <UpcomingView
-              darkMode={darkMode}
-              border={border}
-              className={strongerGlass}
-              themeColor={themeColor}
-              viewMode={upcomingViewMode}
-              setViewMode={setUpcomingViewMode}
-              todayTasks={todayTasks}
-              tomorrowTasks={tomorrowTasks}
-              laterTasks={laterTasks}
-              noDateTasks={noDateTasks}
-              toggleTaskById={toggleTaskById}
-              deleteTask={deleteTask}
-              acceptSuggestedDateById={acceptSuggestedDateById}
-              setSelectedTask={setSelectedTask}
-              setIsEditModalOpen={setIsEditModalOpen}
-            />
-          )}
+            {selectedView === "upcoming" && (
+              <UpcomingView
+                darkMode={darkMode}
+                border={border}
+                className={strongerGlass}
+                themeColor={themeColor}
+                viewMode={upcomingViewMode}
+                setViewMode={setUpcomingViewMode}
+                todayTasks={todayTasks}
+                tomorrowTasks={tomorrowTasks}
+                laterTasks={laterTasks}
+                noDateTasks={noDateTasks}
+                toggleTaskById={toggleTaskById}
+                deleteTask={deleteTask}
+                acceptSuggestedDateById={acceptSuggestedDateById}
+                setSelectedTask={setSelectedTask}
+                setIsEditModalOpen={setIsEditModalOpen}
+              />
+            )}
 
-          {selectedView === "inbox" && (
-          <InboxView
-          darkMode={darkMode}
-          border={border}
-          className={strongerGlass}
-          themeColor={themeColor}
-          inboxTasks={inboxTasks}
-          enableAppSuggestions={enableAppSuggestions}
-          toggleTaskById={toggleTaskById}
-          deleteTask={deleteTask}
-          scheduleTaskById={scheduleTaskById}
-          setSelectedTask={setSelectedTask}
-          setIsEditModalOpen={setIsEditModalOpen}
-        />
-          )}
+            {selectedView === "inbox" && (
+              <InboxView
+                darkMode={darkMode}
+                border={border}
+                className={strongerGlass}
+                themeColor={themeColor}
+                inboxTasks={inboxTasks}
+                enableAppSuggestions={enableAppSuggestions}
+                toggleTaskById={toggleTaskById}
+                deleteTask={deleteTask}
+                scheduleTaskById={scheduleTaskById}
+                setSelectedTask={setSelectedTask}
+                setIsEditModalOpen={setIsEditModalOpen}
+              />
+            )}
 
-          {selectedView === "archive" && (
-            <ArchiveView
-              archive={archive}
-              clearArchive={clearArchive}
-              glass={glass}
-              strongerGlass={strongerGlass}
-              border={border}
-            />
-          )}
+            {selectedView === "archive" && (
+              <ArchiveView
+                archive={archive}
+                clearArchive={clearArchive}
+                glass={glass}
+                strongerGlass={strongerGlass}
+                border={border}
+              />
+            )}
 
-          {selectedView === "categories" && (
-            <CategoriesView
-              categories={categories}
-              newCategory={newCategory}
-              setNewCategory={setNewCategory}
-              addCategory={addCategory}
-              editingCategoryId={editingCategoryId}
-              setEditingCategoryId={setEditingCategoryId}
-              editingCategoryTitle={editingCategoryTitle}
-              setEditingCategoryTitle={setEditingCategoryTitle}
-              renameCategory={renameCategory}
-              deleteCategory={deleteCategory}
-              themeColor={themeColor}
-              input={input}
-              glass={glass}
-              strongerGlass={strongerGlass}
-              border={border}
-            />
-          )}
+            {selectedView === "categories" && (
+              <CategoriesView
+                categories={categories}
+                newCategory={newCategory}
+                setNewCategory={setNewCategory}
+                addCategory={addCategory}
+                editingCategoryId={editingCategoryId}
+                setEditingCategoryId={setEditingCategoryId}
+                editingCategoryTitle={editingCategoryTitle}
+                setEditingCategoryTitle={setEditingCategoryTitle}
+                renameCategory={renameCategory}
+                deleteCategory={deleteCategory}
+                themeColor={themeColor}
+                input={input}
+                glass={glass}
+                strongerGlass={strongerGlass}
+                border={border}
+              />
+            )}
 
-          {selectedView === "settings" && (
-            <SettingsView
-              darkMode={darkMode}
-              setDarkMode={setDarkMode}
-              border={border}
-              className={strongerGlass}
-              themeColor={themeColor}
-              enableAppSuggestions={enableAppSuggestions}
-              setEnableAppSuggestions={setEnableAppSuggestions}
-              enableAutoPriority={enableAutoPriority}
-              setEnableAutoPriority={setEnableAutoPriority}
-              upcomingViewMode={upcomingViewMode}
-              setUpcomingViewMode={setUpcomingViewMode}
-              priorityViewMode={priorityViewMode}
-              setPriorityViewMode={setPriorityViewMode}
-              archiveCount={archive.length}
-              clearArchive={clearArchive}
-              resetAppData={resetAppData}
-            />
-          )}
+            {selectedView === "settings" && (
+              <SettingsView
+                darkMode={darkMode}
+                setDarkMode={setDarkMode}
+                border={border}
+                className={strongerGlass}
+                themeColor={themeColor}
+                enableAppSuggestions={enableAppSuggestions}
+                setEnableAppSuggestions={setEnableAppSuggestions}
+                enableAutoPriority={enableAutoPriority}
+                setEnableAutoPriority={setEnableAutoPriority}
+                upcomingViewMode={upcomingViewMode}
+                setUpcomingViewMode={setUpcomingViewMode}
+                priorityViewMode={priorityViewMode}
+                setPriorityViewMode={setPriorityViewMode}
+                archiveCount={archive.length}
+                clearArchive={clearArchive}
+                resetAppData={resetAppData}
+              />
+            )}
 
-          {[
-            "goals",
-            "routines",
-            "calendar",
-            "review",
-            "insights",
-          ].includes(selectedView) && (
-            <PlaceholderView
-              selectedView={selectedView}
-              darkMode={darkMode}
-              border={border}
-              className={strongerGlass}
-            />
-          )}
+            {[
+              "goals",
+              "routines",
+              "calendar",
+              "review",
+              "insights",
+            ].includes(selectedView) && (
+              <PlaceholderView
+                selectedView={selectedView}
+                darkMode={darkMode}
+                border={border}
+                className={strongerGlass}
+              />
+            )}
           </div>
         </div>
       </div>
+
+      <MobileBottomNav
+        selectedView={selectedView}
+        setSelectedView={setSelectedView}
+        inboxCount={inboxTasks.length}
+        darkMode={darkMode}
+        themeColor={themeColor}
+      />
 
       <AnimatePresence>
         {isEditModalOpen && selectedTask && (
@@ -1409,7 +1409,6 @@ function TodayView({
   glass,
   strongerGlass,
   border,
-  input,
   allTasks,
   prioritizedTasks,
   highPriorityCount,
@@ -1430,11 +1429,13 @@ function TodayView({
 }: any) {
   return (
     <>
-      <div className={`mb-8 rounded-[36px] border p-6 ${strongerGlass} ${border}`}>
-        <div className="flex items-center justify-between gap-6">
+      <div
+        className={`mb-6 rounded-[28px] border p-5 sm:mb-8 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+      >
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           <div>
-            <h1 className="text-[34px] font-[850] tracking-[-0.055em]">
-              Hello! Let's build some Momentum.
+            <h1 className="text-[28px] font-[800] tracking-[-0.045em] sm:text-[34px]">
+              Hello! Let&apos;s build some Momentum.
             </h1>
 
             <p
@@ -1442,18 +1443,19 @@ function TodayView({
                 darkMode ? "text-white/45" : "text-black/45"
               }`}
             >
-              {allTasks.length} active tasks · {dueSoonCount} due soon · {completedToday.length} completed today
+              {allTasks.length} active tasks · {dueSoonCount} due soon ·{" "}
+              {completedToday.length} completed today
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className={`rounded-2xl px-4 py-3 text-xs font-[700] ${glass}`}>
               {formatDateLong()}
             </div>
 
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`h-11 px-4 rounded-2xl flex items-center gap-2 text-sm font-[700] transition hover:-translate-y-0.5 ${glass}`}
+              className={`flex h-11 items-center gap-2 rounded-2xl px-4 text-sm font-[700] transition hover:-translate-y-0.5 ${glass}`}
             >
               {darkMode ? <Sun size={17} /> : <Moon size={17} />}
               {darkMode ? "Light" : "Dark"}
@@ -1462,7 +1464,7 @@ function TodayView({
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-5 md:grid-cols-5">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
         <StatCard
           className={strongerGlass}
           border={border}
@@ -1510,10 +1512,12 @@ function TodayView({
       </div>
 
       <section
-        className={`mb-6 rounded-[36px] border p-6 ${strongerGlass} ${border}`}
+        className={`mb-6 rounded-[28px] border p-4 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
       >
-        <div className="mb-3 flex items-center gap-2">
-          <h2 className="text-[21px] font-[850]">Quick Capture</h2>
+        <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+          <h2 className="text-[19px] font-[800] sm:text-[21px]">
+            Quick Capture
+          </h2>
 
           <span
             className={`text-xs ${
@@ -1524,24 +1528,24 @@ function TodayView({
           </span>
         </div>
 
-        <div className="flex gap-3">
-        <input
-  value={newTask}
-  onChange={(e) => setNewTask(e.target.value)}
-  onKeyDown={(e) => {
-    if (e.key === "Enter") addTask();
-  }}
-  placeholder="Type anything... Momentum will handle the rest"
-  className={`h-14 flex-1 rounded-[22px] border border-rose-200/70 px-5 text-sm font-[650] outline-none transition focus:border-rose-400 focus:ring-4 focus:ring-rose-200/45 dark:border-rose-400/35 dark:focus:border-rose-300 dark:focus:ring-rose-500/15 ${
-    darkMode
-      ? "bg-white/[0.07] text-white placeholder:text-white/35"
-      : "bg-[#fffaf8]/90 text-black placeholder:text-black/35"
-  }`}
-/>
+        <div className="flex gap-2 sm:gap-3">
+          <input
+            value={newTask}
+            onChange={(e) => setNewTask(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") addTask();
+            }}
+            placeholder="Type anything... Momentum will handle the rest"
+            className={`h-[52px] min-w-0 flex-1 rounded-[20px] border border-rose-200/70 px-4 text-sm font-[650] outline-none transition focus:border-rose-400 focus:ring-4 focus:ring-rose-200/45 dark:border-rose-400/35 dark:focus:border-rose-300 dark:focus:ring-rose-500/15 sm:h-14 sm:rounded-[22px] sm:px-5 ${
+              darkMode
+                ? "bg-white/[0.07] text-white placeholder:text-white/35"
+                : "bg-white text-black placeholder:text-black/35"
+            }`}
+          />
 
           <button
             onClick={addTask}
-            className="flex h-14 w-14 items-center justify-center rounded-[22px] text-white shadow-[0_14px_35px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 active:scale-[0.98]"
+            className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[20px] text-white shadow-[0_14px_35px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-14 sm:w-14 sm:rounded-[22px]"
             style={{
               backgroundColor: themeColor,
             }}
@@ -1588,7 +1592,7 @@ function TodayView({
         />
 
         <section
-          className={`rounded-[36px] border p-6 ${strongerGlass} ${border}`}
+          className={`rounded-[28px] border p-5 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
         >
           <div className="mb-5 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-[16px] font-[800]">
@@ -1660,109 +1664,6 @@ function TodayView({
         </section>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
-        {/* <DashboardCard
-          darkMode={darkMode}
-          border={border}
-          className={strongerGlass}
-          title="Upcoming"
-          action="View all"
-        >
-          <div className="space-y-3">
-            {prioritizedTasks
-              .filter((task: any) => task.dueDate || task.suggestedDueDate)
-              .slice(0, 3)
-              .map((task: any) => (
-                <MiniTask
-                  key={task.id}
-                  darkMode={darkMode}
-                  title={task.title}
-                  meta={`Due ${formatDueDate(
-                    task.dueDate || task.suggestedDueDate
-                  )}`}
-                  priority={task.priority}
-                />
-              ))}
-
-            {prioritizedTasks.filter(
-              (task: any) => task.dueDate || task.suggestedDueDate
-            ).length === 0 && (
-              <p
-                className={`text-sm ${
-                  darkMode ? "text-white/35" : "text-black/35"
-                }`}
-              >
-                No upcoming tasks yet.
-              </p>
-            )}
-          </div>
-        </DashboardCard> */}
-
-        {/* <DashboardCard
-          darkMode={darkMode}
-          border={border}
-          className={strongerGlass}
-          title="Today's Progress"
-          action="View timeline"
-        >
-          <div className="flex items-center justify-center gap-6 py-2">
-            <div
-              className="flex h-28 w-28 items-center justify-center rounded-full border-[10px]"
-              style={{
-                borderColor: themeColor,
-              }}
-            >
-              <div className="text-center">
-                <p className="text-xl font-[800]">{completionPercent}%</p>
-
-                <p
-                  className={`text-[10px] ${
-                    darkMode ? "text-white/40" : "text-black/40"
-                  }`}
-                >
-                  Complete
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-sm">
-              <p>✅ {completedToday.length} Completed</p>
-              <p>🔵 {allTasks.length} Remaining</p>
-              <p>🔥 {highPriorityCount} High Priority</p>
-            </div>
-          </div>
-        </DashboardCard> */}
-
-        {/* <DashboardCard
-          darkMode={darkMode}
-          border={border}
-          className={strongerGlass}
-          title="Routines"
-          action="View all"
-        >
-          <div className="space-y-3">
-            {["Morning reset", "Workout", "Learning time", "Evening review"].map(
-              (routine, index) => (
-                <div key={routine} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Circle
-                      size={17}
-                      className={darkMode ? "text-white/25" : "text-black/25"}
-                    />
-
-                    <span className="text-sm font-[650]">{routine}</span>
-                  </div>
-
-                  {index < 2 && (
-                    <CheckCircle2 size={17} className="text-emerald-500" />
-                  )}
-                </div>
-              )
-            )}
-          </div>
-        </DashboardCard> */}
-      </div>
-
       <CompletedTodaySection
         completedToday={completedToday}
         restoreCompletedTask={restoreCompletedTask}
@@ -1795,9 +1696,9 @@ function TaskListPanel({
 }: any) {
   return (
     <section
-      className={`rounded-[36px] border p-6 ${className} ${border}`}
+      className={`rounded-[28px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
     >
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-[16px] font-[800]">
             {title}
@@ -1814,7 +1715,7 @@ function TaskListPanel({
         </div>
 
         <button
-          className={`rounded-full px-3 py-1 text-xs font-[700] ${
+          className={`w-fit rounded-full px-3 py-1 text-xs font-[700] ${
             darkMode
               ? "bg-white/[0.06] text-white/55"
               : "bg-black/[0.04] text-black/55"
@@ -1845,7 +1746,7 @@ function TaskListPanel({
               key={task.id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`group flex min-h-[76px] items-center gap-4 rounded-[24px] border px-4 transition-all duration-200 hover:-translate-y-0.5 ${border} ${getPriorityRowClass(
+              className={`group flex min-h-[76px] flex-col items-start gap-3 rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex-row sm:items-center sm:gap-4 sm:rounded-[24px] ${border} ${getPriorityRowClass(
                 task.priority,
                 darkMode
               )} ${
@@ -1854,80 +1755,86 @@ function TaskListPanel({
                   : "hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
               }`}
             >
-              <button
-                onClick={(e) => toggleTaskById(task.id, e)}
-                className="opacity-70 transition hover:opacity-100"
-              >
-                <Circle
-                  size={19}
-                  className={darkMode ? "text-white/25" : "text-black/25"}
-                />
-              </button>
-
-              {ranked && (
-                <div
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-[800] text-white"
-                  style={{
-                    backgroundColor: index < 3 ? "#f59e0b" : themeColor,
-                  }}
+              <div className="flex w-full min-w-0 items-start gap-3 sm:w-auto sm:flex-1 sm:items-center sm:gap-4">
+                <button
+                  onClick={(e) => toggleTaskById(task.id, e)}
+                  className="mt-0.5 shrink-0 opacity-70 transition hover:opacity-100 sm:mt-0"
                 >
-                  {index + 1}
+                  <Circle
+                    size={19}
+                    className={darkMode ? "text-white/25" : "text-black/25"}
+                  />
+                </button>
+
+                {ranked && (
+                  <div
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[800] text-white"
+                    style={{
+                      backgroundColor: index < 3 ? "#f59e0b" : themeColor,
+                    }}
+                  >
+                    {index + 1}
+                  </div>
+                )}
+
+                <div className="min-w-0 flex-1">
+                  <p
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setIsEditModalOpen(true);
+                    }}
+                    className="cursor-pointer truncate text-[15px] font-[700] tracking-[-0.015em] hover:opacity-70"
+                  >
+                    {task.title}
+                  </p>
+
+                  <p
+                    className={`mt-1.5 truncate text-[11px] font-[650] ${
+                      darkMode ? "text-white/38" : "text-black/38"
+                    }`}
+                  >
+                    {task.category} · {task.priority}
+                  </p>
                 </div>
-              )}
-
-              <div className="min-w-0 flex-1">
-                <p
-                  onClick={() => {
-                    setSelectedTask(task);
-                    setIsEditModalOpen(true);
-                  }}
-                  className="truncate text-[15px] font-[780] tracking-[-0.015em] cursor-pointer hover:opacity-70"
-                >
-                  {task.title}
-                </p>
-
-                <p
-                  className={`mt-1.5 truncate text-[11px] font-[650] ${
-                    darkMode ? "text-white/38" : "text-black/38"
-                  }`}
-                >
-                  {task.category} · {task.priority}
-                </p>
               </div>
 
-              <DateBadge
-                task={task}
-                visibleDueDate={visibleDueDate}
-                darkMode={darkMode}
-              />
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+                <DateBadge
+                  task={task}
+                  visibleDueDate={visibleDueDate}
+                  darkMode={darkMode}
+                />
 
-              {task.suggestedDueDate && !task.dueDate && acceptSuggestedDateById && (
-                <button
-                  onClick={() => acceptSuggestedDateById(task.id)}
-                  className={`rounded-full px-3 py-1 text-[11px] font-[800] transition hover:scale-[1.03] ${
-                    darkMode
-                      ? "bg-white/[0.06] text-white/55 hover:text-white"
-                      : "bg-black/[0.04] text-black/55 hover:text-black"
-                  }`}
+                {task.suggestedDueDate &&
+                  !task.dueDate &&
+                  acceptSuggestedDateById && (
+                    <button
+                      onClick={() => acceptSuggestedDateById(task.id)}
+                      className={`rounded-full px-3 py-1 text-[11px] font-[800] transition hover:scale-[1.03] ${
+                        darkMode
+                          ? "bg-white/[0.06] text-white/55 hover:text-white"
+                          : "bg-black/[0.04] text-black/55 hover:text-black"
+                      }`}
+                    >
+                      Accept
+                    </button>
+                  )}
+
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${getPriorityClass(
+                    task.priority
+                  )}`}
                 >
-                  Accept
+                  {task.priority}
+                </span>
+
+                <button
+                  onClick={() => deleteTask(task.id)}
+                  className="opacity-35 transition hover:!opacity-100 hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-35"
+                >
+                  <Trash2 size={16} />
                 </button>
-              )}
-
-              <span
-                className={`rounded-full px-2.5 py-1 text-[10px] font-[850] ${getPriorityClass(
-                  task.priority
-                )}`}
-              >
-                {task.priority}
-              </span>
-
-              <button
-                onClick={() => deleteTask(task.id)}
-                className="opacity-0 transition group-hover:opacity-35 hover:!opacity-100 hover:text-red-500"
-              >
-                <Trash2 size={16} />
-              </button>
+              </div>
             </motion.div>
           );
         })}
@@ -1948,10 +1855,10 @@ function CompletedTodaySection({
 }: any) {
   return (
     <div className="mt-8">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <h2
-            className="text-[13px] uppercase tracking-[0.14em] font-[800]"
+            className="text-[13px] font-[800] uppercase tracking-[0.14em]"
             style={{ color: themeColor }}
           >
             Completed Today
@@ -1967,15 +1874,15 @@ function CompletedTodaySection({
 
         <button
           onClick={archiveCompletedToday}
-          className={`h-10 px-5 rounded-2xl flex items-center gap-3 text-sm font-[700] transition ${
-            completedToday.length === 0 ? "opacity-30 pointer-events-none" : ""
+          className={`flex h-10 items-center gap-3 rounded-2xl px-4 text-sm font-[700] transition sm:px-5 ${
+            completedToday.length === 0 ? "pointer-events-none opacity-30" : ""
           } ${glass}`}
         >
           Archive All
         </button>
       </div>
 
-      <div className={`rounded-3xl border overflow-hidden ${strongerGlass} ${border}`}>
+      <div className={`overflow-hidden rounded-3xl border ${strongerGlass} ${border}`}>
         {completedToday.length === 0 && (
           <div className="p-6 text-sm opacity-40">Nothing completed yet.</div>
         )}
@@ -1985,15 +1892,15 @@ function CompletedTodaySection({
             key={task.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`h-[64px] px-5 flex items-center justify-between border-b last:border-none ${border}`}
+            className={`flex min-h-[72px] items-center justify-between gap-4 border-b px-4 py-3 last:border-none sm:px-5 ${border}`}
           >
-            <div className="flex items-center gap-3">
-              <CheckCircle2 size={18} className="text-green-500" />
+            <div className="flex min-w-0 items-center gap-3">
+              <CheckCircle2 size={18} className="shrink-0 text-green-500" />
 
-              <div>
-                <p className="text-[14px] font-[650]">{task.title}</p>
+              <div className="min-w-0">
+                <p className="truncate text-[14px] font-[650]">{task.title}</p>
 
-                <p className="text-[11px] opacity-40">
+                <p className="truncate text-[11px] opacity-40">
                   {task.category}
                   {task.dueDate ? ` • Due ${formatDueDate(task.dueDate)}` : ""}
                 </p>
@@ -2002,7 +1909,7 @@ function CompletedTodaySection({
 
             <button
               onClick={() => restoreCompletedTask(task.id)}
-              className={`h-9 rounded-xl px-3 text-xs font-[800] transition hover:scale-[1.02] ${
+              className={`h-9 shrink-0 rounded-xl px-3 text-xs font-[800] transition hover:scale-[1.02] ${
                 darkMode
                   ? "bg-white/[0.06] text-white/55 hover:text-white"
                   : "bg-black/[0.04] text-black/55 hover:text-black"
@@ -2020,47 +1927,47 @@ function CompletedTodaySection({
 function ArchiveView({ archive, clearArchive, glass, strongerGlass, border }: any) {
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h2 className="text-[32px] font-[800]">Archived Items</h2>
-
-          <p className="mt-1 text-sm opacity-40">Completed work saved for reference.</p>
-        </div>
-
+      <PageHeader
+        title="Archived Items"
+        description="Completed work saved for reference."
+        darkMode={false}
+      >
         <button
           onClick={clearArchive}
           disabled={archive.length === 0}
-          className={`h-11 px-5 rounded-2xl text-sm font-[700] transition ${
+          className={`h-11 rounded-2xl px-5 text-sm font-[700] transition ${
             archive.length === 0
-              ? "opacity-30 cursor-not-allowed"
+              ? "cursor-not-allowed opacity-30"
               : "hover:scale-[1.02] active:scale-[0.98]"
           } ${glass}`}
         >
           Clear All
         </button>
-      </div>
+      </PageHeader>
 
-      <div className={`rounded-3xl border overflow-hidden ${strongerGlass} ${border}`}>
+      <div className={`overflow-hidden rounded-3xl border ${strongerGlass} ${border}`}>
         {archive.length === 0 && (
-          <div className="p-10 opacity-50 text-sm">No archived items yet.</div>
+          <div className="p-10 text-sm opacity-50">No archived items yet.</div>
         )}
 
         {archive.map((task: any) => (
           <div
             key={task.id}
-            className={`min-h-[88px] px-6 py-4 flex items-center justify-between border-b last:border-none ${border}`}
+            className={`flex min-h-[88px] items-center justify-between gap-4 border-b px-5 py-4 last:border-none sm:px-6 ${border}`}
           >
-            <div>
-              <p className="mb-1 text-[15px] font-[700]">{task.title}</p>
+            <div className="min-w-0">
+              <p className="mb-1 truncate text-[15px] font-[700]">
+                {task.title}
+              </p>
 
-              <div className="flex items-center gap-3 text-xs opacity-50">
+              <div className="flex flex-wrap items-center gap-3 text-xs opacity-50">
                 <span>{task.category}</span>
                 {task.dueDate && <span>Due {formatDueDate(task.dueDate)}</span>}
                 <span>{new Date(task.completedAt).toLocaleDateString()}</span>
               </div>
             </div>
 
-            <div className="text-xs opacity-40">Archived</div>
+            <div className="shrink-0 text-xs opacity-40">Archived</div>
           </div>
         ))}
       </div>
@@ -2087,10 +1994,14 @@ function CategoriesView({
 }: any) {
   return (
     <div>
-      <h2 className="mb-8 text-[32px] font-[800]">Categories</h2>
+      <PageHeader
+        title="Categories"
+        description="Organize your tasks into working areas."
+        darkMode={false}
+      />
 
-      <div className={`p-5 rounded-3xl mb-8 border ${strongerGlass} ${border}`}>
-        <div className="flex gap-3">
+      <div className={`mb-8 rounded-3xl border p-4 sm:p-5 ${strongerGlass} ${border}`}>
+        <div className="flex flex-col gap-3 sm:flex-row">
           <input
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
@@ -2098,12 +2009,12 @@ function CategoriesView({
               if (e.key === "Enter") addCategory();
             }}
             placeholder="Create new category"
-            className={`flex-1 h-12 px-4 rounded-2xl outline-none ${input}`}
+            className={`h-12 flex-1 rounded-2xl px-4 outline-none ${input}`}
           />
 
           <button
             onClick={addCategory}
-            className="h-12 px-5 rounded-2xl text-white flex items-center gap-2 font-[700]"
+            className="flex h-12 items-center justify-center gap-2 rounded-2xl px-5 font-[700] text-white"
             style={{ backgroundColor: themeColor }}
           >
             <Plus size={18} />
@@ -2112,14 +2023,14 @@ function CategoriesView({
         </div>
       </div>
 
-      <div className={`rounded-3xl border overflow-hidden ${strongerGlass} ${border}`}>
+      <div className={`overflow-hidden rounded-3xl border ${strongerGlass} ${border}`}>
         {categories.map((category: any) => (
           <div
             key={category.id}
-            className={`min-h-[72px] px-6 py-3 flex items-center justify-between border-b last:border-none ${border}`}
+            className={`flex min-h-[72px] items-center justify-between gap-4 border-b px-5 py-3 last:border-none sm:px-6 ${border}`}
           >
-            <div className="flex items-center gap-4 flex-1">
-              <LayoutGrid size={18} />
+            <div className="flex min-w-0 flex-1 items-center gap-4">
+              <LayoutGrid size={18} className="shrink-0" />
 
               {editingCategoryId === category.id ? (
                 <input
@@ -2133,31 +2044,33 @@ function CategoriesView({
                       setEditingCategoryTitle("");
                     }
                   }}
-                  className={`h-10 px-3 rounded-xl outline-none flex-1 max-w-[320px] ${input}`}
+                  className={`h-10 max-w-[320px] flex-1 rounded-xl px-3 outline-none ${input}`}
                 />
               ) : (
-                <div>
+                <div className="min-w-0">
                   <p
                     onClick={() => {
                       setEditingCategoryId(category.id);
                       setEditingCategoryTitle(category.title);
                     }}
-                    className="text-[15px] font-[700] cursor-pointer hover:opacity-70 transition"
+                    className="cursor-pointer truncate text-[15px] font-[700] transition hover:opacity-70"
                   >
                     {category.title}
                   </p>
 
-                  <p className="mt-1 text-xs opacity-40">{category.tasks.length} tasks</p>
+                  <p className="mt-1 text-xs opacity-40">
+                    {category.tasks.length} tasks
+                  </p>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               {editingCategoryId === category.id ? (
                 <>
                   <button
                     onClick={() => renameCategory(category.id)}
-                    className="h-9 px-4 rounded-xl text-sm font-[700] text-white"
+                    className="h-9 rounded-xl px-4 text-sm font-[700] text-white"
                     style={{ backgroundColor: themeColor }}
                   >
                     Save
@@ -2168,7 +2081,7 @@ function CategoriesView({
                       setEditingCategoryId(null);
                       setEditingCategoryTitle("");
                     }}
-                    className={`h-9 px-4 rounded-xl text-sm font-[700] ${glass}`}
+                    className={`h-9 rounded-xl px-4 text-sm font-[700] ${glass}`}
                   >
                     Cancel
                   </button>
@@ -2176,7 +2089,7 @@ function CategoriesView({
               ) : (
                 <button
                   onClick={() => deleteCategory(category.id)}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center opacity-35 hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 transition"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl opacity-35 transition hover:bg-red-500/10 hover:text-red-500 hover:opacity-100"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -2192,6 +2105,38 @@ function CategoriesView({
 /* ------------------------------------------------ */
 /* Small Components */
 /* ------------------------------------------------ */
+
+function PageHeader({
+  title,
+  description,
+  children,
+  darkMode,
+}: {
+  title: string;
+  description: string;
+  children?: React.ReactNode;
+  darkMode: boolean;
+}) {
+  return (
+    <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
+      <div>
+        <h2 className="text-[28px] font-[800] tracking-[-0.04em] sm:text-[32px]">
+          {title}
+        </h2>
+
+        <p
+          className={`mt-2 text-sm ${
+            darkMode ? "text-white/45" : "text-black/45"
+          }`}
+        >
+          {description}
+        </p>
+      </div>
+
+      {children}
+    </div>
+  );
+}
 
 function StatCard({
   icon,
@@ -2210,10 +2155,10 @@ function StatCard({
 }) {
   return (
     <div
-      className={`flex min-h-[96px] items-center gap-4 rounded-[24px] border px-5 transition-all duration-200 hover:-translate-y-0.5 ${className} ${border}`}
+      className={`flex min-h-[86px] items-center gap-3 rounded-[22px] border px-4 transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[96px] sm:gap-4 sm:px-5 ${className} ${border}`}
     >
       <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_10px_24px_rgba(0,0,0,0.16)] sm:h-10 sm:w-10"
         style={{
           backgroundColor: themeColor,
         }}
@@ -2222,11 +2167,11 @@ function StatCard({
       </div>
 
       <div className="min-w-0">
-        <p className="text-[24px] font-[900] leading-none tracking-[-0.045em]">
+        <p className="text-[21px] font-[800] leading-none tracking-[-0.04em] sm:text-[24px]">
           {value}
         </p>
 
-        <p className="mt-1.5 text-xs font-[750] opacity-45">
+        <p className="mt-1.5 truncate text-xs font-[700] opacity-45">
           {label}
         </p>
       </div>
@@ -2246,45 +2191,14 @@ function AssistantItem({ icon, title, description, color, darkMode }: any) {
 
       <div>
         <p className="text-sm font-[800]">{title}</p>
-        <p className={`mt-1 text-xs leading-5 ${darkMode ? "text-white/42" : "text-black/42"}`}>
+        <p
+          className={`mt-1 text-xs leading-5 ${
+            darkMode ? "text-white/42" : "text-black/42"
+          }`}
+        >
           {description}
         </p>
       </div>
-    </div>
-  );
-}
-
-function DashboardCard({ title, action, children, className, border, darkMode }: any) {
-  return (
-    <section className={`rounded-[28px] border p-5 shadow-sm ${className} ${border}`}>
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-[15px] font-[850]">{title}</h2>
-
-        {action && (
-          <button className={`text-xs font-[800] ${darkMode ? "text-white/35" : "text-black/35"}`}>
-            {action}
-          </button>
-        )}
-      </div>
-
-      {children}
-    </section>
-  );
-}
-
-function MiniTask({ title, meta, priority, darkMode }: any) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-[750]">{title}</p>
-        <p className={`mt-1 text-xs ${darkMode ? "text-white/38" : "text-black/38"}`}>
-          {meta}
-        </p>
-      </div>
-
-      <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[800] ${getPriorityClass(priority)}`}>
-        {priority}
-      </span>
     </div>
   );
 }
@@ -2293,7 +2207,7 @@ function DateBadge({ task, visibleDueDate, darkMode }: any) {
   if (visibleDueDate) {
     return (
       <span
-        className={`rounded-full px-2.5 py-1 text-[10px] font-[850] tracking-[-0.01em] ${
+        className={`rounded-full px-2.5 py-1 text-[10px] font-[800] tracking-[-0.01em] ${
           task.dueDate
             ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
             : "bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-300"
@@ -2308,8 +2222,10 @@ function DateBadge({ task, visibleDueDate, darkMode }: any) {
 
   return (
     <span
-      className={`rounded-full px-2.5 py-1 text-[10px] font-[850] tracking-[-0.01em] ${
-        darkMode ? "bg-white/[0.06] text-white/35" : "bg-black/[0.04] text-black/35"
+      className={`rounded-full px-2.5 py-1 text-[10px] font-[800] tracking-[-0.01em] ${
+        darkMode
+          ? "bg-white/[0.06] text-white/35"
+          : "bg-black/[0.04] text-black/35"
       }`}
     >
       No date
@@ -2335,20 +2251,17 @@ function PlaceholderView({ selectedView, darkMode, border, className }: any) {
   };
 
   const title = viewLabels[selectedView] || "Coming Soon";
-  const description = descriptions[selectedView] || "This section will be built in the next phase.";
+  const description =
+    descriptions[selectedView] || "This section will be built in the next phase.";
 
   return (
     <div>
-      <div className="mb-8">
-        <h2 className="text-[32px] font-[800] tracking-[-0.04em]">{title}</h2>
-        <p className={`mt-2 text-sm ${darkMode ? "text-white/45" : "text-black/45"}`}>
-          {description}
-        </p>
-      </div>
+      <PageHeader title={title} description={description} darkMode={darkMode} />
 
       <section className={`rounded-[28px] border p-8 shadow-sm ${className} ${border}`}>
         <p className={`text-sm ${darkMode ? "text-white/40" : "text-black/40"}`}>
-          This view is connected in navigation. We will build it after the Today dashboard is stable.
+          This view is connected in navigation. We will build it after the Today
+          dashboard is stable.
         </p>
       </section>
     </div>
@@ -2389,7 +2302,8 @@ function PrioritiesView({
       description: "Useful work, but less urgent.",
       tasks: mediumPriorityTasks,
       emptyMessage: "No medium-priority tasks.",
-      badgeClass: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
+      badgeClass:
+        "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
       dotColor: "#f59e0b",
     },
     {
@@ -2398,30 +2312,39 @@ function PrioritiesView({
       description: "Keep visible, but do later.",
       tasks: lowPriorityTasks,
       emptyMessage: "No low-priority tasks.",
-      badgeClass: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
+      badgeClass:
+        "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
       dotColor: "#10b981",
     },
   ];
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between gap-4">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[32px] font-[800] tracking-[-0.04em]">Priority</h2>
-          <p className={`mt-2 text-sm ${darkMode ? "text-white/45" : "text-black/45"}`}>
+          <h2 className="text-[28px] font-[800] tracking-[-0.04em] sm:text-[32px]">
+            Priority
+          </h2>
+          <p
+            className={`mt-2 text-sm ${
+              darkMode ? "text-white/45" : "text-black/45"
+            }`}
+          >
             Your active tasks grouped by importance.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className={`rounded-2xl border px-4 py-3 text-xs font-[800] ${className} ${border}`}>
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+          <div
+            className={`rounded-2xl border px-4 py-3 text-xs font-[800] ${className} ${border}`}
+          >
             {totalTasks} active task{totalTasks === 1 ? "" : "s"}
           </div>
 
           <div className={`flex rounded-2xl border p-1 ${className} ${border}`}>
             <button
               onClick={() => setViewMode("cards")}
-              className={`h-9 rounded-xl px-4 text-xs font-[850] transition ${
+              className={`h-9 rounded-xl px-4 text-xs font-[800] transition ${
                 viewMode === "cards"
                   ? "text-white"
                   : darkMode
@@ -2435,7 +2358,7 @@ function PrioritiesView({
 
             <button
               onClick={() => setViewMode("list")}
-              className={`h-9 rounded-xl px-4 text-xs font-[850] transition ${
+              className={`h-9 rounded-xl px-4 text-xs font-[800] transition ${
                 viewMode === "list"
                   ? "text-white"
                   : darkMode
@@ -2508,7 +2431,7 @@ function PriorityColumn({
         <div>
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
-            <h3 className="text-[15px] font-[850]">{title}</h3>
+            <h3 className="text-[15px] font-[800]">{title}</h3>
           </div>
           <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
             {description}
@@ -2522,7 +2445,13 @@ function PriorityColumn({
 
       <div className="space-y-2">
         {tasks.length === 0 && (
-          <div className={`rounded-2xl border border-dashed p-5 text-sm ${darkMode ? "border-white/10 text-white/35" : "border-black/10 text-black/35"}`}>
+          <div
+            className={`rounded-2xl border border-dashed p-5 text-sm ${
+              darkMode
+                ? "border-white/10 text-white/35"
+                : "border-black/10 text-black/35"
+            }`}
+          >
             {emptyMessage}
           </div>
         )}
@@ -2578,7 +2507,7 @@ function CompactTaskCard({
               setSelectedTask(task);
               setIsEditModalOpen(true);
             }}
-            className="cursor-pointer text-sm font-[750] leading-5 hover:opacity-70"
+            className="cursor-pointer text-sm font-[700] leading-5 hover:opacity-70"
           >
             {task.title}
           </p>
@@ -2592,17 +2521,7 @@ function CompactTaskCard({
               {task.priority}
             </span>
 
-            {visibleDueDate ? (
-              <span className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${task.dueDate ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-300"}`}>
-                {task.dueDate
-                  ? `Due ${formatDueDate(task.dueDate)}`
-                  : `Momentum suggested ${formatDueDate(task.suggestedDueDate)}`}
-              </span>
-            ) : (
-              <span className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${darkMode ? "bg-white/[0.06] text-white/35" : "bg-black/[0.04] text-black/35"}`}>
-                No date
-              </span>
-            )}
+            <DateBadge task={task} visibleDueDate={visibleDueDate} darkMode={darkMode} />
           </div>
         </div>
 
@@ -2638,7 +2557,7 @@ function PriorityListGroup({
         <div>
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
-            <h3 className="text-[15px] font-[850]">{title}</h3>
+            <h3 className="text-[15px] font-[800]">{title}</h3>
           </div>
 
           <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
@@ -2685,17 +2604,11 @@ function SettingsView({
 }: any) {
   return (
     <div>
-      <div className="mb-8">
-        <h2 className="text-[32px] font-[800] tracking-[-0.04em]">Settings</h2>
-
-        <p
-          className={`mt-2 text-sm ${
-            darkMode ? "text-white/45" : "text-black/45"
-          }`}
-        >
-          Control how Momentum looks, suggests, and organizes your tasks.
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Control how Momentum looks, suggests, and organizes your tasks."
+        darkMode={darkMode}
+      />
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <SettingsCard
@@ -2817,7 +2730,7 @@ function SettingsView({
             <button
               onClick={clearArchive}
               disabled={archiveCount === 0}
-              className={`h-10 rounded-xl px-4 text-xs font-[850] transition ${
+              className={`h-10 rounded-xl px-4 text-xs font-[800] transition ${
                 archiveCount === 0
                   ? "cursor-not-allowed opacity-30"
                   : darkMode
@@ -2836,7 +2749,7 @@ function SettingsView({
           >
             <button
               onClick={resetAppData}
-              className="h-10 rounded-xl bg-red-500/10 px-4 text-xs font-[850] text-red-500 transition hover:scale-[1.02]"
+              className="h-10 rounded-xl bg-red-500/10 px-4 text-xs font-[800] text-red-500 transition hover:scale-[1.02]"
             >
               Reset data
             </button>
@@ -2856,17 +2769,11 @@ function SettingsCard({
   className,
 }: any) {
   return (
-    <section
-      className={`rounded-[28px] border p-5 shadow-sm ${className} ${border}`}
-    >
+    <section className={`rounded-[28px] border p-5 shadow-sm ${className} ${border}`}>
       <div className="mb-5">
-        <h3 className="text-[16px] font-[850]">{title}</h3>
+        <h3 className="text-[16px] font-[800]">{title}</h3>
 
-        <p
-          className={`mt-1 text-xs ${
-            darkMode ? "text-white/40" : "text-black/40"
-          }`}
-        >
+        <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
           {description}
         </p>
       </div>
@@ -2878,15 +2785,11 @@ function SettingsCard({
 
 function SettingsRow({ title, description, children, darkMode }: any) {
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <div className="min-w-0">
         <p className="text-sm font-[800]">{title}</p>
 
-        <p
-          className={`mt-1 text-xs ${
-            darkMode ? "text-white/38" : "text-black/38"
-          }`}
-        >
+        <p className={`mt-1 text-xs ${darkMode ? "text-white/38" : "text-black/38"}`}>
           {description}
         </p>
       </div>
@@ -2937,7 +2840,7 @@ function SegmentedControl({
           <button
             key={option.value}
             onClick={() => onChange(option.value)}
-            className={`h-9 rounded-xl px-4 text-xs font-[850] transition ${
+            className={`h-9 rounded-xl px-4 text-xs font-[800] transition ${
               isActive
                 ? "text-white"
                 : darkMode
@@ -3013,22 +2916,18 @@ function UpcomingView({
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between gap-4">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[32px] font-[800] tracking-[-0.04em]">
+          <h2 className="text-[28px] font-[800] tracking-[-0.04em] sm:text-[32px]">
             Upcoming
           </h2>
 
-          <p
-            className={`mt-2 text-sm ${
-              darkMode ? "text-white/45" : "text-black/45"
-            }`}
-          >
+          <p className={`mt-2 text-sm ${darkMode ? "text-white/45" : "text-black/45"}`}>
             Tasks grouped by manual due dates and Momentum-suggested dates.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
           <div
             className={`rounded-2xl border px-4 py-3 text-xs font-[800] ${className} ${border}`}
           >
@@ -3038,40 +2937,28 @@ function UpcomingView({
           <div className={`flex rounded-2xl border p-1 ${className} ${border}`}>
             <button
               onClick={() => setViewMode("calendar")}
-              className={`h-9 rounded-xl px-4 text-xs font-[850] transition ${
+              className={`h-9 rounded-xl px-4 text-xs font-[800] transition ${
                 viewMode === "calendar"
                   ? "text-white"
                   : darkMode
                   ? "text-white/45 hover:text-white"
                   : "text-black/45 hover:text-black"
               }`}
-              style={
-                viewMode === "calendar"
-                  ? {
-                      backgroundColor: themeColor,
-                    }
-                  : undefined
-              }
+              style={viewMode === "calendar" ? { backgroundColor: themeColor } : undefined}
             >
               Calendar
             </button>
 
             <button
               onClick={() => setViewMode("list")}
-              className={`h-9 rounded-xl px-4 text-xs font-[850] transition ${
+              className={`h-9 rounded-xl px-4 text-xs font-[800] transition ${
                 viewMode === "list"
                   ? "text-white"
                   : darkMode
                   ? "text-white/45 hover:text-white"
                   : "text-black/45 hover:text-black"
               }`}
-              style={
-                viewMode === "list"
-                  ? {
-                      backgroundColor: themeColor,
-                    }
-                  : undefined
-              }
+              style={viewMode === "list" ? { backgroundColor: themeColor } : undefined}
             >
               List
             </button>
@@ -3164,11 +3051,11 @@ function UpcomingCalendarView({
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
       {calendarDays.map((day) => (
         <section
           key={day.title}
-          className={`min-h-[420px] rounded-[28px] border p-4 shadow-sm ${className} ${border}`}
+          className={`min-h-[320px] rounded-[28px] border p-4 shadow-sm xl:min-h-[420px] ${className} ${border}`}
         >
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
@@ -3180,14 +3067,10 @@ function UpcomingCalendarView({
                   }}
                 />
 
-                <h3 className="text-[15px] font-[850]">{day.title}</h3>
+                <h3 className="text-[15px] font-[800]">{day.title}</h3>
               </div>
 
-              <p
-                className={`mt-1 text-xs ${
-                  darkMode ? "text-white/40" : "text-black/40"
-                }`}
-              >
+              <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
                 {day.dateLabel}
               </p>
             </div>
@@ -3279,7 +3162,7 @@ function UpcomingCalendarTaskCard({
               setSelectedTask(task);
               setIsEditModalOpen(true);
             }}
-            className="cursor-pointer text-sm font-[750] leading-5 hover:opacity-70"
+            className="cursor-pointer text-sm font-[700] leading-5 hover:opacity-70"
           >
             {task.title}
           </p>
@@ -3310,29 +3193,7 @@ function UpcomingCalendarTaskCard({
           {task.priority}
         </span>
 
-        {visibleDueDate ? (
-          <span
-            className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${
-              task.dueDate
-                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
-                : "bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-300"
-            }`}
-          >
-            {task.dueDate
-              ? `Due ${formatDueDate(task.dueDate)}`
-              : `Momentum suggested ${formatDueDate(task.suggestedDueDate)}`}
-          </span>
-        ) : (
-          <span
-            className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${
-              darkMode
-                ? "bg-white/[0.06] text-white/35"
-                : "bg-black/[0.04] text-black/35"
-            }`}
-          >
-            No date
-          </span>
-        )}
+        <DateBadge task={task} visibleDueDate={visibleDueDate} darkMode={darkMode} />
 
         {task.suggestedDueDate && !task.dueDate && acceptSuggestedDateById && (
           <button
@@ -3372,7 +3233,7 @@ function UpcomingGroup({
         <div>
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
-            <h3 className="text-[15px] font-[850]">{title}</h3>
+            <h3 className="text-[15px] font-[800]">{title}</h3>
           </div>
 
           <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
@@ -3380,7 +3241,13 @@ function UpcomingGroup({
           </p>
         </div>
 
-        <span className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${darkMode ? "bg-white/[0.06] text-white/50" : "bg-black/[0.04] text-black/50"}`}>
+        <span
+          className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
+            darkMode
+              ? "bg-white/[0.06] text-white/50"
+              : "bg-black/[0.04] text-black/50"
+          }`}
+        >
           {tasks.length}
         </span>
       </div>
@@ -3427,59 +3294,71 @@ function TaskRows({
             key={task.id}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`flex min-h-[72px] items-center gap-4 border-b px-5 transition-colors last:border-none ${border} ${getPriorityRowClass(
+            className={`flex min-h-[72px] flex-col items-start gap-3 border-b px-5 py-4 transition-colors last:border-none sm:flex-row sm:items-center sm:gap-4 ${border} ${getPriorityRowClass(
               task.priority,
               darkMode
             )}`}
           >
-            <button
-              onClick={(e) => toggleTaskById(task.id, e)}
-              className="opacity-70 transition hover:opacity-100"
-            >
-              <Circle size={18} className={darkMode ? "text-white/25" : "text-black/25"} />
-            </button>
-
-            <div className="min-w-0 flex-1">
-              <p
-                onClick={() => {
-                  setSelectedTask(task);
-                  setIsEditModalOpen(true);
-                }}
-                className="truncate text-[15px] font-[780] tracking-[-0.015em] cursor-pointer hover:opacity-70"
+            <div className="flex w-full min-w-0 items-start gap-3 sm:w-auto sm:flex-1 sm:items-center">
+              <button
+                onClick={(e) => toggleTaskById(task.id, e)}
+                className="mt-0.5 shrink-0 opacity-70 transition hover:opacity-100 sm:mt-0"
               >
-                {task.title}
-              </p>
+                <Circle size={18} className={darkMode ? "text-white/25" : "text-black/25"} />
+              </button>
 
-              <p className={`mt-1.5 truncate text-[11px] font-[650] ${darkMode ? "text-white/38" : "text-black/38"}`}>
-                {task.category} · {task.priority}
-              </p>
+              <div className="min-w-0 flex-1">
+                <p
+                  onClick={() => {
+                    setSelectedTask(task);
+                    setIsEditModalOpen(true);
+                  }}
+                  className="cursor-pointer truncate text-[15px] font-[700] tracking-[-0.015em] hover:opacity-70"
+                >
+                  {task.title}
+                </p>
+
+                <p
+                  className={`mt-1.5 truncate text-[11px] font-[650] ${
+                    darkMode ? "text-white/38" : "text-black/38"
+                  }`}
+                >
+                  {task.category} · {task.priority}
+                </p>
+              </div>
             </div>
 
-            <DateBadge task={task} visibleDueDate={visibleDueDate} darkMode={darkMode} />
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+              <DateBadge task={task} visibleDueDate={visibleDueDate} darkMode={darkMode} />
 
-            {task.suggestedDueDate && !task.dueDate && acceptSuggestedDateById && (
-              <button
-                onClick={() => acceptSuggestedDateById(task.id)}
-                className={`rounded-full px-3 py-1 text-[11px] font-[800] transition hover:scale-[1.03] ${
-                  darkMode
-                    ? "bg-white/[0.06] text-white/55 hover:text-white"
-                    : "bg-black/[0.04] text-black/55 hover:text-black"
-                }`}
+              {task.suggestedDueDate && !task.dueDate && acceptSuggestedDateById && (
+                <button
+                  onClick={() => acceptSuggestedDateById(task.id)}
+                  className={`rounded-full px-3 py-1 text-[11px] font-[800] transition hover:scale-[1.03] ${
+                    darkMode
+                      ? "bg-white/[0.06] text-white/55 hover:text-white"
+                      : "bg-black/[0.04] text-black/55 hover:text-black"
+                  }`}
+                >
+                  Accept
+                </button>
+              )}
+
+              <span
+                className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${getPriorityClass(
+                  task.priority
+                )}`}
               >
-                Accept
+                {task.priority}
+              </span>
+
+              <button
+                onClick={() => deleteTask(task.id)}
+                className="opacity-35 transition hover:text-red-500 hover:opacity-100"
+              >
+                <Trash2 size={16} />
               </button>
-            )}
-
-            <span className={`rounded-full px-2.5 py-1 text-[10px] font-[850] ${getPriorityClass(task.priority)}`}>
-              {task.priority}
-            </span>
-
-            <button
-              onClick={() => deleteTask(task.id)}
-              className="opacity-25 transition hover:text-red-500 hover:opacity-100"
-            >
-              <Trash2 size={16} />
-            </button>
+            </div>
           </motion.div>
         );
       })}
@@ -3502,9 +3381,9 @@ function InboxView({
 }: any) {
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between gap-4">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[32px] font-[800] tracking-[-0.04em]">
+          <h2 className="text-[28px] font-[800] tracking-[-0.04em] sm:text-[32px]">
             Inbox
           </h2>
 
@@ -3524,11 +3403,9 @@ function InboxView({
         </div>
       </div>
 
-      <section
-        className={`rounded-[28px] border shadow-sm ${className} ${border}`}
-      >
+      <section className={`rounded-[28px] border shadow-sm ${className} ${border}`}>
         <div
-          className={`flex items-center justify-between border-b px-5 py-4 ${border}`}
+          className={`flex items-center justify-between gap-4 border-b px-5 py-4 ${border}`}
         >
           <div>
             <div className="flex items-center gap-2">
@@ -3539,7 +3416,7 @@ function InboxView({
                 }}
               />
 
-              <h3 className="text-[15px] font-[850]">Needs Review</h3>
+              <h3 className="text-[15px] font-[800]">Needs Review</h3>
             </div>
 
             <p
@@ -3569,7 +3446,8 @@ function InboxView({
                 darkMode ? "text-white/35" : "text-black/35"
               }`}
             >
-              Your inbox is clear. Every active task has either a date or a Momentum suggestion.
+              Your inbox is clear. Every active task has either a date or a
+              Momentum suggestion.
             </div>
           )}
 
@@ -3584,100 +3462,189 @@ function InboxView({
                 opacity: 1,
                 y: 0,
               }}
-              className={`flex min-h-[82px] items-center gap-4 border-b px-5 py-3 last:border-none ${border} ${
+              className={`flex min-h-[82px] flex-col items-start gap-3 border-b px-5 py-4 last:border-none sm:flex-row sm:items-center sm:gap-4 ${border} ${
                 darkMode ? "hover:bg-white/[0.04]" : "hover:bg-black/[0.02]"
               }`}
             >
-              <button
-                onClick={(e) => toggleTaskById(task.id, e)}
-                className="opacity-70 transition hover:opacity-100"
-              >
-                <Circle
-                  size={18}
-                  className={darkMode ? "text-white/25" : "text-black/25"}
-                />
-              </button>
+              <div className="flex w-full min-w-0 items-start gap-3 sm:w-auto sm:flex-1 sm:items-center">
+                <button
+                  onClick={(e) => toggleTaskById(task.id, e)}
+                  className="mt-0.5 shrink-0 opacity-70 transition hover:opacity-100 sm:mt-0"
+                >
+                  <Circle
+                    size={18}
+                    className={darkMode ? "text-white/25" : "text-black/25"}
+                  />
+                </button>
 
-              <div className="min-w-0 flex-1">
-                <p
+                <div className="min-w-0 flex-1">
+                  <p
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setIsEditModalOpen(true);
+                    }}
+                    className="cursor-pointer truncate text-[15px] font-[700] tracking-[-0.015em] hover:opacity-70"
+                  >
+                    {task.title}
+                  </p>
+
+                  <p
+                    className={`mt-1 truncate text-[11px] ${
+                      darkMode ? "text-white/38" : "text-black/38"
+                    }`}
+                  >
+                    {task.category} · Needs date
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+                <span
+                  className={`rounded-full px-3 py-1 text-[11px] font-[800] ${getPriorityClass(
+                    task.priority
+                  )}`}
+                >
+                  {task.priority}
+                </span>
+
+                {enableAppSuggestions && (
+                  <>
+                    <button
+                      onClick={() => scheduleTaskById(task.id, getTodayDate())}
+                      className={`h-9 rounded-xl px-3 text-xs font-[800] transition hover:scale-[1.02] ${
+                        darkMode
+                          ? "bg-white/[0.06] text-white/55 hover:text-white"
+                          : "bg-black/[0.04] text-black/55 hover:text-black"
+                      }`}
+                    >
+                      Today
+                    </button>
+
+                    <button
+                      onClick={() => scheduleTaskById(task.id, getTomorrowDate())}
+                      className={`h-9 rounded-xl px-3 text-xs font-[800] transition hover:scale-[1.02] ${
+                        darkMode
+                          ? "bg-white/[0.06] text-white/55 hover:text-white"
+                          : "bg-black/[0.04] text-black/55 hover:text-black"
+                      }`}
+                    >
+                      Tomorrow
+                    </button>
+                  </>
+                )}
+
+                <button
                   onClick={() => {
                     setSelectedTask(task);
                     setIsEditModalOpen(true);
                   }}
-                  className="truncate text-[15px] font-[780] tracking-[-0.015em] cursor-pointer hover:opacity-70"
+                  className="h-9 rounded-xl px-3 text-xs font-[800] text-white transition hover:scale-[1.02]"
+                  style={{
+                    backgroundColor: themeColor,
+                  }}
                 >
-                  {task.title}
-                </p>
+                  Review
+                </button>
 
-                <p
-                  className={`mt-1 truncate text-[11px] ${
-                    darkMode ? "text-white/38" : "text-black/38"
-                  }`}
+                <button
+                  onClick={() => deleteTask(task.id)}
+                  className="opacity-35 transition hover:text-red-500 hover:opacity-100"
                 >
-                  {task.category} · Needs date
-                </p>
+                  <Trash2 size={16} />
+                </button>
               </div>
-
-              <span
-                className={`rounded-full px-3 py-1 text-[11px] font-[800] ${getPriorityClass(
-                  task.priority
-                )}`}
-              >
-                {task.priority}
-              </span>
-
-        <div className="flex items-center gap-2">
-  {enableAppSuggestions && (
-    <>
-      <button
-        onClick={() => scheduleTaskById(task.id, getTodayDate())}
-        className={`h-9 rounded-xl px-3 text-xs font-[800] transition hover:scale-[1.02] ${
-          darkMode
-            ? "bg-white/[0.06] text-white/55 hover:text-white"
-            : "bg-black/[0.04] text-black/55 hover:text-black"
-        }`}
-      >
-        Today
-      </button>
-
-      <button
-        onClick={() => scheduleTaskById(task.id, getTomorrowDate())}
-        className={`h-9 rounded-xl px-3 text-xs font-[800] transition hover:scale-[1.02] ${
-          darkMode
-            ? "bg-white/[0.06] text-white/55 hover:text-white"
-            : "bg-black/[0.04] text-black/55 hover:text-black"
-        }`}
-      >
-        Tomorrow
-      </button>
-    </>
-  )}
-
-  <button
-    onClick={() => {
-      setSelectedTask(task);
-      setIsEditModalOpen(true);
-    }}
-    className="h-9 rounded-xl px-3 text-xs font-[800] text-white transition hover:scale-[1.02]"
-    style={{
-      backgroundColor: themeColor,
-    }}
-  >
-    Review
-  </button>
-</div>
-
-              <button
-                onClick={() => deleteTask(task.id)}
-                className="opacity-25 transition hover:text-red-500 hover:opacity-100"
-              >
-                <Trash2 size={16} />
-              </button>
             </motion.div>
           ))}
         </div>
       </section>
     </div>
+  );
+}
+
+function MobileBottomNav({
+  selectedView,
+  setSelectedView,
+  inboxCount,
+  darkMode,
+  themeColor,
+}: any) {
+  const items = [
+    {
+      key: "today",
+      label: "Today",
+      icon: ListChecks,
+    },
+    {
+      key: "inbox",
+      label: "Inbox",
+      icon: Calendar,
+      count: inboxCount,
+    },
+    {
+      key: "upcoming",
+      label: "Plan",
+      icon: Clock3,
+    },
+    {
+      key: "priorities",
+      label: "Priority",
+      icon: Flame,
+    },
+    {
+      key: "settings",
+      label: "Settings",
+      icon: Target,
+    },
+  ];
+
+  return (
+    <nav
+      className={`fixed bottom-3 left-3 right-3 z-[160] grid grid-cols-5 rounded-[24px] border p-2 shadow-[0_18px_60px_rgba(0,0,0,0.22)] backdrop-blur-2xl lg:hidden ${
+        darkMode
+          ? "border-white/[0.08] bg-[#111827]/90"
+          : "border-[#2f2618]/[0.08] bg-[#fffaf0]/90"
+      }`}
+    >
+      {items.map((item) => {
+        const Icon = item.icon;
+        const isActive = selectedView === item.key;
+
+        return (
+          <button
+            key={item.key}
+            onClick={() => setSelectedView(item.key)}
+            className={`relative flex flex-col items-center justify-center gap-1 rounded-[18px] py-2 text-[10px] font-[800] transition ${
+              isActive
+                ? "text-white"
+                : darkMode
+                ? "text-white/45"
+                : "text-black/45"
+            }`}
+            style={
+              isActive
+                ? {
+                    backgroundColor: themeColor,
+                  }
+                : undefined
+            }
+          >
+            <Icon size={16} />
+
+            <span>{item.label}</span>
+
+            {item.count ? (
+              <span
+                className={`absolute right-2 top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-[900] ${
+                  isActive ? "bg-white text-black" : "bg-red-500 text-white"
+                }`}
+              >
+                {item.count}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -3699,7 +3666,7 @@ function EditTaskModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-6"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6"
       onClick={() => setIsEditModalOpen(false)}
     >
       <motion.div
@@ -3708,27 +3675,35 @@ function EditTaskModal({
         exit={{ opacity: 0, scale: 0.92, y: 16, filter: "blur(8px)" }}
         transition={{ type: "spring", stiffness: 240, damping: 24 }}
         onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-[600px] rounded-[36px] p-6 border backdrop-blur-3xl shadow-[0_30px_120px_rgba(0,0,0,0.35)] ${strongerGlass} ${border}`}
+        className={`w-full max-w-[600px] rounded-[28px] border p-5 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur-3xl sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
       >
         <div className="mb-6">
-          <h2 className="text-[28px] font-[800] tracking-[-0.04em] mb-1">Edit Task</h2>
-          <p className="text-sm opacity-40">Manual changes always override Momentum suggestions.</p>
+          <h2 className="mb-1 text-[25px] font-[800] tracking-[-0.04em] sm:text-[28px]">
+            Edit Task
+          </h2>
+          <p className="text-sm opacity-40">
+            Manual changes always override Momentum suggestions.
+          </p>
         </div>
 
         <div className="space-y-4">
           <input
             value={selectedTask.title}
-            onChange={(e) => setSelectedTask({ ...selectedTask, title: e.target.value })}
+            onChange={(e) =>
+              setSelectedTask({ ...selectedTask, title: e.target.value })
+            }
             onKeyDown={(e) => {
               if (e.key === "Enter") saveTaskChanges(selectedTask);
             }}
-            className={`w-full h-12 px-4 rounded-2xl outline-none ${input}`}
+            className={`h-12 w-full rounded-2xl px-4 outline-none ${input}`}
           />
 
           <select
             value={selectedTask.category}
-            onChange={(e) => setSelectedTask({ ...selectedTask, category: e.target.value })}
-            className={`w-full h-12 px-4 rounded-2xl outline-none ${modalSelect}`}
+            onChange={(e) =>
+              setSelectedTask({ ...selectedTask, category: e.target.value })
+            }
+            className={`h-12 w-full rounded-2xl px-4 outline-none ${modalSelect}`}
           >
             {categories.map((category: any) => (
               <option key={category.id} value={category.title}>
@@ -3740,9 +3715,12 @@ function EditTaskModal({
           <select
             value={selectedTask.priority}
             onChange={(e) =>
-              setSelectedTask({ ...selectedTask, priority: e.target.value as Priority })
+              setSelectedTask({
+                ...selectedTask,
+                priority: e.target.value as Priority,
+              })
             }
-            className={`w-full h-12 px-4 rounded-2xl outline-none ${modalSelect}`}
+            className={`h-12 w-full rounded-2xl px-4 outline-none ${modalSelect}`}
           >
             <option value="Low">Low</option>
             <option value="Medium">Medium</option>
@@ -3752,8 +3730,10 @@ function EditTaskModal({
           <input
             type="date"
             value={selectedTask.dueDate || ""}
-            onChange={(e) => setSelectedTask({ ...selectedTask, dueDate: e.target.value })}
-            className={`w-full h-12 px-4 rounded-2xl outline-none ${modalSelect}`}
+            onChange={(e) =>
+              setSelectedTask({ ...selectedTask, dueDate: e.target.value })
+            }
+            className={`h-12 w-full rounded-2xl px-4 outline-none ${modalSelect}`}
           />
 
           {selectedTask.suggestedDueDate && (
@@ -3772,14 +3752,14 @@ function EditTaskModal({
                 setIsEditModalOpen(false);
                 setSelectedTask(null);
               }}
-              className={`flex-1 h-12 rounded-2xl font-[700] ${glass}`}
+              className={`h-12 flex-1 rounded-2xl font-[700] ${glass}`}
             >
               Cancel
             </button>
 
             <button
               onClick={() => saveTaskChanges(selectedTask)}
-              className="flex-1 h-12 rounded-2xl text-white font-[700]"
+              className="h-12 flex-1 rounded-2xl font-[700] text-white"
               style={{ backgroundColor: themeColor }}
             >
               Save

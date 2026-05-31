@@ -120,7 +120,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`sticky top-0 flex h-screen w-[260px] shrink-0 flex-col border-r ${border} ${sidebarBg} px-4 py-5`}
+      className={`sticky top-0 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 lg:flex ${border} ${sidebarBg}`}
     >
       <div className="mb-7">
         <div className="mb-5 flex items-center gap-3">
@@ -335,7 +335,7 @@ function SidebarNavButton({
 
       {item.count ? (
         <span
-          className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-[900] text-white`}
+          className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-[900] text-white"
           style={{
             backgroundColor: themeColor,
           }}
