@@ -8,7 +8,20 @@ export type Task = {
   title: string;
   priority: Priority;
   completed: boolean;
+
+  // Manual date selected by the user.
+  // This always overrides the AI suggested date.
   dueDate?: string;
+
+  // AI/helper fields.
+  suggestedDueDate?: string;
+  aiReason?: string;
+  aiConfidence?: number;
+
+  // Metadata.
+  createdAt?: string;
+  completedAt?: string;
+  category?: string;
 };
 
 export type Category = {
@@ -23,10 +36,23 @@ export type Firecracker = {
   y: number;
 };
 
+export type CompletedTask = Task & {
+  completed: true;
+  completedAt: string;
+  category: string;
+};
+
 export type AppState = {
   categories: Category[];
   darkMode: boolean;
   themeColor: string;
-  archive: any[];
-  completedToday?: any[];
+
+  priorityViewMode?: "cards" | "list";
+  upcomingViewMode?: "calendar" | "list";
+
+  enableAppSuggestions?: boolean;
+  enableAutoPriority?: boolean;
+
+  archive: CompletedTask[];
+  completedToday?: CompletedTask[];
 };

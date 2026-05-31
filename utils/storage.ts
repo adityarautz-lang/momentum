@@ -1,22 +1,29 @@
-import { AppState } from "@/types";
+import type { AppState } from "@/types";
 
-export const STORAGE_KEY =
-  "momentum-v7";
+export const STORAGE_KEY = "momentum-v8";
 
-export const saveState = (
-  state: AppState
-) => {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(state)
-  );
+export const saveState = (state: AppState) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (error) {
+    console.error("Failed to save Momentum state:", error);
+  }
 };
 
-export const loadState = () => {
-  const saved =
-    localStorage.getItem(STORAGE_KEY);
+export const loadState = (): AppState | null => {
+  if (typeof window === "undefined") return null;
 
-  if (!saved) return null;
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
 
-  return JSON.parse(saved);
+    if (!saved) return null;
+
+    return JSON.parse(saved) as AppState;
+  } catch (error) {
+    console.error("Failed to load Momentum state:", error);
+
+    return null;
+  }
 };
