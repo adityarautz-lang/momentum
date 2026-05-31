@@ -1513,7 +1513,7 @@ function TodayView({
         className={`mb-6 rounded-[36px] border p-6 ${strongerGlass} ${border}`}
       >
         <div className="mb-3 flex items-center gap-2">
-          <h2 className="text-[15px] font-[850]">Quick Capture</h2>
+          <h2 className="text-[21px] font-[850]">Quick Capture</h2>
 
           <span
             className={`text-xs ${
@@ -1525,15 +1525,19 @@ function TodayView({
         </div>
 
         <div className="flex gap-3">
-          <input
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") addTask();
-            }}
-            placeholder="Type anything... Momentum will handle the rest"
-            className={`h-14 flex-1 rounded-[22px] px-5 text-sm font-[650] outline-none transition focus:ring-2 focus:ring-black/5 dark:focus:ring-white/10 ${input}`}
-          />
+        <input
+  value={newTask}
+  onChange={(e) => setNewTask(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") addTask();
+  }}
+  placeholder="Type anything... Momentum will handle the rest"
+  className={`h-14 flex-1 rounded-[22px] border border-rose-200/70 px-5 text-sm font-[650] outline-none transition focus:border-rose-400 focus:ring-4 focus:ring-rose-200/45 dark:border-rose-400/35 dark:focus:border-rose-300 dark:focus:ring-rose-500/15 ${
+    darkMode
+      ? "bg-white/[0.07] text-white placeholder:text-white/35"
+      : "bg-[#fffaf8]/90 text-black placeholder:text-black/35"
+  }`}
+/>
 
           <button
             onClick={addTask}
