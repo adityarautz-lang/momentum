@@ -4006,20 +4006,41 @@ function EditTaskModal({
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/45 p-4 backdrop-blur-xl sm:p-6"
-      onClick={closeModal}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.92, y: 28, filter: "blur(14px)" }}
-        animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
-        exit={{ opacity: 0, scale: 0.96, y: 18, filter: "blur(10px)" }}
-        transition={{ type: "spring", stiffness: 240, damping: 25 }}
-        onClick={(e) => e.stopPropagation()}
-        className={`max-h-[92vh] w-full max-w-[760px] overflow-hidden rounded-[34px] border shadow-[0_35px_140px_rgba(0,0,0,0.38)] backdrop-blur-3xl ${strongerGlass} ${border}`}
-      >
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-md sm:p-6"
+    onClick={closeModal}
+  >
+     <motion.div
+  initial={{
+    opacity: 0,
+    scale: 0.82,
+    y: 18,
+    transformOrigin: "50% 48%",
+  }}
+  animate={{
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transformOrigin: "50% 48%",
+  }}
+  exit={{
+    opacity: 0,
+    scale: 0.86,
+    y: 14,
+    transformOrigin: "50% 48%",
+  }}
+  transition={{
+    type: "spring",
+    stiffness: 520,
+    damping: 38,
+    mass: 0.8,
+  }}
+  onClick={(e) => e.stopPropagation()}
+  className={`max-h-[92vh] w-full max-w-[760px] overflow-hidden rounded-[34px] border shadow-[0_35px_140px_rgba(0,0,0,0.38)] backdrop-blur-3xl ${strongerGlass} ${border}`}
+>
         <div className="relative overflow-hidden">
           <div
             className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full opacity-20 blur-3xl"
