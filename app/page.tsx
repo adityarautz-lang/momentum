@@ -739,22 +739,22 @@ export default function Home() {
   /* ------------------------------------------------ */
 
   const glass = darkMode
-    ? "bg-white/[0.055] backdrop-blur-2xl"
-    : "bg-[#fffaf0]/70 backdrop-blur-2xl";
+  ? "bg-white/[0.055] backdrop-blur-2xl"
+  : "bg-white backdrop-blur-2xl";
 
     const strongerGlass = darkMode
     ? "bg-white/[0.065] border-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl"
     : "bg-white border-black/[0.05] shadow-[0_24px_70px_rgba(15,23,42,0.08)]";
 
-  const input = darkMode
+    const input = darkMode
     ? "bg-white/[0.07] text-white placeholder:text-white/35 border border-white/[0.06]"
-    : "bg-[#f8f2e8]/85 text-[#171717] placeholder:text-[#171717]/35 border border-[#2f2618]/[0.07]";
+    : "bg-white text-[#171717] placeholder:text-[#171717]/35 border border-black/[0.08]";
 
-  const border = darkMode ? "border-white/[0.075]" : "border-[#2f2618]/[0.07]";
+    const border = darkMode ? "border-white/[0.075]" : "border-black/[0.07]";
 
-  const modalSelect = darkMode
+    const modalSelect = darkMode
     ? "bg-[#171a20] text-white"
-    : "bg-[#f7f7f5] text-black";
+    : "bg-white text-black border border-black/[0.08]";
 
   const fontClass = mulish.className;
 
@@ -1195,17 +1195,17 @@ export default function Home() {
 
   return (
     <main
-  className={`${fontClass} min-h-screen overflow-hidden transition-colors duration-500 ${
-    darkMode
-      ? "bg-[radial-gradient(circle_at_top_right,_rgba(167,139,250,0.18),_transparent_32%),linear-gradient(135deg,_#080b12_0%,_#111827_48%,_#0b0f17_100%)] text-white"
-      : "bg-white text-black"
-  }`}
->
+    className={`${fontClass} min-h-screen overflow-x-hidden transition-colors duration-500 ${
+      darkMode
+        ? "bg-[radial-gradient(circle_at_top_right,_rgba(167,139,250,0.18),_transparent_32%),linear-gradient(135deg,_#080b12_0%,_#111827_48%,_#0b0f17_100%)] text-white"
+        : "bg-white text-black"
+    }`}
+  >
       <FirecrackerLayer firecrackers={firecrackers} themeColor={themeColor} />
       <Toast message={archiveToast} darkMode={darkMode} />
 
       <div className="flex min-h-screen">
-        <div className="hidden lg:block">
+      <div className="hidden lg:flex">
           <Sidebar
             darkMode={darkMode}
             setDarkMode={setDarkMode}
@@ -1216,7 +1216,7 @@ export default function Home() {
           />
         </div>
 
-        <div className="min-w-0 flex-1 px-4 pb-28 pt-4 sm:px-6 sm:py-6 xl:px-10 xl:py-8">
+        <div className="min-w-0 flex-1 px-3 pb-28 pt-3 sm:px-6 sm:py-6 xl:px-10 xl:py-8">
           <div className="mx-auto w-full max-w-[1440px]">
             {selectedView === "today" && (
               <TodayView
@@ -1301,18 +1301,20 @@ export default function Home() {
             )}
 
             {selectedView === "archive" && (
-              <ArchiveView
-                archive={archive}
-                clearArchive={clearArchive}
-                glass={glass}
-                strongerGlass={strongerGlass}
-                border={border}
-              />
+             <ArchiveView
+             archive={archive}
+             clearArchive={clearArchive}
+             glass={glass}
+             strongerGlass={strongerGlass}
+             border={border}
+             darkMode={darkMode}
+           />
             )}
 
             {selectedView === "categories" && (
               <CategoriesView
-                categories={categories}
+              darkMode={darkMode}
+              categories={categories}
                 newCategory={newCategory}
                 setNewCategory={setNewCategory}
                 addCategory={addCategory}
@@ -1434,7 +1436,7 @@ function TodayView({
       >
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           <div>
-            <h1 className="text-[28px] font-[800] tracking-[-0.045em] sm:text-[34px]">
+          <h1 className="text-[25px] font-[800] leading-tight tracking-[-0.045em] sm:text-[34px]">
               Hello! Let&apos;s build some Momentum.
             </h1>
 
@@ -1448,14 +1450,14 @@ function TodayView({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
             <div className={`rounded-2xl px-4 py-3 text-xs font-[700] ${glass}`}>
               {formatDateLong()}
             </div>
 
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`flex h-11 items-center gap-2 rounded-2xl px-4 text-sm font-[700] transition hover:-translate-y-0.5 ${glass}`}
+              className={`flex h-11 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-[700] transition hover:-translate-y-0.5 ${glass}`}
             >
               {darkMode ? <Sun size={17} /> : <Moon size={17} />}
               {darkMode ? "Light" : "Dark"}
@@ -1535,7 +1537,7 @@ function TodayView({
             onKeyDown={(e) => {
               if (e.key === "Enter") addTask();
             }}
-            placeholder="Type anything... Momentum will handle the rest"
+           placeholder="Capture anything..."
             className={`h-[52px] min-w-0 flex-1 rounded-[20px] border border-rose-200/70 px-4 text-sm font-[650] outline-none transition focus:border-rose-400 focus:ring-4 focus:ring-rose-200/45 dark:border-rose-400/35 dark:focus:border-rose-300 dark:focus:ring-rose-500/15 sm:h-14 sm:rounded-[22px] sm:px-5 ${
               darkMode
                 ? "bg-white/[0.07] text-white placeholder:text-white/35"
@@ -1783,7 +1785,7 @@ function TaskListPanel({
                       setSelectedTask(task);
                       setIsEditModalOpen(true);
                     }}
-                    className="cursor-pointer truncate text-[15px] font-[700] tracking-[-0.015em] hover:opacity-70"
+                    className="cursor-pointer text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70 sm:truncate"
                   >
                     {task.title}
                   </p>
@@ -1855,7 +1857,7 @@ function CompletedTodaySection({
 }: any) {
   return (
     <div className="mt-8">
-      <div className="mb-4 flex items-center justify-between gap-4">
+      <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
         <div className="flex items-center gap-3">
           <h2
             className="text-[13px] font-[800] uppercase tracking-[0.14em]"
@@ -1924,14 +1926,21 @@ function CompletedTodaySection({
   );
 }
 
-function ArchiveView({ archive, clearArchive, glass, strongerGlass, border }: any) {
+function ArchiveView({
+  archive,
+  clearArchive,
+  glass,
+  strongerGlass,
+  border,
+  darkMode,
+}: any) {
   return (
     <div>
-      <PageHeader
-        title="Archived Items"
-        description="Completed work saved for reference."
-        darkMode={false}
-      >
+    <PageHeader
+  title="Archived Items"
+  description="Completed work saved for reference."
+  darkMode={archive.length < 0}
+>
         <button
           onClick={clearArchive}
           disabled={archive.length === 0}
@@ -1953,7 +1962,7 @@ function ArchiveView({ archive, clearArchive, glass, strongerGlass, border }: an
         {archive.map((task: any) => (
           <div
             key={task.id}
-            className={`flex min-h-[88px] items-center justify-between gap-4 border-b px-5 py-4 last:border-none sm:px-6 ${border}`}
+            className={`flex min-h-[88px] flex-col items-start justify-between gap-3 border-b px-5 py-4 last:border-none sm:flex-row sm:items-center sm:gap-4 sm:px-6 ${border}`}
           >
             <div className="min-w-0">
               <p className="mb-1 truncate text-[15px] font-[700]">
@@ -1976,6 +1985,7 @@ function ArchiveView({ archive, clearArchive, glass, strongerGlass, border }: an
 }
 
 function CategoriesView({
+  darkMode,
   categories,
   newCategory,
   setNewCategory,
@@ -1995,10 +2005,10 @@ function CategoriesView({
   return (
     <div>
       <PageHeader
-        title="Categories"
-        description="Organize your tasks into working areas."
-        darkMode={false}
-      />
+  title="Categories"
+  description="Organize your tasks into working areas."
+  darkMode={darkMode}
+/>
 
       <div className={`mb-8 rounded-3xl border p-4 sm:p-5 ${strongerGlass} ${border}`}>
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -2027,7 +2037,7 @@ function CategoriesView({
         {categories.map((category: any) => (
           <div
             key={category.id}
-            className={`flex min-h-[72px] items-center justify-between gap-4 border-b px-5 py-3 last:border-none sm:px-6 ${border}`}
+            className={`flex min-h-[72px] flex-col items-start justify-between gap-3 border-b px-5 py-3 last:border-none sm:flex-row sm:items-center sm:gap-4 sm:px-6 ${border}`}
           >
             <div className="flex min-w-0 flex-1 items-center gap-4">
               <LayoutGrid size={18} className="shrink-0" />
@@ -2065,7 +2075,7 @@ function CategoriesView({
               )}
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
               {editingCategoryId === category.id ? (
                 <>
                   <button
@@ -3313,7 +3323,7 @@ function TaskRows({
                     setSelectedTask(task);
                     setIsEditModalOpen(true);
                   }}
-                  className="cursor-pointer truncate text-[15px] font-[700] tracking-[-0.015em] hover:opacity-70"
+                  className="cursor-pointer text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70 sm:truncate"
                 >
                   {task.title}
                 </p>
@@ -3483,7 +3493,7 @@ function InboxView({
                       setSelectedTask(task);
                       setIsEditModalOpen(true);
                     }}
-                    className="cursor-pointer truncate text-[15px] font-[700] tracking-[-0.015em] hover:opacity-70"
+                    className="cursor-pointer text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70 sm:truncate"
                   >
                     {task.title}
                   </p>
@@ -3601,8 +3611,8 @@ function MobileBottomNav({
     <nav
       className={`fixed bottom-3 left-3 right-3 z-[160] grid grid-cols-5 rounded-[24px] border p-2 shadow-[0_18px_60px_rgba(0,0,0,0.22)] backdrop-blur-2xl lg:hidden ${
         darkMode
-          ? "border-white/[0.08] bg-[#111827]/90"
-          : "border-[#2f2618]/[0.08] bg-[#fffaf0]/90"
+        ? "border-white/[0.08] bg-[#111827]/90"
+        : "border-black/[0.08] bg-white/95"
       }`}
     >
       {items.map((item) => {
@@ -3675,7 +3685,7 @@ function EditTaskModal({
         exit={{ opacity: 0, scale: 0.92, y: 16, filter: "blur(8px)" }}
         transition={{ type: "spring", stiffness: 240, damping: 24 }}
         onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-[600px] rounded-[28px] border p-5 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur-3xl sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+        className={`max-h-[92vh] w-full max-w-[600px] overflow-y-auto rounded-[28px] border p-5 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur-3xl sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
       >
         <div className="mb-6">
           <h2 className="mb-1 text-[25px] font-[800] tracking-[-0.04em] sm:text-[28px]">
@@ -3746,7 +3756,7 @@ function EditTaskModal({
             </div>
           )}
 
-          <div className="flex gap-3 pt-4">
+<div className="flex flex-col gap-3 pt-4 sm:flex-row">
             <button
               onClick={() => {
                 setIsEditModalOpen(false);
