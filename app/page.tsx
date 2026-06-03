@@ -1436,7 +1436,7 @@ function TodayView({
 >
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           <div>
-          <h1 className="text-[24px] font-[800] leading-[1.12] tracking-[-0.045em] sm:text-[34px]">
+          <h1 className="text-[24px] font-[800] leading-[1.12] tracking-[-0.045em] sm:text-[32px]">
               Hello! Let&apos;s build some Momentum.
             </h1>
 
