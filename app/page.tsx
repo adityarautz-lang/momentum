@@ -544,14 +544,14 @@ const scoreTask = (task: any) => {
 
 const getPriorityClass = (priority: Priority) => {
   if (priority === "High") {
-    return "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-300";
+    return "border border-red-500/15 bg-red-500/[0.08] text-red-500 dark:border-red-300/10 dark:bg-red-300/[0.08] dark:text-red-200";
   }
 
   if (priority === "Medium") {
-    return "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300";
+    return "border border-amber-500/15 bg-amber-500/[0.08] text-amber-600 dark:border-amber-300/10 dark:bg-amber-300/[0.08] dark:text-amber-200";
   }
 
-  return "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300";
+  return "border border-emerald-500/15 bg-emerald-500/[0.08] text-emerald-600 dark:border-emerald-300/10 dark:bg-emerald-300/[0.08] dark:text-emerald-200";
 };
 
 const getPriorityRowClass = (priority: Priority, darkMode: boolean) => {
@@ -2250,9 +2250,9 @@ function TaskListPanel({
                   )}
 
                 <span
-                  className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${getPriorityClass(
-                    task.priority
-                  )}`}
+                 className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[800] tracking-[-0.01em] ${getPriorityClass(
+                  task.priority
+                )}`}
                 >
                   {task.priority}
                 </span>
@@ -2642,27 +2642,29 @@ function AssistantItem({ icon, title, description, color, darkMode }: any) {
 
 function DateBadge({ task, visibleDueDate, darkMode }: any) {
   if (visibleDueDate) {
+    const isManualDate = Boolean(task.dueDate);
+
     return (
       <span
-        className={`rounded-full px-2.5 py-1 text-[10px] font-[800] tracking-[-0.01em] ${
-          task.dueDate
-            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
-            : "bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-300"
+        className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-[800] tracking-[-0.01em] ${
+          isManualDate
+            ? "border-emerald-500/15 bg-emerald-500/[0.08] text-emerald-600 dark:border-emerald-300/10 dark:bg-emerald-300/[0.08] dark:text-emerald-200"
+            : "border-violet-500/15 bg-violet-500/[0.08] text-violet-600 dark:border-violet-300/10 dark:bg-violet-300/[0.08] dark:text-violet-200"
         }`}
       >
-        {task.dueDate
+        {isManualDate
           ? `Due ${formatDueDate(task.dueDate)}`
-          : `Momentum suggested ${formatDueDate(task.suggestedDueDate)}`}
+          : `Suggested ${formatDueDate(task.suggestedDueDate)}`}
       </span>
     );
   }
 
   return (
     <span
-      className={`rounded-full px-2.5 py-1 text-[10px] font-[800] tracking-[-0.01em] ${
+      className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-[800] tracking-[-0.01em] ${
         darkMode
-          ? "bg-white/[0.06] text-white/35"
-          : "bg-black/[0.04] text-black/35"
+          ? "border-white/[0.08] bg-white/[0.04] text-white/35"
+          : "border-black/[0.06] bg-black/[0.025] text-black/35"
       }`}
     >
       No date
@@ -3639,9 +3641,9 @@ function UpcomingCalendarTaskCard({
 
       <div className="flex flex-wrap gap-2">
         <span
-          className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${getPriorityClass(
-            task.priority
-          )}`}
+      className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[800] tracking-[-0.01em] ${getPriorityClass(
+        task.priority
+      )}`}
         >
           {task.priority}
         </span>
@@ -3798,9 +3800,9 @@ function TaskRows({
               )}
 
               <span
-                className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${getPriorityClass(
-                  task.priority
-                )}`}
+              className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[800] tracking-[-0.01em] ${getPriorityClass(
+                task.priority
+              )}`}
               >
                 {task.priority}
               </span>
@@ -3953,9 +3955,9 @@ function InboxView({
 
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
                 <span
-                  className={`rounded-full px-3 py-1 text-[11px] font-[800] ${getPriorityClass(
-                    task.priority
-                  )}`}
+                 className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[800] tracking-[-0.01em] ${getPriorityClass(
+                  task.priority
+                )}`}
                 >
                   {task.priority}
                 </span>
@@ -4488,9 +4490,9 @@ function SuggestionsReviewModal({
 
                       <div className="mt-3 flex flex-wrap gap-2">
                         <span
-                          className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${getPriorityClass(
-                            task.priority
-                          )}`}
+                       className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[800] tracking-[-0.01em] ${getPriorityClass(
+                        task.priority
+                      )}`}
                         >
                           {task.priority}
                         </span>
