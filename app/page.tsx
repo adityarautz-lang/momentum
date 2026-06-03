@@ -982,9 +982,10 @@ const [isLoaded, setIsLoaded] = useState(false);
     }, 2200);
   
     setIsExtractModalOpen(false);
-    setExtractInput("");
-    setExtractedTasks([]);
-    setExtractError("");
+setNewTask("");
+setExtractInput("");
+setExtractedTasks([]);
+setExtractError("");
   };
 
   /* ------------------------------------------------ */
