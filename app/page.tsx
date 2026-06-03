@@ -11,6 +11,8 @@ import FirecrackerLayer from "@/components/Firecracker";
 import type { Category, Firecracker, Priority } from "@/types";
 import { loadState, saveState } from "@/utils/storage";
 
+
+
 import {
   Calendar,
   CheckCircle2,
@@ -30,6 +32,20 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react";
+
+
+type ExtractedTaskSuggestion = {
+  id: string;
+  selected: boolean;
+  title: string;
+  priority: Priority;
+  suggestedDueDate: string | null;
+  category: string;
+  notes: string;
+  status: "Active" | "Waiting" | "Someday";
+  reason: string;
+  confidence: number;
+};
 
 /* ------------------------------------------------ */
 /* Font */
@@ -586,8 +602,15 @@ export default function Home() {
   const [editingCategoryTitle, setEditingCategoryTitle] = useState("");
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isSuggestionsModalOpen, setIsSuggestionsModalOpen] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+const [isSuggestionsModalOpen, setIsSuggestionsModalOpen] = useState(false);
+const [isExtractModalOpen, setIsExtractModalOpen] = useState(false);
+const [extractInput, setExtractInput] = useState("");
+const [extractLoading, setExtractLoading] = useState(false);
+const [extractError, setExtractError] = useState("");
+const [extractedTasks, setExtractedTasks] = useState<ExtractedTaskSuggestion[]>(
+  []
+);
+const [isLoaded, setIsLoaded] = useState(false);
 
   const todayDate = getTodayDate();
 
@@ -833,6 +856,135 @@ export default function Home() {
     );
 
     setNewTask("");
+  };
+
+
+  const extractTasksFromText = async () => {
+    if (!extractInput.trim()) {
+      setExtractError("Paste some text first.");
+      return;
+    }
+  
+    setExtractLoading(true);
+    setExtractError("");
+  
+    try {
+      const response = await fetch("/api/extract-tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: extractInput,
+          categories: categories.map((category) => category.title),
+          today: getTodayDate(),
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to extract tasks.");
+      }
+  
+      const normalizedTasks: ExtractedTaskSuggestion[] = (data.tasks || []).map(
+        (task: any) => ({
+          id: crypto.randomUUID(),
+          selected: true,
+          title: String(task.title || "").trim(),
+          priority: ["Low", "Medium", "High"].includes(task.priority)
+            ? task.priority
+            : "Medium",
+          suggestedDueDate: task.suggestedDueDate || null,
+          category:
+            categories.find((category) => category.title === task.category)
+              ?.title ||
+            categories[0]?.title ||
+            "Small Wins",
+          notes: String(task.notes || ""),
+          status: ["Active", "Waiting", "Someday"].includes(task.status)
+            ? task.status
+            : "Active",
+          reason: String(task.reason || ""),
+          confidence:
+            typeof task.confidence === "number" ? task.confidence : 0.7,
+        })
+      );
+  
+      setExtractedTasks(normalizedTasks);
+    } catch (error) {
+      setExtractError(
+        error instanceof Error ? error.message : "Failed to extract tasks."
+      );
+    } finally {
+      setExtractLoading(false);
+    }
+  };
+  
+  const toggleExtractedTask = (taskId: string) => {
+    setExtractedTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              selected: !task.selected,
+            }
+          : task
+      )
+    );
+  };
+  
+  const addSelectedExtractedTasks = () => {
+    const selectedTasks = extractedTasks.filter((task) => task.selected);
+  
+    if (selectedTasks.length === 0) {
+      setExtractError("Select at least one task to add.");
+      return;
+    }
+  
+    setCategories((prev) =>
+      prev.map((category) => {
+        const tasksForCategory = selectedTasks
+          .filter((task) => task.category === category.title)
+          .map((task) => ({
+            id: crypto.randomUUID(),
+            title: task.title,
+            priority: task.priority,
+            dueDate: undefined,
+            suggestedDueDate: task.suggestedDueDate || undefined,
+            notes: task.notes,
+            status: task.status,
+            aiReason: task.reason,
+            aiConfidence: task.confidence,
+            completed: false,
+            createdAt: new Date().toISOString(),
+          }));
+  
+        if (tasksForCategory.length === 0) {
+          return category;
+        }
+  
+        return {
+          ...category,
+          tasks: [...tasksForCategory, ...category.tasks],
+        };
+      })
+    );
+  
+    setArchiveToast(
+      `${selectedTasks.length} extracted task${
+        selectedTasks.length === 1 ? "" : "s"
+      } added`
+    );
+  
+    setTimeout(() => {
+      setArchiveToast("");
+    }, 2200);
+  
+    setIsExtractModalOpen(false);
+    setExtractInput("");
+    setExtractedTasks([]);
+    setExtractError("");
   };
 
   /* ------------------------------------------------ */
@@ -1309,32 +1461,33 @@ export default function Home() {
         <div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-32 pt-4 sm:px-6 sm:py-6 xl:px-10 xl:py-8">
         <div className="mx-auto w-full max-w-[1440px] overflow-x-hidden">
             {selectedView === "today" && (
-             <TodayView
-             darkMode={darkMode}
-             setDarkMode={setDarkMode}
-             themeColor={themeColor}
-             glass={glass}
-             strongerGlass={strongerGlass}
-             border={border}
-             allTasks={allTasks}
-             prioritizedTasks={prioritizedTasks}
-             highPriorityCount={highPriorityCount}
-             dueSoonCount={dueSoonCount}
-             completionPercent={completionPercent}
-             suggestedDateCount={suggestedDateCount}
-             completedToday={completedToday}
-             newTask={newTask}
-             setNewTask={setNewTask}
-             addTask={addTask}
-             toggleTaskById={toggleTaskById}
-             deleteTask={deleteTask}
-             acceptSuggestedDateById={acceptSuggestedDateById}
-             setSelectedTask={setSelectedTask}
-             setIsEditModalOpen={setIsEditModalOpen}
-             setIsSuggestionsModalOpen={setIsSuggestionsModalOpen}
-             archiveCompletedToday={archiveCompletedToday}
-             restoreCompletedTask={restoreCompletedTask}
-           />
+            <TodayView
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            themeColor={themeColor}
+            glass={glass}
+            strongerGlass={strongerGlass}
+            border={border}
+            allTasks={allTasks}
+            prioritizedTasks={prioritizedTasks}
+            highPriorityCount={highPriorityCount}
+            dueSoonCount={dueSoonCount}
+            completionPercent={completionPercent}
+            suggestedDateCount={suggestedDateCount}
+            completedToday={completedToday}
+            newTask={newTask}
+            setNewTask={setNewTask}
+            addTask={addTask}
+            toggleTaskById={toggleTaskById}
+            deleteTask={deleteTask}
+            acceptSuggestedDateById={acceptSuggestedDateById}
+            setSelectedTask={setSelectedTask}
+            setIsEditModalOpen={setIsEditModalOpen}
+            setIsSuggestionsModalOpen={setIsSuggestionsModalOpen}
+            setIsExtractModalOpen={setIsExtractModalOpen}
+            archiveCompletedToday={archiveCompletedToday}
+            restoreCompletedTask={restoreCompletedTask}
+          />
             )}
 
             {selectedView === "priorities" && (
@@ -1476,6 +1629,26 @@ export default function Home() {
       />
 
 <AnimatePresence>
+
+{isExtractModalOpen && (
+  <ExtractTasksModal
+    extractInput={extractInput}
+    setExtractInput={setExtractInput}
+    extractLoading={extractLoading}
+    extractError={extractError}
+    extractedTasks={extractedTasks}
+    setIsExtractModalOpen={setIsExtractModalOpen}
+    extractTasksFromText={extractTasksFromText}
+    toggleExtractedTask={toggleExtractedTask}
+    addSelectedExtractedTasks={addSelectedExtractedTasks}
+    themeColor={themeColor}
+    darkMode={darkMode}
+    glass={glass}
+    strongerGlass={strongerGlass}
+    border={border}
+  />
+)}
+
   {isSuggestionsModalOpen && (
     <SuggestionsReviewModal
       tasks={suggestionReviewTasks}
@@ -1542,6 +1715,7 @@ function TodayView({
   setSelectedTask,
   setIsEditModalOpen,
   setIsSuggestionsModalOpen,
+  setIsExtractModalOpen,
   archiveCompletedToday,
   restoreCompletedTask,
 }: any) {
@@ -1672,12 +1846,22 @@ function TodayView({
           </button>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          {[
-            "Submit insurance claim next week",
-            "Buy birthday gift for mom",
-            "Book dentist appointment",
-          ].map((example) => (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+  <button
+    onClick={() => setIsExtractModalOpen(true)}
+    className={`rounded-full border px-3 py-1.5 text-xs font-[800] transition hover:scale-[1.02] ${border}`}
+    style={{
+      color: themeColor,
+    }}
+  >
+    Extract from text
+  </button>
+
+  {[
+    "Submit insurance claim next week",
+    "Buy birthday gift for mom",
+    "Book dentist appointment",
+  ].map((example) => (
             <button
               key={example}
               onClick={() => setNewTask(example)}
@@ -3788,6 +3972,272 @@ function MobileBottomNav({
         );
       })}
     </nav>
+  );
+}
+
+function ExtractTasksModal({
+  extractInput,
+  setExtractInput,
+  extractLoading,
+  extractError,
+  extractedTasks,
+  setIsExtractModalOpen,
+  extractTasksFromText,
+  toggleExtractedTask,
+  addSelectedExtractedTasks,
+  themeColor,
+  darkMode,
+  glass,
+  strongerGlass,
+  border,
+}: any) {
+  const selectedCount = extractedTasks.filter((task: any) => task.selected).length;
+
+  const closeModal = () => {
+    setIsExtractModalOpen(false);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-0 z-[195] flex items-center justify-center bg-black/40 p-4 backdrop-blur-md sm:p-6"
+      onClick={closeModal}
+    >
+      <motion.div
+        initial={{
+          opacity: 0,
+          scale: 0.84,
+          y: 18,
+          transformOrigin: "50% 48%",
+        }}
+        animate={{
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          transformOrigin: "50% 48%",
+        }}
+        exit={{
+          opacity: 0,
+          scale: 0.88,
+          y: 14,
+          transformOrigin: "50% 48%",
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 520,
+          damping: 38,
+          mass: 0.8,
+        }}
+        onClick={(e) => e.stopPropagation()}
+        className={`max-h-[92vh] w-full max-w-[860px] overflow-hidden rounded-[34px] border shadow-[0_35px_140px_rgba(0,0,0,0.38)] backdrop-blur-3xl ${strongerGlass} ${border}`}
+      >
+        <div className="relative overflow-hidden">
+          <div
+            className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full opacity-20 blur-3xl"
+            style={{ backgroundColor: themeColor }}
+          />
+
+          <div className={`relative border-b px-5 py-5 sm:px-7 sm:py-6 ${border}`}>
+            <div className="flex items-start justify-between gap-5">
+              <div className="min-w-0">
+                <div className="mb-4 flex items-center gap-3">
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_14px_34px_rgba(0,0,0,0.22)]"
+                    style={{ backgroundColor: themeColor }}
+                  >
+                    <Sparkles size={19} />
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] font-[900] uppercase tracking-[0.16em] opacity-35">
+                      Momentum Capture
+                    </p>
+
+                    <h2 className="text-[27px] font-[900] tracking-[-0.05em] sm:text-[31px]">
+                      Extract Action Items
+                    </h2>
+                  </div>
+                </div>
+
+                <p className="max-w-xl text-sm leading-6 opacity-45">
+                  Paste notes, emails, chats, or meeting snippets. Momentum will
+                  pull out likely tasks for you to review.
+                </p>
+              </div>
+
+              <button
+                onClick={closeModal}
+                className={`h-10 shrink-0 rounded-2xl px-4 text-sm font-[800] transition hover:scale-[1.02] ${glass}`}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+
+          <div className="max-h-[calc(92vh-185px)] overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
+            <div className="space-y-5">
+              <section>
+                <label className="mb-2 block text-xs font-[900] uppercase tracking-[0.14em] opacity-40">
+                  Paste source text
+                </label>
+
+                <textarea
+                  value={extractInput}
+                  onChange={(event) => setExtractInput(event.target.value)}
+                  className={`min-h-[170px] w-full resize-none rounded-[26px] px-4 py-4 text-sm leading-6 outline-none transition focus:ring-4 focus:ring-violet-500/15 ${darkMode
+                    ? "bg-white/[0.07] text-white placeholder:text-white/35 border border-white/[0.06]"
+                    : "bg-white text-black placeholder:text-black/35 border border-black/[0.08]"
+                  }`}
+                  placeholder="Paste an email, Slack message, meeting note, or paragraph..."
+                />
+              </section>
+
+              {extractError && (
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-[700] text-red-500">
+                  {extractError}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={extractTasksFromText}
+                  disabled={extractLoading}
+                  className="h-12 rounded-2xl px-5 text-sm font-[900] text-white shadow-[0_16px_36px_rgba(0,0,0,0.20)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ backgroundColor: themeColor }}
+                >
+                  {extractLoading ? "Extracting..." : "Extract Action Items"}
+                </button>
+
+                {extractedTasks.length > 0 && (
+                  <button
+                    onClick={addSelectedExtractedTasks}
+                    className={`h-12 rounded-2xl px-5 text-sm font-[900] transition hover:scale-[1.01] ${glass}`}
+                  >
+                    Add Selected ({selectedCount})
+                  </button>
+                )}
+              </div>
+
+              {extractedTasks.length > 0 && (
+                <section>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-[900]">
+                      Review extracted tasks
+                    </h3>
+
+                    <span className="text-xs font-[800] opacity-40">
+                      {selectedCount} selected
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {extractedTasks.map((task: any) => (
+                      <div
+                        key={task.id}
+                        className={`rounded-[24px] border p-4 ${border} ${
+                          darkMode ? "bg-white/[0.035]" : "bg-black/[0.015]"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => toggleExtractedTask(task.id)}
+                            className="mt-0.5 shrink-0"
+                          >
+                            {task.selected ? (
+                              <CheckCircle2
+                                size={20}
+                                style={{ color: themeColor }}
+                              />
+                            ) : (
+                              <Circle
+                                size={20}
+                                className={
+                                  darkMode ? "text-white/30" : "text-black/30"
+                                }
+                              />
+                            )}
+                          </button>
+
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[15px] font-[900] leading-6">
+                              {task.title}
+                            </p>
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${getPriorityClass(
+                                  task.priority
+                                )}`}
+                              >
+                                {task.priority}
+                              </span>
+
+                              {task.suggestedDueDate && (
+                                <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-[900] text-orange-600 dark:bg-orange-500/10 dark:text-orange-300">
+                                  Suggested{" "}
+                                  {formatDueDate(task.suggestedDueDate)}
+                                </span>
+                              )}
+
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
+                                  darkMode
+                                    ? "bg-white/[0.06] text-white/45"
+                                    : "bg-black/[0.04] text-black/45"
+                                }`}
+                              >
+                                {task.category}
+                              </span>
+
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
+                                  darkMode
+                                    ? "bg-white/[0.06] text-white/45"
+                                    : "bg-black/[0.04] text-black/45"
+                                }`}
+                              >
+                                {Math.round(task.confidence * 100)}%
+                              </span>
+                            </div>
+
+                            {task.notes && (
+                              <p
+                                className={`mt-3 text-sm leading-6 ${
+                                  darkMode
+                                    ? "text-white/45"
+                                    : "text-black/45"
+                                }`}
+                              >
+                                {task.notes}
+                              </p>
+                            )}
+
+                            {task.reason && (
+                              <p
+                                className={`mt-2 text-xs leading-5 ${
+                                  darkMode
+                                    ? "text-white/35"
+                                    : "text-black/35"
+                                }`}
+                              >
+                                {task.reason}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
