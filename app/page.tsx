@@ -1338,21 +1338,26 @@ export default function Home() {
             )}
 
             {selectedView === "priorities" && (
-              <PrioritiesView
-                darkMode={darkMode}
-                border={border}
-                className={strongerGlass}
-                themeColor={themeColor}
-                viewMode={priorityViewMode}
-                setViewMode={setPriorityViewMode}
-                highPriorityTasks={highPriorityTasks}
-                mediumPriorityTasks={mediumPriorityTasks}
-                lowPriorityTasks={lowPriorityTasks}
-                toggleTaskById={toggleTaskById}
-                deleteTask={deleteTask}
-                setSelectedTask={setSelectedTask}
-                setIsEditModalOpen={setIsEditModalOpen}
-              />
+            <PrioritiesView
+            darkMode={darkMode}
+            border={border}
+            className={strongerGlass}
+            glass={glass}
+            strongerGlass={strongerGlass}
+            themeColor={themeColor}
+            viewMode={priorityViewMode}
+            setViewMode={setPriorityViewMode}
+            highPriorityTasks={highPriorityTasks}
+            mediumPriorityTasks={mediumPriorityTasks}
+            lowPriorityTasks={lowPriorityTasks}
+            completedToday={completedToday}
+            archiveCompletedToday={archiveCompletedToday}
+            restoreCompletedTask={restoreCompletedTask}
+            toggleTaskById={toggleTaskById}
+            deleteTask={deleteTask}
+            setSelectedTask={setSelectedTask}
+            setIsEditModalOpen={setIsEditModalOpen}
+          />
             )}
 
             {selectedView === "upcoming" && (
@@ -2394,12 +2399,17 @@ function PrioritiesView({
   darkMode,
   border,
   className,
+  glass,
+  strongerGlass,
   themeColor,
   viewMode,
   setViewMode,
   highPriorityTasks,
   mediumPriorityTasks,
   lowPriorityTasks,
+  completedToday,
+  archiveCompletedToday,
+  restoreCompletedTask,
   toggleTaskById,
   deleteTask,
   setSelectedTask,
@@ -2496,38 +2506,49 @@ function PrioritiesView({
       </div>
 
       {viewMode === "cards" ? (
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-          {priorityGroups.map((group) => (
-            <PriorityColumn
-              key={group.key}
-              {...group}
-              darkMode={darkMode}
-              border={border}
-              className={className}
-              toggleTaskById={toggleTaskById}
-              deleteTask={deleteTask}
-              setSelectedTask={setSelectedTask}
-              setIsEditModalOpen={setIsEditModalOpen}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {priorityGroups.map((group) => (
-            <PriorityListGroup
-              key={group.key}
-              {...group}
-              darkMode={darkMode}
-              border={border}
-              className={className}
-              toggleTaskById={toggleTaskById}
-              deleteTask={deleteTask}
-              setSelectedTask={setSelectedTask}
-              setIsEditModalOpen={setIsEditModalOpen}
-            />
-          ))}
-        </div>
-      )}
+  <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+    {priorityGroups.map((group) => (
+      <PriorityColumn
+        key={group.key}
+        {...group}
+        darkMode={darkMode}
+        border={border}
+        className={className}
+        toggleTaskById={toggleTaskById}
+        deleteTask={deleteTask}
+        setSelectedTask={setSelectedTask}
+        setIsEditModalOpen={setIsEditModalOpen}
+      />
+    ))}
+  </div>
+) : (
+  <div className="space-y-5">
+    {priorityGroups.map((group) => (
+      <PriorityListGroup
+        key={group.key}
+        {...group}
+        darkMode={darkMode}
+        border={border}
+        className={className}
+        toggleTaskById={toggleTaskById}
+        deleteTask={deleteTask}
+        setSelectedTask={setSelectedTask}
+        setIsEditModalOpen={setIsEditModalOpen}
+      />
+    ))}
+  </div>
+)}
+
+<CompletedTodaySection
+  completedToday={completedToday}
+  restoreCompletedTask={restoreCompletedTask}
+  archiveCompletedToday={archiveCompletedToday}
+  themeColor={themeColor}
+  darkMode={darkMode}
+  glass={glass}
+  strongerGlass={strongerGlass}
+  border={border}
+/>
     </div>
   );
 }
