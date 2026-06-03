@@ -4575,6 +4575,11 @@ function EditTaskModal({
   const isCompleted = Boolean(selectedTask.completed);
 
   const closeModal = () => {
+    if (selectedTask?.title?.trim()) {
+      saveTaskChanges(selectedTask);
+      return;
+    }
+  
     setIsEditModalOpen(false);
     setSelectedTask(null);
   };
@@ -4659,11 +4664,11 @@ function EditTaskModal({
               </div>
 
               <button
-                onClick={closeModal}
-                className={`h-10 shrink-0 rounded-2xl px-4 text-sm font-[800] transition hover:scale-[1.02] ${glass}`}
-              >
-                Close
-              </button>
+  onClick={closeModal}
+  className={`h-10 shrink-0 rounded-2xl px-4 text-sm font-[800] transition hover:scale-[1.02] ${glass}`}
+>
+  Done
+</button>
             </div>
           </div>
 
