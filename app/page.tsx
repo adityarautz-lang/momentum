@@ -803,19 +803,21 @@ export default function Home() {
       ? suggestDueDate(title)
       : undefined;
 
-    const taskToAdd = {
-      id: crypto.randomUUID(),
-      title,
-      priority,
-      dueDate: undefined,
-      suggestedDueDate,
-      aiReason: enableAppSuggestions
-        ? getAppSuggestionReason(title, priority)
-        : "App suggestions are turned off.",
-      aiConfidence: suggestedDueDate ? 0.82 : 0,
-      completed: false,
-      createdAt: new Date().toISOString(),
-    };
+      const taskToAdd = {
+        id: crypto.randomUUID(),
+        title,
+        priority,
+        dueDate: undefined,
+        suggestedDueDate,
+        notes: "",
+        status: "Active",
+        aiReason: enableAppSuggestions
+          ? getAppSuggestionReason(title, priority)
+          : "App suggestions are turned off.",
+        aiConfidence: suggestedDueDate ? 0.82 : 0,
+        completed: false,
+        createdAt: new Date().toISOString(),
+      };
 
     setCategories((prev) =>
       prev.map((category) => {
@@ -889,17 +891,19 @@ export default function Home() {
     const categoryTitle =
       taskToRestore.category || selectedCategory || categories[0]?.title;
 
-    const restoredTask = {
-      id: taskToRestore.id,
-      title: taskToRestore.title,
-      priority: taskToRestore.priority,
-      dueDate: taskToRestore.dueDate,
-      suggestedDueDate: taskToRestore.suggestedDueDate,
-      aiReason: taskToRestore.aiReason,
-      aiConfidence: taskToRestore.aiConfidence,
-      completed: false,
-      createdAt: taskToRestore.createdAt || new Date().toISOString(),
-    };
+      const restoredTask = {
+        id: taskToRestore.id,
+        title: taskToRestore.title,
+        priority: taskToRestore.priority,
+        dueDate: taskToRestore.dueDate,
+        suggestedDueDate: taskToRestore.suggestedDueDate,
+        notes: taskToRestore.notes || "",
+        status: taskToRestore.status || "Active",
+        aiReason: taskToRestore.aiReason,
+        aiConfidence: taskToRestore.aiConfidence,
+        completed: false,
+        createdAt: taskToRestore.createdAt || new Date().toISOString(),
+      };
 
     setCategories((prev) =>
       prev.map((category) => {
@@ -928,6 +932,60 @@ export default function Home() {
         tasks: category.tasks.filter((task: any) => task.id !== taskId),
       }))
     );
+  };
+
+  const deleteTaskEverywhere = (taskId: string) => {
+    setCategories((prev) =>
+      prev.map((category) => ({
+        ...category,
+        tasks: category.tasks.filter((task: any) => task.id !== taskId),
+      }))
+    );
+  
+    setCompletedToday((prev) => prev.filter((task) => task.id !== taskId));
+    setArchive((prev) => prev.filter((task) => task.id !== taskId));
+  
+    setIsEditModalOpen(false);
+    setSelectedTask(null);
+  };
+  
+  const completeTaskFromModal = (taskId: string) => {
+    const categoryWithTask = categories.find((category) =>
+      category.tasks.some((task: any) => task.id === taskId)
+    );
+  
+    if (!categoryWithTask) return;
+  
+    const taskToComplete = categoryWithTask.tasks.find(
+      (task: any) => task.id === taskId
+    );
+  
+    if (!taskToComplete) return;
+  
+    const completedTask = {
+      ...taskToComplete,
+      completed: true,
+      completedAt: new Date().toISOString(),
+      category: categoryWithTask.title,
+    };
+  
+    setCategories((prev) =>
+      prev.map((category) => {
+        if (category.id !== categoryWithTask.id) {
+          return category;
+        }
+  
+        return {
+          ...category,
+          tasks: category.tasks.filter((task: any) => task.id !== taskId),
+        };
+      })
+    );
+  
+    setCompletedToday((prev) => [completedTask, ...prev]);
+  
+    setIsEditModalOpen(false);
+    setSelectedTask(null);
   };
 
   /* ------------------------------------------------ */
@@ -1034,8 +1092,12 @@ export default function Home() {
                 priority,
                 dueDate: updatedTask.dueDate || undefined,
                 suggestedDueDate:
-                  updatedTask.suggestedDueDate ||
-                  (enableAppSuggestions ? suggestDueDate(title) : undefined),
+                  updatedTask.dueDate
+                    ? undefined
+                    : updatedTask.suggestedDueDate ||
+                      (enableAppSuggestions ? suggestDueDate(title) : undefined),
+                notes: updatedTask.notes || "",
+                status: updatedTask.status || "Active",
                 aiReason:
                   updatedTask.aiReason ||
                   (enableAppSuggestions
@@ -1426,19 +1488,22 @@ export default function Home() {
   )}
 
   {isEditModalOpen && selectedTask && (
-    <EditTaskModal
-      selectedTask={selectedTask}
-      setSelectedTask={setSelectedTask}
-      setIsEditModalOpen={setIsEditModalOpen}
-      saveTaskChanges={saveTaskChanges}
-      categories={categories}
-      themeColor={themeColor}
-      input={input}
-      modalSelect={modalSelect}
-      glass={glass}
-      strongerGlass={strongerGlass}
-      border={border}
-    />
+   <EditTaskModal
+   selectedTask={selectedTask}
+   setSelectedTask={setSelectedTask}
+   setIsEditModalOpen={setIsEditModalOpen}
+   saveTaskChanges={saveTaskChanges}
+   completeTaskFromModal={completeTaskFromModal}
+   deleteTaskEverywhere={deleteTaskEverywhere}
+   restoreCompletedTask={restoreCompletedTask}
+   categories={categories}
+   themeColor={themeColor}
+   input={input}
+   modalSelect={modalSelect}
+   glass={glass}
+   strongerGlass={strongerGlass}
+   border={border}
+ />
   )}
 </AnimatePresence>
     </main>
@@ -3889,11 +3954,17 @@ function SuggestionsReviewModal({
   );
 }
 
+
+
+
 function EditTaskModal({
   selectedTask,
   setSelectedTask,
   setIsEditModalOpen,
   saveTaskChanges,
+  completeTaskFromModal,
+  deleteTaskEverywhere,
+  restoreCompletedTask,
   categories,
   themeColor,
   input,
@@ -3902,109 +3973,329 @@ function EditTaskModal({
   strongerGlass,
   border,
 }: any) {
+  const isCompleted = Boolean(selectedTask.completed);
+
+  const closeModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedTask(null);
+  };
+
+  const priorityOptions: Priority[] = ["Low", "Medium", "High"];
+  const statusOptions = ["Active", "Waiting", "Someday"];
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6"
-      onClick={() => setIsEditModalOpen(false)}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/45 p-4 backdrop-blur-xl sm:p-6"
+      onClick={closeModal}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.88, y: 24, filter: "blur(12px)" }}
+        initial={{ opacity: 0, scale: 0.92, y: 28, filter: "blur(14px)" }}
         animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
-        exit={{ opacity: 0, scale: 0.92, y: 16, filter: "blur(8px)" }}
-        transition={{ type: "spring", stiffness: 240, damping: 24 }}
+        exit={{ opacity: 0, scale: 0.96, y: 18, filter: "blur(10px)" }}
+        transition={{ type: "spring", stiffness: 240, damping: 25 }}
         onClick={(e) => e.stopPropagation()}
-        className={`max-h-[92vh] w-full max-w-[600px] overflow-y-auto rounded-[28px] border p-5 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur-3xl sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+        className={`max-h-[92vh] w-full max-w-[760px] overflow-hidden rounded-[34px] border shadow-[0_35px_140px_rgba(0,0,0,0.38)] backdrop-blur-3xl ${strongerGlass} ${border}`}
       >
-        <div className="mb-6">
-          <h2 className="mb-1 text-[25px] font-[800] tracking-[-0.04em] sm:text-[28px]">
-            Edit Task
-          </h2>
-          <p className="text-sm opacity-40">
-            Manual changes always override Momentum suggestions.
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          <input
-            value={selectedTask.title}
-            onChange={(e) =>
-              setSelectedTask({ ...selectedTask, title: e.target.value })
-            }
-            onKeyDown={(e) => {
-              if (e.key === "Enter") saveTaskChanges(selectedTask);
-            }}
-            className={`h-12 w-full rounded-2xl px-4 outline-none ${input}`}
+        <div className="relative overflow-hidden">
+          <div
+            className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full opacity-20 blur-3xl"
+            style={{ backgroundColor: themeColor }}
           />
 
-          <select
-            value={selectedTask.category}
-            onChange={(e) =>
-              setSelectedTask({ ...selectedTask, category: e.target.value })
-            }
-            className={`h-12 w-full rounded-2xl px-4 outline-none ${modalSelect}`}
-          >
-            {categories.map((category: any) => (
-              <option key={category.id} value={category.title}>
-                {category.title}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedTask.priority}
-            onChange={(e) =>
-              setSelectedTask({
-                ...selectedTask,
-                priority: e.target.value as Priority,
-              })
-            }
-            className={`h-12 w-full rounded-2xl px-4 outline-none ${modalSelect}`}
-          >
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
-
-          <input
-            type="date"
-            value={selectedTask.dueDate || ""}
-            onChange={(e) =>
-              setSelectedTask({ ...selectedTask, dueDate: e.target.value })
-            }
-            className={`h-12 w-full rounded-2xl px-4 outline-none ${modalSelect}`}
+          <div
+            className="pointer-events-none absolute -left-20 top-20 h-40 w-40 rounded-full opacity-10 blur-3xl"
+            style={{ backgroundColor: themeColor }}
           />
 
-          {selectedTask.suggestedDueDate && (
-            <div className={`rounded-2xl border p-4 text-sm ${border}`}>
-              <p className="mb-1 font-[800]">Momentum suggestion</p>
-              <p className="opacity-50">
-                Suggested date: {formatDueDate(selectedTask.suggestedDueDate)}
-              </p>
-              <p className="mt-2 opacity-50">{selectedTask.aiReason}</p>
+          <div className={`relative border-b px-5 py-5 sm:px-7 sm:py-6 ${border}`}>
+            <div className="flex items-start justify-between gap-5">
+              <div className="min-w-0">
+                <div className="mb-4 flex items-center gap-3">
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_14px_34px_rgba(0,0,0,0.22)]"
+                    style={{ backgroundColor: themeColor }}
+                  >
+                    <Sparkles size={19} />
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] font-[900] uppercase tracking-[0.16em] opacity-35">
+                      Momentum Task
+                    </p>
+
+                    <h2 className="text-[27px] font-[900] tracking-[-0.05em] sm:text-[31px]">
+                      Edit Task
+                    </h2>
+                  </div>
+                </div>
+
+                <p className="max-w-xl text-sm leading-6 opacity-45">
+                  Refine the task, adjust the plan, and keep Momentum aligned
+                  with how you actually want to execute.
+                </p>
+              </div>
+
+              <button
+                onClick={closeModal}
+                className={`h-10 shrink-0 rounded-2xl px-4 text-sm font-[800] transition hover:scale-[1.02] ${glass}`}
+              >
+                Close
+              </button>
             </div>
-          )}
+          </div>
 
-<div className="flex flex-col gap-3 pt-4 sm:flex-row">
-            <button
-              onClick={() => {
-                setIsEditModalOpen(false);
-                setSelectedTask(null);
-              }}
-              className={`h-12 flex-1 rounded-2xl font-[700] ${glass}`}
-            >
-              Cancel
-            </button>
+          <div className="relative max-h-[calc(92vh-180px)] overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
+            <div className="space-y-6">
+              <section>
+                <label className="mb-2 block text-xs font-[900] uppercase tracking-[0.14em] opacity-40">
+                  Title
+                </label>
 
-            <button
-              onClick={() => saveTaskChanges(selectedTask)}
-              className="h-12 flex-1 rounded-2xl font-[700] text-white"
-              style={{ backgroundColor: themeColor }}
-            >
-              Save
-            </button>
+                <input
+                  value={selectedTask.title}
+                  onChange={(e) =>
+                    setSelectedTask({ ...selectedTask, title: e.target.value })
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveTaskChanges(selectedTask);
+                  }}
+                  className={`h-14 w-full rounded-[22px] px-4 text-[15px] font-[750] tracking-[-0.01em] outline-none transition focus:ring-4 ${input} ${
+                    selectedTask.title?.trim()
+                      ? "focus:ring-violet-500/15"
+                      : "focus:ring-red-500/15"
+                  }`}
+                  placeholder="What needs to get done?"
+                />
+              </section>
+
+              <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-xs font-[900] uppercase tracking-[0.14em] opacity-40">
+                    Priority
+                  </label>
+
+                  <div className={`grid grid-cols-3 gap-2 rounded-[22px] border p-1.5 ${border}`}>
+                    {priorityOptions.map((priority) => {
+                      const isActive = selectedTask.priority === priority;
+
+                      return (
+                        <button
+                          key={priority}
+                          onClick={() =>
+                            setSelectedTask({
+                              ...selectedTask,
+                              priority,
+                            })
+                          }
+                          className={`h-11 rounded-[17px] text-xs font-[900] transition ${
+                            isActive
+                              ? "text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
+                              : "opacity-45 hover:opacity-80"
+                          }`}
+                          style={
+                            isActive
+                              ? {
+                                  backgroundColor:
+                                    priority === "High"
+                                      ? "#ef4444"
+                                      : priority === "Medium"
+                                      ? "#f59e0b"
+                                      : "#10b981",
+                                }
+                              : undefined
+                          }
+                        >
+                          {priority}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-[900] uppercase tracking-[0.14em] opacity-40">
+                    Status
+                  </label>
+
+                  <div className={`grid grid-cols-3 gap-2 rounded-[22px] border p-1.5 ${border}`}>
+                    {statusOptions.map((status) => {
+                      const isActive = (selectedTask.status || "Active") === status;
+
+                      return (
+                        <button
+                          key={status}
+                          onClick={() =>
+                            setSelectedTask({
+                              ...selectedTask,
+                              status,
+                            })
+                          }
+                          className={`h-11 rounded-[17px] text-xs font-[900] transition ${
+                            isActive
+                              ? "text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
+                              : "opacity-45 hover:opacity-80"
+                          }`}
+                          style={
+                            isActive
+                              ? {
+                                  backgroundColor: themeColor,
+                                }
+                              : undefined
+                          }
+                        >
+                          {status}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </section>
+
+              <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-xs font-[900] uppercase tracking-[0.14em] opacity-40">
+                    Due date
+                  </label>
+
+                  <input
+                    type="date"
+                    value={selectedTask.dueDate || ""}
+                    onChange={(e) =>
+                      setSelectedTask({
+                        ...selectedTask,
+                        dueDate: e.target.value || undefined,
+                        suggestedDueDate: e.target.value
+                          ? undefined
+                          : selectedTask.suggestedDueDate,
+                      })
+                    }
+                    className={`h-14 w-full rounded-[22px] px-4 text-sm font-[800] outline-none transition focus:ring-4 focus:ring-violet-500/15 ${modalSelect}`}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-[900] uppercase tracking-[0.14em] opacity-40">
+                    Category
+                  </label>
+
+                  <select
+                    value={selectedTask.category}
+                    onChange={(e) =>
+                      setSelectedTask({
+                        ...selectedTask,
+                        category: e.target.value,
+                      })
+                    }
+                    className={`h-14 w-full rounded-[22px] px-4 text-sm font-[800] outline-none transition focus:ring-4 focus:ring-violet-500/15 ${modalSelect}`}
+                  >
+                    {categories.map((category: any) => (
+                      <option key={category.id} value={category.title}>
+                        {category.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </section>
+
+              <section>
+                <label className="mb-2 block text-xs font-[900] uppercase tracking-[0.14em] opacity-40">
+                  Notes
+                </label>
+
+                <textarea
+                  value={selectedTask.notes || ""}
+                  onChange={(e) =>
+                    setSelectedTask({ ...selectedTask, notes: e.target.value })
+                  }
+                  className={`min-h-[120px] w-full resize-none rounded-[24px] px-4 py-4 text-sm leading-6 outline-none transition focus:ring-4 focus:ring-violet-500/15 ${input}`}
+                  placeholder="Add context, links, blockers, or anything useful..."
+                />
+              </section>
+
+              {selectedTask.suggestedDueDate && (
+                <section className={`rounded-[26px] border p-4 ${border}`}>
+                  <div className="mb-4 flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-[900]">Momentum’s read</p>
+                      <p className="mt-1 text-xs leading-5 opacity-45">
+                        This is how Momentum interpreted the task.
+                      </p>
+                    </div>
+
+                    <span
+                      className="rounded-full px-2.5 py-1 text-[10px] font-[900] text-white"
+                      style={{ backgroundColor: themeColor }}
+                    >
+                      {Math.round((selectedTask.aiConfidence || 0) * 100)}%
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full bg-orange-50 px-3 py-1.5 text-[11px] font-[900] text-orange-600 dark:bg-orange-500/10 dark:text-orange-300">
+                      Suggested {formatDueDate(selectedTask.suggestedDueDate)}
+                    </span>
+
+                    <span
+                      className={`rounded-full px-3 py-1.5 text-[11px] font-[900] ${
+                        selectedTask.priority === "High"
+                          ? "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-300"
+                          : selectedTask.priority === "Medium"
+                          ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300"
+                          : "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
+                      }`}
+                    >
+                      {selectedTask.priority} priority
+                    </span>
+                  </div>
+
+                  <p className="mt-4 text-sm leading-6 opacity-50">
+                    {selectedTask.aiReason ||
+                      "Momentum thinks this task may need attention soon."}
+                  </p>
+                </section>
+              )}
+            </div>
+          </div>
+
+          <div className={`relative border-t px-5 py-4 sm:px-7 ${border}`}>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_1.4fr]">
+              <button
+                onClick={() => deleteTaskEverywhere(selectedTask.id)}
+                className="h-12 rounded-2xl bg-red-500/10 text-sm font-[900] text-red-500 transition hover:scale-[1.01]"
+              >
+                Delete
+              </button>
+
+              {isCompleted ? (
+                <button
+                  onClick={() => {
+                    restoreCompletedTask(selectedTask.id);
+                    closeModal();
+                  }}
+                  className={`h-12 rounded-2xl text-sm font-[900] transition hover:scale-[1.01] ${glass}`}
+                >
+                  Restore
+                </button>
+              ) : (
+                <button
+                  onClick={() => completeTaskFromModal(selectedTask.id)}
+                  className={`h-12 rounded-2xl text-sm font-[900] transition hover:scale-[1.01] ${glass}`}
+                >
+                  Complete
+                </button>
+              )}
+
+              <button
+                onClick={() => saveTaskChanges(selectedTask)}
+                className="h-12 rounded-2xl text-sm font-[900] text-white shadow-[0_16px_36px_rgba(0,0,0,0.20)] transition hover:scale-[1.01]"
+                style={{ backgroundColor: themeColor }}
+              >
+                Save Changes
+              </button>
+            </div>
           </div>
         </div>
       </motion.div>
