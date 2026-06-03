@@ -1466,7 +1466,7 @@ function TodayView({
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="mb-5 grid grid-cols-5 gap-1 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
         <StatCard
           className={strongerGlass}
           border={border}
@@ -2165,10 +2165,10 @@ function StatCard({
 }) {
   return (
     <div
-    className={`flex min-h-[78px] items-center gap-3 rounded-[22px] border px-4 transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[96px] sm:gap-4 sm:px-5 ${className} ${border}`}
+    className={`flex min-h-[84px] flex-col items-center justify-center gap-2 rounded-[18px] border px-1.5 text-center transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[96px] sm:flex-row sm:justify-start sm:gap-4 sm:rounded-[22px] sm:px-5 sm:text-left ${className} ${border}`}
     >
       <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_10px_24px_rgba(0,0,0,0.16)] sm:h-10 sm:w-10"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-white shadow-[0_10px_24px_rgba(0,0,0,0.16)] sm:h-10 sm:w-10 sm:rounded-2xl"
         style={{
           backgroundColor: themeColor,
         }}
@@ -2177,11 +2177,11 @@ function StatCard({
       </div>
 
       <div className="min-w-0">
-        <p className="text-[21px] font-[800] leading-none tracking-[-0.04em] sm:text-[24px]">
+        <p className="text-[18px] font-[800] leading-none tracking-[-0.04em] sm:text-[24px]">
           {value}
         </p>
 
-        <p className="mt-1.5 truncate text-xs font-[700] opacity-45">
+        <p className="mt-1 truncate text-[10px] font-[700] leading-tight opacity-45 sm:mt-1.5 sm:text-xs">
           {label}
         </p>
       </div>
