@@ -610,6 +610,7 @@ const [extractError, setExtractError] = useState("");
 const [extractedTasks, setExtractedTasks] = useState<ExtractedTaskSuggestion[]>(
   []
 );
+const [suggestingTaskIds, setSuggestingTaskIds] = useState<string[]>([]);
 const [isLoaded, setIsLoaded] = useState(false);
 
   const todayDate = getTodayDate();
@@ -809,39 +810,153 @@ const [isLoaded, setIsLoaded] = useState(false);
     }, 1000);
   };
 
+
+  const improveTaskWithAI = async (taskId: string, title: string) => {
+    setSuggestingTaskIds((prev) => [...prev, taskId]);
+  
+    try {
+      const response = await fetch("/api/suggest-task", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          categories: categories.map((category) => category.title),
+          today: getTodayDate(),
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to suggest task details.");
+      }
+  
+      const suggestion = data.suggestion;
+  
+      setCategories((prev) =>
+        prev.map((category) => ({
+          ...category,
+          tasks: category.tasks.map((task: any) => {
+            if (task.id !== taskId) {
+              return task;
+            }
+  
+            return {
+              ...task,
+              priority: suggestion.priority || task.priority,
+              suggestedDueDate: suggestion.suggestedDueDate || task.suggestedDueDate,
+              status: suggestion.status || task.status || "Active",
+              notes: suggestion.notes || task.notes || "",
+              aiReason:
+                suggestion.reason ||
+                task.aiReason ||
+                "Momentum reviewed this task.",
+              aiConfidence:
+                typeof suggestion.confidence === "number"
+                  ? suggestion.confidence
+                  : task.aiConfidence || 0.7,
+            };
+          }),
+        }))
+      );
+  
+      if (
+        suggestion.category &&
+        categories.some((category) => category.title === suggestion.category)
+      ) {
+        setCategories((prev) => {
+          const taskToMove = prev
+            .flatMap((category) =>
+              category.tasks.map((task: any) => ({
+                ...task,
+                categoryTitle: category.title,
+              }))
+            )
+            .find((task: any) => task.id === taskId);
+  
+          if (!taskToMove) return prev;
+          if (taskToMove.categoryTitle === suggestion.category) return prev;
+  
+          const cleanedCategories = prev.map((category) => ({
+            ...category,
+            tasks: category.tasks.filter((task: any) => task.id !== taskId),
+          }));
+  
+          return cleanedCategories.map((category) => {
+            if (category.title !== suggestion.category) {
+              return category;
+            }
+  
+            const movedTask = {
+              ...taskToMove,
+              priority: suggestion.priority || taskToMove.priority,
+              suggestedDueDate:
+                suggestion.suggestedDueDate || taskToMove.suggestedDueDate,
+              status: suggestion.status || taskToMove.status || "Active",
+              notes: suggestion.notes || taskToMove.notes || "",
+              aiReason:
+                suggestion.reason ||
+                taskToMove.aiReason ||
+                "Momentum reviewed this task.",
+              aiConfidence:
+                typeof suggestion.confidence === "number"
+                  ? suggestion.confidence
+                  : taskToMove.aiConfidence || 0.7,
+            };
+  
+            delete movedTask.categoryTitle;
+  
+            return {
+              ...category,
+              tasks: [movedTask, ...category.tasks],
+            };
+          });
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSuggestingTaskIds((prev) => prev.filter((id) => id !== taskId));
+    }
+  };
+
   /* ------------------------------------------------ */
   /* Add Task */
   /* ------------------------------------------------ */
 
   const addTask = () => {
     if (!newTask.trim()) return;
-
+  
     const title = newTask.trim();
     const categoryTitle =
       selectedCategory || categories[0]?.title || "Small Wins";
-
+  
     const priority: Priority = enableAutoPriority ? inferPriority(title) : "Medium";
-
+  
     const suggestedDueDate = enableAppSuggestions
       ? suggestDueDate(title)
       : undefined;
-
-      const taskToAdd = {
-        id: crypto.randomUUID(),
-        title,
-        priority,
-        dueDate: undefined,
-        suggestedDueDate,
-        notes: "",
-        status: "Active",
-        aiReason: enableAppSuggestions
-          ? getAppSuggestionReason(title, priority)
-          : "App suggestions are turned off.",
-        aiConfidence: suggestedDueDate ? 0.82 : 0,
-        completed: false,
-        createdAt: new Date().toISOString(),
-      };
-
+  
+    const taskId = crypto.randomUUID();
+  
+    const taskToAdd = {
+      id: taskId,
+      title,
+      priority,
+      dueDate: undefined,
+      suggestedDueDate,
+      notes: "",
+      status: "Active",
+      aiReason: enableAppSuggestions
+        ? getAppSuggestionReason(title, priority)
+        : "App suggestions are turned off.",
+      aiConfidence: suggestedDueDate ? 0.82 : 0,
+      completed: false,
+      createdAt: new Date().toISOString(),
+    };
+  
     setCategories((prev) =>
       prev.map((category) => {
         if (category.title === categoryTitle) {
@@ -850,12 +965,16 @@ const [isLoaded, setIsLoaded] = useState(false);
             tasks: [taskToAdd, ...category.tasks],
           };
         }
-
+  
         return category;
       })
     );
-
+  
     setNewTask("");
+  
+    if (enableAppSuggestions) {
+      void improveTaskWithAI(taskId, title);
+    }
   };
 
 
@@ -1433,7 +1552,7 @@ setExtractError("");
   /* ------------------------------------------------ */
 
   if (!isLoaded) {
-    return <main className="min-h-screen bg-[#f5f5f3]" />;
+    return <main className="min-h-screen bg-white" />;
   }
 
   return (
@@ -1488,6 +1607,7 @@ setExtractError("");
             setIsExtractModalOpen={setIsExtractModalOpen}
             archiveCompletedToday={archiveCompletedToday}
             restoreCompletedTask={restoreCompletedTask}
+suggestingTaskIds={suggestingTaskIds}
           />
             )}
 
@@ -1719,6 +1839,7 @@ function TodayView({
   setIsExtractModalOpen,
   archiveCompletedToday,
   restoreCompletedTask,
+  suggestingTaskIds,
 }: any) {
   return (
     <>
@@ -1877,22 +1998,23 @@ function TodayView({
       </section>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_0.85fr]">
-        <TaskListPanel
-          title="Momentum Prioritized for You"
-          description="Momentum lines up your tasks based on intent, urgency, and priority."
-          tasks={prioritizedTasks}
-          darkMode={darkMode}
-          border={border}
-          className={strongerGlass}
-          themeColor={themeColor}
-          toggleTaskById={toggleTaskById}
-          deleteTask={deleteTask}
-          acceptSuggestedDateById={acceptSuggestedDateById}
-          setSelectedTask={setSelectedTask}
-          setIsEditModalOpen={setIsEditModalOpen}
-          emptyMessage="Add a task below. Momentum will organize it for you."
-          ranked
-        />
+      <TaskListPanel
+  title="Momentum Prioritized for You"
+  description="Momentum lines up your tasks based on intent, urgency, and priority."
+  tasks={prioritizedTasks}
+  darkMode={darkMode}
+  border={border}
+  className={strongerGlass}
+  themeColor={themeColor}
+  toggleTaskById={toggleTaskById}
+  suggestingTaskIds={suggestingTaskIds}
+  deleteTask={deleteTask}
+  acceptSuggestedDateById={acceptSuggestedDateById}
+  setSelectedTask={setSelectedTask}
+  setIsEditModalOpen={setIsEditModalOpen}
+  emptyMessage="Add a task below. Momentum will organize it for you."
+  ranked
+/>
 
         <section
           className={`rounded-[28px] border p-5 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
@@ -1969,15 +2091,15 @@ function TodayView({
       </div>
 
       <CompletedTodaySection
-        completedToday={completedToday}
-        restoreCompletedTask={restoreCompletedTask}
-        archiveCompletedToday={archiveCompletedToday}
-        themeColor={themeColor}
-        darkMode={darkMode}
-        glass={glass}
-        strongerGlass={strongerGlass}
-        border={border}
-      />
+  completedToday={completedToday}
+  restoreCompletedTask={restoreCompletedTask}
+  archiveCompletedToday={archiveCompletedToday}
+  themeColor={themeColor}
+  darkMode={darkMode}
+  glass={glass}
+  strongerGlass={strongerGlass}
+  border={border}
+/>
     </>
   );
 }
@@ -1992,6 +2114,7 @@ function TaskListPanel({
   className,
   themeColor,
   toggleTaskById,
+  suggestingTaskIds = [],
   deleteTask,
   acceptSuggestedDateById,
   setSelectedTask,
@@ -2042,10 +2165,11 @@ function TaskListPanel({
           </div>
         )}
 
-        {tasks.map((task: any, index: number) => {
-          const visibleDueDate = task.dueDate || task.suggestedDueDate;
+{tasks.map((task: any, index: number) => {
+  const isSuggesting = suggestingTaskIds.includes(task.id);
+  const visibleDueDate = task.dueDate || task.suggestedDueDate;
 
-          return (
+  return (
             <motion.div
               key={task.id}
               initial={{ opacity: 0, y: 8 }}
@@ -2093,12 +2217,13 @@ function TaskListPanel({
                   </p>
 
                   <p
-                    className={`mt-1.5 truncate text-[11px] font-[650] ${
-                      darkMode ? "text-white/38" : "text-black/38"
-                    }`}
-                  >
-                    {task.category} · {task.priority}
-                  </p>
+  className={`mt-1.5 truncate text-[11px] font-[650] ${
+    darkMode ? "text-white/38" : "text-black/38"
+  }`}
+>
+{task.category} · {task.priority}
+{isSuggesting ? " · Momentum thinking..." : ""}
+</p>
                 </div>
               </div>
 
@@ -3615,7 +3740,7 @@ function TaskRows({
       )}
 
       {tasks.map((task: any) => {
-        const visibleDueDate = task.dueDate || task.suggestedDueDate;
+       const visibleDueDate = task.dueDate || task.suggestedDueDate;
 
         return (
           <motion.div
