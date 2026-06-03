@@ -586,6 +586,7 @@ export default function Home() {
   const [editingCategoryTitle, setEditingCategoryTitle] = useState("");
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSuggestionsModalOpen, setIsSuggestionsModalOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   const todayDate = getTodayDate();
@@ -732,6 +733,10 @@ export default function Home() {
 
   const inboxTasks = prioritizedTasks.filter(
     (task) => !task.dueDate && !task.suggestedDueDate
+  );
+
+  const suggestionReviewTasks = prioritizedTasks.filter(
+    (task) => !task.dueDate && task.suggestedDueDate
   );
 
   /* ------------------------------------------------ */
@@ -979,6 +984,29 @@ export default function Home() {
     );
   };
 
+  const acceptAllSuggestedDates = () => {
+    setCategories((prev) =>
+      prev.map((category) => ({
+        ...category,
+        tasks: category.tasks.map((task: any) => {
+          if (task.dueDate || !task.suggestedDueDate) {
+            return task;
+          }
+  
+          return {
+            ...task,
+            dueDate: task.suggestedDueDate,
+            suggestedDueDate: undefined,
+            aiReason: "You accepted Momentum's app-suggested date.",
+            aiConfidence: 1,
+          };
+        }),
+      }))
+    );
+  
+    setIsSuggestionsModalOpen(false);
+  };
+
   /* ------------------------------------------------ */
   /* Save Task Changes */
   /* ------------------------------------------------ */
@@ -1219,31 +1247,32 @@ export default function Home() {
         <div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-32 pt-4 sm:px-6 sm:py-6 xl:px-10 xl:py-8">
         <div className="mx-auto w-full max-w-[1440px] overflow-x-hidden">
             {selectedView === "today" && (
-              <TodayView
-                darkMode={darkMode}
-                setDarkMode={setDarkMode}
-                themeColor={themeColor}
-                glass={glass}
-                strongerGlass={strongerGlass}
-                border={border}
-                allTasks={allTasks}
-                prioritizedTasks={prioritizedTasks}
-                highPriorityCount={highPriorityCount}
-                dueSoonCount={dueSoonCount}
-                completionPercent={completionPercent}
-                suggestedDateCount={suggestedDateCount}
-                completedToday={completedToday}
-                newTask={newTask}
-                setNewTask={setNewTask}
-                addTask={addTask}
-                toggleTaskById={toggleTaskById}
-                deleteTask={deleteTask}
-                acceptSuggestedDateById={acceptSuggestedDateById}
-                setSelectedTask={setSelectedTask}
-                setIsEditModalOpen={setIsEditModalOpen}
-                archiveCompletedToday={archiveCompletedToday}
-                restoreCompletedTask={restoreCompletedTask}
-              />
+             <TodayView
+             darkMode={darkMode}
+             setDarkMode={setDarkMode}
+             themeColor={themeColor}
+             glass={glass}
+             strongerGlass={strongerGlass}
+             border={border}
+             allTasks={allTasks}
+             prioritizedTasks={prioritizedTasks}
+             highPriorityCount={highPriorityCount}
+             dueSoonCount={dueSoonCount}
+             completionPercent={completionPercent}
+             suggestedDateCount={suggestedDateCount}
+             completedToday={completedToday}
+             newTask={newTask}
+             setNewTask={setNewTask}
+             addTask={addTask}
+             toggleTaskById={toggleTaskById}
+             deleteTask={deleteTask}
+             acceptSuggestedDateById={acceptSuggestedDateById}
+             setSelectedTask={setSelectedTask}
+             setIsEditModalOpen={setIsEditModalOpen}
+             setIsSuggestionsModalOpen={setIsSuggestionsModalOpen}
+             archiveCompletedToday={archiveCompletedToday}
+             restoreCompletedTask={restoreCompletedTask}
+           />
             )}
 
             {selectedView === "priorities" && (
@@ -1379,23 +1408,39 @@ export default function Home() {
         themeColor={themeColor}
       />
 
-      <AnimatePresence>
-        {isEditModalOpen && selectedTask && (
-          <EditTaskModal
-            selectedTask={selectedTask}
-            setSelectedTask={setSelectedTask}
-            setIsEditModalOpen={setIsEditModalOpen}
-            saveTaskChanges={saveTaskChanges}
-            categories={categories}
-            themeColor={themeColor}
-            input={input}
-            modalSelect={modalSelect}
-            glass={glass}
-            strongerGlass={strongerGlass}
-            border={border}
-          />
-        )}
-      </AnimatePresence>
+<AnimatePresence>
+  {isSuggestionsModalOpen && (
+    <SuggestionsReviewModal
+      tasks={suggestionReviewTasks}
+      darkMode={darkMode}
+      themeColor={themeColor}
+      glass={glass}
+      strongerGlass={strongerGlass}
+      border={border}
+      setIsSuggestionsModalOpen={setIsSuggestionsModalOpen}
+      acceptSuggestedDateById={acceptSuggestedDateById}
+      acceptAllSuggestedDates={acceptAllSuggestedDates}
+      setSelectedTask={setSelectedTask}
+      setIsEditModalOpen={setIsEditModalOpen}
+    />
+  )}
+
+  {isEditModalOpen && selectedTask && (
+    <EditTaskModal
+      selectedTask={selectedTask}
+      setSelectedTask={setSelectedTask}
+      setIsEditModalOpen={setIsEditModalOpen}
+      saveTaskChanges={saveTaskChanges}
+      categories={categories}
+      themeColor={themeColor}
+      input={input}
+      modalSelect={modalSelect}
+      glass={glass}
+      strongerGlass={strongerGlass}
+      border={border}
+    />
+  )}
+</AnimatePresence>
     </main>
   );
 }
@@ -1426,6 +1471,7 @@ function TodayView({
   acceptSuggestedDateById,
   setSelectedTask,
   setIsEditModalOpen,
+  setIsSuggestionsModalOpen,
   archiveCompletedToday,
   restoreCompletedTask,
 }: any) {
@@ -1656,13 +1702,14 @@ function TodayView({
           </div>
 
           <button
-            className={`mt-6 h-11 w-full rounded-2xl border text-sm font-[800] transition hover:scale-[1.01] ${border}`}
-            style={{
-              color: themeColor,
-            }}
-          >
-            Review Momentum Suggestions
-          </button>
+  onClick={() => setIsSuggestionsModalOpen(true)}
+  className={`mt-6 h-11 w-full rounded-2xl border text-sm font-[800] transition hover:scale-[1.01] ${border}`}
+  style={{
+    color: themeColor,
+  }}
+>
+  Review Momentum Suggestions
+</button>
         </section>
       </div>
 
@@ -1936,10 +1983,10 @@ function ArchiveView({
 }: any) {
   return (
     <div>
-    <PageHeader
+<PageHeader
   title="Archived Items"
   description="Completed work saved for reference."
-  darkMode={archive.length < 0}
+  darkMode={darkMode}
 >
         <button
           onClick={clearArchive}
@@ -3655,6 +3702,190 @@ function MobileBottomNav({
         );
       })}
     </nav>
+  );
+}
+
+function SuggestionsReviewModal({
+  tasks,
+  darkMode,
+  themeColor,
+  glass,
+  strongerGlass,
+  border,
+  setIsSuggestionsModalOpen,
+  acceptSuggestedDateById,
+  acceptAllSuggestedDates,
+  setSelectedTask,
+  setIsEditModalOpen,
+}: any) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[190] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6"
+      onClick={() => setIsSuggestionsModalOpen(false)}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 24, filter: "blur(10px)" }}
+        animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
+        exit={{ opacity: 0, scale: 0.94, y: 16, filter: "blur(8px)" }}
+        transition={{ type: "spring", stiffness: 240, damping: 24 }}
+        onClick={(e) => e.stopPropagation()}
+        className={`max-h-[88vh] w-full max-w-[760px] overflow-hidden rounded-[28px] border shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur-3xl sm:rounded-[36px] ${strongerGlass} ${border}`}
+      >
+        <div className={`border-b p-5 sm:p-6 ${border}`}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div
+                className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl text-white"
+                style={{ backgroundColor: themeColor }}
+              >
+                <Sparkles size={18} />
+              </div>
+
+              <h2 className="text-[25px] font-[800] tracking-[-0.04em] sm:text-[30px]">
+                Review Momentum Suggestions
+              </h2>
+
+              <p
+                className={`mt-2 max-w-xl text-sm leading-6 ${
+                  darkMode ? "text-white/45" : "text-black/45"
+                }`}
+              >
+                Momentum found tasks that look time-sensitive. Review the
+                suggested dates before they become part of your plan.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsSuggestionsModalOpen(false)}
+              className={`h-10 rounded-2xl px-4 text-sm font-[800] ${glass}`}
+            >
+              Close
+            </button>
+          </div>
+
+          {tasks.length > 0 && (
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={acceptAllSuggestedDates}
+                className="h-11 rounded-2xl px-5 text-sm font-[800] text-white transition hover:scale-[1.01]"
+                style={{ backgroundColor: themeColor }}
+              >
+                Accept All Suggested Dates
+              </button>
+
+              <button
+                onClick={() => setIsSuggestionsModalOpen(false)}
+                className={`h-11 rounded-2xl px-5 text-sm font-[800] ${glass}`}
+              >
+                Review Later
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="max-h-[56vh] overflow-y-auto p-4 sm:p-5">
+          {tasks.length === 0 ? (
+            <div
+              className={`rounded-[24px] border border-dashed p-8 text-center ${border}`}
+            >
+              <div
+                className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl text-white"
+                style={{ backgroundColor: themeColor }}
+              >
+                <CheckCircle2 size={20} />
+              </div>
+
+              <h3 className="text-lg font-[800]">No suggestions to review</h3>
+
+              <p
+                className={`mx-auto mt-2 max-w-sm text-sm leading-6 ${
+                  darkMode ? "text-white/40" : "text-black/40"
+                }`}
+              >
+                Momentum will show suggestions here when a task sounds like it
+                needs a date.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {tasks.map((task: any) => (
+                <div
+                  key={task.id}
+                  className={`rounded-[24px] border p-4 ${border} ${
+                    darkMode ? "bg-white/[0.035]" : "bg-black/[0.015]"
+                  }`}
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-[800] leading-6">
+                        {task.title}
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${getPriorityClass(
+                            task.priority
+                          )}`}
+                        >
+                          {task.priority}
+                        </span>
+
+                        <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-[800] text-orange-600 dark:bg-orange-500/10 dark:text-orange-300">
+                          Suggested {formatDueDate(task.suggestedDueDate)}
+                        </span>
+
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${
+                            darkMode
+                              ? "bg-white/[0.06] text-white/40"
+                              : "bg-black/[0.04] text-black/40"
+                          }`}
+                        >
+                          {task.category}
+                        </span>
+                      </div>
+
+                      <p
+                        className={`mt-3 text-sm leading-6 ${
+                          darkMode ? "text-white/45" : "text-black/45"
+                        }`}
+                      >
+                        {task.aiReason ||
+                          "Momentum thinks this task may need attention soon."}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col gap-2 sm:w-[150px]">
+                      <button
+                        onClick={() => acceptSuggestedDateById(task.id)}
+                        className="h-10 rounded-2xl px-4 text-xs font-[800] text-white transition hover:scale-[1.02]"
+                        style={{ backgroundColor: themeColor }}
+                      >
+                        Accept Date
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setSelectedTask(task);
+                          setIsEditModalOpen(true);
+                          setIsSuggestionsModalOpen(false);
+                        }}
+                        className={`h-10 rounded-2xl px-4 text-xs font-[800] ${glass}`}
+                      >
+                        Edit Task
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
