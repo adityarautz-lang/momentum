@@ -1195,7 +1195,7 @@ export default function Home() {
 
   return (
     <main
-    className={`${fontClass} min-h-screen overflow-x-hidden transition-colors duration-500 ${
+  className={`${fontClass} min-h-screen w-full overflow-x-hidden transition-colors duration-500 ${
       darkMode
         ? "bg-[radial-gradient(circle_at_top_right,_rgba(167,139,250,0.18),_transparent_32%),linear-gradient(135deg,_#080b12_0%,_#111827_48%,_#0b0f17_100%)] text-white"
         : "bg-white text-black"
@@ -1204,7 +1204,7 @@ export default function Home() {
       <FirecrackerLayer firecrackers={firecrackers} themeColor={themeColor} />
       <Toast message={archiveToast} darkMode={darkMode} />
 
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen w-full overflow-x-hidden">
       <div className="hidden lg:flex">
           <Sidebar
             darkMode={darkMode}
@@ -1216,8 +1216,8 @@ export default function Home() {
           />
         </div>
 
-        <div className="min-w-0 flex-1 px-3 pb-28 pt-3 sm:px-6 sm:py-6 xl:px-10 xl:py-8">
-          <div className="mx-auto w-full max-w-[1440px]">
+        <div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-32 pt-4 sm:px-6 sm:py-6 xl:px-10 xl:py-8">
+        <div className="mx-auto w-full max-w-[1440px] overflow-x-hidden">
             {selectedView === "today" && (
               <TodayView
                 darkMode={darkMode}
@@ -1431,12 +1431,12 @@ function TodayView({
 }: any) {
   return (
     <>
-      <div
-        className={`mb-6 rounded-[28px] border p-5 sm:mb-8 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
-      >
+     <div
+  className={`mb-5 rounded-[26px] border p-4 sm:mb-8 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           <div>
-          <h1 className="text-[25px] font-[800] leading-tight tracking-[-0.045em] sm:text-[34px]">
+          <h1 className="text-[24px] font-[800] leading-[1.12] tracking-[-0.045em] sm:text-[34px]">
               Hello! Let&apos;s build some Momentum.
             </h1>
 
@@ -1450,7 +1450,7 @@ function TodayView({
             </p>
           </div>
 
-          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+          <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
             <div className={`rounded-2xl px-4 py-3 text-xs font-[700] ${glass}`}>
               {formatDateLong()}
             </div>
@@ -1466,7 +1466,7 @@ function TodayView({
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="mb-6 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
         <StatCard
           className={strongerGlass}
           border={border}
@@ -1514,8 +1514,8 @@ function TodayView({
       </div>
 
       <section
-        className={`mb-6 rounded-[28px] border p-4 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
-      >
+  className={`mb-5 rounded-[26px] border p-4 sm:mb-6 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+>
         <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
           <h2 className="text-[19px] font-[800] sm:text-[21px]">
             Quick Capture
@@ -2165,7 +2165,7 @@ function StatCard({
 }) {
   return (
     <div
-      className={`flex min-h-[86px] items-center gap-3 rounded-[22px] border px-4 transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[96px] sm:gap-4 sm:px-5 ${className} ${border}`}
+    className={`flex min-h-[78px] items-center gap-3 rounded-[22px] border px-4 transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[96px] sm:gap-4 sm:px-5 ${className} ${border}`}
     >
       <div
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_10px_24px_rgba(0,0,0,0.16)] sm:h-10 sm:w-10"
