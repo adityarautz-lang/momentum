@@ -3060,7 +3060,11 @@ function AirtablePriorityGroup({
       {tasks.map((task: any) => (
         <div
           key={task.id}
-          className={`group flex min-h-[64px] items-center gap-4 border-b px-6 py-3.5 last:border-b-0 ${border}`}
+          className={`group flex min-h-[64px] items-center gap-4 border-b px-6 py-3.5 last:border-b-0 ${
+            task.completed
+              ? "bg-black/[0.025] dark:bg-white/[0.035]"
+              : ""
+          } ${border}`}
         >
           <button
             onClick={(e) => toggleTaskById(task.id, e)}
@@ -3080,7 +3084,8 @@ function AirtablePriorityGroup({
                 setIsEditModalOpen(true);
               }}
               className={`cursor-pointer truncate text-[14px] font-[700] ${
-                task.completed ? "text-black/35 line-through dark:text-white/50" : ""
+                  ? "text-black/45 line-through decoration-black/45 dark:text-white/65 dark:decoration-white/65"
+  : ""
               }`}
             >
               {task.title}
