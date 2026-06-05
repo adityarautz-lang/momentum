@@ -692,6 +692,12 @@ const [isLoaded, setIsLoaded] = useState(false);
   }, [categories]);
 
   const prioritizedTasks = useMemo(() => {
+    return [...allTasks]
+      .filter((task) => !task.completed)
+      .sort((a, b) => b.score - a.score);
+  }, [allTasks]);
+  
+  const priorityViewTasks = useMemo(() => {
     return [...allTasks].sort((a, b) => {
       if (a.completed !== b.completed) {
         return a.completed ? 1 : -1;
@@ -725,15 +731,15 @@ const [isLoaded, setIsLoaded] = useState(false);
     (task) => !task.dueDate && task.suggestedDueDate
   ).length;
 
-  const highPriorityTasks = prioritizedTasks.filter(
+  const highPriorityTasks = priorityViewTasks.filter(
     (task) => task.priority === "High"
   );
-
-  const mediumPriorityTasks = prioritizedTasks.filter(
+  
+  const mediumPriorityTasks = priorityViewTasks.filter(
     (task) => task.priority === "Medium"
   );
-
-  const lowPriorityTasks = prioritizedTasks.filter(
+  
+  const lowPriorityTasks = priorityViewTasks.filter(
     (task) => task.priority === "Low"
   );
 
@@ -2821,16 +2827,7 @@ function PrioritiesView({
   ))}
 </div>
 
-<CompletedTodaySection
-  completedToday={completedToday}
-  restoreCompletedTask={restoreCompletedTask}
-  archiveCompletedToday={archiveCompletedToday}
-  themeColor={themeColor}
-  darkMode={darkMode}
-  glass={glass}
-  strongerGlass={strongerGlass}
-  border={border}
-/>
+
     </div>
   );
 }
