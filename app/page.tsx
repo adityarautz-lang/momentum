@@ -3080,7 +3080,7 @@ function AirtablePriorityGroup({
                 setIsEditModalOpen(true);
               }}
               className={`cursor-pointer truncate text-[14px] font-[700] ${
-                task.completed ? "text-black/35 line-through dark:text-white/30" : ""
+                task.completed ? "text-black/35 line-through dark:text-white/50" : ""
               }`}
             >
               {task.title}
@@ -3088,7 +3088,13 @@ function AirtablePriorityGroup({
 
             <p
               className={`mt-1 text-[12px] ${
-                darkMode ? "text-white/40" : "text-black/40"
+                task.completed
+  ? darkMode
+    ? "text-white/45"
+    : "text-black/35"
+  : darkMode
+  ? "text-white/40"
+  : "text-black/40"
               }`}
             >
               {task.category} • {task.priority}
