@@ -1135,19 +1135,19 @@ setExtractError("");
     };
 
     setCategories((prev) =>
-      prev.map((category) => {
-        if (category.id !== categoryWithTask.id) {
-          return category;
-        }
-
-        return {
-          ...category,
-          tasks: category.tasks.filter((task: any) => task.id !== taskId),
-        };
-      })
+      prev.map((category) => ({
+        ...category,
+        tasks: category.tasks.map((task: any) =>
+          task.id === taskId
+            ? {
+                ...task,
+                completed: true,
+                completedAt: new Date().toISOString(),
+              }
+            : task
+        ),
+      }))
     );
-
-    setCompletedToday((prev) => [completedTask, ...prev]);
   };
 
   /* ------------------------------------------------ */
@@ -3060,7 +3060,11 @@ function AirtablePriorityGroup({
             onClick={(e) => toggleTaskById(task.id, e)}
             className="opacity-60 hover:opacity-100"
           >
-            <Circle size={22} />
+           {task.completed ? (
+  <CheckCircle2 size={22} className="text-emerald-500" />
+) : (
+  <Circle size={22} />
+)}
           </button>
 
           <div className="min-w-0 flex-1">
@@ -3069,7 +3073,9 @@ function AirtablePriorityGroup({
                 setSelectedTask(task);
                 setIsEditModalOpen(true);
               }}
-             className="cursor-pointer truncate text-[14px] font-[700]"
+              className={`cursor-pointer truncate text-[14px] font-[700] ${
+                task.completed ? "text-black/35 line-through dark:text-white/30" : ""
+              }`}
             >
               {task.title}
             </p>
@@ -3086,9 +3092,9 @@ function AirtablePriorityGroup({
           <div className="flex items-center gap-5 text-[13px] font-[700]">
   {task.dueDate && (
     <div
-      className={`flex items-center gap-1.5 ${
-        darkMode ? "text-red-300" : "text-red-500"
-      }`}
+    className={`flex items-center gap-1.5 ${
+      darkMode ? "text-white/70" : "text-black/65"
+    }`}
     >
       <Calendar size={14} />
       <span>{formatDueDate(task.dueDate)}</span>
