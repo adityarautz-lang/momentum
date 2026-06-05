@@ -1141,8 +1141,8 @@ setExtractError("");
           task.id === taskId
             ? {
                 ...task,
-                completed: true,
-                completedAt: new Date().toISOString(),
+                completed: !task.completed,
+                completedAt: task.completed ? undefined : new Date().toISOString(),
               }
             : task
         ),
