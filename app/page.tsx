@@ -692,7 +692,13 @@ const [isLoaded, setIsLoaded] = useState(false);
   }, [categories]);
 
   const prioritizedTasks = useMemo(() => {
-    return [...allTasks].sort((a, b) => b.score - a.score);
+    return [...allTasks].sort((a, b) => {
+      if (a.completed !== b.completed) {
+        return a.completed ? 1 : -1;
+      }
+  
+      return b.score - a.score;
+    });
   }, [allTasks]);
 
   const highPriorityCount = allTasks.filter(
@@ -744,7 +750,9 @@ const [isLoaded, setIsLoaded] = useState(false);
     });
   }, [prioritizedTasks]);
 
-  const todayTasks = upcomingTasks.filter((task) => isToday(getTaskDate(task)));
+  const todayTasks = upcomingTasks.filter(
+    (task) => isToday(getTaskDate(task)) && !task.completed
+  );
 
   const tomorrowTasks = upcomingTasks.filter((task) =>
     isTomorrow(getTaskDate(task))
@@ -1112,28 +1120,22 @@ setExtractError("");
 
   const toggleTaskById = (taskId: string, e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
-
+  
     triggerFirecracker(rect.left + rect.width / 2, rect.top + rect.height / 2);
-
-    const categoryWithTask = categories.find((category) =>
-      category.tasks.some((task: any) => task.id === taskId)
-    );
-
-    if (!categoryWithTask) return;
-
-    const taskToComplete = categoryWithTask.tasks.find(
-      (task: any) => task.id === taskId
-    );
-
-    if (!taskToComplete) return;
-
-    const completedTask = {
-      ...taskToComplete,
-      completed: true,
-      completedAt: new Date().toISOString(),
-      category: categoryWithTask.title,
-    };
-
+  
+    const taskWithCategory = categories
+      .flatMap((category) =>
+        category.tasks.map((task: any) => ({
+          ...task,
+          category: category.title,
+        }))
+      )
+      .find((task: any) => task.id === taskId);
+  
+    if (!taskWithCategory) return;
+  
+    const isAlreadyCompleted = Boolean(taskWithCategory.completed);
+  
     setCategories((prev) =>
       prev.map((category) => ({
         ...category,
@@ -1141,13 +1143,29 @@ setExtractError("");
           task.id === taskId
             ? {
                 ...task,
-                completed: !task.completed,
-                completedAt: task.completed ? undefined : new Date().toISOString(),
+                completed: !isAlreadyCompleted,
+                completedAt: isAlreadyCompleted
+                  ? undefined
+                  : new Date().toISOString(),
               }
             : task
         ),
       }))
     );
+  
+    if (isAlreadyCompleted) {
+      setCompletedToday((prev) => prev.filter((task) => task.id !== taskId));
+      return;
+    }
+  
+    setCompletedToday((prev) => [
+      {
+        ...taskWithCategory,
+        completed: true,
+        completedAt: new Date().toISOString(),
+      },
+      ...prev.filter((task) => task.id !== taskId),
+    ]);
   };
 
   /* ------------------------------------------------ */
