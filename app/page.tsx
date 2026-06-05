@@ -1179,40 +1179,21 @@ setExtractError("");
   /* ------------------------------------------------ */
 
   const restoreCompletedTask = (taskId: string) => {
-    const taskToRestore = completedToday.find((task) => task.id === taskId);
-
-    if (!taskToRestore) return;
-
-    const categoryTitle =
-      taskToRestore.category || selectedCategory || categories[0]?.title;
-
-      const restoredTask = {
-        id: taskToRestore.id,
-        title: taskToRestore.title,
-        priority: taskToRestore.priority,
-        dueDate: taskToRestore.dueDate,
-        suggestedDueDate: taskToRestore.suggestedDueDate,
-        notes: taskToRestore.notes || "",
-        status: taskToRestore.status || "Active",
-        aiReason: taskToRestore.aiReason,
-        aiConfidence: taskToRestore.aiConfidence,
-        completed: false,
-        createdAt: taskToRestore.createdAt || new Date().toISOString(),
-      };
-
     setCategories((prev) =>
-      prev.map((category) => {
-        if (category.title !== categoryTitle) {
-          return category;
-        }
-
-        return {
-          ...category,
-          tasks: [restoredTask, ...category.tasks],
-        };
-      })
+      prev.map((category) => ({
+        ...category,
+        tasks: category.tasks.map((task: any) =>
+          task.id === taskId
+            ? {
+                ...task,
+                completed: false,
+                completedAt: undefined,
+              }
+            : task
+        ),
+      }))
     );
-
+  
     setCompletedToday((prev) => prev.filter((task) => task.id !== taskId));
   };
 
@@ -1245,39 +1226,42 @@ setExtractError("");
   };
   
   const completeTaskFromModal = (taskId: string) => {
-    const categoryWithTask = categories.find((category) =>
-      category.tasks.some((task: any) => task.id === taskId)
-    );
+    const taskWithCategory = categories
+      .flatMap((category) =>
+        category.tasks.map((task: any) => ({
+          ...task,
+          category: category.title,
+        }))
+      )
+      .find((task: any) => task.id === taskId);
   
-    if (!categoryWithTask) return;
+    if (!taskWithCategory) return;
   
-    const taskToComplete = categoryWithTask.tasks.find(
-      (task: any) => task.id === taskId
-    );
-  
-    if (!taskToComplete) return;
-  
-    const completedTask = {
-      ...taskToComplete,
-      completed: true,
-      completedAt: new Date().toISOString(),
-      category: categoryWithTask.title,
-    };
+    const completedAt = new Date().toISOString();
   
     setCategories((prev) =>
-      prev.map((category) => {
-        if (category.id !== categoryWithTask.id) {
-          return category;
-        }
-  
-        return {
-          ...category,
-          tasks: category.tasks.filter((task: any) => task.id !== taskId),
-        };
-      })
+      prev.map((category) => ({
+        ...category,
+        tasks: category.tasks.map((task: any) =>
+          task.id === taskId
+            ? {
+                ...task,
+                completed: true,
+                completedAt,
+              }
+            : task
+        ),
+      }))
     );
   
-    setCompletedToday((prev) => [completedTask, ...prev]);
+    setCompletedToday((prev) => [
+      {
+        ...taskWithCategory,
+        completed: true,
+        completedAt,
+      },
+      ...prev.filter((task) => task.id !== taskId),
+    ]);
   
     setIsEditModalOpen(false);
     setSelectedTask(null);
@@ -1399,7 +1383,8 @@ setExtractError("");
                     ? getAppSuggestionReason(title, priority)
                     : "App suggestions are turned off."),
                 aiConfidence: updatedTask.aiConfidence || 0.72,
-                completed: false,
+                completed: Boolean(updatedTask.completed),
+completedAt: updatedTask.completedAt,
                 createdAt: updatedTask.createdAt || new Date().toISOString(),
               },
               ...category.tasks,
