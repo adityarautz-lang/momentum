@@ -583,9 +583,8 @@ export default function Home() {
   const [themeColor] = useState("#A78BFA");
   const [darkMode, setDarkMode] = useState(false);
   const [selectedView, setSelectedView] = useState("today");
-  const [priorityViewMode, setPriorityViewMode] = useState<"cards" | "list">(
-    "cards"
-  );
+  const [priorityViewMode, setPriorityViewMode] =
+  useState<"cards" | "list">("list");
   const [upcomingViewMode, setUpcomingViewMode] = useState<
     "calendar" | "list"
   >("calendar");
@@ -2785,71 +2784,24 @@ function PrioritiesView({
             {totalTasks} active task{totalTasks === 1 ? "" : "s"}
           </div>
 
-          <div className={`flex rounded-2xl border p-1 ${className} ${border}`}>
-            <button
-              onClick={() => setViewMode("cards")}
-              className={`h-9 rounded-xl px-4 text-xs font-[800] transition ${
-                viewMode === "cards"
-                  ? "text-white"
-                  : darkMode
-                  ? "text-white/45 hover:text-white"
-                  : "text-black/45 hover:text-black"
-              }`}
-              style={viewMode === "cards" ? { backgroundColor: themeColor } : undefined}
-            >
-              Cards
-            </button>
-
-            <button
-              onClick={() => setViewMode("list")}
-              className={`h-9 rounded-xl px-4 text-xs font-[800] transition ${
-                viewMode === "list"
-                  ? "text-white"
-                  : darkMode
-                  ? "text-white/45 hover:text-white"
-                  : "text-black/45 hover:text-black"
-              }`}
-              style={viewMode === "list" ? { backgroundColor: themeColor } : undefined}
-            >
-              List
-            </button>
-          </div>
+      
         </div>
       </div>
 
-      {viewMode === "cards" ? (
-  <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-    {priorityGroups.map((group) => (
-      <PriorityColumn
-        key={group.key}
-        {...group}
-        darkMode={darkMode}
-        border={border}
-        className={className}
-        toggleTaskById={toggleTaskById}
-        deleteTask={deleteTask}
-        setSelectedTask={setSelectedTask}
-        setIsEditModalOpen={setIsEditModalOpen}
-      />
-    ))}
-  </div>
-) : (
-  <div className="space-y-5">
-    {priorityGroups.map((group) => (
-      <PriorityListGroup
-        key={group.key}
-        {...group}
-        darkMode={darkMode}
-        border={border}
-        className={className}
-        toggleTaskById={toggleTaskById}
-        deleteTask={deleteTask}
-        setSelectedTask={setSelectedTask}
-        setIsEditModalOpen={setIsEditModalOpen}
-      />
-    ))}
-  </div>
-)}
+      <div className="space-y-6">
+  {priorityGroups.map((group) => (
+    <AirtablePriorityGroup
+      key={group.key}
+      {...group}
+      darkMode={darkMode}
+      border={border}
+      toggleTaskById={toggleTaskById}
+      deleteTask={deleteTask}
+      setSelectedTask={setSelectedTask}
+      setIsEditModalOpen={setIsEditModalOpen}
+    />
+  ))}
+</div>
 
 <CompletedTodaySection
   completedToday={completedToday}
@@ -3035,6 +2987,123 @@ function PriorityListGroup({
         setSelectedTask={setSelectedTask}
         setIsEditModalOpen={setIsEditModalOpen}
       />
+    </section>
+  );
+}
+
+function AirtablePriorityGroup({
+  title,
+  description,
+  tasks,
+  dotColor,
+  darkMode,
+  border,
+  toggleTaskById,
+  deleteTask,
+  setSelectedTask,
+  setIsEditModalOpen,
+}: any) {
+  return (
+    <section
+      className={`overflow-hidden rounded-[24px] border bg-white shadow-sm ${
+        darkMode ? "bg-[#171717]" : "bg-white"
+      } ${border}`}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between border-b px-6 py-5">
+        <div>
+          <div className="flex items-center gap-3">
+            <span
+              className="h-3 w-3 rounded-full"
+              style={{ backgroundColor: dotColor }}
+            />
+
+            <h3 className="text-xl font-[800]">{title}</h3>
+          </div>
+
+          <p
+            className={`mt-1 text-sm ${
+              darkMode ? "text-white/45" : "text-black/45"
+            }`}
+          >
+            {description}
+          </p>
+        </div>
+
+        <div
+          className={`flex h-8 min-w-8 items-center justify-center rounded-full px-3 text-xs font-[800]
+          ${
+            darkMode
+              ? "bg-white/10 text-white/70"
+              : "bg-black/[0.04] text-black/60"
+          }`}
+        >
+          {tasks.length}
+        </div>
+      </div>
+
+      {/* Tasks */}
+      {tasks.map((task: any) => (
+        <div
+          key={task.id}
+          className={`group flex items-center gap-4 border-b px-6 py-5 last:border-b-0 ${border}`}
+        >
+          <button
+            onClick={(e) => toggleTaskById(task.id, e)}
+            className="opacity-60 hover:opacity-100"
+          >
+            <Circle size={22} />
+          </button>
+
+          <div className="min-w-0 flex-1">
+            <p
+              onClick={() => {
+                setSelectedTask(task);
+                setIsEditModalOpen(true);
+              }}
+              className="cursor-pointer truncate text-[17px] font-[700]"
+            >
+              {task.title}
+            </p>
+
+            <p
+              className={`mt-1 text-sm ${
+                darkMode ? "text-white/40" : "text-black/40"
+              }`}
+            >
+              {task.category} • {task.priority}
+            </p>
+          </div>
+
+          {task.dueDate && (
+            <span
+              className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-[700] text-red-500"
+            >
+              Due {formatDueDate(task.dueDate)}
+            </span>
+          )}
+
+          <span
+            className={`rounded-lg px-4 py-2 text-sm font-[700]
+            ${
+              task.priority === "High"
+                ? "border border-red-200 bg-red-50 text-red-500"
+                : task.priority === "Medium"
+                ? "border border-orange-200 bg-orange-50 text-orange-500"
+                : "border border-emerald-200 bg-emerald-50 text-emerald-600"
+            }`}
+          >
+            {task.priority}
+          </span>
+
+          <button
+            onClick={() => deleteTask(task.id)}
+            className="opacity-30 transition hover:text-red-500 hover:opacity-100"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      ))}
     </section>
   );
 }
