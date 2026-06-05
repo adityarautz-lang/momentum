@@ -3011,18 +3011,18 @@ function AirtablePriorityGroup({
 }: any) {
   return (
     <section
-    className={`overflow-hidden rounded-[20px] border border-l-[3px] shadow-sm ${
-      title === "High"
-        ? "border-l-red-500"
-        : title === "Medium"
-        ? "border-l-orange-500"
-        : "border-l-emerald-500"
-    } ${
-      darkMode
-        ? "border-y-white/[0.08] border-r-white/[0.08] bg-[#171717]"
-        : "border-y-black/[0.07] border-r-black/[0.07] bg-white"
-    }`}
-  >
+      className={`overflow-hidden rounded-[20px] border border-l-[3px] shadow-sm ${
+        title === "High"
+          ? "border-l-red-500"
+          : title === "Medium"
+          ? "border-l-orange-500"
+          : "border-l-emerald-500"
+      } ${
+        darkMode
+          ? "border-y-white/[0.08] border-r-white/[0.08] bg-[#171717]"
+          : "border-y-black/[0.07] border-r-black/[0.07] bg-white"
+      }`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between border-b px-6 py-5">
         <div>
