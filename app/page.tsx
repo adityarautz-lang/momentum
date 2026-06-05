@@ -3069,7 +3069,7 @@ function AirtablePriorityGroup({
                 setSelectedTask(task);
                 setIsEditModalOpen(true);
               }}
-              className="cursor-pointer truncate text-[14px] font-[800]"
+             className="cursor-pointer truncate text-[14px] font-[700]"
             >
               {task.title}
             </p>
@@ -3083,26 +3083,31 @@ function AirtablePriorityGroup({
             </p>
           </div>
 
-          {task.dueDate && (
-            <span
-              className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-[700] text-red-500"
-            >
-              Due {formatDueDate(task.dueDate)}
-            </span>
-          )}
+          <div className="flex items-center gap-5 text-[13px] font-[700]">
+  {task.dueDate && (
+    <div
+      className={`flex items-center gap-1.5 ${
+        darkMode ? "text-red-300" : "text-red-500"
+      }`}
+    >
+      <Calendar size={14} />
+      <span>{formatDueDate(task.dueDate)}</span>
+    </div>
+  )}
 
-          <span
-            className={`rounded-lg px-4 py-2 text-sm font-[700]
-            ${
-              task.priority === "High"
-                ? "border border-red-200 bg-red-50 text-red-500"
-                : task.priority === "Medium"
-                ? "border border-orange-200 bg-orange-50 text-orange-500"
-                : "border border-emerald-200 bg-emerald-50 text-emerald-600"
-            }`}
-          >
-            {task.priority}
-          </span>
+  <div
+    className={`flex items-center gap-1.5 ${
+      task.priority === "High"
+        ? "text-red-500"
+        : task.priority === "Medium"
+        ? "text-orange-500"
+        : "text-emerald-500"
+    }`}
+  >
+    <span className="text-[12px]">●</span>
+    <span>{task.priority}</span>
+  </div>
+</div>
 
           <button
             onClick={() => deleteTask(task.id)}
