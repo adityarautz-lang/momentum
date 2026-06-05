@@ -2017,7 +2017,7 @@ function TodayView({
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_0.85fr]">
       <TaskListPanel
   title="Momentum Prioritized for You"
-  description="Momentum lines up your tasks based on intent, urgency, and priority."
+  description="Momentum lines up your tasks based on intent, urgency, and priority"
   tasks={prioritizedTasks}
   darkMode={darkMode}
   border={border}
