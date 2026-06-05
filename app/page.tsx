@@ -694,7 +694,16 @@ const [isLoaded, setIsLoaded] = useState(false);
   const prioritizedTasks = useMemo(() => {
     return [...allTasks]
       .filter((task) => !task.completed)
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => {
+        const dateA = getTaskDate(a);
+        const dateB = getTaskDate(b);
+  
+        if (!dateA && !dateB) return b.score - a.score;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+  
+        return dateA.localeCompare(dateB);
+      });
   }, [allTasks]);
   
   const priorityViewTasks = useMemo(() => {
@@ -2236,34 +2245,31 @@ function TaskListPanel({
               </div>
 
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-                <DateBadge
-                  task={task}
-                  visibleDueDate={visibleDueDate}
-                  darkMode={darkMode}
-                />
+              <div className="flex items-center gap-5 text-[13px] font-[700]">
+  {visibleDueDate && (
+    <div
+      className={`flex items-center gap-1.5 ${
+        darkMode ? "text-white/70" : "text-black/65"
+      }`}
+    >
+      <Calendar size={14} />
+      <span>{formatDueDate(visibleDueDate)}</span>
+    </div>
+  )}
 
-                {task.suggestedDueDate &&
-                  !task.dueDate &&
-                  acceptSuggestedDateById && (
-                    <button
-                      onClick={() => acceptSuggestedDateById(task.id)}
-                      className={`rounded-full px-3 py-1 text-[11px] font-[800] transition hover:scale-[1.03] ${
-                        darkMode
-                          ? "bg-white/[0.06] text-white/55 hover:text-white"
-                          : "bg-black/[0.04] text-black/55 hover:text-black"
-                      }`}
-                    >
-                      Accept
-                    </button>
-                  )}
-
-                <span
-                 className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[800] tracking-[-0.01em] ${getPriorityClass(
-                  task.priority
-                )}`}
-                >
-                  {task.priority}
-                </span>
+  <div
+    className={`flex items-center gap-1.5 ${
+      task.priority === "High"
+        ? "text-red-500"
+        : task.priority === "Medium"
+        ? "text-orange-500"
+        : "text-emerald-500"
+    }`}
+  >
+    <span className="text-[12px]">●</span>
+    <span>{task.priority}</span>
+  </div>
+</div>
 
                 <button
                   onClick={() => deleteTask(task.id)}
