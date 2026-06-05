@@ -3005,10 +3005,18 @@ function AirtablePriorityGroup({
 }: any) {
   return (
     <section
-      className={`overflow-hidden rounded-[24px] border bg-white shadow-sm ${
-        darkMode ? "bg-[#171717]" : "bg-white"
-      } ${border}`}
-    >
+    className={`overflow-hidden rounded-[20px] border border-l-[3px] shadow-sm ${
+      title === "High"
+        ? "border-l-red-500"
+        : title === "Medium"
+        ? "border-l-orange-500"
+        : "border-l-emerald-500"
+    } ${
+      darkMode
+        ? "border-y-white/[0.08] border-r-white/[0.08] bg-[#171717]"
+        : "border-y-black/[0.07] border-r-black/[0.07] bg-white"
+    }`}
+  >
       {/* Header */}
       <div className="flex items-center justify-between border-b px-6 py-5">
         <div>
@@ -3022,7 +3030,7 @@ function AirtablePriorityGroup({
           </div>
 
           <p
-            className={`mt-1 text-sm ${
+            className={`mt-1 text-[12px] ${
               darkMode ? "text-white/45" : "text-black/45"
             }`}
           >
@@ -3046,7 +3054,7 @@ function AirtablePriorityGroup({
       {tasks.map((task: any) => (
         <div
           key={task.id}
-          className={`group flex items-center gap-4 border-b px-6 py-5 last:border-b-0 ${border}`}
+          className={`group flex min-h-[64px] items-center gap-4 border-b px-6 py-3.5 last:border-b-0 ${border}`}
         >
           <button
             onClick={(e) => toggleTaskById(task.id, e)}
@@ -3061,13 +3069,13 @@ function AirtablePriorityGroup({
                 setSelectedTask(task);
                 setIsEditModalOpen(true);
               }}
-              className="cursor-pointer truncate text-[17px] font-[700]"
+              className="cursor-pointer truncate text-[14px] font-[800]"
             >
               {task.title}
             </p>
 
             <p
-              className={`mt-1 text-sm ${
+              className={`mt-1 text-[12px] ${
                 darkMode ? "text-white/40" : "text-black/40"
               }`}
             >
