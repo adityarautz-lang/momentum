@@ -3023,58 +3023,41 @@ function AirtablePriorityGroup({
           : "border-y-black/[0.07] border-r-black/[0.07] bg-white"
       }`}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between border-b px-6 py-5">
+      <div className={`flex items-center justify-between border-b px-6 py-5 ${border}`}>
         <div>
           <div className="flex items-center gap-3">
-            <span
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: dotColor }}
-            />
-
+            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: dotColor }} />
             <h3 className="text-xl font-[800]">{title}</h3>
           </div>
 
-          <p
-            className={`mt-1 text-[12px] ${
-              darkMode ? "text-white/45" : "text-black/45"
-            }`}
-          >
+          <p className={`mt-1 text-[12px] ${darkMode ? "text-white/45" : "text-black/45"}`}>
             {description}
           </p>
         </div>
 
-        <div
-          className={`flex h-8 min-w-8 items-center justify-center rounded-full px-3 text-xs font-[800]
-          ${
-            darkMode
-              ? "bg-white/10 text-white/70"
-              : "bg-black/[0.04] text-black/60"
-          }`}
-        >
+        <div className={`flex h-8 min-w-8 items-center justify-center rounded-full px-3 text-xs font-[800] ${
+          darkMode ? "bg-white/10 text-white/70" : "bg-black/[0.04] text-black/60"
+        }`}>
           {tasks.length}
         </div>
       </div>
 
-      {/* Tasks */}
       {tasks.map((task: any) => (
         <div
           key={task.id}
           className={`group flex min-h-[64px] items-center gap-4 border-b px-6 py-3.5 last:border-b-0 ${
-            task.completed
-              ? "bg-black/[0.025] dark:bg-white/[0.035]"
-              : ""
+            task.completed ? "bg-black/[0.025] dark:bg-white/[0.035]" : ""
           } ${border}`}
         >
           <button
             onClick={(e) => toggleTaskById(task.id, e)}
             className="opacity-60 hover:opacity-100"
           >
-           {task.completed ? (
-  <CheckCircle2 size={22} className="text-emerald-500" />
-) : (
-  <Circle size={22} />
-)}
+            {task.completed ? (
+              <CheckCircle2 size={22} className="text-emerald-500" />
+            ) : (
+              <Circle size={22} />
+            )}
           </button>
 
           <div className="min-w-0 flex-1">
@@ -3084,8 +3067,9 @@ function AirtablePriorityGroup({
                 setIsEditModalOpen(true);
               }}
               className={`cursor-pointer truncate text-[14px] font-[700] ${
+                task.completed
                   ? "text-black/45 line-through decoration-black/45 dark:text-white/65 dark:decoration-white/65"
-  : ""
+                  : ""
               }`}
             >
               {task.title}
@@ -3094,12 +3078,12 @@ function AirtablePriorityGroup({
             <p
               className={`mt-1 text-[12px] ${
                 task.completed
-  ? darkMode
-    ? "text-white/45"
-    : "text-black/35"
-  : darkMode
-  ? "text-white/40"
-  : "text-black/40"
+                  ? darkMode
+                    ? "text-white/45"
+                    : "text-black/35"
+                  : darkMode
+                  ? "text-white/40"
+                  : "text-black/40"
               }`}
             >
               {task.category} • {task.priority}
@@ -3107,30 +3091,26 @@ function AirtablePriorityGroup({
           </div>
 
           <div className="flex items-center gap-5 text-[13px] font-[700]">
-  {task.dueDate && (
-    <div
-    className={`flex items-center gap-1.5 ${
-      darkMode ? "text-white/70" : "text-black/65"
-    }`}
-    >
-      <Calendar size={14} />
-      <span>{formatDueDate(task.dueDate)}</span>
-    </div>
-  )}
+            {task.dueDate && (
+              <div className={`flex items-center gap-1.5 ${
+                darkMode ? "text-white/70" : "text-black/65"
+              }`}>
+                <Calendar size={14} />
+                <span>{formatDueDate(task.dueDate)}</span>
+              </div>
+            )}
 
-  <div
-    className={`flex items-center gap-1.5 ${
-      task.priority === "High"
-        ? "text-red-500"
-        : task.priority === "Medium"
-        ? "text-orange-500"
-        : "text-emerald-500"
-    }`}
-  >
-    <span className="text-[12px]">●</span>
-    <span>{task.priority}</span>
-  </div>
-</div>
+            <div className={`flex items-center gap-1.5 ${
+              task.priority === "High"
+                ? "text-red-500"
+                : task.priority === "Medium"
+                ? "text-orange-500"
+                : "text-emerald-500"
+            }`}>
+              <span className="text-[12px]">●</span>
+              <span>{task.priority}</span>
+            </div>
+          </div>
 
           <button
             onClick={() => deleteTask(task.id)}
