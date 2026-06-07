@@ -2417,7 +2417,7 @@ const hiddenTaskCount = Math.max(tasks.length - 5, 0);
         </button>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-0 sm:space-y-3">
         {tasks.length === 0 && (
           <div
             className={`rounded-2xl border border-dashed p-8 text-center text-sm ${
@@ -2436,11 +2436,11 @@ const hiddenTaskCount = Math.max(tasks.length - 5, 0);
 
   return (
     <motion.div
-      key={task.id}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`group overflow-hidden border-b last:border-b-0 sm:rounded-[24px] sm:border sm:p-4 sm:transition-all sm:duration-200 sm:hover:-translate-y-0.5 ${border}`}
-    >
+  key={task.id}
+  initial={{ opacity: 0, y: 8 }}
+  animate={{ opacity: 1, y: 0 }}
+  className={`group overflow-hidden border-b last:border-b-0 sm:overflow-visible sm:border-b-0 ${border}`}
+>
       {/* Mobile compact row */}
       <div className="flex min-h-[44px] items-center gap-3 px-1 py-2 sm:hidden">
         <button
@@ -2486,11 +2486,15 @@ const hiddenTaskCount = Math.max(tasks.length - 5, 0);
 
       {/* Desktop/tablet full row */}
       <div
-        className={`hidden min-h-[76px] min-w-0 items-center gap-4 rounded-[24px] sm:flex ${getPriorityRowClass(
-          task.priority,
-          darkMode
-        )}`}
-      >
+  className={`hidden min-h-[72px] min-w-0 items-center gap-4 rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${border} ${getPriorityRowClass(
+    task.priority,
+    darkMode
+  )} ${
+    darkMode
+      ? "hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
+      : "hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+  }`}
+>
         <div className="flex w-full min-w-0 flex-1 items-center gap-4 overflow-hidden">
           <button
             onClick={(e) => toggleTaskById(task.id, e)}
