@@ -610,6 +610,10 @@ const [extractedTasks, setExtractedTasks] = useState<ExtractedTaskSuggestion[]>(
   []
 );
 const [suggestingTaskIds, setSuggestingTaskIds] = useState<string[]>([]);
+const [boostMessage, setBoostMessage] = useState("");
+const [boostLoading, setBoostLoading] = useState(false);
+const [lastBoostTaskKey, setLastBoostTaskKey] = useState("");
+const [dailyBoostCount, setDailyBoostCount] = useState(0);
 const [isLoaded, setIsLoaded] = useState(false);
 
   const todayDate = getTodayDate();
@@ -784,6 +788,183 @@ const [isLoaded, setIsLoaded] = useState(false);
   const suggestionReviewTasks = prioritizedTasks.filter(
     (task) => !task.dueDate && task.suggestedDueDate
   );
+  
+  const completedBoostTaskKey = completedToday
+  .map((task) => task.id)
+  .sort()
+  .join("-");
+
+const boostCacheDate = getTodayDate();
+const boostCacheKey = `momentum-boost-${boostCacheDate}`;
+const boostCountKey = `momentum-boost-count-${boostCacheDate}`;
+
+
+/* ------------------------------------------------ */
+/* Load Momentum Boost Cache */
+/* ------------------------------------------------ */
+
+useEffect(() => {
+  if (!isLoaded) return;
+
+  const cachedBoost = localStorage.getItem(boostCacheKey);
+  const cachedCount = localStorage.getItem(boostCountKey);
+
+  if (cachedBoost) {
+    try {
+      const parsed = JSON.parse(cachedBoost);
+
+      if (parsed?.message && parsed?.taskKey) {
+        setBoostMessage(parsed.message);
+        setLastBoostTaskKey(parsed.taskKey);
+      }
+    } catch (error) {
+      console.error("Failed to load cached boost:", error);
+    }
+  }
+
+  setDailyBoostCount(Number(cachedCount || 0));
+}, [isLoaded, boostCacheKey, boostCountKey]);
+
+/* ------------------------------------------------ */
+/* Automatic Momentum Boost */
+/* ------------------------------------------------ */
+
+useEffect(() => {
+  if (!isLoaded) return;
+  if (selectedView !== "today") return;
+
+  if (completedToday.length === 0) {
+    setBoostMessage("");
+    setLastBoostTaskKey("");
+    setBoostLoading(false);
+
+    localStorage.removeItem(boostCacheKey);
+    return;
+  }
+
+  if (completedToday.length === 1) {
+    const firstWinMessage =
+      "Nice — first win logged. Momentum is starting to build.";
+
+    setBoostMessage(firstWinMessage);
+    setLastBoostTaskKey(completedBoostTaskKey);
+    setBoostLoading(false);
+
+    localStorage.setItem(
+      boostCacheKey,
+      JSON.stringify({
+        message: firstWinMessage,
+        taskKey: completedBoostTaskKey,
+        generatedAt: new Date().toISOString(),
+        source: "local",
+      })
+    );
+
+    return;
+  }
+
+  if (completedBoostTaskKey === lastBoostTaskKey) return;
+
+  if (dailyBoostCount >= 3) {
+    const cappedMessage = `You’ve completed ${completedToday.length} tasks today. That is strong progress — and Momentum is already visible.`;
+
+    setBoostMessage(cappedMessage);
+    setLastBoostTaskKey(completedBoostTaskKey);
+    setBoostLoading(false);
+
+    localStorage.setItem(
+      boostCacheKey,
+      JSON.stringify({
+        message: cappedMessage,
+        taskKey: completedBoostTaskKey,
+        generatedAt: new Date().toISOString(),
+        source: "local-cap",
+      })
+    );
+
+    return;
+  }
+
+  const timeout = setTimeout(async () => {
+    const completedTaskTitles = completedToday.map((task) => task.title);
+
+    try {
+      setBoostLoading(true);
+
+      const response = await fetch("/api/boost", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          completedTasks: completedTaskTitles,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to generate boost.");
+      }
+
+      const nextBoostMessage =
+        data.boost || "Nice work — you made visible progress today.";
+
+      const nextBoostCount = dailyBoostCount + 1;
+
+      setBoostMessage(nextBoostMessage);
+      setLastBoostTaskKey(completedBoostTaskKey);
+      setDailyBoostCount(nextBoostCount);
+
+      localStorage.setItem(
+        boostCacheKey,
+        JSON.stringify({
+          message: nextBoostMessage,
+          taskKey: completedBoostTaskKey,
+          generatedAt: new Date().toISOString(),
+          source: "ai",
+        })
+      );
+
+      localStorage.setItem(boostCountKey, String(nextBoostCount));
+    } catch (error) {
+      console.error(error);
+
+      const fallbackMessage = `Nice work — you’ve completed ${
+        completedTaskTitles.length
+      } task${
+        completedTaskTitles.length === 1 ? "" : "s"
+      } today. Keep building momentum.`;
+
+      setBoostMessage(fallbackMessage);
+      setLastBoostTaskKey(completedBoostTaskKey);
+
+      localStorage.setItem(
+        boostCacheKey,
+        JSON.stringify({
+          message: fallbackMessage,
+          taskKey: completedBoostTaskKey,
+          generatedAt: new Date().toISOString(),
+          source: "fallback",
+        })
+      );
+    } finally {
+      setBoostLoading(false);
+    }
+  }, 3000);
+
+  return () => clearTimeout(timeout);
+}, [
+  isLoaded,
+  selectedView,
+  completedBoostTaskKey,
+  completedToday,
+  lastBoostTaskKey,
+  dailyBoostCount,
+  boostCacheKey,
+  boostCountKey,
+]);
+
 
   /* ------------------------------------------------ */
   /* Theme Classes */
@@ -1612,6 +1793,8 @@ completedAt: updatedTask.completedAt,
             completionPercent={completionPercent}
             suggestedDateCount={suggestedDateCount}
             completedToday={completedToday}
+            boostMessage={boostMessage}
+            boostLoading={boostLoading}
             newTask={newTask}
             setNewTask={setNewTask}
             addTask={addTask}
@@ -1844,6 +2027,8 @@ function TodayView({
   completionPercent,
   suggestedDateCount,
   completedToday,
+  boostMessage,
+  boostLoading,
   newTask,
   setNewTask,
   addTask,
@@ -1894,6 +2079,100 @@ function TodayView({
           </div>
         </div>
       </div>
+
+      <section
+        className={`mb-5 overflow-hidden rounded-[26px] border p-4 sm:mb-6 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+      >
+       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+       <div className="min-w-0 flex-1">
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles size={17} style={{ color: themeColor }} />
+
+              <p
+                className="text-[12px] font-[900] uppercase tracking-[0.14em]"
+                style={{ color: themeColor }}
+              >
+                AI Momentum Boost
+              </p>
+            </div>
+
+            {completedToday.length === 0 ? (
+              <>
+                <h2 className="text-[22px] font-[900] leading-tight tracking-[-0.04em] sm:text-[28px]">
+                  Let&apos;s build momentum today.
+                </h2>
+
+                <p
+                  className={`mt-2 max-w-5xl text-sm leading-6 ${
+                    darkMode ? "text-white/45" : "text-black/45"
+                  }`}
+                >
+                  Complete your first task and Momentum will automatically turn
+                  your progress into a quick boost.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-[22px] font-[900] leading-tight tracking-[-0.04em] sm:text-[28px]">
+                {boostLoading
+  ? "Reading your wins..."
+  : completedToday.length === 1
+  ? "First win logged."
+  : `Great start! You have completed ${
+      completedToday.length
+    } tasks today.`}
+                </h2>
+
+                <p
+                  className={`mt-2 max-w-5xl text-sm leading-6 ${
+                    darkMode ? "text-white/55" : "text-black/55"
+                  }`}
+                >
+                 {boostLoading
+  ? "Your boost will update after a short pause."
+  : boostMessage ||
+    "Nice work — your completed tasks are turning into visible progress."}
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {completedToday.slice(0, 4).map((task: any) => (
+                    <span
+                      key={task.id}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-[800] ${
+                        darkMode
+                          ? "border-white/[0.08] bg-white/[0.06] text-white/65"
+                          : "border-black/[0.06] bg-white text-black/65"
+                      }`}
+                    >
+                      <CheckCircle2 size={13} style={{ color: themeColor }} />
+                      {task.title}
+                    </span>
+                  ))}
+
+                  {completedToday.length > 4 && (
+                    <span
+                      className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[11px] font-[800] ${
+                        darkMode
+                          ? "border-white/[0.08] bg-white/[0.06] text-white/50"
+                          : "border-black/[0.06] bg-white text-black/50"
+                      }`}
+                    >
+                      +{completedToday.length - 4} more
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div
+  className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] text-white shadow-[0_18px_45px_rgba(0,0,0,0.18)] sm:flex"
+  style={{ backgroundColor: themeColor }}
+>
+  <Zap size={26} />
+</div>
+        </div>
+      </section>
 
       <div className="mb-5 grid grid-cols-5 gap-1 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
         <StatCard

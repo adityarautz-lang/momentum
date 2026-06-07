@@ -98,34 +98,22 @@ export default function Sidebar({
   themeColor,
   inboxCount = 0,
 }: SidebarProps) {
-  const sidebarBg = darkMode ? "bg-[#10151f]" : "bg-white";
+  const sidebarBg = "bg-[#1f232b]";
 
-  const border = darkMode
-    ? "border-white/[0.08]"
-    : "border-black/[0.06]";
-
-  const mutedText = darkMode ? "text-white/50" : "text-black/45";
-
-  const softSurface = darkMode
-    ? "bg-white/[0.05]"
-    : "bg-black/[0.04]";
-
-  const hoverSurface = darkMode
-    ? "hover:bg-white/[0.06]"
-    : "hover:bg-black/[0.04]";
-
-  const activeSurface = darkMode
-    ? "bg-white/[0.08]"
-    : "bg-black/[0.04]";
+  const border = "border-white/[0.09]";
+  const mutedText = "text-white/45";
+  const softSurface = "bg-white/[0.06]";
+  const hoverSurface = "hover:bg-white/[0.08]";
+  const activeSurface = "bg-white/[0.12]";
 
   return (
     <aside
-      className={`sticky top-0 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 lg:flex ${border} ${sidebarBg}`}
+      className={`sticky top-0 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 text-white shadow-[18px_0_70px_rgba(0,0,0,0.38)] lg:flex ${border} ${sidebarBg}`}
     >
       <div className="mb-7">
         <div className="mb-5 flex items-center gap-3">
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-white shadow-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-white shadow-[0_14px_34px_rgba(0,0,0,0.28)]"
             style={{
               backgroundColor: themeColor,
             }}
@@ -134,7 +122,7 @@ export default function Sidebar({
           </div>
 
           <div>
-            <h1 className="text-[15px] font-[800] tracking-[-0.03em]">
+            <h1 className="text-[15px] font-[800] tracking-[-0.03em] text-white">
               Momentum
             </h1>
 
@@ -153,7 +141,9 @@ export default function Sidebar({
               }}
             />
 
-            <p className="text-xs font-[800]">AI planning enabled</p>
+            <p className="text-xs font-[800] text-white">
+              AI planning enabled
+            </p>
           </div>
 
           <p className={`text-[11px] leading-relaxed ${mutedText}`}>
@@ -177,7 +167,6 @@ export default function Sidebar({
               setSelectedView={setSelectedView}
               activeSurface={activeSurface}
               hoverSurface={hoverSurface}
-              mutedText={mutedText}
               themeColor={themeColor}
             />
           ))}
@@ -194,7 +183,6 @@ export default function Sidebar({
               setSelectedView={setSelectedView}
               activeSurface={activeSurface}
               hoverSurface={hoverSurface}
-              mutedText={mutedText}
               themeColor={themeColor}
             />
           ))}
@@ -213,7 +201,6 @@ export default function Sidebar({
             setSelectedView={setSelectedView}
             activeSurface={activeSurface}
             hoverSurface={hoverSurface}
-            mutedText={mutedText}
             themeColor={themeColor}
           />
 
@@ -225,7 +212,7 @@ export default function Sidebar({
               scale: 0.98,
             }}
             onClick={() => setDarkMode(!darkMode)}
-            className={`flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[700] transition ${hoverSurface}`}
+            className={`flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[700] text-white/70 transition hover:text-white ${hoverSurface}`}
           >
             <div className="flex items-center gap-3">
               {darkMode ? <Sun size={17} /> : <Moon size={17} />}
@@ -233,11 +220,7 @@ export default function Sidebar({
               <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
             </div>
 
-            <div
-              className={`flex h-6 w-11 items-center rounded-full p-1 transition ${
-                darkMode ? "bg-white/15" : "bg-black/10"
-              }`}
-            >
+            <div className="flex h-6 w-11 items-center rounded-full bg-white/12 p-1 transition">
               <div
                 className="h-4 w-4 rounded-full transition-transform"
                 style={{
@@ -254,10 +237,10 @@ export default function Sidebar({
 
       <div className={`mt-5 border-t ${border} pt-4`}>
         <button
-          className={`flex w-full items-center gap-3 rounded-2xl p-2 text-left transition ${hoverSurface}`}
+          className={`flex w-full items-center gap-3 rounded-2xl p-2 text-left transition hover:text-white ${hoverSurface}`}
         >
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-[900] text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-[900] text-white shadow-[0_12px_28px_rgba(0,0,0,0.24)]"
             style={{
               backgroundColor: themeColor,
             }}
@@ -266,7 +249,7 @@ export default function Sidebar({
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-[800]">Arnav</p>
+            <p className="truncate text-sm font-[800] text-white">Arnav</p>
             <p className={`text-[11px] font-medium ${mutedText}`}>
               View Profile
             </p>
@@ -299,7 +282,6 @@ function SidebarNavButton({
   setSelectedView,
   activeSurface,
   hoverSurface,
-  mutedText,
   themeColor,
 }: any) {
   const Icon = item.icon;
@@ -315,7 +297,9 @@ function SidebarNavButton({
       }}
       onClick={() => setSelectedView(item.key)}
       className={`flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[700] transition ${
-        isActive ? activeSurface : hoverSurface
+        isActive
+          ? `${activeSurface} text-white shadow-[0_14px_34px_rgba(0,0,0,0.22)]`
+          : `text-white/58 hover:text-white ${hoverSurface}`
       }`}
     >
       <div className="flex items-center gap-3">
@@ -335,7 +319,7 @@ function SidebarNavButton({
 
       {item.count ? (
         <span
-          className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-[900] text-white"
+          className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-[900] text-white shadow-sm"
           style={{
             backgroundColor: themeColor,
           }}
