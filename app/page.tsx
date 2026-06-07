@@ -2895,6 +2895,51 @@ function FocusModePanel({
   const [focusError, setFocusError] = useState("");
   const [focusPlan, setFocusPlan] = useState<any>(null);
 
+  const focusCacheDate = getTodayDate();
+  const focusCacheKey = `momentum-focus-plan-${focusCacheDate}`;
+
+  useEffect(() => {
+    const cachedFocusPlan = localStorage.getItem(focusCacheKey);
+  
+    if (!cachedFocusPlan) return;
+  
+    try {
+      const parsed = JSON.parse(cachedFocusPlan);
+  
+      if (!parsed?.focusTaskIds?.length) return;
+  
+      const validTaskIds = parsed.focusTaskIds.filter((taskId: string) =>
+        prioritizedTasks.some((task: any) => task.id === taskId)
+      );
+  
+      if (validTaskIds.length === 0) {
+        setFocusPlan(null);
+        setFocusIndex(0);
+        localStorage.removeItem(focusCacheKey);
+        return;
+      }
+  
+      setFocusPlan({
+        ...parsed,
+        focusTaskIds: validTaskIds,
+      });
+  
+      setFocusIndex(0);
+    } catch (error) {
+      console.error("Failed to load cached focus plan:", error);
+      localStorage.removeItem(focusCacheKey);
+    }
+  }, [focusCacheKey, prioritizedTasks]);
+
+
+  useEffect(() => {
+    if (prioritizedTasks.length > 0) return;
+
+    setFocusPlan(null);
+    setFocusIndex(0);
+    localStorage.removeItem(focusCacheKey);
+  }, [prioritizedTasks.length, focusCacheKey]);
+
   const focusTasks =
     focusPlan?.focusTaskIds
       ?.map((taskId: string) =>
@@ -2963,21 +3008,26 @@ function FocusModePanel({
         throw new Error("Momentum could not pick focus tasks.");
       }
 
-      setFocusPlan({
+      const nextFocusPlan = {
         focusTaskIds: validTaskIds.slice(0, 3),
         reasons: data.reasons || {},
         summary:
           data.summary ||
           "Momentum selected the strongest next moves from your active tasks.",
-      });
-
+        generatedAt: new Date().toISOString(),
+        source: "ai",
+      };
+      
+      setFocusPlan(nextFocusPlan);
+      localStorage.setItem(focusCacheKey, JSON.stringify(nextFocusPlan));
+      
       setFocusIndex(0);
     } catch (error) {
       console.error(error);
 
       const fallbackTasks = prioritizedTasks.slice(0, 3);
 
-      setFocusPlan({
+      const fallbackFocusPlan = {
         focusTaskIds: fallbackTasks.map((task: any) => task.id),
         reasons: Object.fromEntries(
           fallbackTasks.map((task: any) => [
@@ -2987,8 +3037,13 @@ function FocusModePanel({
         ),
         summary:
           "Momentum used a fallback stack because AI focus planning was unavailable.",
-      });
-
+        generatedAt: new Date().toISOString(),
+        source: "fallback",
+      };
+      
+      setFocusPlan(fallbackFocusPlan);
+      localStorage.setItem(focusCacheKey, JSON.stringify(fallbackFocusPlan));
+      
       setFocusIndex(0);
       setFocusError("AI focus was unavailable. Fallback stack used.");
     } finally {
