@@ -2360,6 +2360,11 @@ function TaskListPanel({
   setIsEditModalOpen,
   ranked = false,
 }: any) {
+  const [showAllTasks, setShowAllTasks] = useState(false);
+
+  const visibleTasks = showAllTasks ? tasks : tasks.slice(0, 6);
+  const hiddenTaskCount = Math.max(tasks.length - 6, 0);
+
   return (
     <section
     className={`min-w-0 self-start overflow-hidden rounded-[30px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
@@ -2404,7 +2409,7 @@ function TaskListPanel({
           </div>
         )}
 
-{tasks.map((task: any, index: number) => {
+{visibleTasks.map((task: any, index: number) => {
   const isSuggesting = suggestingTaskIds.includes(task.id);
   const visibleDueDate = task.dueDate || task.suggestedDueDate;
 
@@ -2504,6 +2509,19 @@ function TaskListPanel({
             </motion.div>
           );
         })}
+
+        {hiddenTaskCount > 0 && (
+          <button
+            onClick={() => setShowAllTasks((prev) => !prev)}
+            className={`mt-4 flex h-12 w-full items-center justify-center rounded-[20px] border text-sm font-[900] transition hover:scale-[1.005] ${border} ${
+              darkMode
+                ? "bg-white/[0.035] text-white/55 hover:bg-white/[0.06] hover:text-white"
+                : "bg-black/[0.025] text-black/50 hover:bg-black/[0.04] hover:text-black"
+            }`}
+          >
+            {showAllTasks ? "Collapse to 6 tasks" : `Show ${hiddenTaskCount} more`}
+          </button>
+        )}
       </div>
     </section>
   );
