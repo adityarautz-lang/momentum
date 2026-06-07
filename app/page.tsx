@@ -2216,28 +2216,35 @@ function TodayView({
       <section
   className={`relative mb-5 overflow-hidden rounded-[30px] border p-5 sm:mb-6 sm:rounded-[36px] sm:p-6 ${
     darkMode
-      ? "border-violet-300/[0.14] bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(255,255,255,0.055)_45%,rgba(124,58,237,0.10))] shadow-[0_24px_80px_rgba(124,58,237,0.12)]"
-      : "border-violet-500/15 bg-[linear-gradient(135deg,rgba(250,247,255,0.98),rgba(255,255,255,0.94)_45%,rgba(237,233,254,0.96))] shadow-[0_24px_70px_rgba(124,58,237,0.10)]"
+      ? "border-white/[0.08] bg-white/[0.055] shadow-[0_24px_80px_rgba(0,0,0,0.32)]"
+      : "border-white bg-white/95 shadow-[0_18px_54px_rgba(17,24,39,0.055)]"
   }`}
 >
   <div
-    className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full opacity-30 blur-3xl"
+    className="pointer-events-none absolute left-0 top-0 h-1 w-full"
     style={{
-      backgroundColor: themeColor,
+      background: `linear-gradient(90deg, ${themeColor}, transparent)`,
     }}
   />
 
   <div
-    className="pointer-events-none absolute -left-20 bottom-0 h-44 w-44 rounded-full opacity-16 blur-3xl"
+    className="pointer-events-none absolute -right-20 -top-28 h-56 w-56 rounded-full opacity-18 blur-3xl"
     style={{
-      backgroundColor: "#c4b5fd",
+      backgroundColor: themeColor,
     }}
   />
 
   <div className="relative">
     <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
       <div className="flex items-center gap-2">
-        <Sparkles size={18} style={{ color: themeColor }} />
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-2xl text-white shadow-[0_12px_28px_rgba(124,58,237,0.22)]"
+          style={{
+            backgroundColor: themeColor,
+          }}
+        >
+          <Send size={15} />
+        </div>
 
         <h2 className="text-[19px] font-[900] tracking-[-0.03em] sm:text-[22px]">
           Quick Capture
@@ -2246,7 +2253,7 @@ function TodayView({
 
       <span
         className={`text-xs font-[700] ${
-          darkMode ? "text-white/45" : "text-violet-950/40"
+          darkMode ? "text-white/42" : "text-black/38"
         }`}
       >
         Momentum will organize it for you
@@ -2263,14 +2270,14 @@ function TodayView({
         placeholder="Capture anything..."
         className={`h-[54px] min-w-0 flex-1 rounded-[22px] border px-4 text-sm font-[750] outline-none transition focus:ring-4 sm:h-14 sm:px-5 ${
           darkMode
-            ? "border-violet-300/25 bg-black/10 text-white placeholder:text-white/35 focus:border-violet-300/50 focus:ring-violet-400/10"
-            : "border-violet-400/35 bg-white/85 text-black placeholder:text-black/35 focus:border-violet-500/55 focus:ring-violet-300/30"
+            ? "border-white/[0.08] bg-white/[0.06] text-white placeholder:text-white/35 focus:border-violet-300/45 focus:ring-violet-400/10"
+            : "border-black/[0.06] bg-white text-black placeholder:text-black/35 focus:border-violet-400/55 focus:ring-violet-300/25"
         }`}
       />
 
       <button
         onClick={addTask}
-        className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[22px] text-white shadow-[0_18px_42px_rgba(124,58,237,0.24)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-14 sm:w-14"
+        className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[22px] text-white shadow-[0_16px_38px_rgba(124,58,237,0.25)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-14 sm:w-14"
         style={{
           background: `linear-gradient(135deg, ${themeColor}, #7c3aed)`,
         }}
@@ -2285,7 +2292,7 @@ function TodayView({
         className={`rounded-full border px-3 py-1.5 text-xs font-[900] transition hover:scale-[1.02] ${
           darkMode
             ? "border-violet-300/15 bg-violet-300/10 text-violet-200"
-            : "border-violet-500/15 bg-violet-500/10 text-violet-700"
+            : "border-violet-500/15 bg-violet-500/8 text-violet-600"
         }`}
       >
         Extract from text
@@ -2301,8 +2308,8 @@ function TodayView({
           onClick={() => setNewTask(example)}
           className={`rounded-full border px-3 py-1.5 text-xs font-[700] transition hover:scale-[1.02] ${
             darkMode
-              ? "border-white/[0.08] bg-white/[0.045] text-white/50 hover:text-white"
-              : "border-violet-950/[0.08] bg-white/70 text-violet-950/42 hover:text-violet-950/70"
+              ? "border-white/[0.08] bg-white/[0.045] text-white/48 hover:text-white"
+              : "border-black/[0.06] bg-white text-black/45 hover:text-black/70"
           }`}
         >
           {example}
