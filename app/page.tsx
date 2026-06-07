@@ -2383,8 +2383,13 @@ function TaskListPanel({
 }: any) {
   const [showAllTasks, setShowAllTasks] = useState(false);
 
-  const visibleTasks = showAllTasks ? tasks : tasks.slice(0, 5);
-const hiddenTaskCount = Math.max(tasks.length - 5, 0);
+  const defaultVisibleTaskCount = 6;
+
+const visibleTasks = showAllTasks
+  ? tasks
+  : tasks.slice(0, defaultVisibleTaskCount);
+
+const hiddenTaskCount = Math.max(tasks.length - defaultVisibleTaskCount, 0);
 
   return (
     <section
