@@ -1923,20 +1923,7 @@ suggestingTaskIds={suggestingTaskIds}
               />
             )}
 
-            {[
-              "goals",
-              "routines",
-              "calendar",
-              "review",
-              "insights",
-            ].includes(selectedView) && (
-              <PlaceholderView
-                selectedView={selectedView}
-                darkMode={darkMode}
-                border={border}
-                className={strongerGlass}
-              />
-            )}
+           
           </div>
         </div>
       </div>
@@ -3357,40 +3344,6 @@ function DateBadge({ task, visibleDueDate, darkMode }: any) {
   );
 }
 
-function PlaceholderView({ selectedView, darkMode, border, className }: any) {
-  const viewLabels: Record<string, string> = {
-    goals: "Goals",
-    routines: "Routines",
-    calendar: "Calendar",
-    review: "Review",
-    insights: "Insights",
-  };
-
-  const descriptions: Record<string, string> = {
-    goals: "Longer-term outcomes that your tasks can connect to.",
-    routines: "Recurring systems like morning reset, workouts, and weekly review.",
-    calendar: "A calendar-style view for due dates and focus blocks.",
-    review: "Daily and weekly reflections to understand what moved forward.",
-    insights: "Personal analytics for progress, consistency, and task patterns.",
-  };
-
-  const title = viewLabels[selectedView] || "Coming Soon";
-  const description =
-    descriptions[selectedView] || "This section will be built in the next phase.";
-
-  return (
-    <div>
-      <PageHeader title={title} description={description} darkMode={darkMode} />
-
-      <section className={`rounded-[28px] border p-8 shadow-sm ${className} ${border}`}>
-        <p className={`text-sm ${darkMode ? "text-white/40" : "text-black/40"}`}>
-          This view is connected in navigation. We will build it after the Today
-          dashboard is stable.
-        </p>
-      </section>
-    </div>
-  );
-}
 
 function PrioritiesView({
   darkMode,

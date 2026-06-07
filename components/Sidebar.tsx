@@ -2,16 +2,11 @@
 
 import {
   Archive,
-  BarChart3,
   Calendar,
-  CalendarCheck,
   CalendarDays,
   Inbox,
-  LineChart,
   Moon,
-  RefreshCcw,
   Settings,
-  ShieldCheck,
   Sparkles,
   Star,
   Sun,
@@ -40,31 +35,6 @@ const mainNavItems = [
     key: "priorities",
     label: "Priority",
     icon: Star,
-  },
-  {
-    key: "goals",
-    label: "Goals",
-    icon: ShieldCheck,
-  },
-  {
-    key: "routines",
-    label: "Routines",
-    icon: RefreshCcw,
-  },
-  {
-    key: "calendar",
-    label: "Calendar",
-    icon: CalendarCheck,
-  },
-  {
-    key: "review",
-    label: "Review",
-    icon: LineChart,
-  },
-  {
-    key: "insights",
-    label: "Insights",
-    icon: BarChart3,
   },
 ];
 
@@ -235,7 +205,7 @@ export default function Sidebar({
         </div>
       </nav>
 
-      <div className={`mt-5 border-t ${border} pt-4`}>
+      <div className={`mt-4 shrink-0 border-t ${border} pt-4`}>
         <button
           className={`flex w-full items-center gap-3 rounded-2xl p-2 text-left transition hover:text-white ${hoverSurface}`}
         >
