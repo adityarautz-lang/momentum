@@ -2033,7 +2033,7 @@ function TodayView({
   return (
     <>
     <div
-  className={`mb-5 rounded-[30px] border px-5 py-5 sm:mb-6 sm:rounded-[34px] sm:px-7 sm:py-6 ${strongerGlass} ${border}`}
+  className={`mb-5 hidden rounded-[30px] border px-5 py-5 sm:mb-6 sm:block sm:rounded-[34px] sm:px-7 sm:py-6 ${strongerGlass} ${border}`}
 >
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           <div>
@@ -2067,8 +2067,8 @@ function TodayView({
       </div>
 
       <section
-        className={`relative mb-5 overflow-hidden rounded-[32px] border p-5 sm:mb-6 sm:rounded-[40px] sm:p-7 ${strongerGlass} ${border}`}
-      >
+  className={`relative mb-5 hidden overflow-hidden rounded-[32px] border p-5 sm:mb-6 sm:block sm:rounded-[40px] sm:p-7 ${strongerGlass} ${border}`}
+>
         <div
           className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-20 blur-3xl"
           style={{ backgroundColor: themeColor }}
@@ -2314,7 +2314,7 @@ function TodayView({
 </section>
 
 
-<div className="grid min-w-0 grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,1fr)]">
+<div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,1fr)]">
   <div className="order-2 xl:order-1">
     <TaskListPanel
       title="Momentum Prioritized for You"
@@ -2435,101 +2435,145 @@ const hiddenTaskCount = Math.max(tasks.length - 5, 0);
   const visibleDueDate = task.dueDate || task.suggestedDueDate;
 
   return (
-            <motion.div
-              key={task.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`group flex min-h-[68px] min-w-0 flex-col items-start gap-3 overflow-hidden rounded-[20px] border p-3 transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[76px] sm:flex-row sm:items-center sm:gap-4 sm:rounded-[24px] sm:p-4 ${border} ${getPriorityRowClass(
-                task.priority,
-                darkMode
-              )} ${
-                darkMode
-                  ? "hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
-                  : "hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+    <motion.div
+      key={task.id}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`group overflow-hidden border-b last:border-b-0 sm:rounded-[24px] sm:border sm:p-4 sm:transition-all sm:duration-200 sm:hover:-translate-y-0.5 ${border}`}
+    >
+      {/* Mobile compact row */}
+      <div className="flex min-h-[44px] items-center gap-3 px-1 py-2 sm:hidden">
+        <button
+          onClick={(e) => toggleTaskById(task.id, e)}
+          className="shrink-0 opacity-70 transition hover:opacity-100"
+        >
+          <Circle
+            size={18}
+            className={darkMode ? "text-white/28" : "text-black/28"}
+          />
+        </button>
+
+        {ranked && (
+          <span
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-[900] text-white"
+            style={{
+              backgroundColor: index < 3 ? "#f59e0b" : themeColor,
+            }}
+          >
+            {index + 1}
+          </span>
+        )}
+
+        <button
+          onClick={() => {
+            setSelectedTask(task);
+            setIsEditModalOpen(true);
+          }}
+          title={task.title}
+          className="min-w-0 flex-1 truncate text-left text-[13px] font-[850] tracking-[-0.02em] transition hover:opacity-70"
+        >
+          {task.title}
+        </button>
+
+        {isSuggesting && (
+          <Sparkles
+            size={13}
+            className="shrink-0 animate-pulse"
+            style={{ color: themeColor }}
+          />
+        )}
+      </div>
+
+      {/* Desktop/tablet full row */}
+      <div
+        className={`hidden min-h-[76px] min-w-0 items-center gap-4 rounded-[24px] sm:flex ${getPriorityRowClass(
+          task.priority,
+          darkMode
+        )}`}
+      >
+        <div className="flex w-full min-w-0 flex-1 items-center gap-4 overflow-hidden">
+          <button
+            onClick={(e) => toggleTaskById(task.id, e)}
+            className="shrink-0 opacity-70 transition hover:opacity-100"
+          >
+            <Circle
+              size={19}
+              className={darkMode ? "text-white/25" : "text-black/25"}
+            />
+          </button>
+
+          {ranked && (
+            <div
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[800] text-white"
+              style={{
+                backgroundColor: index < 3 ? "#f59e0b" : themeColor,
+              }}
+            >
+              {index + 1}
+            </div>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <p
+              onClick={() => {
+                setSelectedTask(task);
+                setIsEditModalOpen(true);
+              }}
+              title={task.title}
+              className="block max-w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
+            >
+              {task.title}
+            </p>
+
+            <p
+              className={`mt-1.5 truncate text-[11px] font-[650] ${
+                darkMode ? "text-white/38" : "text-black/38"
               }`}
             >
-             <div className="flex w-full min-w-0 flex-1 items-start gap-3 overflow-hidden sm:items-center sm:gap-4">
-                <button
-                  onClick={(e) => toggleTaskById(task.id, e)}
-                  className="mt-0.5 shrink-0 opacity-70 transition hover:opacity-100 sm:mt-0"
-                >
-                  <Circle
-                    size={19}
-                    className={darkMode ? "text-white/25" : "text-black/25"}
-                  />
-                </button>
+              {task.category} · {task.priority}
+              {isSuggesting ? " · Momentum thinking..." : ""}
+            </p>
+          </div>
+        </div>
 
-                {ranked && (
-                  <div
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-[900] text-white sm:h-7 sm:w-7 sm:text-xs sm:font-[800]"
-                    style={{
-                      backgroundColor: index < 3 ? "#f59e0b" : themeColor,
-                    }}
-                  >
-                    {index + 1}
-                  </div>
-                )}
-
-                <div className="min-w-0 flex-1">
-                <p
-  onClick={() => {
-    setSelectedTask(task);
-    setIsEditModalOpen(true);
-  }}
-  title={task.title}
-  className="block max-w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[800] leading-5 tracking-[-0.02em] hover:opacity-70 sm:text-[15px] sm:font-[700] sm:tracking-[-0.015em]"
->
-  {task.title}
-</p>
-
-                  <p
-  className={`mt-1 truncate text-[10.5px] font-[700] sm:mt-1.5 sm:text-[11px] sm:font-[650] ${
-    darkMode ? "text-white/38" : "text-black/38"
-  }`}
->
-{task.category} · {task.priority}
-{isSuggesting ? " · Momentum thinking..." : ""}
-</p>
-                </div>
+        <div className="flex w-auto items-center justify-end gap-2">
+          <div className="flex items-center gap-5 text-[13px] font-[700]">
+            {visibleDueDate && (
+              <div
+                className={`flex items-center gap-1.5 ${
+                  darkMode ? "text-white/70" : "text-black/65"
+                }`}
+              >
+                <Calendar size={14} />
+                <span>{formatDueDate(visibleDueDate)}</span>
               </div>
+            )}
 
-              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-              <div className="flex items-center gap-3 text-[12px] font-[800] sm:gap-5 sm:text-[13px] sm:font-[700]">
-  {visibleDueDate && (
-    <div
-      className={`flex items-center gap-1.5 ${
-        darkMode ? "text-white/70" : "text-black/65"
-      }`}
-    >
-      <Calendar size={14} />
-      <span>{formatDueDate(visibleDueDate)}</span>
-    </div>
-  )}
+            <div
+              className={`flex items-center gap-1.5 ${
+                task.priority === "High"
+                  ? "text-red-500"
+                  : task.priority === "Medium"
+                  ? "text-orange-500"
+                  : "text-emerald-500"
+              }`}
+            >
+              <span className="text-[12px]">●</span>
+              <span>{task.priority}</span>
+            </div>
+          </div>
 
-  <div
-    className={`flex items-center gap-1.5 ${
-      task.priority === "High"
-        ? "text-red-500"
-        : task.priority === "Medium"
-        ? "text-orange-500"
-        : "text-emerald-500"
-    }`}
-  >
-    <span className="text-[12px]">●</span>
-    <span>{task.priority}</span>
-  </div>
-</div>
-
-                <button
-                  onClick={() => deleteTask(task.id)}
-                  className="opacity-35 transition hover:!opacity-100 hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-35"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </motion.div>
-          );
-        })}
+          <button
+            onClick={() => deleteTask(task.id)}
+            className="opacity-0 transition hover:!opacity-100 hover:text-red-500 sm:group-hover:opacity-35"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+})}
 
         {hiddenTaskCount > 0 && (
           <button
