@@ -2890,12 +2890,26 @@ function FocusModePanel({
   setSelectedTask,
   setIsEditModalOpen,
 }: any) {
-  const focusTasks = prioritizedTasks.slice(0, 3);
   const [focusIndex, setFocusIndex] = useState(0);
+  const [focusLoading, setFocusLoading] = useState(false);
+  const [focusError, setFocusError] = useState("");
+  const [focusPlan, setFocusPlan] = useState<any>(null);
+
+  const focusTasks =
+    focusPlan?.focusTaskIds
+      ?.map((taskId: string) =>
+        prioritizedTasks.find((task: any) => task.id === taskId)
+      )
+      .filter(Boolean) || [];
 
   const currentTask = focusTasks[focusIndex] || focusTasks[0];
-  const completedCount = completedToday.length;
-  const focusTotal = focusTasks.length;
+
+  const getTaskReason = (taskId: string) => {
+    return (
+      focusPlan?.reasons?.[taskId] ||
+      "Momentum selected this as one of the strongest next moves."
+    );
+  };
 
   const moveNext = () => {
     if (focusTasks.length === 0) return;
@@ -2906,106 +2920,214 @@ function FocusModePanel({
     });
   };
 
-  const getFocusReason = (task: any) => {
-    if (!task) return "Add a task and Momentum will create a focus plan.";
+  const computeFocusStack = async () => {
+    if (prioritizedTasks.length === 0) return;
 
-    const visibleDate = task.dueDate || task.suggestedDueDate;
+    setFocusLoading(true);
+    setFocusError("");
 
-    if (task.priority === "High" && visibleDate) {
-      return "High priority and already dated. Completing this will create immediate progress.";
+    try {
+      const response = await fetch("/api/focus-plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          today: getTodayDate(),
+          completedTodayCount: completedToday.length,
+          tasks: prioritizedTasks.slice(0, 15).map((task: any) => ({
+            id: task.id,
+            title: task.title,
+            priority: task.priority,
+            dueDate: task.dueDate || null,
+            suggestedDueDate: task.suggestedDueDate || null,
+            category: task.category,
+            score: task.score || 0,
+            aiReason: task.aiReason || "",
+            status: task.status || "Active",
+          })),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to compute focus stack.");
+      }
+
+      const validTaskIds = (data.focusTaskIds || []).filter((taskId: string) =>
+        prioritizedTasks.some((task: any) => task.id === taskId)
+      );
+
+      if (validTaskIds.length === 0) {
+        throw new Error("Momentum could not pick focus tasks.");
+      }
+
+      setFocusPlan({
+        focusTaskIds: validTaskIds.slice(0, 3),
+        reasons: data.reasons || {},
+        summary:
+          data.summary ||
+          "Momentum selected the strongest next moves from your active tasks.",
+      });
+
+      setFocusIndex(0);
+    } catch (error) {
+      console.error(error);
+
+      const fallbackTasks = prioritizedTasks.slice(0, 3);
+
+      setFocusPlan({
+        focusTaskIds: fallbackTasks.map((task: any) => task.id),
+        reasons: Object.fromEntries(
+          fallbackTasks.map((task: any) => [
+            task.id,
+            "Fallback pick: this task is near the top of your prioritized list.",
+          ])
+        ),
+        summary:
+          "Momentum used a fallback stack because AI focus planning was unavailable.",
+      });
+
+      setFocusIndex(0);
+      setFocusError("AI focus was unavailable. Fallback stack used.");
+    } finally {
+      setFocusLoading(false);
     }
-
-    if (task.priority === "High") {
-      return "High priority. This is worth handling before lower-impact work.";
-    }
-
-    if (visibleDate) {
-      return "This task has a date attached, so Momentum is keeping it visible.";
-    }
-
-    return "Momentum picked this because it is near the top of your prioritized list.";
   };
 
   return (
     <section
-    className={`relative self-start overflow-hidden rounded-[30px] border p-5 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
-  >
+      className={`relative self-start overflow-hidden rounded-[30px] border p-5 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+    >
       <div
-        className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full opacity-20 blur-3xl"
+        className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full opacity-14 blur-3xl"
         style={{ backgroundColor: themeColor }}
       />
 
       <div className="relative">
         <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.03em]">
               Focus Mode
               <Sparkles size={16} style={{ color: themeColor }} />
             </h2>
 
             <p
-              className={`mt-2 text-sm leading-6 ${
+              className={`mt-2 max-w-md text-sm leading-6 ${
                 darkMode ? "text-white/45" : "text-black/45"
               }`}
             >
-              Stay focused. One task at a time. Momentum will guide you.
+              Compute a clean 3-task execution stack.
             </p>
           </div>
 
           <span
-            className="rounded-full px-3 py-1.5 text-[10px] font-[900] text-white"
-            style={{ backgroundColor: themeColor }}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-[900] ${
+              darkMode
+                ? "bg-white/[0.07] text-white/55"
+                : "bg-black/[0.04] text-black/45"
+            }`}
           >
-            BETA
+            AI
           </span>
         </div>
 
-        {currentTask ? (
-          <>
-            <div
-              className={`mb-5 rounded-[28px] border p-5 ${
-                darkMode
-                  ? "border-white/[0.08] bg-white/[0.045]"
-                  : "border-violet-500/10 bg-violet-50/45"
+        {!focusPlan ? (
+          <div
+            className={`rounded-[26px] border p-5 ${
+              darkMode
+                ? "border-white/[0.08] bg-white/[0.04]"
+                : "border-black/[0.04] bg-white/65"
+            }`}
+          >
+            <h3 className="text-[22px] font-[900] leading-tight tracking-[-0.04em]">
+              Build your focus stack.
+            </h3>
+
+            <p
+              className={`mt-3 text-sm leading-6 ${
+                darkMode ? "text-white/45" : "text-black/45"
               }`}
             >
-              <p
-                className="mb-3 text-[11px] font-[900] uppercase tracking-[0.16em]"
-                style={{ color: themeColor }}
-              >
-                Current Focus
+              Momentum will choose the 3 strongest tasks to work through next.
+            </p>
+
+            <button
+              onClick={computeFocusStack}
+              disabled={focusLoading || prioritizedTasks.length === 0}
+              className="mt-5 h-12 w-full rounded-2xl text-sm font-[900] text-white shadow-[0_16px_36px_rgba(0,0,0,0.14)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-40"
+              style={{ backgroundColor: themeColor }}
+            >
+              {focusLoading ? "Computing..." : "Compute Focus Stack"}
+            </button>
+
+            {prioritizedTasks.length === 0 && (
+              <p className="mt-3 text-center text-xs font-[700] opacity-40">
+                Add a task first.
               </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <div
+              className={`mb-5 rounded-[26px] border p-5 ${
+                darkMode
+                  ? "border-white/[0.08] bg-white/[0.04]"
+                  : "border-black/[0.04] bg-white/65"
+              }`}
+            >
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p
+                  className="text-[11px] font-[900] uppercase tracking-[0.16em]"
+                  style={{ color: themeColor }}
+                >
+                  Current Focus
+                </p>
+
+                <button
+                  onClick={computeFocusStack}
+                  disabled={focusLoading}
+                  className={`rounded-full px-3 py-1 text-[10px] font-[900] transition hover:scale-[1.02] disabled:opacity-40 ${
+                    darkMode
+                      ? "bg-white/[0.06] text-white/50"
+                      : "bg-black/[0.04] text-black/45"
+                  }`}
+                >
+                  {focusLoading ? "Thinking..." : "Recompute"}
+                </button>
+              </div>
 
               <h3
                 onClick={() => {
                   setSelectedTask(currentTask);
                   setIsEditModalOpen(true);
                 }}
-                title={currentTask.title}
-                className="cursor-pointer text-[22px] font-[900] leading-tight tracking-[-0.04em] hover:opacity-75"
+                title={currentTask?.title}
+                className="cursor-pointer text-[23px] font-[900] leading-tight tracking-[-0.045em] hover:opacity-75"
               >
-                {currentTask.title}
+                {currentTask?.title}
               </h3>
 
               <div
-                className={`mt-4 flex flex-wrap items-center gap-3 text-sm font-[750] ${
-                  darkMode ? "text-white/60" : "text-black/55"
+                className={`mt-3 flex flex-wrap items-center gap-3 text-sm font-[750] ${
+                  darkMode ? "text-white/55" : "text-black/50"
                 }`}
               >
                 <span
                   className={`inline-flex items-center gap-2 ${
-                    currentTask.priority === "High"
+                    currentTask?.priority === "High"
                       ? "text-red-500"
-                      : currentTask.priority === "Medium"
+                      : currentTask?.priority === "Medium"
                       ? "text-orange-500"
                       : "text-emerald-500"
                   }`}
                 >
                   <span className="text-[12px]">●</span>
-                  {currentTask.priority} Priority
+                  {currentTask?.priority}
                 </span>
 
-                {(currentTask.dueDate || currentTask.suggestedDueDate) && (
+                {(currentTask?.dueDate || currentTask?.suggestedDueDate) && (
                   <span className="inline-flex items-center gap-2">
                     <Calendar size={15} />
                     {formatDueDate(
@@ -3015,40 +3137,21 @@ function FocusModePanel({
                 )}
               </div>
 
-              <div className={`my-5 h-px ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
+              <p
+                className={`mt-4 text-sm leading-6 ${
+                  darkMode ? "text-white/45" : "text-black/45"
+                }`}
+              >
+                {getTaskReason(currentTask?.id)}
+              </p>
 
-              <div className="mb-5">
-                <p
-                  className="mb-2 flex items-center gap-2 text-sm font-[900]"
-                  style={{ color: themeColor }}
-                >
-                  <Sparkles size={15} />
-                  Why this?
-                </p>
-
-                <p
-                  className={`text-sm leading-6 ${
-                    darkMode ? "text-white/50" : "text-black/55"
-                  }`}
-                >
-                  {getFocusReason(currentTask)}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="mt-5 grid grid-cols-[1fr_0.7fr] gap-3">
                 <button
                   onClick={(event) => toggleTaskById(currentTask.id, event)}
-                  className="h-12 rounded-2xl text-sm font-[900] text-white shadow-[0_16px_36px_rgba(0,0,0,0.18)] transition hover:scale-[1.01]"
+                  className="h-12 rounded-2xl text-sm font-[900] text-white shadow-[0_16px_36px_rgba(0,0,0,0.14)] transition hover:scale-[1.01]"
                   style={{ backgroundColor: themeColor }}
                 >
-                  ✓ Complete
-                </button>
-
-                <button
-                  onClick={moveNext}
-                  className={`h-12 rounded-2xl border text-sm font-[900] transition hover:scale-[1.01] ${border}`}
-                >
-                  Skip
+                  Complete
                 </button>
 
                 <button
@@ -3060,22 +3163,28 @@ function FocusModePanel({
               </div>
             </div>
 
-            <div className="mb-5">
+            <div>
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h3 className="text-[16px] font-[900] tracking-[-0.03em]">
-                  Today&apos;s Focus Plan
+                <h3 className="text-[15px] font-[900] tracking-[-0.03em]">
+                  Focus Stack
                 </h3>
 
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-[800] ${
                     darkMode
-                      ? "bg-white/[0.06] text-white/50"
-                      : "bg-black/[0.04] text-black/45"
+                      ? "bg-white/[0.06] text-white/45"
+                      : "bg-black/[0.04] text-black/40"
                   }`}
                 >
-                  {focusTotal} tasks
+                  {focusTasks.length}
                 </span>
               </div>
+
+              {focusError && (
+                <p className="mb-3 rounded-2xl bg-orange-500/10 px-3 py-2 text-xs font-[800] text-orange-500">
+                  {focusError}
+                </p>
+              )}
 
               <div className="space-y-2">
                 {focusTasks.map((task: any, index: number) => {
@@ -3085,16 +3194,16 @@ function FocusModePanel({
                     <button
                       key={task.id}
                       onClick={() => setFocusIndex(index)}
-                      className={`flex min-h-[68px] w-full items-center gap-3 rounded-[20px] border px-3 py-3 text-left transition hover:scale-[1.005] ${
+                      className={`flex min-h-[60px] w-full items-center gap-3 rounded-[18px] border px-3 py-3 text-left transition hover:scale-[1.005] ${
                         isCurrent
-                          ? "border-violet-400/60 bg-violet-500/[0.06]"
+                          ? "border-violet-400/50 bg-violet-500/[0.055]"
                           : `${border} ${
-                              darkMode ? "bg-white/[0.025]" : "bg-white/70"
+                              darkMode ? "bg-white/[0.025]" : "bg-white/60"
                             }`
                       }`}
                     >
                       <div
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
                         style={{
                           backgroundColor: isCurrent ? themeColor : "#a1a1aa",
                         }}
@@ -3108,8 +3217,8 @@ function FocusModePanel({
                         </p>
 
                         <p
-                          className={`mt-1 text-[11px] font-[700] ${
-                            darkMode ? "text-white/40" : "text-black/40"
+                          className={`mt-0.5 text-[11px] font-[700] ${
+                            darkMode ? "text-white/35" : "text-black/35"
                           }`}
                         >
                           {task.priority}
@@ -3120,81 +3229,23 @@ function FocusModePanel({
                         </p>
                       </div>
 
-                      <span
-                        className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900] ${
-                          isCurrent
-                            ? "bg-violet-500/10 text-violet-500"
-                            : darkMode
-                            ? "bg-white/[0.06] text-white/45"
-                            : "bg-black/[0.04] text-black/40"
-                        }`}
-                      >
-                        {isCurrent ? "Now" : index === focusIndex + 1 ? "Next" : "Later"}
-                      </span>
+                      {isCurrent && (
+                        <span
+                          className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900]"
+                          style={{
+                            color: themeColor,
+                            backgroundColor: `${themeColor}18`,
+                          }}
+                        >
+                          Now
+                        </span>
+                      )}
                     </button>
                   );
                 })}
               </div>
             </div>
-
-            <div
-              className={`grid grid-cols-3 overflow-hidden rounded-[26px] border ${
-                darkMode
-                  ? "border-white/[0.08] bg-white/[0.035]"
-                  : "border-black/[0.04] bg-white/70"
-              }`}
-            >
-              <div className="p-4 text-center">
-                <CheckCircle2
-                  size={22}
-                  className="mx-auto mb-2 text-emerald-500"
-                />
-                <p className="text-xl font-[900]">{completedCount}</p>
-                <p className="text-[11px] font-[700] opacity-40">Completed</p>
-              </div>
-
-              <div className={`border-x p-4 text-center ${border}`}>
-                <Target
-                  size={22}
-                  className="mx-auto mb-2"
-                  style={{ color: themeColor }}
-                />
-                <p className="text-xl font-[900]">
-                  {focusIndex + 1}/{focusTotal}
-                </p>
-                <p className="text-[11px] font-[700] opacity-40">Focus</p>
-              </div>
-
-              <div className="p-4 text-center">
-                <Flame size={22} className="mx-auto mb-2 text-orange-500" />
-                <p className="text-xl font-[900]">4</p>
-                <p className="text-[11px] font-[700] opacity-40">Streak</p>
-              </div>
-            </div>
           </>
-        ) : (
-          <div
-            className={`rounded-[28px] border border-dashed p-8 text-center ${
-              darkMode
-                ? "border-white/10 text-white/40"
-                : "border-black/10 text-black/45"
-            }`}
-          >
-            <Target
-              size={32}
-              className="mx-auto mb-4"
-              style={{ color: themeColor }}
-            />
-
-            <h3 className="text-lg font-[900] text-inherit">
-              No focus tasks yet
-            </h3>
-
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-6">
-              Add a task and Momentum will create a focus plan from your
-              prioritized list.
-            </p>
-          </div>
         )}
       </div>
     </section>
