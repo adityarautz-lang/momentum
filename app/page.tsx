@@ -555,21 +555,11 @@ const getPriorityClass = (priority: Priority) => {
 };
 
 const getPriorityRowClass = (priority: Priority, darkMode: boolean) => {
-  if (priority === "High") {
-    return darkMode
-      ? "bg-red-500/[0.07] hover:bg-red-500/[0.11]"
-      : "bg-red-50/70 hover:bg-red-100/70";
+  if (darkMode) {
+    return "bg-white/[0.035] hover:bg-white/[0.055]";
   }
 
-  if (priority === "Medium") {
-    return darkMode
-      ? "bg-amber-500/[0.07] hover:bg-amber-500/[0.11]"
-      : "bg-amber-50/70 hover:bg-amber-100/70";
-  }
-
-  return darkMode
-    ? "bg-emerald-500/[0.07] hover:bg-emerald-500/[0.11]"
-    : "bg-emerald-50/70 hover:bg-emerald-100/70";
+  return "bg-white hover:bg-[#faf9f6]";
 };
 
 /* ------------------------------------------------ */
@@ -972,17 +962,17 @@ useEffect(() => {
 
   const glass = darkMode
   ? "bg-white/[0.055] backdrop-blur-2xl"
-  : "bg-white backdrop-blur-2xl";
+  : "bg-white/80 backdrop-blur-2xl";
 
-    const strongerGlass = darkMode
-    ? "bg-white/[0.065] border-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl"
-    : "bg-white border-black/[0.05] shadow-[0_24px_70px_rgba(15,23,42,0.08)]";
+const strongerGlass = darkMode
+  ? "bg-white/[0.065] border-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl"
+  : "bg-white/90 border-white shadow-[0_24px_80px_rgba(17,24,39,0.08)] backdrop-blur-2xl";
 
-    const input = darkMode
-    ? "bg-white/[0.07] text-white placeholder:text-white/35 border border-white/[0.06]"
-    : "bg-white text-[#171717] placeholder:text-[#171717]/35 border border-black/[0.08]";
+const input = darkMode
+  ? "bg-white/[0.07] text-white placeholder:text-white/35 border border-white/[0.06]"
+  : "bg-white/90 text-[#171717] placeholder:text-[#171717]/35 border border-black/[0.06]";
 
-    const border = darkMode ? "border-white/[0.075]" : "border-black/[0.07]";
+const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
 
     const modalSelect = darkMode
     ? "bg-[#171a20] text-white"
@@ -1770,7 +1760,7 @@ completedAt: updatedTask.completedAt,
   className={`${fontClass} min-h-screen w-full overflow-x-hidden transition-colors duration-500 ${
       darkMode
         ? "bg-[radial-gradient(circle_at_top_right,_rgba(167,139,250,0.18),_transparent_32%),linear-gradient(135deg,_#080b12_0%,_#111827_48%,_#0b0f17_100%)] text-white"
-        : "bg-white text-black"
+       : "bg-[#f5f3ef] text-[#111111]"
     }`}
   >
       <FirecrackerLayer firecrackers={firecrackers} themeColor={themeColor} />
@@ -2055,13 +2045,13 @@ function TodayView({
 }: any) {
   return (
     <>
-     <div
-  className={`mb-5 rounded-[26px] border p-4 sm:mb-8 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+    <div
+  className={`mb-5 rounded-[30px] border px-5 py-5 sm:mb-6 sm:rounded-[34px] sm:px-7 sm:py-6 ${strongerGlass} ${border}`}
 >
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           <div>
-          <h1 className="whitespace-nowrap text-[20px] font-[800] leading-none tracking-[-0.055em] sm:text-[34px]">
-  Hello! Let&apos;s build some Momentum.
+          <h1 className="text-[22px] font-[900] leading-tight tracking-[-0.05em] sm:text-[32px]">
+  Today&apos;s Momentum
 </h1>
 
             <p
@@ -2069,8 +2059,7 @@ function TodayView({
                 darkMode ? "text-white/45" : "text-black/45"
               }`}
             >
-              {allTasks.length} active tasks · {dueSoonCount} due soon ·{" "}
-              {completedToday.length} completed today
+             {allTasks.length} active tasks · {dueSoonCount} due soon · {completedToday.length} completed
             </p>
           </div>
 
@@ -2091,10 +2080,15 @@ function TodayView({
       </div>
 
       <section
-        className={`mb-5 overflow-hidden rounded-[26px] border p-4 sm:mb-6 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+        className={`relative mb-5 overflow-hidden rounded-[32px] border p-5 sm:mb-6 sm:rounded-[40px] sm:p-7 ${strongerGlass} ${border}`}
       >
-       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-       <div className="min-w-0 flex-1">
+        <div
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-20 blur-3xl"
+          style={{ backgroundColor: themeColor }}
+        />
+
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
             <div className="mb-3 flex items-center gap-2">
               <Sparkles size={17} style={{ color: themeColor }} />
 
@@ -2232,7 +2226,7 @@ function TodayView({
       </div>
 
       <section
-  className={`mb-5 rounded-[26px] border p-4 sm:mb-6 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+  className={`mb-5 rounded-[30px] border p-5 sm:mb-6 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
 >
         <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
           <h2 className="text-[19px] font-[800] sm:text-[21px]">
@@ -2303,7 +2297,7 @@ function TodayView({
         </div>
       </section>
 
-      <div className="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(360px,0.85fr)]">
+      <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.8fr)]">
       <TaskListPanel
   title="Momentum Prioritized for You"
   description="Momentum lines up your tasks based on intent, urgency, and priority"
@@ -2429,7 +2423,7 @@ function TaskListPanel({
 }: any) {
   return (
     <section
-    className={`min-w-0 overflow-hidden rounded-[28px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
+    className={`min-w-0 overflow-hidden rounded-[30px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
   >
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -2896,10 +2890,10 @@ function StatCard({
 }) {
   return (
     <div
-    className={`flex min-h-[84px] flex-col items-center justify-center gap-2 rounded-[18px] border px-1.5 text-center transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[96px] sm:flex-row sm:justify-start sm:gap-4 sm:rounded-[22px] sm:px-5 sm:text-left ${className} ${border}`}
+    className={`flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-[22px] border px-2 text-center transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[88px] sm:flex-row sm:justify-start sm:gap-4 sm:rounded-[26px] sm:px-5 sm:text-left ${className} ${border}`}
     >
       <div
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-white shadow-[0_10px_24px_rgba(0,0,0,0.16)] sm:h-10 sm:w-10 sm:rounded-2xl"
+       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_14px_30px_rgba(0,0,0,0.16)] sm:h-11 sm:w-11"
         style={{
           backgroundColor: themeColor,
         }}
