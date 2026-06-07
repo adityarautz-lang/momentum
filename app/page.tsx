@@ -2297,7 +2297,7 @@ function TodayView({
         </div>
       </section>
 
-      <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.8fr)]">
+      <div className="grid min-w-0 items-start grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,1fr)]">
       <TaskListPanel
   title="Momentum Prioritized for You"
   description="Momentum lines up your tasks based on intent, urgency, and priority"
@@ -2316,78 +2316,17 @@ function TodayView({
   ranked
 />
 
-        <section
-          className={`rounded-[28px] border p-5 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
-        >
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-[16px] font-[800]">
-              Momentum Assistant
-              <Sparkles size={16} style={{ color: themeColor }} />
-            </h2>
-
-            <span
-              className="rounded-full px-2 py-1 text-[10px] font-[800] text-white"
-              style={{
-                backgroundColor: themeColor,
-              }}
-            >
-              BETA
-            </span>
-          </div>
-
-          <p
-            className={`mb-5 text-sm leading-6 ${
-              darkMode ? "text-white/45" : "text-black/45"
-            }`}
-          >
-            Momentum reviewed your task titles and arranged them so you can
-            start with the most important work first.
-          </p>
-
-          <div className="space-y-4">
-            <AssistantItem
-              darkMode={darkMode}
-              icon={<Calendar size={17} />}
-              title="Tasks dated for you"
-              description={`${suggestedDateCount} task${
-                suggestedDateCount === 1 ? "" : "s"
-              } have Momentum suggestions`}
-              color="#8b5cf6"
-            />
-
-            <AssistantItem
-              darkMode={darkMode}
-              icon={<Lightbulb size={17} />}
-              title="Focus suggestion"
-              description={
-                prioritizedTasks[0]
-                  ? `Start with ${prioritizedTasks[0].title}`
-                  : "Add a task and Momentum will suggest where to start"
-              }
-              color="#3b82f6"
-            />
-
-            <AssistantItem
-              darkMode={darkMode}
-              icon={<Target size={17} />}
-              title="Priority check"
-              description={`${highPriorityCount} high-priority item${
-                highPriorityCount === 1 ? "" : "s"
-              } currently need attention`}
-              color="#ef4444"
-            />
-          </div>
-
-          <button
-  onClick={() => setIsSuggestionsModalOpen(true)}
-  className={`mt-6 h-11 w-full rounded-2xl border text-sm font-[800] transition hover:scale-[1.01] ${border}`}
-  style={{
-    color: themeColor,
-  }}
->
-  Review Momentum Suggestions
-</button>
-        </section>
+<FocusModePanel
+          prioritizedTasks={prioritizedTasks}
+          completedToday={completedToday}
+          darkMode={darkMode}
+          border={border}
+          strongerGlass={strongerGlass}
+          themeColor={themeColor}
+          toggleTaskById={toggleTaskById}
+          setSelectedTask={setSelectedTask}
+          setIsEditModalOpen={setIsEditModalOpen}
+        />
       </div>
 
       <CompletedTodaySection
@@ -2423,7 +2362,7 @@ function TaskListPanel({
 }: any) {
   return (
     <section
-    className={`min-w-0 overflow-hidden rounded-[30px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
+    className={`min-w-0 self-start overflow-hidden rounded-[30px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
   >
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -2935,6 +2874,330 @@ function AssistantItem({ icon, title, description, color, darkMode }: any) {
         </p>
       </div>
     </div>
+  );
+}
+
+
+
+function FocusModePanel({
+  prioritizedTasks,
+  completedToday,
+  darkMode,
+  border,
+  strongerGlass,
+  themeColor,
+  toggleTaskById,
+  setSelectedTask,
+  setIsEditModalOpen,
+}: any) {
+  const focusTasks = prioritizedTasks.slice(0, 3);
+  const [focusIndex, setFocusIndex] = useState(0);
+
+  const currentTask = focusTasks[focusIndex] || focusTasks[0];
+  const completedCount = completedToday.length;
+  const focusTotal = focusTasks.length;
+
+  const moveNext = () => {
+    if (focusTasks.length === 0) return;
+
+    setFocusIndex((prev) => {
+      if (prev >= focusTasks.length - 1) return 0;
+      return prev + 1;
+    });
+  };
+
+  const getFocusReason = (task: any) => {
+    if (!task) return "Add a task and Momentum will create a focus plan.";
+
+    const visibleDate = task.dueDate || task.suggestedDueDate;
+
+    if (task.priority === "High" && visibleDate) {
+      return "High priority and already dated. Completing this will create immediate progress.";
+    }
+
+    if (task.priority === "High") {
+      return "High priority. This is worth handling before lower-impact work.";
+    }
+
+    if (visibleDate) {
+      return "This task has a date attached, so Momentum is keeping it visible.";
+    }
+
+    return "Momentum picked this because it is near the top of your prioritized list.";
+  };
+
+  return (
+    <section
+    className={`relative self-start overflow-hidden rounded-[30px] border p-5 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+  >
+      <div
+        className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full opacity-20 blur-3xl"
+        style={{ backgroundColor: themeColor }}
+      />
+
+      <div className="relative">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.03em]">
+              Focus Mode
+              <Sparkles size={16} style={{ color: themeColor }} />
+            </h2>
+
+            <p
+              className={`mt-2 text-sm leading-6 ${
+                darkMode ? "text-white/45" : "text-black/45"
+              }`}
+            >
+              Stay focused. One task at a time. Momentum will guide you.
+            </p>
+          </div>
+
+          <span
+            className="rounded-full px-3 py-1.5 text-[10px] font-[900] text-white"
+            style={{ backgroundColor: themeColor }}
+          >
+            BETA
+          </span>
+        </div>
+
+        {currentTask ? (
+          <>
+            <div
+              className={`mb-5 rounded-[28px] border p-5 ${
+                darkMode
+                  ? "border-white/[0.08] bg-white/[0.045]"
+                  : "border-violet-500/10 bg-violet-50/45"
+              }`}
+            >
+              <p
+                className="mb-3 text-[11px] font-[900] uppercase tracking-[0.16em]"
+                style={{ color: themeColor }}
+              >
+                Current Focus
+              </p>
+
+              <h3
+                onClick={() => {
+                  setSelectedTask(currentTask);
+                  setIsEditModalOpen(true);
+                }}
+                title={currentTask.title}
+                className="cursor-pointer text-[22px] font-[900] leading-tight tracking-[-0.04em] hover:opacity-75"
+              >
+                {currentTask.title}
+              </h3>
+
+              <div
+                className={`mt-4 flex flex-wrap items-center gap-3 text-sm font-[750] ${
+                  darkMode ? "text-white/60" : "text-black/55"
+                }`}
+              >
+                <span
+                  className={`inline-flex items-center gap-2 ${
+                    currentTask.priority === "High"
+                      ? "text-red-500"
+                      : currentTask.priority === "Medium"
+                      ? "text-orange-500"
+                      : "text-emerald-500"
+                  }`}
+                >
+                  <span className="text-[12px]">●</span>
+                  {currentTask.priority} Priority
+                </span>
+
+                {(currentTask.dueDate || currentTask.suggestedDueDate) && (
+                  <span className="inline-flex items-center gap-2">
+                    <Calendar size={15} />
+                    {formatDueDate(
+                      currentTask.dueDate || currentTask.suggestedDueDate
+                    )}
+                  </span>
+                )}
+              </div>
+
+              <div className={`my-5 h-px ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
+
+              <div className="mb-5">
+                <p
+                  className="mb-2 flex items-center gap-2 text-sm font-[900]"
+                  style={{ color: themeColor }}
+                >
+                  <Sparkles size={15} />
+                  Why this?
+                </p>
+
+                <p
+                  className={`text-sm leading-6 ${
+                    darkMode ? "text-white/50" : "text-black/55"
+                  }`}
+                >
+                  {getFocusReason(currentTask)}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <button
+                  onClick={(event) => toggleTaskById(currentTask.id, event)}
+                  className="h-12 rounded-2xl text-sm font-[900] text-white shadow-[0_16px_36px_rgba(0,0,0,0.18)] transition hover:scale-[1.01]"
+                  style={{ backgroundColor: themeColor }}
+                >
+                  ✓ Complete
+                </button>
+
+                <button
+                  onClick={moveNext}
+                  className={`h-12 rounded-2xl border text-sm font-[900] transition hover:scale-[1.01] ${border}`}
+                >
+                  Skip
+                </button>
+
+                <button
+                  onClick={moveNext}
+                  className={`h-12 rounded-2xl border text-sm font-[900] transition hover:scale-[1.01] ${border}`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-[16px] font-[900] tracking-[-0.03em]">
+                  Today&apos;s Focus Plan
+                </h3>
+
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-[800] ${
+                    darkMode
+                      ? "bg-white/[0.06] text-white/50"
+                      : "bg-black/[0.04] text-black/45"
+                  }`}
+                >
+                  {focusTotal} tasks
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {focusTasks.map((task: any, index: number) => {
+                  const isCurrent = task.id === currentTask.id;
+
+                  return (
+                    <button
+                      key={task.id}
+                      onClick={() => setFocusIndex(index)}
+                      className={`flex min-h-[68px] w-full items-center gap-3 rounded-[20px] border px-3 py-3 text-left transition hover:scale-[1.005] ${
+                        isCurrent
+                          ? "border-violet-400/60 bg-violet-500/[0.06]"
+                          : `${border} ${
+                              darkMode ? "bg-white/[0.025]" : "bg-white/70"
+                            }`
+                      }`}
+                    >
+                      <div
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
+                        style={{
+                          backgroundColor: isCurrent ? themeColor : "#a1a1aa",
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-[900]">
+                          {task.title}
+                        </p>
+
+                        <p
+                          className={`mt-1 text-[11px] font-[700] ${
+                            darkMode ? "text-white/40" : "text-black/40"
+                          }`}
+                        >
+                          {task.priority}
+                          {(task.dueDate || task.suggestedDueDate) &&
+                            ` · ${formatDueDate(
+                              task.dueDate || task.suggestedDueDate
+                            )}`}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900] ${
+                          isCurrent
+                            ? "bg-violet-500/10 text-violet-500"
+                            : darkMode
+                            ? "bg-white/[0.06] text-white/45"
+                            : "bg-black/[0.04] text-black/40"
+                        }`}
+                      >
+                        {isCurrent ? "Now" : index === focusIndex + 1 ? "Next" : "Later"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div
+              className={`grid grid-cols-3 overflow-hidden rounded-[26px] border ${
+                darkMode
+                  ? "border-white/[0.08] bg-white/[0.035]"
+                  : "border-black/[0.04] bg-white/70"
+              }`}
+            >
+              <div className="p-4 text-center">
+                <CheckCircle2
+                  size={22}
+                  className="mx-auto mb-2 text-emerald-500"
+                />
+                <p className="text-xl font-[900]">{completedCount}</p>
+                <p className="text-[11px] font-[700] opacity-40">Completed</p>
+              </div>
+
+              <div className={`border-x p-4 text-center ${border}`}>
+                <Target
+                  size={22}
+                  className="mx-auto mb-2"
+                  style={{ color: themeColor }}
+                />
+                <p className="text-xl font-[900]">
+                  {focusIndex + 1}/{focusTotal}
+                </p>
+                <p className="text-[11px] font-[700] opacity-40">Focus</p>
+              </div>
+
+              <div className="p-4 text-center">
+                <Flame size={22} className="mx-auto mb-2 text-orange-500" />
+                <p className="text-xl font-[900]">4</p>
+                <p className="text-[11px] font-[700] opacity-40">Streak</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div
+            className={`rounded-[28px] border border-dashed p-8 text-center ${
+              darkMode
+                ? "border-white/10 text-white/40"
+                : "border-black/10 text-black/45"
+            }`}
+          >
+            <Target
+              size={32}
+              className="mx-auto mb-4"
+              style={{ color: themeColor }}
+            />
+
+            <h3 className="text-lg font-[900] text-inherit">
+              No focus tasks yet
+            </h3>
+
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-6">
+              Add a task and Momentum will create a focus plan from your
+              prioritized list.
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
