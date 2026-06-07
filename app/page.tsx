@@ -1596,16 +1596,28 @@ completedAt: updatedTask.completedAt,
 
   const archiveCompletedToday = () => {
     if (completedToday.length === 0) return;
-
+  
+    const completedIds = completedToday.map((task) => task.id);
+  
     setArchive((prev) => [...completedToday, ...prev]);
+  
+    setCategories((prev) =>
+      prev.map((category) => ({
+        ...category,
+        tasks: category.tasks.filter(
+          (task: any) => !completedIds.includes(task.id)
+        ),
+      }))
+    );
+  
     setCompletedToday([]);
-
+  
     setArchiveToast(
       `${completedToday.length} completed item${
         completedToday.length > 1 ? "s" : ""
       } archived`
     );
-
+  
     setTimeout(() => {
       setArchiveToast("");
     }, 2200);
