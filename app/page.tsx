@@ -964,9 +964,9 @@ useEffect(() => {
   ? "bg-white/[0.055] backdrop-blur-2xl"
   : "bg-white/80 backdrop-blur-2xl";
 
-const strongerGlass = darkMode
+  const strongerGlass = darkMode
   ? "bg-white/[0.065] border-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl"
-  : "bg-white/90 border-white shadow-[0_24px_80px_rgba(17,24,39,0.08)] backdrop-blur-2xl";
+  : "bg-white/95 border-white shadow-[0_12px_36px_rgba(17,24,39,0.045)] backdrop-blur-2xl";
 
 const input = darkMode
   ? "bg-white/[0.07] text-white placeholder:text-white/35 border border-white/[0.06]"
@@ -1760,7 +1760,7 @@ completedAt: updatedTask.completedAt,
   className={`${fontClass} min-h-screen w-full overflow-x-hidden transition-colors duration-500 ${
       darkMode
         ? "bg-[radial-gradient(circle_at_top_right,_rgba(167,139,250,0.18),_transparent_32%),linear-gradient(135deg,_#080b12_0%,_#111827_48%,_#0b0f17_100%)] text-white"
-       : "bg-[#f5f3ef] text-[#111111]"
+      : "bg-[#f7f5f1] text-[#111111]"
     }`}
   >
       <FirecrackerLayer firecrackers={firecrackers} themeColor={themeColor} />
@@ -1777,7 +1777,7 @@ completedAt: updatedTask.completedAt,
 />
 
 <div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-32 pt-4 sm:px-6 sm:py-6 lg:pl-[284px] xl:px-10 xl:py-8 xl:pl-[300px]">
-        <div className="mx-auto w-full max-w-[1440px] overflow-x-hidden">
+<div className="mx-auto w-full max-w-[1400px] overflow-x-hidden">
             {selectedView === "today" && (
             <TodayView
             darkMode={darkMode}
