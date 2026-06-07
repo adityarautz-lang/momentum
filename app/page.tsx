@@ -2212,77 +2212,103 @@ function TodayView({
         />
       </div>
 
+     
       <section
-  className={`mb-5 rounded-[30px] border p-5 sm:mb-6 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+  className={`relative mb-5 overflow-hidden rounded-[30px] border p-5 sm:mb-6 sm:rounded-[36px] sm:p-6 ${
+    darkMode
+      ? "border-emerald-300/[0.14] bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(255,255,255,0.055)_42%,rgba(20,184,166,0.10))] shadow-[0_24px_80px_rgba(16,185,129,0.10)]"
+      : "border-emerald-500/15 bg-[linear-gradient(135deg,rgba(236,253,245,0.98),rgba(255,255,255,0.92)_45%,rgba(209,250,229,0.95))] shadow-[0_24px_70px_rgba(16,185,129,0.14)]"
+  }`}
 >
-        <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-          <h2 className="text-[19px] font-[800] sm:text-[21px]">
-            Quick Capture
-          </h2>
-
-          <span
-            className={`text-xs ${
-              darkMode ? "text-white/40" : "text-black/40"
-            }`}
-          >
-            Momentum will organize it for you
-          </span>
-        </div>
-
-        <div className="flex gap-2 sm:gap-3">
-          <input
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") addTask();
-            }}
-           placeholder="Capture anything..."
-            className={`h-[52px] min-w-0 flex-1 rounded-[20px] border border-rose-200/70 px-4 text-sm font-[650] outline-none transition focus:border-rose-400 focus:ring-4 focus:ring-rose-200/45 dark:border-rose-400/35 dark:focus:border-rose-300 dark:focus:ring-rose-500/15 sm:h-14 sm:rounded-[22px] sm:px-5 ${
-              darkMode
-                ? "bg-white/[0.07] text-white placeholder:text-white/35"
-                : "bg-white text-black placeholder:text-black/35"
-            }`}
-          />
-
-          <button
-            onClick={addTask}
-            className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[20px] text-white shadow-[0_14px_35px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-14 sm:w-14 sm:rounded-[22px]"
-            style={{
-              backgroundColor: themeColor,
-            }}
-          >
-            <Send size={18} />
-          </button>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-  <button
-    onClick={() => setIsExtractModalOpen(true)}
-    className={`rounded-full border px-3 py-1.5 text-xs font-[800] transition hover:scale-[1.02] ${border}`}
+  <div
+    className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full opacity-30 blur-3xl"
     style={{
-      color: themeColor,
+      backgroundColor: "#34d399",
     }}
-  >
-    Extract from text
-  </button>
+  />
 
-  {[
-    "Submit insurance claim next week",
-    "Buy birthday gift for mom",
-    "Book dentist appointment",
-  ].map((example) => (
-            <button
-              key={example}
-              onClick={() => setNewTask(example)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-[650] transition hover:scale-[1.02] ${border} ${
-                darkMode ? "text-white/50" : "text-black/50"
-              }`}
-            >
-              {example}
-            </button>
-          ))}
-        </div>
-      </section>
+  <div
+    className="pointer-events-none absolute -left-20 bottom-0 h-44 w-44 rounded-full opacity-20 blur-3xl"
+    style={{
+      backgroundColor: "#6ee7b7",
+    }}
+  />
+
+  <div className="relative">
+    <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+      <div className="flex items-center gap-2">
+        <Sparkles size={18} className="text-emerald-500" />
+
+        <h2 className="text-[19px] font-[900] tracking-[-0.03em] sm:text-[22px]">
+          Quick Capture
+        </h2>
+      </div>
+
+      <span
+        className={`text-xs font-[700] ${
+          darkMode ? "text-white/45" : "text-emerald-900/45"
+        }`}
+      >
+        Momentum will organize it for you
+      </span>
+    </div>
+
+    <div className="flex gap-2 sm:gap-3">
+      <input
+        value={newTask}
+        onChange={(e) => setNewTask(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") addTask();
+        }}
+        placeholder="Capture anything..."
+        className={`h-[54px] min-w-0 flex-1 rounded-[22px] border px-4 text-sm font-[750] outline-none transition focus:ring-4 sm:h-14 sm:px-5 ${
+          darkMode
+            ? "border-emerald-300/25 bg-black/10 text-white placeholder:text-white/35 focus:border-emerald-300/50 focus:ring-emerald-400/10"
+            : "border-emerald-400/35 bg-white/80 text-black placeholder:text-black/35 focus:border-emerald-500/55 focus:ring-emerald-300/30"
+        }`}
+      />
+
+      <button
+        onClick={addTask}
+        className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#34d399,#10b981)] text-white shadow-[0_18px_42px_rgba(16,185,129,0.32)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-14 sm:w-14"
+      >
+        <Send size={18} />
+      </button>
+    </div>
+
+    <div className="mt-3 flex flex-wrap items-center gap-2">
+      <button
+        onClick={() => setIsExtractModalOpen(true)}
+        className={`rounded-full border px-3 py-1.5 text-xs font-[900] transition hover:scale-[1.02] ${
+          darkMode
+            ? "border-emerald-300/15 bg-emerald-300/10 text-emerald-200"
+            : "border-emerald-500/15 bg-emerald-500/10 text-emerald-700"
+        }`}
+      >
+        Extract from text
+      </button>
+
+      {[
+        "Submit insurance claim next week",
+        "Buy birthday gift for mom",
+        "Book dentist appointment",
+      ].map((example) => (
+        <button
+          key={example}
+          onClick={() => setNewTask(example)}
+          className={`rounded-full border px-3 py-1.5 text-xs font-[700] transition hover:scale-[1.02] ${
+            darkMode
+              ? "border-white/[0.08] bg-white/[0.045] text-white/50 hover:text-white"
+              : "border-emerald-900/[0.08] bg-white/65 text-emerald-950/45 hover:text-emerald-950/70"
+          }`}
+        >
+          {example}
+        </button>
+      ))}
+    </div>
+  </div>
+</section>
+
 
       <div className="grid min-w-0 items-start grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,1fr)]">
       <TaskListPanel
