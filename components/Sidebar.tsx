@@ -108,8 +108,8 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`sticky top-0 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 text-white shadow-[18px_0_70px_rgba(0,0,0,0.38)] lg:flex ${border} ${sidebarBg}`}
-    >
+    className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 text-white shadow-[18px_0_70px_rgba(0,0,0,0.38)] lg:flex ${border} ${sidebarBg}`}
+  >
       <div className="mb-7">
         <div className="mb-5 flex items-center gap-3">
           <div
@@ -152,7 +152,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto pr-1">
+      <nav className="min-h-0 flex-1 overflow-y-auto pr-1">
         <SidebarSectionLabel label="Plan" mutedText={mutedText} />
 
         <div className="mb-6 space-y-1.5">

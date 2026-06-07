@@ -1777,18 +1777,16 @@ completedAt: updatedTask.completedAt,
       <Toast message={archiveToast} darkMode={darkMode} />
 
       <div className="flex min-h-screen w-full overflow-x-hidden">
-      <div className="hidden lg:flex">
-          <Sidebar
-            darkMode={darkMode}
-            setDarkMode={setDarkMode}
-            selectedView={selectedView}
-            setSelectedView={setSelectedView}
-            themeColor={themeColor}
-            inboxCount={inboxTasks.length}
-          />
-        </div>
+      <Sidebar
+  darkMode={darkMode}
+  setDarkMode={setDarkMode}
+  selectedView={selectedView}
+  setSelectedView={setSelectedView}
+  themeColor={themeColor}
+  inboxCount={inboxTasks.length}
+/>
 
-        <div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-32 pt-4 sm:px-6 sm:py-6 xl:px-10 xl:py-8">
+<div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-32 pt-4 sm:px-6 sm:py-6 lg:pl-[284px] xl:px-10 xl:py-8 xl:pl-[300px]">
         <div className="mx-auto w-full max-w-[1440px] overflow-x-hidden">
             {selectedView === "today" && (
             <TodayView
