@@ -1776,7 +1776,7 @@ completedAt: updatedTask.completedAt,
   inboxCount={inboxTasks.length}
 />
 
-<div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-32 pt-4 sm:px-6 sm:py-6 lg:pl-[284px] xl:px-10 xl:py-8 xl:pl-[300px]">
+<div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-12 pt-28 sm:px-6 sm:pb-16 sm:pt-[120px] lg:pl-[284px] lg:pt-6 xl:px-10 xl:py-8 xl:pl-[300px]">
 <div className="mx-auto w-full max-w-[1400px] overflow-x-hidden">
             {selectedView === "today" && (
             <TodayView
@@ -2089,12 +2089,12 @@ function TodayView({
 
             {completedToday.length === 0 ? (
               <>
-                <h2 className="text-[22px] font-[900] leading-tight tracking-[-0.04em] sm:text-[28px]">
+               <h2 className="text-[19px] font-[900] leading-tight tracking-[-0.04em] sm:text-[28px]">
                   Let&apos;s build momentum today.
                 </h2>
 
                 <p
-                  className={`mt-2 max-w-5xl text-sm leading-6 ${
+                  className={`mt-2 max-w-5xl text-xs leading-5 sm:text-sm sm:leading-6 ${
                     darkMode ? "text-white/45" : "text-black/45"
                   }`}
                 >
@@ -2104,7 +2104,7 @@ function TodayView({
               </>
             ) : (
               <>
-                <h2 className="text-[22px] font-[900] leading-tight tracking-[-0.04em] sm:text-[28px]">
+               <h2 className="text-[19px] font-[900] leading-tight tracking-[-0.04em] sm:text-[28px]">
                 {boostLoading
   ? "Reading your wins..."
   : completedToday.length === 1
@@ -2115,7 +2115,7 @@ function TodayView({
                 </h2>
 
                 <p
-                  className={`mt-2 max-w-5xl text-sm leading-6 ${
+                 className={`mt-2 max-w-5xl text-xs leading-5 sm:text-sm sm:leading-6 ${
                     darkMode ? "text-white/55" : "text-black/55"
                   }`}
                 >
@@ -2165,7 +2165,7 @@ function TodayView({
         </div>
       </section>
 
-      <div className="mb-5 grid grid-cols-5 gap-1 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="mb-5 hidden gap-3 sm:grid sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-5">
         <StatCard
           className={strongerGlass}
           border={border}
@@ -2214,10 +2214,10 @@ function TodayView({
 
      
       <section
-  className={`relative mb-5 overflow-hidden rounded-[30px] border p-5 sm:mb-6 sm:rounded-[36px] sm:p-6 ${
+  className={`relative mb-5 overflow-hidden rounded-[24px] border p-4 sm:mb-6 sm:rounded-[36px] sm:p-6 ${
     darkMode
-      ? "border-white/[0.08] bg-white/[0.055] shadow-[0_24px_80px_rgba(0,0,0,0.32)]"
-      : "border-white bg-white/95 shadow-[0_18px_54px_rgba(17,24,39,0.055)]"
+      ? "border-white/[0.08] bg-white/[0.055] shadow-[0_18px_54px_rgba(0,0,0,0.28)]"
+      : "border-white bg-white/95 shadow-[0_14px_42px_rgba(17,24,39,0.045)]"
   }`}
 >
   <div
@@ -2228,36 +2228,28 @@ function TodayView({
   />
 
   <div
-    className="pointer-events-none absolute -right-20 -top-28 h-56 w-56 rounded-full opacity-18 blur-3xl"
+    className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full opacity-[0.14] blur-3xl"
     style={{
       backgroundColor: themeColor,
     }}
   />
 
   <div className="relative">
-    <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-      <div className="flex items-center gap-2">
-        <div
-          className="flex h-8 w-8 items-center justify-center rounded-2xl text-white shadow-[0_12px_28px_rgba(124,58,237,0.22)]"
-          style={{
-            backgroundColor: themeColor,
-          }}
-        >
-          <Send size={15} />
-        </div>
-
-        <h2 className="text-[19px] font-[900] tracking-[-0.03em] sm:text-[22px]">
+    <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4 sm:items-center">
+      <div className="min-w-0">
+        <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[22px]">
+          <Send size={16} style={{ color: themeColor }} />
           Quick Capture
         </h2>
-      </div>
 
-      <span
-        className={`text-xs font-[700] ${
-          darkMode ? "text-white/42" : "text-black/38"
-        }`}
-      >
-        Momentum will organize it for you
-      </span>
+        <p
+          className={`mt-1 text-[11px] font-[700] sm:text-xs ${
+            darkMode ? "text-white/42" : "text-black/38"
+          }`}
+        >
+          Momentum will organize it for you
+        </p>
+      </div>
     </div>
 
     <div className="flex gap-2 sm:gap-3">
@@ -2268,7 +2260,7 @@ function TodayView({
           if (e.key === "Enter") addTask();
         }}
         placeholder="Capture anything..."
-        className={`h-[54px] min-w-0 flex-1 rounded-[22px] border px-4 text-sm font-[750] outline-none transition focus:ring-4 sm:h-14 sm:px-5 ${
+        className={`h-12 min-w-0 flex-1 rounded-[18px] border px-4 text-sm font-[750] outline-none transition focus:ring-4 sm:h-14 sm:rounded-[22px] sm:px-5 ${
           darkMode
             ? "border-white/[0.08] bg-white/[0.06] text-white placeholder:text-white/35 focus:border-violet-300/45 focus:ring-violet-400/10"
             : "border-black/[0.06] bg-white text-black placeholder:text-black/35 focus:border-violet-400/55 focus:ring-violet-300/25"
@@ -2277,22 +2269,22 @@ function TodayView({
 
       <button
         onClick={addTask}
-        className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[22px] text-white shadow-[0_16px_38px_rgba(124,58,237,0.25)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-14 sm:w-14"
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] text-white shadow-[0_14px_30px_rgba(124,58,237,0.20)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-14 sm:w-14 sm:rounded-[22px]"
         style={{
           background: `linear-gradient(135deg, ${themeColor}, #7c3aed)`,
         }}
       >
-        <Send size={18} />
+        <Send size={17} />
       </button>
     </div>
 
     <div className="mt-3 flex flex-wrap items-center gap-2">
       <button
         onClick={() => setIsExtractModalOpen(true)}
-        className={`rounded-full border px-3 py-1.5 text-xs font-[900] transition hover:scale-[1.02] ${
+        className={`rounded-full border px-3 py-1.5 text-[11px] font-[900] transition hover:scale-[1.02] sm:text-xs ${
           darkMode
             ? "border-violet-300/15 bg-violet-300/10 text-violet-200"
-            : "border-violet-500/15 bg-violet-500/8 text-violet-600"
+            : "border-violet-500/15 bg-violet-500/[0.08] text-violet-600"
         }`}
       >
         Extract from text
@@ -2302,11 +2294,13 @@ function TodayView({
         "Submit insurance claim next week",
         "Buy birthday gift for mom",
         "Book dentist appointment",
-      ].map((example) => (
+      ].map((example, index) => (
         <button
           key={example}
           onClick={() => setNewTask(example)}
-          className={`rounded-full border px-3 py-1.5 text-xs font-[700] transition hover:scale-[1.02] ${
+          className={`rounded-full border px-3 py-1.5 text-[11px] font-[700] transition hover:scale-[1.02] sm:text-xs ${
+            index > 0 ? "hidden sm:inline-flex" : "inline-flex"
+          } ${
             darkMode
               ? "border-white/[0.08] bg-white/[0.045] text-white/48 hover:text-white"
               : "border-black/[0.06] bg-white text-black/45 hover:text-black/70"
@@ -2320,37 +2314,41 @@ function TodayView({
 </section>
 
 
-      <div className="grid min-w-0 items-start grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,1fr)]">
-      <TaskListPanel
-  title="Momentum Prioritized for You"
-  description="Momentum lines up your tasks based on intent, urgency, and priority"
-  tasks={prioritizedTasks}
-  darkMode={darkMode}
-  border={border}
-  className={strongerGlass}
-  themeColor={themeColor}
-  toggleTaskById={toggleTaskById}
-  suggestingTaskIds={suggestingTaskIds}
-  deleteTask={deleteTask}
-  acceptSuggestedDateById={acceptSuggestedDateById}
-  setSelectedTask={setSelectedTask}
-  setIsEditModalOpen={setIsEditModalOpen}
-  emptyMessage="Add a task below. Momentum will organize it for you."
-  ranked
-/>
+<div className="grid min-w-0 grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,1fr)]">
+  <div className="order-2 xl:order-1">
+    <TaskListPanel
+      title="Momentum Prioritized for You"
+      description="Momentum lines up your tasks based on intent, urgency, and priority"
+      tasks={prioritizedTasks}
+      darkMode={darkMode}
+      border={border}
+      className={strongerGlass}
+      themeColor={themeColor}
+      toggleTaskById={toggleTaskById}
+      suggestingTaskIds={suggestingTaskIds}
+      deleteTask={deleteTask}
+      acceptSuggestedDateById={acceptSuggestedDateById}
+      setSelectedTask={setSelectedTask}
+      setIsEditModalOpen={setIsEditModalOpen}
+      emptyMessage="Add a task below. Momentum will organize it for you."
+      ranked
+    />
+  </div>
 
-<FocusModePanel
-          prioritizedTasks={prioritizedTasks}
-          completedToday={completedToday}
-          darkMode={darkMode}
-          border={border}
-          strongerGlass={strongerGlass}
-          themeColor={themeColor}
-          toggleTaskById={toggleTaskById}
-          setSelectedTask={setSelectedTask}
-          setIsEditModalOpen={setIsEditModalOpen}
-        />
-      </div>
+  <div className="order-1 xl:order-2">
+    <FocusModePanel
+      prioritizedTasks={prioritizedTasks}
+      completedToday={completedToday}
+      darkMode={darkMode}
+      border={border}
+      strongerGlass={strongerGlass}
+      themeColor={themeColor}
+      toggleTaskById={toggleTaskById}
+      setSelectedTask={setSelectedTask}
+      setIsEditModalOpen={setIsEditModalOpen}
+    />
+  </div>
+</div>
 
       <CompletedTodaySection
   completedToday={completedToday}
@@ -2385,22 +2383,22 @@ function TaskListPanel({
 }: any) {
   const [showAllTasks, setShowAllTasks] = useState(false);
 
-  const visibleTasks = showAllTasks ? tasks : tasks.slice(0, 6);
-  const hiddenTaskCount = Math.max(tasks.length - 6, 0);
+  const visibleTasks = showAllTasks ? tasks : tasks.slice(0, 5);
+const hiddenTaskCount = Math.max(tasks.length - 5, 0);
 
   return (
     <section
-    className={`min-w-0 self-start overflow-hidden rounded-[30px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
+    className={`min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
   >
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-4 flex flex-col gap-2 sm:mb-5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div>
-          <h2 className="flex items-center gap-2 text-[16px] font-[800]">
+        <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[16px] sm:font-[800] sm:tracking-normal">
             {title}
             <Sparkles size={16} style={{ color: themeColor }} />
           </h2>
 
           <p
-            className={`mt-1 text-xs ${
+            className={`mt-1 text-[12px] leading-5 sm:text-xs ${
               darkMode ? "text-white/40" : "text-black/40"
             }`}
           >
@@ -2409,7 +2407,7 @@ function TaskListPanel({
         </div>
 
         <button
-          className={`w-fit rounded-full px-3 py-1 text-xs font-[700] ${
+  className={`w-fit rounded-full px-3 py-1 text-[11px] font-[800] sm:text-xs sm:font-[700] ${
             darkMode
               ? "bg-white/[0.06] text-white/55"
               : "bg-black/[0.04] text-black/55"
@@ -2441,7 +2439,7 @@ function TaskListPanel({
               key={task.id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`group flex min-h-[76px] min-w-0 flex-col items-start gap-3 overflow-hidden rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex-row sm:items-center sm:gap-4 sm:rounded-[24px] ${border} ${getPriorityRowClass(
+              className={`group flex min-h-[68px] min-w-0 flex-col items-start gap-3 overflow-hidden rounded-[20px] border p-3 transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[76px] sm:flex-row sm:items-center sm:gap-4 sm:rounded-[24px] sm:p-4 ${border} ${getPriorityRowClass(
                 task.priority,
                 darkMode
               )} ${
@@ -2463,7 +2461,7 @@ function TaskListPanel({
 
                 {ranked && (
                   <div
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[800] text-white"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-[900] text-white sm:h-7 sm:w-7 sm:text-xs sm:font-[800]"
                     style={{
                       backgroundColor: index < 3 ? "#f59e0b" : themeColor,
                     }}
@@ -2479,13 +2477,13 @@ function TaskListPanel({
     setIsEditModalOpen(true);
   }}
   title={task.title}
-  className="block max-w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
+  className="block max-w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[800] leading-5 tracking-[-0.02em] hover:opacity-70 sm:text-[15px] sm:font-[700] sm:tracking-[-0.015em]"
 >
   {task.title}
 </p>
 
                   <p
-  className={`mt-1.5 truncate text-[11px] font-[650] ${
+  className={`mt-1 truncate text-[10.5px] font-[700] sm:mt-1.5 sm:text-[11px] sm:font-[650] ${
     darkMode ? "text-white/38" : "text-black/38"
   }`}
 >
@@ -2496,7 +2494,7 @@ function TaskListPanel({
               </div>
 
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-              <div className="flex items-center gap-5 text-[13px] font-[700]">
+              <div className="flex items-center gap-3 text-[12px] font-[800] sm:gap-5 sm:text-[13px] sm:font-[700]">
   {visibleDueDate && (
     <div
       className={`flex items-center gap-1.5 ${
@@ -2536,13 +2534,13 @@ function TaskListPanel({
         {hiddenTaskCount > 0 && (
           <button
             onClick={() => setShowAllTasks((prev) => !prev)}
-            className={`mt-4 flex h-12 w-full items-center justify-center rounded-[20px] border text-sm font-[900] transition hover:scale-[1.005] ${border} ${
+            className={`mt-3 flex h-10 w-full items-center justify-center rounded-[16px] border text-xs font-[900] transition hover:scale-[1.005] sm:mt-4 sm:h-12 sm:rounded-[20px] sm:text-sm ${border} ${
               darkMode
                 ? "bg-white/[0.035] text-white/55 hover:bg-white/[0.06] hover:text-white"
                 : "bg-black/[0.025] text-black/50 hover:bg-black/[0.04] hover:text-black"
             }`}
           >
-            {showAllTasks ? "Collapse to 6 tasks" : `Show ${hiddenTaskCount} more`}
+            {showAllTasks ? "Show less" : `Show ${hiddenTaskCount} more`}
           </button>
         )}
       </div>
@@ -2561,11 +2559,11 @@ function CompletedTodaySection({
   border,
 }: any) {
   return (
-    <div className="mt-8">
-      <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
+    <div className="mt-6 sm:mt-8">
+      <div className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
         <div className="flex items-center gap-3">
           <h2
-            className="text-[13px] font-[800] uppercase tracking-[0.14em]"
+            className="text-[11px] font-[900] uppercase tracking-[0.16em] sm:text-[13px] sm:font-[800] sm:tracking-[0.14em]"
             style={{ color: themeColor }}
           >
             Completed Today
@@ -2581,7 +2579,7 @@ function CompletedTodaySection({
 
         <button
           onClick={archiveCompletedToday}
-          className={`flex h-10 items-center gap-3 rounded-2xl px-4 text-sm font-[700] transition sm:px-5 ${
+          className={`flex h-9 items-center gap-2 rounded-[16px] px-3 text-xs font-[900] transition sm:h-10 sm:gap-3 sm:rounded-2xl sm:px-5 sm:text-sm sm:font-[700] ${
             completedToday.length === 0 ? "pointer-events-none opacity-30" : ""
           } ${glass}`}
         >
@@ -2589,7 +2587,7 @@ function CompletedTodaySection({
         </button>
       </div>
 
-      <div className={`overflow-hidden rounded-3xl border ${strongerGlass} ${border}`}>
+      <div className={`overflow-hidden rounded-[24px] border sm:rounded-3xl ${strongerGlass} ${border}`}>
         {completedToday.length === 0 && (
           <div className="p-6 text-sm opacity-40">Nothing completed yet.</div>
         )}
@@ -2599,15 +2597,15 @@ function CompletedTodaySection({
             key={task.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`flex min-h-[72px] items-center justify-between gap-4 border-b px-4 py-3 last:border-none sm:px-5 ${border}`}
+            className={`flex min-h-[60px] items-center justify-between gap-3 border-b px-4 py-3 last:border-none sm:min-h-[72px] sm:gap-4 sm:px-5 ${border}`}
           >
             <div className="flex min-w-0 items-center gap-3">
               <CheckCircle2 size={18} className="shrink-0 text-green-500" />
 
               <div className="min-w-0">
-                <p className="truncate text-[14px] font-[650]">{task.title}</p>
+              <p className="truncate text-[13px] font-[800] sm:text-[14px] sm:font-[650]">{task.title}</p>
 
-                <p className="truncate text-[11px] opacity-40">
+              <p className="truncate text-[10.5px] opacity-40 sm:text-[11px]">
                   {task.category}
                   {task.dueDate ? ` • Due ${formatDueDate(task.dueDate)}` : ""}
                 </p>
@@ -2616,7 +2614,7 @@ function CompletedTodaySection({
 
             <button
               onClick={() => restoreCompletedTask(task.id)}
-              className={`h-9 shrink-0 rounded-xl px-3 text-xs font-[800] transition hover:scale-[1.02] ${
+              className={`h-8 shrink-0 rounded-[14px] px-3 text-[11px] font-[900] transition hover:scale-[1.02] sm:h-9 sm:rounded-xl sm:text-xs sm:font-[800] ${
                 darkMode
                   ? "bg-white/[0.06] text-white/55 hover:text-white"
                   : "bg-black/[0.04] text-black/55 hover:text-black"
@@ -2659,7 +2657,8 @@ function ArchiveView({
         </button>
       </PageHeader>
 
-      <div className={`overflow-hidden rounded-3xl border ${strongerGlass} ${border}`}>
+      <div className={`overflow-hidden rounded-[24px] border sm:rounded-3xl ${strongerGlass} ${border}`}>
+
         {archive.length === 0 && (
           <div className="p-10 text-sm opacity-50">No archived items yet.</div>
         )}
@@ -2738,7 +2737,7 @@ function CategoriesView({
         </div>
       </div>
 
-      <div className={`overflow-hidden rounded-3xl border ${strongerGlass} ${border}`}>
+      <div className={`overflow-hidden rounded-[24px] border sm:rounded-3xl ${strongerGlass} ${border}`}>
         {categories.map((category: any) => (
           <div
             key={category.id}
@@ -2870,7 +2869,7 @@ function StatCard({
 }) {
   return (
     <div
-    className={`flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-[22px] border px-2 text-center transition-all duration-200 hover:-translate-y-0.5 sm:min-h-[88px] sm:flex-row sm:justify-start sm:gap-4 sm:rounded-[26px] sm:px-5 sm:text-left ${className} ${border}`}
+    className={`flex min-h-[78px] min-w-[118px] flex-col items-center justify-center gap-2 rounded-[22px] border px-2 text-center transition-all duration-200 hover:-translate-y-0.5 sm:min-w-0 sm:min-h-[88px] sm:flex-row sm:justify-start sm:gap-4 sm:rounded-[26px] sm:px-5 sm:text-left ${className} ${border}`}
     >
       <div
        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_14px_30px_rgba(0,0,0,0.16)] sm:h-11 sm:w-11"
@@ -3094,85 +3093,85 @@ function FocusModePanel({
 
   return (
     <section
-      className={`relative self-start overflow-hidden rounded-[30px] border p-5 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
-    >
+    className={`relative self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+  >
       <div
-        className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full opacity-14 blur-3xl"
+        className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full opacity-[0.14] blur-3xl"
         style={{ backgroundColor: themeColor }}
       />
 
       <div className="relative">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.03em]">
-              Focus Mode
-              <Sparkles size={16} style={{ color: themeColor }} />
-            </h2>
+      <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5 sm:gap-4">
+  <div className="min-w-0">
+    <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[18px]">
+      Focus Mode
+      <Sparkles size={15} style={{ color: themeColor }} />
+    </h2>
 
-            <p
-              className={`mt-2 max-w-md text-sm leading-6 ${
-                darkMode ? "text-white/45" : "text-black/45"
-              }`}
-            >
-              Compute a clean 3-task execution stack.
-            </p>
-          </div>
+    <p
+      className={`mt-1.5 max-w-md text-[12px] leading-5 sm:mt-2 sm:text-sm sm:leading-6 ${
+        darkMode ? "text-white/45" : "text-black/45"
+      }`}
+    >
+      Compute your 3-task execution stack.
+    </p>
+  </div>
 
-          <span
-            className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-[900] ${
-              darkMode
-                ? "bg-white/[0.07] text-white/55"
-                : "bg-black/[0.04] text-black/45"
-            }`}
-          >
-            AI
-          </span>
-        </div>
+  <span
+    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900] sm:px-3 sm:py-1.5 ${
+      darkMode
+        ? "bg-white/[0.07] text-white/55"
+        : "bg-black/[0.04] text-black/45"
+    }`}
+  >
+    AI
+  </span>
+</div>
 
         {!focusPlan ? (
-          <div
-            className={`rounded-[26px] border p-5 ${
-              darkMode
-                ? "border-white/[0.08] bg-white/[0.04]"
-                : "border-black/[0.04] bg-white/65"
-            }`}
-          >
-            <h3 className="text-[22px] font-[900] leading-tight tracking-[-0.04em]">
-              Build your focus stack.
-            </h3>
-
-            <p
-              className={`mt-3 text-sm leading-6 ${
-                darkMode ? "text-white/45" : "text-black/45"
-              }`}
-            >
-              Momentum will choose the 3 strongest tasks to work through next.
-            </p>
-
-            <button
-              onClick={computeFocusStack}
-              disabled={focusLoading || prioritizedTasks.length === 0}
-              className="mt-5 h-12 w-full rounded-2xl text-sm font-[900] text-white shadow-[0_16px_36px_rgba(0,0,0,0.14)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-40"
-              style={{ backgroundColor: themeColor }}
-            >
-              {focusLoading ? "Computing..." : "Compute Focus Stack"}
-            </button>
-
-            {prioritizedTasks.length === 0 && (
-              <p className="mt-3 text-center text-xs font-[700] opacity-40">
-                Add a task first.
-              </p>
-            )}
-          </div>
+         <div
+         className={`rounded-[22px] border p-4 sm:rounded-[26px] sm:p-5 ${
+           darkMode
+             ? "border-white/[0.08] bg-white/[0.04]"
+             : "border-black/[0.04] bg-white/65"
+         }`}
+       >
+         <h3 className="text-[19px] font-[900] leading-tight tracking-[-0.04em] sm:text-[22px]">
+           Build your focus stack.
+         </h3>
+       
+         <p
+           className={`mt-2 text-[12px] leading-5 sm:mt-3 sm:text-sm sm:leading-6 ${
+             darkMode ? "text-white/45" : "text-black/45"
+           }`}
+         >
+           Momentum will choose the 3 strongest tasks to work through next.
+         </p>
+       
+         <button
+           onClick={computeFocusStack}
+           disabled={focusLoading || prioritizedTasks.length === 0}
+           className="mt-4 h-11 w-full rounded-[18px] text-sm font-[900] text-white shadow-[0_14px_30px_rgba(0,0,0,0.14)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-40 sm:mt-5 sm:h-12 sm:rounded-2xl"
+           style={{ backgroundColor: themeColor }}
+         >
+           {focusLoading ? "Computing..." : "Compute Focus Stack"}
+         </button>
+       
+         {prioritizedTasks.length === 0 && (
+           <p className="mt-3 text-center text-xs font-[700] opacity-40">
+             Add a task first.
+           </p>
+         )}
+       </div>
         ) : (
           <>
-            <div
-              className={`mb-5 rounded-[26px] border p-5 ${
-                darkMode
-                  ? "border-white/[0.08] bg-white/[0.04]"
-                  : "border-black/[0.04] bg-white/65"
-              }`}
-            >
+           <div
+  className={`mb-4 rounded-[22px] border p-4 sm:mb-5 sm:rounded-[26px] sm:p-5 ${
+    darkMode
+      ? "border-white/[0.08] bg-white/[0.04]"
+      : "border-black/[0.04] bg-white/65"
+  }`}
+>
               <div className="mb-4 flex items-center justify-between gap-3">
                 <p
                   className="text-[11px] font-[900] uppercase tracking-[0.16em]"
@@ -3200,7 +3199,7 @@ function FocusModePanel({
                   setIsEditModalOpen(true);
                 }}
                 title={currentTask?.title}
-                className="cursor-pointer text-[23px] font-[900] leading-tight tracking-[-0.045em] hover:opacity-75"
+                className="cursor-pointer text-[19px] font-[900] leading-tight tracking-[-0.04em] hover:opacity-75 sm:text-[23px] sm:tracking-[-0.045em]"
               >
                 {currentTask?.title}
               </h3>
@@ -3234,17 +3233,17 @@ function FocusModePanel({
               </div>
 
               <p
-                className={`mt-4 text-sm leading-6 ${
-                  darkMode ? "text-white/45" : "text-black/45"
-                }`}
+               className={`mt-3 text-[12px] leading-5 sm:mt-4 sm:text-sm sm:leading-6 ${
+                darkMode ? "text-white/45" : "text-black/45"
+              }`}
               >
                 {getTaskReason(currentTask?.id)}
               </p>
 
-              <div className="mt-5 grid grid-cols-[1fr_0.7fr] gap-3">
+              <div className="mt-4 grid grid-cols-[1fr_0.72fr] gap-2 sm:mt-5 sm:gap-3">
                 <button
                   onClick={(event) => toggleTaskById(currentTask.id, event)}
-                  className="h-12 rounded-2xl text-sm font-[900] text-white shadow-[0_16px_36px_rgba(0,0,0,0.14)] transition hover:scale-[1.01]"
+                  className="h-11 rounded-[18px] text-sm font-[900] text-white shadow-[0_14px_30px_rgba(0,0,0,0.14)] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl"
                   style={{ backgroundColor: themeColor }}
                 >
                   Complete
@@ -3252,7 +3251,7 @@ function FocusModePanel({
 
                 <button
                   onClick={moveNext}
-                  className={`h-12 rounded-2xl border text-sm font-[900] transition hover:scale-[1.01] ${border}`}
+                  className={`h-11 rounded-[18px] border text-sm font-[900] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl ${border}`}
                 >
                   Next
                 </button>
@@ -3290,7 +3289,7 @@ function FocusModePanel({
                     <button
                       key={task.id}
                       onClick={() => setFocusIndex(index)}
-                      className={`flex min-h-[60px] w-full items-center gap-3 rounded-[18px] border px-3 py-3 text-left transition hover:scale-[1.005] ${
+                      className={`flex min-h-[54px] w-full items-center gap-2 rounded-[16px] border px-3 py-2.5 text-left transition hover:scale-[1.005] sm:min-h-[60px] sm:gap-3 sm:rounded-[18px] sm:py-3 ${
                         isCurrent
                           ? "border-violet-400/50 bg-violet-500/[0.055]"
                           : `${border} ${
@@ -3299,7 +3298,7 @@ function FocusModePanel({
                       }`}
                     >
                       <div
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-[900] text-white sm:h-7 sm:w-7 sm:text-xs"
                         style={{
                           backgroundColor: isCurrent ? themeColor : "#a1a1aa",
                         }}
@@ -3750,7 +3749,7 @@ function AirtablePriorityGroup({
             </p>
           </div>
 
-          <div className="flex items-center gap-5 text-[13px] font-[700]">
+          <div className="flex items-center gap-3 text-[12px] font-[800] sm:gap-5 sm:text-[13px] sm:font-[700]">
             {task.dueDate && (
               <div className={`flex items-center gap-1.5 ${
                 darkMode ? "text-white/70" : "text-black/65"
@@ -4519,7 +4518,7 @@ function TaskRows({
                 </p>
 
                 <p
-                  className={`mt-1.5 truncate text-[11px] font-[650] ${
+                  className={`mt-1 truncate text-[10.5px] font-[700] sm:mt-1.5 sm:text-[11px] sm:font-[650] ${
                     darkMode ? "text-white/38" : "text-black/38"
                   }`}
                 >
@@ -4768,6 +4767,22 @@ function MobileBottomNav({
   darkMode,
   themeColor,
 }: any) {
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setHasScrolled(window.scrollY > 24);
+    };
+
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll, {
+      passive: true,
+    });
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const items = [
     {
       key: "today",
@@ -4799,11 +4814,15 @@ function MobileBottomNav({
 
   return (
     <nav
-      className={`fixed bottom-3 left-3 right-3 z-[160] grid grid-cols-5 rounded-[24px] border p-2 shadow-[0_18px_60px_rgba(0,0,0,0.22)] backdrop-blur-2xl lg:hidden ${
-        darkMode
-        ? "border-white/[0.08] bg-[#111827]/90"
-        : "border-black/[0.08] bg-white/95"
-      }`}
+    className={`fixed left-3 right-3 top-3 z-[160] grid grid-cols-5 rounded-[24px] border p-2 backdrop-blur-2xl transition-all duration-300 lg:hidden ${
+      hasScrolled
+  ? darkMode
+    ? "border-white/[0.035] bg-[#111827]/22 shadow-[0_10px_34px_rgba(0,0,0,0.10)]"
+    : "border-white/25 bg-white/22 shadow-[0_10px_34px_rgba(17,24,39,0.045)]"
+  : darkMode
+        ? "border-white/[0.08] bg-[#111827]/90 shadow-[0_18px_60px_rgba(0,0,0,0.22)]"
+        : "border-black/[0.08] bg-white/95 shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
+    }`}
     >
       {items.map((item) => {
         const Icon = item.icon;
