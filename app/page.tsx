@@ -2303,7 +2303,7 @@ function TodayView({
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_0.85fr]">
+      <div className="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(360px,0.85fr)]">
       <TaskListPanel
   title="Momentum Prioritized for You"
   description="Momentum lines up your tasks based on intent, urgency, and priority"
@@ -2429,8 +2429,8 @@ function TaskListPanel({
 }: any) {
   return (
     <section
-      className={`rounded-[28px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
-    >
+    className={`min-w-0 overflow-hidden rounded-[28px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
+  >
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-[16px] font-[800]">
@@ -2480,7 +2480,7 @@ function TaskListPanel({
               key={task.id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`group flex min-h-[76px] flex-col items-start gap-3 rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex-row sm:items-center sm:gap-4 sm:rounded-[24px] ${border} ${getPriorityRowClass(
+              className={`group flex min-h-[76px] min-w-0 flex-col items-start gap-3 overflow-hidden rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex-row sm:items-center sm:gap-4 sm:rounded-[24px] ${border} ${getPriorityRowClass(
                 task.priority,
                 darkMode
               )} ${
@@ -2489,7 +2489,7 @@ function TaskListPanel({
                   : "hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
               }`}
             >
-              <div className="flex w-full min-w-0 items-start gap-3 sm:w-auto sm:flex-1 sm:items-center sm:gap-4">
+             <div className="flex w-full min-w-0 flex-1 items-start gap-3 overflow-hidden sm:items-center sm:gap-4">
                 <button
                   onClick={(e) => toggleTaskById(task.id, e)}
                   className="mt-0.5 shrink-0 opacity-70 transition hover:opacity-100 sm:mt-0"
@@ -2512,15 +2512,16 @@ function TaskListPanel({
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <p
-                    onClick={() => {
-                      setSelectedTask(task);
-                      setIsEditModalOpen(true);
-                    }}
-                    className="cursor-pointer text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70 sm:truncate"
-                  >
-                    {task.title}
-                  </p>
+                <p
+  onClick={() => {
+    setSelectedTask(task);
+    setIsEditModalOpen(true);
+  }}
+  title={task.title}
+  className="block max-w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
+>
+  {task.title}
+</p>
 
                   <p
   className={`mt-1.5 truncate text-[11px] font-[650] ${
