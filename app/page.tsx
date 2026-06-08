@@ -495,7 +495,10 @@ const getAppSuggestionReason = (title: string, priority: Priority) => {
 
 const scoreTask = (task: any) => {
   let score = 0;
+
   const title = String(task.title || "").toLowerCase();
+  const whyThisMatters = String(task.whyThisMatters || "").toLowerCase();
+  const combinedText = `${title} ${whyThisMatters}`;
 
   const urgentWords = [
     "submit",
@@ -516,6 +519,31 @@ const scoreTask = (task: any) => {
     "visa",
   ];
 
+  const impactWords = [
+    "approval",
+    "budget",
+    "revenue",
+    "launch",
+    "release",
+    "blocked",
+    "blocking",
+    "manager",
+    "client",
+    "customer",
+    "stakeholder",
+    "career",
+    "interview",
+    "promotion",
+    "risk",
+    "legal",
+    "health",
+    "family",
+    "money",
+    "dependency",
+    "deadline",
+    "quarterly",
+  ];
+
   const lowValueWords = [
     "clean",
     "organize",
@@ -529,9 +557,15 @@ const scoreTask = (task: any) => {
     if (title.includes(word)) score += 10;
   });
 
-  lowValueWords.forEach((word) => {
-    if (title.includes(word)) score -= 3;
+  impactWords.forEach((word) => {
+    if (whyThisMatters.includes(word)) score += 12;
   });
+
+  lowValueWords.forEach((word) => {
+    if (combinedText.includes(word)) score -= 3;
+  });
+
+  if (whyThisMatters.trim()) score += 8;
 
   if (task.priority === "High") score += 25;
   if (task.priority === "Medium") score += 12;
@@ -583,8 +617,9 @@ export default function Home() {
   const [archiveToast, setArchiveToast] = useState("");
   const [firecrackers, setFirecrackers] = useState<Firecracker[]>([]);
   const [newTask, setNewTask] = useState("");
-  const [newCategory, setNewCategory] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+const [newTaskWhy, setNewTaskWhy] = useState("");
+const [newCategory, setNewCategory] = useState("");
+const [selectedCategory, setSelectedCategory] = useState("");
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
     null
   );
@@ -689,10 +724,14 @@ const [isLoaded, setIsLoaded] = useState(false);
     return [...allTasks]
       .filter((task) => !task.completed)
       .sort((a, b) => {
+        if (b.score !== a.score) {
+          return b.score - a.score;
+        }
+  
         const dateA = getTaskDate(a);
         const dateB = getTaskDate(b);
   
-        if (!dateA && !dateB) return b.score - a.score;
+        if (!dateA && !dateB) return 0;
         if (!dateA) return 1;
         if (!dateB) return -1;
   
@@ -1004,7 +1043,11 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
   };
 
 
-  const improveTaskWithAI = async (taskId: string, title: string) => {
+  const improveTaskWithAI = async (
+    taskId: string,
+    title: string,
+    whyThisMatters: string
+  ) => {
     setSuggestingTaskIds((prev) => [...prev, taskId]);
   
     try {
@@ -1015,6 +1058,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
         },
         body: JSON.stringify({
           title,
+          whyThisMatters,
           categories: categories.map((category) => category.title),
           today: getTodayDate(),
         }),
@@ -1038,6 +1082,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
   
             return {
               ...task,
+              whyThisMatters: task.whyThisMatters || whyThisMatters,
               priority: suggestion.priority || task.priority,
               suggestedDueDate: suggestion.suggestedDueDate || task.suggestedDueDate,
               status: suggestion.status || task.status || "Active",
@@ -1045,7 +1090,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
               aiReason:
                 suggestion.reason ||
                 task.aiReason ||
-                "Momentum reviewed this task.",
+                "Momentum reviewed this task with your reason in mind.",
               aiConfidence:
                 typeof suggestion.confidence === "number"
                   ? suggestion.confidence
@@ -1084,6 +1129,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
   
             const movedTask = {
               ...taskToMove,
+              whyThisMatters: taskToMove.whyThisMatters || whyThisMatters,
               priority: suggestion.priority || taskToMove.priority,
               suggestedDueDate:
                 suggestion.suggestedDueDate || taskToMove.suggestedDueDate,
@@ -1118,11 +1164,12 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
   /* ------------------------------------------------ */
   /* Add Task */
   /* ------------------------------------------------ */
-
   const addTask = () => {
     if (!newTask.trim()) return;
   
     const title = newTask.trim();
+    const whyThisMatters = newTaskWhy.trim();
+  
     const categoryTitle =
       selectedCategory || categories[0]?.title || "Small Wins";
   
@@ -1137,15 +1184,18 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
     const taskToAdd = {
       id: taskId,
       title,
+      whyThisMatters,
       priority,
       dueDate: undefined,
       suggestedDueDate,
       notes: "",
       status: "Active",
-      aiReason: enableAppSuggestions
+      aiReason: whyThisMatters
+        ? `This matters because: ${whyThisMatters}`
+        : enableAppSuggestions
         ? getAppSuggestionReason(title, priority)
         : "App suggestions are turned off.",
-      aiConfidence: suggestedDueDate ? 0.82 : 0,
+      aiConfidence: whyThisMatters ? 0.9 : suggestedDueDate ? 0.82 : 0,
       completed: false,
       createdAt: new Date().toISOString(),
     };
@@ -1164,9 +1214,10 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
     );
   
     setNewTask("");
+    setNewTaskWhy("");
   
     if (enableAppSuggestions) {
-      void improveTaskWithAI(taskId, title);
+      void improveTaskWithAI(taskId, title, whyThisMatters);
     }
   };
 
@@ -1532,7 +1583,8 @@ setExtractError("");
     if (!updatedTask?.title?.trim()) return;
 
     const title = updatedTask.title.trim();
-    const priority: Priority = updatedTask.priority || inferPriority(title);
+const whyThisMatters = String(updatedTask.whyThisMatters || "").trim();
+const priority: Priority = updatedTask.priority || inferPriority(title);
 
     setCategories((prev) => {
       const cleanedCategories = prev.map((category) => ({
@@ -1548,6 +1600,7 @@ setExtractError("");
               {
                 id: updatedTask.id,
                 title,
+                whyThisMatters,
                 priority,
                 dueDate: updatedTask.dueDate || undefined,
                 suggestedDueDate:
@@ -1796,8 +1849,10 @@ completedAt: updatedTask.completedAt,
             boostMessage={boostMessage}
             boostLoading={boostLoading}
             newTask={newTask}
-            setNewTask={setNewTask}
-            addTask={addTask}
+setNewTask={setNewTask}
+newTaskWhy={newTaskWhy}
+setNewTaskWhy={setNewTaskWhy}
+addTask={addTask}
             toggleTaskById={toggleTaskById}
             deleteTask={deleteTask}
             acceptSuggestedDateById={acceptSuggestedDateById}
@@ -2017,8 +2072,10 @@ function TodayView({
   boostMessage,
   boostLoading,
   newTask,
-  setNewTask,
-  addTask,
+setNewTask,
+newTaskWhy,
+setNewTaskWhy,
+addTask,
   toggleTaskById,
   deleteTask,
   acceptSuggestedDateById,
@@ -2252,31 +2309,57 @@ function TodayView({
       </div>
     </div>
 
-    <div className="flex gap-2 sm:gap-3">
-      <input
-        value={newTask}
-        onChange={(e) => setNewTask(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") addTask();
-        }}
-        placeholder="Capture anything..."
-        className={`h-12 min-w-0 flex-1 rounded-[18px] border px-4 text-sm font-[750] outline-none transition focus:ring-4 sm:h-14 sm:rounded-[22px] sm:px-5 ${
-          darkMode
-            ? "border-white/[0.08] bg-white/[0.06] text-white placeholder:text-white/35 focus:border-violet-300/45 focus:ring-violet-400/10"
-            : "border-black/[0.06] bg-white text-black placeholder:text-black/35 focus:border-violet-400/55 focus:ring-violet-300/25"
-        }`}
-      />
+    <div
+  className={`flex min-h-12 overflow-hidden rounded-[18px] border sm:min-h-14 sm:rounded-[22px] ${
+    darkMode
+      ? "border-white/[0.08] bg-white/[0.06] focus-within:border-violet-300/45"
+      : "border-black/[0.06] bg-white focus-within:border-violet-400/55"
+  }`}
+>
+  <input
+    value={newTask}
+    onChange={(e) => setNewTask(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") addTask();
+    }}
+    placeholder="Capture anything..."
+    className={`h-12 min-w-0 flex-[1.05] bg-transparent px-4 text-sm font-[750] outline-none sm:h-14 sm:px-5 ${
+      darkMode
+        ? "text-white placeholder:text-white/35"
+        : "text-black placeholder:text-black/35"
+    }`}
+  />
 
-      <button
-        onClick={addTask}
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] text-white shadow-[0_14px_30px_rgba(124,58,237,0.20)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-14 sm:w-14 sm:rounded-[22px]"
-        style={{
-          background: `linear-gradient(135deg, ${themeColor}, #7c3aed)`,
-        }}
-      >
-        <Send size={17} />
-      </button>
-    </div>
+  <div
+    className={`my-3 w-px shrink-0 ${
+      darkMode ? "bg-white/[0.08]" : "bg-black/[0.06]"
+    }`}
+  />
+
+  <input
+    value={newTaskWhy}
+    onChange={(e) => setNewTaskWhy(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") addTask();
+    }}
+    placeholder="Why this matters..."
+    className={`h-12 min-w-0 flex-1 bg-transparent px-4 text-sm font-[750] outline-none sm:h-14 sm:px-5 ${
+      darkMode
+        ? "text-white placeholder:text-white/35"
+        : "text-black placeholder:text-black/35"
+    }`}
+  />
+
+  <button
+    onClick={addTask}
+    className="m-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] text-white shadow-[0_14px_30px_rgba(124,58,237,0.20)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-11 sm:w-11 sm:rounded-[18px]"
+    style={{
+      background: `linear-gradient(135deg, ${themeColor}, #7c3aed)`,
+    }}
+  >
+    <Send size={16} />
+  </button>
+</div>
 
     <div className="mt-3 flex flex-wrap items-center gap-2">
       <button
@@ -2297,7 +2380,21 @@ function TodayView({
       ].map((example, index) => (
         <button
           key={example}
-          onClick={() => setNewTask(example)}
+          onClick={() => {
+            setNewTask(example);
+          
+            if (example === "Submit insurance claim next week") {
+              setNewTaskWhy("Avoid delay in claim approval.");
+            }
+          
+            if (example === "Buy birthday gift for mom") {
+              setNewTaskWhy("Make sure it arrives before her birthday.");
+            }
+          
+            if (example === "Book dentist appointment") {
+              setNewTaskWhy("Prevent the issue from getting worse.");
+            }
+          }}
           className={`rounded-full border px-3 py-1.5 text-[11px] font-[700] transition hover:scale-[1.02] sm:text-xs ${
             index > 0 ? "hidden sm:inline-flex" : "inline-flex"
           } ${
@@ -2539,8 +2636,9 @@ const hiddenTaskCount = Math.max(tasks.length - defaultVisibleTaskCount, 0);
                 darkMode ? "text-white/38" : "text-black/38"
               }`}
             >
-              {task.category} · {task.priority}
-              {isSuggesting ? " · Momentum thinking..." : ""}
+             {task.category} · {task.priority}
+             {task.whyThisMatters ? " · Context added" : ""}
+{isSuggesting ? " · Momentum thinking..." : ""}
             </p>
           </div>
         </div>
@@ -3076,6 +3174,7 @@ function FocusModePanel({
           tasks: prioritizedTasks.slice(0, 15).map((task: any) => ({
             id: task.id,
             title: task.title,
+            whyThisMatters: task.whyThisMatters || "",
             priority: task.priority,
             dueDate: task.dueDate || null,
             suggestedDueDate: task.suggestedDueDate || null,
@@ -5491,27 +5590,50 @@ function EditTaskModal({
 
           <div className="relative max-h-[calc(92vh-180px)] overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
             <div className="space-y-6">
-              <section>
-                <label className="mb-2 block text-xs font-[900] uppercase tracking-[0.14em] opacity-40">
-                  Title
-                </label>
+            <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+  <div>
+    <label className="mb-2 block text-xs font-[900] uppercase tracking-[0.14em] opacity-40">
+      Title
+    </label>
 
-                <input
-                  value={selectedTask.title}
-                  onChange={(e) =>
-                    setSelectedTask({ ...selectedTask, title: e.target.value })
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") saveTaskChanges(selectedTask);
-                  }}
-                  className={`h-14 w-full rounded-[22px] px-4 text-[15px] font-[750] tracking-[-0.01em] outline-none transition focus:ring-4 ${input} ${
-                    selectedTask.title?.trim()
-                      ? "focus:ring-violet-500/15"
-                      : "focus:ring-red-500/15"
-                  }`}
-                  placeholder="What needs to get done?"
-                />
-              </section>
+    <input
+      value={selectedTask.title}
+      onChange={(e) =>
+        setSelectedTask({ ...selectedTask, title: e.target.value })
+      }
+      onKeyDown={(e) => {
+        if (e.key === "Enter") saveTaskChanges(selectedTask);
+      }}
+      className={`h-14 w-full rounded-[22px] px-4 text-[15px] font-[750] tracking-[-0.01em] outline-none transition focus:ring-4 ${input} ${
+        selectedTask.title?.trim()
+          ? "focus:ring-violet-500/15"
+          : "focus:ring-red-500/15"
+      }`}
+      placeholder="What needs to get done?"
+    />
+  </div>
+
+  <div>
+    <label className="mb-2 block text-xs font-[900] uppercase tracking-[0.14em] opacity-40">
+      Why this matters
+    </label>
+
+    <input
+      value={selectedTask.whyThisMatters || ""}
+      onChange={(e) =>
+        setSelectedTask({
+          ...selectedTask,
+          whyThisMatters: e.target.value,
+        })
+      }
+      onKeyDown={(e) => {
+        if (e.key === "Enter") saveTaskChanges(selectedTask);
+      }}
+      className={`h-14 w-full rounded-[22px] px-4 text-[15px] font-[750] tracking-[-0.01em] outline-none transition focus:ring-4 focus:ring-violet-500/15 ${input}`}
+      placeholder="Impact, outcome, or consequence..."
+    />
+  </div>
+</section>
 
               <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                 <div>
