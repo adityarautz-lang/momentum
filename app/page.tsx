@@ -762,12 +762,9 @@ const [isLoaded, setIsLoaded] = useState(false);
   ).length;
 
   const completionPercent =
-    allTasks.length + completedToday.length === 0
-      ? 0
-      : Math.round(
-          (completedToday.length / (allTasks.length + completedToday.length)) *
-            100
-        );
+  allTasks.length === 0
+    ? 0
+    : Math.round((completedToday.length / allTasks.length) * 100);
 
   const suggestedDateCount = allTasks.filter(
     (task) => !task.dueDate && task.suggestedDueDate
