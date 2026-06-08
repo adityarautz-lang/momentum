@@ -2113,185 +2113,125 @@ addTask,
 }: any) {
   return (
     <>
-    <div
-  className={`mb-5 hidden rounded-[30px] border px-5 py-5 sm:mb-6 sm:block sm:rounded-[34px] sm:px-7 sm:py-6 ${strongerGlass} ${border}`}
+    <section
+  className={`mb-5 hidden overflow-hidden rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-5 ${strongerGlass} ${border}`}
 >
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-          <div>
-          <h1 className="text-[22px] font-[900] leading-tight tracking-[-0.05em] sm:text-[32px]">
-  Today&apos;s Momentum
-</h1>
+  <div className="flex items-start justify-between gap-5">
+    <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h1 className="text-[24px] font-[900] leading-tight tracking-[-0.05em]">
+          Today&apos;s Momentum
+        </h1>
 
-            <p
-              className={`mt-2 text-sm ${
-                darkMode ? "text-white/45" : "text-black/45"
-              }`}
-            >
-             {allTasks.length} active tasks · {dueSoonCount} due soon · {completedToday.length} completed
-            </p>
-          </div>
+        <span
+          className={`rounded-full px-3 py-1 text-[11px] font-[900] ${
+            darkMode
+              ? "bg-white/[0.06] text-white/50"
+              : "bg-black/[0.035] text-black/45"
+          }`}
+        >
+          {formatDateLong()}
+        </span>
 
-          <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
-            <div className={`rounded-2xl px-4 py-3 text-xs font-[700] ${glass}`}>
-              {formatDateLong()}
-            </div>
-
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`flex h-11 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-[700] transition hover:-translate-y-0.5 ${glass}`}
-            >
-              {darkMode ? <Sun size={17} /> : <Moon size={17} />}
-              {darkMode ? "Light" : "Dark"}
-            </button>
-          </div>
-        </div>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className={`inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[11px] font-[900] transition hover:scale-[1.02] ${
+            darkMode
+              ? "bg-white/[0.06] text-white/55 hover:text-white"
+              : "bg-black/[0.035] text-black/50 hover:text-black"
+          }`}
+        >
+          {darkMode ? <Sun size={13} /> : <Moon size={13} />}
+          {darkMode ? "Light" : "Dark"}
+        </button>
       </div>
 
-      <section
-  className={`relative mb-5 hidden overflow-hidden rounded-[32px] border p-5 sm:mb-6 sm:block sm:rounded-[40px] sm:p-7 ${strongerGlass} ${border}`}
->
-        <div
-          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-20 blur-3xl"
-          style={{ backgroundColor: themeColor }}
-        />
+      <p
+        className={`mt-1.5 text-sm font-[700] ${
+          darkMode ? "text-white/42" : "text-black/42"
+        }`}
+      >
+        {allTasks.length} tasks · {completedToday.length} completed ·{" "}
+        {completionPercent}% progress
+      </p>
 
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="mb-3 flex items-center gap-2">
-              <Sparkles size={17} style={{ color: themeColor }} />
-
-              <p
-                className="text-[12px] font-[900] uppercase tracking-[0.14em]"
-                style={{ color: themeColor }}
-              >
-                AI Momentum Boost
-              </p>
-            </div>
-
-            {completedToday.length === 0 ? (
-              <>
-               <h2 className="text-[19px] font-[900] leading-tight tracking-[-0.04em] sm:text-[28px]">
-                  Let&apos;s build momentum today.
-                </h2>
-
-                <p
-                  className={`mt-2 max-w-5xl text-xs leading-5 sm:text-sm sm:leading-6 ${
-                    darkMode ? "text-white/45" : "text-black/45"
-                  }`}
-                >
-                  Complete your first task and Momentum will automatically turn
-                  your progress into a quick boost.
-                </p>
-              </>
-            ) : (
-              <>
-               <h2 className="text-[19px] font-[900] leading-tight tracking-[-0.04em] sm:text-[28px]">
-                {boostLoading
-  ? "Reading your wins..."
-  : completedToday.length === 1
-  ? "First win logged."
-  : `Great start! You have completed ${
-      completedToday.length
-    } tasks today.`}
-                </h2>
-
-                <p
-                 className={`mt-2 max-w-5xl text-xs leading-5 sm:text-sm sm:leading-6 ${
-                    darkMode ? "text-white/55" : "text-black/55"
-                  }`}
-                >
-                 {boostLoading
-  ? "Your boost will update after a short pause."
-  : boostMessage ||
-    "Nice work — your completed tasks are turning into visible progress."}
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {completedToday.slice(0, 4).map((task: any) => (
-                    <span
-                      key={task.id}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-[800] ${
-                        darkMode
-                          ? "border-white/[0.08] bg-white/[0.06] text-white/65"
-                          : "border-black/[0.06] bg-white text-black/65"
-                      }`}
-                    >
-                      <CheckCircle2 size={13} style={{ color: themeColor }} />
-                      {task.title}
-                    </span>
-                  ))}
-
-                  {completedToday.length > 4 && (
-                    <span
-                      className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[11px] font-[800] ${
-                        darkMode
-                          ? "border-white/[0.08] bg-white/[0.06] text-white/50"
-                          : "border-black/[0.06] bg-white text-black/50"
-                      }`}
-                    >
-                      +{completedToday.length - 4} more
-                    </span>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-
-          <div
-  className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-[24px] text-white shadow-[0_18px_45px_rgba(0,0,0,0.18)] sm:flex"
-  style={{ backgroundColor: themeColor }}
->
-  <Zap size={26} />
-</div>
-        </div>
-      </section>
-
-      <div className="mb-5 hidden gap-3 sm:grid sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-5">
-        <StatCard
-          className={strongerGlass}
-          border={border}
-          icon={<ListChecks size={18} />}
-          label="Tasks Today"
-          value={allTasks.length}
-          themeColor={themeColor}
-        />
-
-        <StatCard
-          className={strongerGlass}
-          border={border}
-          icon={<Flame size={18} />}
-          label="High Priority"
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <CompactMetric
+          label="High"
           value={highPriorityCount}
-          themeColor="#ef4444"
+          color="#ef4444"
+          darkMode={darkMode}
         />
 
-        <StatCard
-          className={strongerGlass}
-          border={border}
-          icon={<Clock3 size={18} />}
-          label="Due Soon"
+        <CompactMetric
+          label="Due soon"
           value={dueSoonCount}
-          themeColor="#f59e0b"
+          color="#f59e0b"
+          darkMode={darkMode}
         />
 
-        <StatCard
-          className={strongerGlass}
-          border={border}
-          icon={<TrendingUp size={18} />}
+        <CompactMetric
           label="Completed"
           value={`${completionPercent}%`}
-          themeColor="#10b981"
+          color="#10b981"
+          darkMode={darkMode}
         />
 
-        <StatCard
-          className={strongerGlass}
-          border={border}
-          icon={<Zap size={18} />}
+        <CompactMetric
           label="Streak"
           value="4 Day"
-          themeColor={themeColor}
+          color={themeColor}
+          darkMode={darkMode}
         />
       </div>
+    </div>
+
+    <div
+      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[20px] text-white shadow-[0_18px_45px_rgba(0,0,0,0.16)]"
+      style={{ backgroundColor: themeColor }}
+    >
+      <Zap size={21} />
+    </div>
+  </div>
+
+  {completedToday.length > 0 && (
+    <div
+      className={`mt-4 rounded-[22px] border px-4 py-3 ${
+        darkMode
+          ? "border-white/[0.07] bg-white/[0.035]"
+          : "border-black/[0.045] bg-black/[0.018]"
+      }`}
+    >
+      <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0">
+          <p
+            className="text-[11px] font-[900] uppercase tracking-[0.16em]"
+            style={{ color: themeColor }}
+          >
+            AI Momentum Boost
+          </p>
+
+          <p className="mt-1 truncate text-[15px] font-[900] tracking-[-0.025em]">
+            {boostLoading
+              ? "Reading your wins..."
+              : `Great start — ${completedToday.length} completed today.`}
+          </p>
+        </div>
+
+        <p
+          className={`min-w-0 truncate text-xs font-[700] xl:max-w-[620px] ${
+            darkMode ? "text-white/45" : "text-black/45"
+          }`}
+        >
+          {boostLoading
+            ? "Your boost will update after a short pause."
+            : boostMessage ||
+              "Your completed tasks are turning into visible progress."}
+        </p>
+      </div>
+    </div>
+  )}
+</section>
 
      
       <section
@@ -3088,6 +3028,43 @@ function AssistantItem({ icon, title, description, color, darkMode }: any) {
           {description}
         </p>
       </div>
+    </div>
+  );
+}
+
+function CompactMetric({
+  label,
+  value,
+  color,
+  darkMode,
+}: {
+  label: string;
+  value: string | number;
+  color: string;
+  darkMode: boolean;
+}) {
+  return (
+    <div
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 ${
+        darkMode
+          ? "border-white/[0.07] bg-white/[0.04]"
+          : "border-black/[0.045] bg-white/70"
+      }`}
+    >
+      <span
+        className="h-2 w-2 rounded-full"
+        style={{ backgroundColor: color }}
+      />
+
+      <span className="text-[12px] font-[900]">{value}</span>
+
+      <span
+        className={`text-[11px] font-[800] ${
+          darkMode ? "text-white/38" : "text-black/38"
+        }`}
+      >
+        {label}
+      </span>
     </div>
   );
 }
