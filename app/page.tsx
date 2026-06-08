@@ -1246,10 +1246,26 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
         }),
       });
   
-      const data = await response.json();
-  
+      const responseText = await response.text();
+
+      let data: any = null;
+      
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (error) {
+        console.error("Extract API returned non-JSON response:", responseText);
+      
+        throw new Error(
+          "Momentum could not reach the AI service properly. Please try again in a moment."
+        );
+      }
+      
       if (!response.ok) {
-        throw new Error(data.error || "Failed to extract tasks.");
+        throw new Error(
+          data?.error ||
+            data?.message ||
+            "Momentum could not extract tasks right now."
+        );
       }
   
       const normalizedTasks: ExtractedTaskSuggestion[] = (data.tasks || [])
@@ -1279,7 +1295,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
   if (normalizedTasks.length === 0) {
     setExtractedTasks([]);
     setExtractError(
-      "Momentum could not find a clear action item yet. Try rewriting it as something to do, for example: “Build automated validation for school records before launch.”"
+      "Momentum could not find a clear action item yet. Try adding an action verb, owner, or timing — for example: “Build automated validation for school records before launch.”"
     );
     return;
   }
