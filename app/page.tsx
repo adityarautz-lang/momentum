@@ -1227,6 +1227,13 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
       setExtractError("Paste some text first.");
       return;
     }
+    
+    if (extractInput.trim().split(/\s+/).length < 6) {
+      setExtractError(
+        "Add a little more context so Momentum can turn this into action items."
+      );
+      return;
+    }
   
     setExtractLoading(true);
     setExtractError("");
@@ -1250,31 +1257,39 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
         throw new Error(data.error || "Failed to extract tasks.");
       }
   
-      const normalizedTasks: ExtractedTaskSuggestion[] = (data.tasks || []).map(
-        (task: any) => ({
-          id: crypto.randomUUID(),
-          selected: true,
-          title: String(task.title || "").trim(),
-          priority: ["Low", "Medium", "High"].includes(task.priority)
-            ? task.priority
-            : "Medium",
-          suggestedDueDate: task.suggestedDueDate || null,
-          category:
-            categories.find((category) => category.title === task.category)
-              ?.title ||
-            categories[0]?.title ||
-            "Small Wins",
-          notes: String(task.notes || ""),
-          status: ["Active", "Waiting", "Someday"].includes(task.status)
-            ? task.status
-            : "Active",
-          reason: String(task.reason || ""),
-          confidence:
-            typeof task.confidence === "number" ? task.confidence : 0.7,
-        })
-      );
-  
-      setExtractedTasks(normalizedTasks);
+      const normalizedTasks: ExtractedTaskSuggestion[] = (data.tasks || [])
+  .map((task: any) => ({
+    id: crypto.randomUUID(),
+    selected: true,
+    title: String(task.title || "").trim(),
+    priority: ["Low", "Medium", "High"].includes(task.priority)
+      ? task.priority
+      : "Medium",
+    suggestedDueDate: task.suggestedDueDate || null,
+    category:
+      categories.find((category) => category.title === task.category)
+        ?.title ||
+      categories[0]?.title ||
+      "Small Wins",
+    notes: String(task.notes || ""),
+    status: ["Active", "Waiting", "Someday"].includes(task.status)
+      ? task.status
+      : "Active",
+    reason: String(task.reason || ""),
+    confidence:
+      typeof task.confidence === "number" ? task.confidence : 0.7,
+  }))
+  .filter((task: ExtractedTaskSuggestion) => task.title.length > 0);
+
+if (normalizedTasks.length === 0) {
+  setExtractedTasks([]);
+  setExtractError(
+    "I need a little more context to create action items. Try adding what needs to be done, who it is for, or when it matters."
+  );
+  return;
+}
+
+setExtractedTasks(normalizedTasks);
     } catch (error) {
       setExtractError(
         error instanceof Error ? error.message : "Failed to extract tasks."
