@@ -1230,6 +1230,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
   
     setExtractLoading(true);
     setExtractError("");
+    setExtractedTasks([]);
   
     try {
       const response = await fetch("/api/extract-tasks", {
@@ -1244,10 +1245,26 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
         }),
       });
   
-      const data = await response.json();
+      const responseText = await response.text();
+  
+      let data: any = null;
+  
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (error) {
+        console.error("Extract API returned non-JSON response:", responseText);
+  
+        throw new Error(
+          "Momentum could not connect to the AI service. Please try again."
+        );
+      }
   
       if (!response.ok) {
-        throw new Error(data.error || "Failed to extract tasks.");
+        throw new Error(
+          data?.error ||
+            data?.message ||
+            "Momentum could not extract tasks right now."
+        );
       }
   
       const normalizedTasks: ExtractedTaskSuggestion[] = (data.tasks || []).map(
@@ -1275,9 +1292,19 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
       );
   
       setExtractedTasks(normalizedTasks);
+  
+      if (normalizedTasks.length === 0) {
+        setExtractError(
+          "No tasks were found. Try adding a little more context or rewrite it as something to do."
+        );
+      }
     } catch (error) {
+      console.error(error);
+  
       setExtractError(
-        error instanceof Error ? error.message : "Failed to extract tasks."
+        error instanceof Error
+          ? error.message
+          : "Failed to extract tasks. Please try again."
       );
     } finally {
       setExtractLoading(false);
