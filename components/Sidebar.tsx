@@ -78,8 +78,8 @@ export default function Sidebar({
 
   return (
     <aside
-    className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 text-white shadow-[18px_0_70px_rgba(0,0,0,0.38)] lg:flex ${border} ${sidebarBg}`}
-  >
+      className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 text-white shadow-[18px_0_70px_rgba(0,0,0,0.38)] lg:flex ${border} ${sidebarBg}`}
+    >
       <div className="mb-7">
         <div className="mb-5 flex items-center gap-3">
           <div
@@ -88,12 +88,12 @@ export default function Sidebar({
               backgroundColor: themeColor,
             }}
           >
-            M
+            V
           </div>
 
           <div>
             <h1 className="text-[15px] font-[800] tracking-[-0.03em] text-white">
-            VeyraFlow
+              Veira
             </h1>
 
             <p className={`text-[11px] font-medium ${mutedText}`}>
@@ -117,7 +117,7 @@ export default function Sidebar({
           </div>
 
           <p className={`text-[11px] leading-relaxed ${mutedText}`}>
-          VeyraFlow can prioritize and suggest dates from your task titles.
+            Veira can prioritize and suggest dates from your task titles.
           </p>
         </div>
       </div>
