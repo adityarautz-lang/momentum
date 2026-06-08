@@ -415,7 +415,7 @@ const getAppSuggestionReason = (title: string, priority: Priority) => {
       "form",
     ])
   ) {
-    return "This looks like an admin or official task, so Momentum suggests handling it soon.";
+    return "This looks like an admin or official task, so Veira suggests handling it soon.";
   }
 
   if (
@@ -433,7 +433,7 @@ const getAppSuggestionReason = (title: string, priority: Priority) => {
       "insurance",
     ])
   ) {
-    return "This sounds time-sensitive or submission-based, so Momentum moved it higher.";
+    return "This sounds time-sensitive or submission-based, so Veira moved it higher.";
   }
 
   if (
@@ -449,7 +449,7 @@ const getAppSuggestionReason = (title: string, priority: Priority) => {
       "call",
     ])
   ) {
-    return "This may depend on another person or available slots, so Momentum suggests doing it early.";
+    return "This may depend on another person or available slots, so Veira suggests doing it early.";
   }
 
   if (
@@ -464,7 +464,7 @@ const getAppSuggestionReason = (title: string, priority: Priority) => {
       "ask",
     ])
   ) {
-    return "This involves communication with someone else, so Momentum suggests not leaving it open too long.";
+    return "This involves communication with someone else, so Veira suggests not leaving it open too long.";
   }
 
   if (
@@ -479,18 +479,18 @@ const getAppSuggestionReason = (title: string, priority: Priority) => {
       "medicine",
     ])
   ) {
-    return "This looks like an errand or purchase, so Momentum suggests scheduling it soon.";
+    return "This looks like an errand or purchase, so Veira suggests scheduling it soon.";
   }
 
   if (priority === "High") {
-    return "This was classified as high priority, so Momentum kept it near the top.";
+    return "This was classified as high priority, so Veira kept it near the top.";
   }
 
   if (priority === "Medium") {
     return "This looks useful but not immediately critical.";
   }
 
-  return "This looks less urgent, so Momentum placed it lower for now.";
+  return "This looks less urgent, so Veira placed it lower for now.";
 };
 
 const scoreTask = (task: any) => {
@@ -826,7 +826,7 @@ const boostCountKey = `momentum-boost-count-${boostCacheDate}`;
 
 
 /* ------------------------------------------------ */
-/* Load Momentum Boost Cache */
+/* Load Veira Boost Cache */
 /* ------------------------------------------------ */
 
 useEffect(() => {
@@ -852,7 +852,7 @@ useEffect(() => {
 }, [isLoaded, boostCacheKey, boostCountKey]);
 
 /* ------------------------------------------------ */
-/* Automatic Momentum Boost */
+/* Automatic Veira Boost */
 /* ------------------------------------------------ */
 
 useEffect(() => {
@@ -870,7 +870,7 @@ useEffect(() => {
 
   if (completedToday.length === 1) {
     const firstWinMessage =
-      "Nice — first win logged. Momentum is starting to build.";
+      "Nice — first win logged. Veira is starting to build.";
 
     setBoostMessage(firstWinMessage);
     setLastBoostTaskKey(completedBoostTaskKey);
@@ -892,7 +892,7 @@ useEffect(() => {
   if (completedBoostTaskKey === lastBoostTaskKey) return;
 
   if (dailyBoostCount >= 3) {
-    const cappedMessage = `You’ve completed ${completedToday.length} tasks today. That is strong progress — and Momentum is already visible.`;
+    const cappedMessage = `You’ve completed ${completedToday.length} tasks today. That is strong progress — and Veira is already visible.`;
 
     setBoostMessage(cappedMessage);
     setLastBoostTaskKey(completedBoostTaskKey);
@@ -1087,7 +1087,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
               aiReason:
                 suggestion.reason ||
                 task.aiReason ||
-                "Momentum reviewed this task with your reason in mind.",
+                "Veira reviewed this task with your reason in mind.",
               aiConfidence:
                 typeof suggestion.confidence === "number"
                   ? suggestion.confidence
@@ -1135,7 +1135,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
               aiReason:
                 suggestion.reason ||
                 taskToMove.aiReason ||
-                "Momentum reviewed this task.",
+                "Veira reviewed this task.",
               aiConfidence:
                 typeof suggestion.confidence === "number"
                   ? suggestion.confidence
@@ -1252,7 +1252,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
         console.error("Extract API returned non-JSON response:", responseText);
   
         throw new Error(
-          "Momentum could not connect to the AI service. Please try again."
+          "Veira could not connect to the AI service. Please try again."
         );
       }
   
@@ -1260,7 +1260,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
         throw new Error(
           data?.error ||
             data?.message ||
-            "Momentum could not extract tasks right now."
+            "Veira could not extract tasks right now."
         );
       }
   
@@ -1568,7 +1568,7 @@ setExtractError("");
             ...task,
             dueDate: task.suggestedDueDate,
             suggestedDueDate: undefined,
-            aiReason: "You accepted Momentum's app-suggested date.",
+            aiReason: "You accepted Veira's app-suggested date.",
             aiConfidence: 1,
           };
         }),
@@ -1589,7 +1589,7 @@ setExtractError("");
             ...task,
             dueDate: task.suggestedDueDate,
             suggestedDueDate: undefined,
-            aiReason: "You accepted Momentum's app-suggested date.",
+            aiReason: "You accepted Veira's app-suggested date.",
             aiConfidence: 1,
           };
         }),
@@ -1710,7 +1710,7 @@ completedAt: updatedTask.completedAt,
 
   const resetAppData = () => {
     const confirmed = window.confirm(
-      "Reset all Momentum data? This will delete active tasks, completed tasks, and archived items."
+      "Reset all Veira data? This will delete active tasks, completed tasks, and archived items."
     );
 
     if (!confirmed) return;
@@ -1721,7 +1721,7 @@ completedAt: updatedTask.completedAt,
     setSelectedCategory(initialCategories[0].title);
     setSelectedView("today");
 
-    setArchiveToast("Momentum data reset");
+    setArchiveToast("Veira data reset");
 
     setTimeout(() => {
       setArchiveToast("");
@@ -2208,7 +2208,7 @@ addTask,
             className="text-[11px] font-[900] uppercase tracking-[0.16em]"
             style={{ color: themeColor }}
           >
-            AI Momentum Boost
+            AI Veira Boost
           </p>
 
           <p className="mt-1 truncate text-[15px] font-[900] tracking-[-0.025em]">
@@ -2268,7 +2268,7 @@ addTask,
             darkMode ? "text-white/42" : "text-black/38"
           }`}
         >
-          Momentum will organize it for you
+          Veira will organize it for you
         </p>
       </div>
     </div>
@@ -2378,8 +2378,8 @@ addTask,
 <div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,1fr)]">
   <div className="order-2 xl:order-1">
     <TaskListPanel
-      title="Momentum Prioritized for You"
-      description="Momentum lines up your tasks based on intent, urgency, and priority"
+      title="Veira Prioritized for You"
+      description="Veira lines up your tasks based on intent, urgency, and priority"
       tasks={prioritizedTasks}
       darkMode={darkMode}
       border={border}
@@ -2391,7 +2391,7 @@ addTask,
       acceptSuggestedDateById={acceptSuggestedDateById}
       setSelectedTask={setSelectedTask}
       setIsEditModalOpen={setIsEditModalOpen}
-      emptyMessage="Add a task below. Momentum will organize it for you."
+      emptyMessage="Add a task below. Veira will organize it for you."
       ranked
     />
   </div>
@@ -2602,7 +2602,7 @@ const hiddenTaskCount = Math.max(tasks.length - defaultVisibleTaskCount, 0);
             >
              {task.category} · {task.priority}
              {task.whyThisMatters ? " · Context added" : ""}
-{isSuggesting ? " · Momentum thinking..." : ""}
+{isSuggesting ? " · Veira thinking..." : ""}
             </p>
           </div>
         </div>
@@ -3144,7 +3144,7 @@ function FocusModePanel({
   const getTaskReason = (taskId: string) => {
     return (
       focusPlan?.reasons?.[taskId] ||
-      "Momentum selected this as one of the strongest next moves."
+      "Veira selected this as one of the strongest next moves."
     );
   };
 
@@ -3198,7 +3198,7 @@ function FocusModePanel({
       );
 
       if (validTaskIds.length === 0) {
-        throw new Error("Momentum could not pick focus tasks.");
+        throw new Error("Veira could not pick focus tasks.");
       }
 
       const nextFocusPlan = {
@@ -3206,7 +3206,7 @@ function FocusModePanel({
         reasons: data.reasons || {},
         summary:
           data.summary ||
-          "Momentum selected the strongest next moves from your active tasks.",
+          "Veira selected the strongest next moves from your active tasks.",
         generatedAt: new Date().toISOString(),
         source: "ai",
       };
@@ -3229,7 +3229,7 @@ function FocusModePanel({
           ])
         ),
         summary:
-          "Momentum used a fallback stack because AI focus planning was unavailable.",
+          "Veira used a fallback stack because AI focus planning was unavailable.",
         generatedAt: new Date().toISOString(),
         source: "fallback",
       };
@@ -3298,7 +3298,7 @@ function FocusModePanel({
              darkMode ? "text-white/45" : "text-black/45"
            }`}
          >
-           Momentum will choose the 3 strongest tasks to work through next.
+           Veira will choose the 3 strongest tasks to work through next.
          </p>
        
          <button
@@ -3958,14 +3958,14 @@ function SettingsView({
     <div>
       <PageHeader
         title="Settings"
-        description="Control how Momentum looks, suggests, and organizes your tasks."
+        description="Control how Veira looks, suggests, and organizes your tasks."
         darkMode={darkMode}
       />
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <SettingsCard
           title="Appearance"
-          description="Choose how Momentum looks."
+          description="Choose how Veira looks."
           darkMode={darkMode}
           border={border}
           className={className}
@@ -3991,14 +3991,14 @@ function SettingsView({
 
         <SettingsCard
           title="App Suggestions"
-          description="Control how much Momentum helps organize new tasks."
+          description="Control how much Veira helps organize new tasks."
           darkMode={darkMode}
           border={border}
           className={className}
         >
           <SettingsRow
             title="Suggested dates"
-            description="Let Momentum suggest dates from task titles."
+            description="Let Veira suggest dates from task titles."
             darkMode={darkMode}
           >
             <ToggleSwitch
@@ -4011,7 +4011,7 @@ function SettingsView({
 
           <SettingsRow
             title="Auto priority"
-            description="Let Momentum classify new tasks as High, Medium, or Low."
+            description="Let Veira classify new tasks as High, Medium, or Low."
             darkMode={darkMode}
           >
             <ToggleSwitch
@@ -4095,7 +4095,7 @@ function SettingsView({
           </SettingsRow>
 
           <SettingsRow
-            title="Reset Momentum"
+            title="Reset Veira"
             description="Delete active tasks, completed tasks, and archived items."
             darkMode={darkMode}
           >
@@ -4275,7 +4275,7 @@ function UpcomingView({
           </h2>
 
           <p className={`mt-2 text-sm ${darkMode ? "text-white/45" : "text-black/45"}`}>
-            Tasks grouped by manual due dates and Momentum-suggested dates.
+            Tasks grouped by manual due dates and Veira-suggested dates.
           </p>
         </div>
 
@@ -4799,7 +4799,7 @@ function InboxView({
               }`}
             >
               Your inbox is clear. Every active task has either a date or a
-              Momentum suggestion.
+              Veira suggestion.
             </div>
           )}
 
@@ -5098,7 +5098,7 @@ function ExtractTasksModal({
 
                   <div>
                     <p className="text-[11px] font-[900] uppercase tracking-[0.16em] opacity-35">
-                      Momentum Capture
+                    Veira Capture
                     </p>
 
                     <h2 className="text-[27px] font-[900] tracking-[-0.05em] sm:text-[31px]">
@@ -5108,7 +5108,7 @@ function ExtractTasksModal({
                 </div>
 
                 <p className="max-w-xl text-sm leading-6 opacity-45">
-                  Paste notes, emails, chats, or meeting snippets. Momentum will
+                  Paste notes, emails, chats, or meeting snippets. Veira will
                   pull out likely tasks for you to review.
                 </p>
               </div>
@@ -5326,7 +5326,7 @@ function SuggestionsReviewModal({
               </div>
 
               <h2 className="text-[25px] font-[800] tracking-[-0.04em] sm:text-[30px]">
-                Review Momentum Suggestions
+                Review Veira Suggestions
               </h2>
 
               <p
@@ -5334,7 +5334,7 @@ function SuggestionsReviewModal({
                   darkMode ? "text-white/45" : "text-black/45"
                 }`}
               >
-                Momentum found tasks that look time-sensitive. Review the
+                Veira found tasks that look time-sensitive. Review the
                 suggested dates before they become part of your plan.
               </p>
             </div>
@@ -5386,7 +5386,7 @@ function SuggestionsReviewModal({
                   darkMode ? "text-white/40" : "text-black/40"
                 }`}
               >
-                Momentum will show suggestions here when a task sounds like it
+                Veira will show suggestions here when a task sounds like it
                 needs a date.
               </p>
             </div>
@@ -5435,7 +5435,7 @@ function SuggestionsReviewModal({
                         }`}
                       >
                         {task.aiReason ||
-                          "Momentum thinks this task may need attention soon."}
+                          "Veira thinks this task may need attention soon."}
                       </p>
                     </div>
 
@@ -5565,7 +5565,7 @@ function EditTaskModal({
 
                   <div>
                     <p className="text-[11px] font-[900] uppercase tracking-[0.16em] opacity-35">
-                      Momentum Task
+                    Veira Task
                     </p>
 
                     <h2 className="text-[27px] font-[900] tracking-[-0.05em] sm:text-[31px]">
@@ -5575,7 +5575,7 @@ function EditTaskModal({
                 </div>
 
                 <p className="max-w-xl text-sm leading-6 opacity-45">
-                  Refine the task, adjust the plan, and keep Momentum aligned
+                  Refine the task, adjust the plan, and keep Veira aligned
                   with how you actually want to execute.
                 </p>
               </div>
@@ -5786,7 +5786,7 @@ function EditTaskModal({
                     <div>
                       <p className="text-sm font-[900]">Veira’s read</p>
                       <p className="mt-1 text-xs leading-5 opacity-45">
-                        This is how Momentum interpreted the task.
+                        This is how Veira interpreted the task.
                       </p>
                     </div>
 
@@ -5818,7 +5818,7 @@ function EditTaskModal({
 
                   <p className="mt-4 text-sm leading-6 opacity-50">
                     {selectedTask.aiReason ||
-                      "Momentum thinks this task may need attention soon."}
+                      "Veira thinks this task may need attention soon."}
                   </p>
                 </section>
               )}
