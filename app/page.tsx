@@ -1228,12 +1228,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
       return;
     }
     
-    if (extractInput.trim().split(/\s+/).length < 6) {
-      setExtractError(
-        "Add a little more context so Momentum can turn this into action items."
-      );
-      return;
-    }
+    
   
     setExtractLoading(true);
     setExtractError("");
@@ -1281,13 +1276,13 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
   }))
   .filter((task: ExtractedTaskSuggestion) => task.title.length > 0);
 
-if (normalizedTasks.length === 0) {
-  setExtractedTasks([]);
-  setExtractError(
-    "I need a little more context to create action items. Try adding what needs to be done, who it is for, or when it matters."
-  );
-  return;
-}
+  if (normalizedTasks.length === 0) {
+    setExtractedTasks([]);
+    setExtractError(
+      "Momentum could not find a clear action item yet. Try rewriting it as something to do, for example: “Build automated validation for school records before launch.”"
+    );
+    return;
+  }
 
 setExtractedTasks(normalizedTasks);
     } catch (error) {
