@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Mulish } from "next/font/google";
+import { Inter } from "next/font/google";
 import { motion, AnimatePresence } from "framer-motion";
 
 import Sidebar from "@/components/Sidebar";
@@ -51,7 +51,7 @@ type ExtractedTaskSuggestion = {
 /* Font */
 /* ------------------------------------------------ */
 
-const mulish = Mulish({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
@@ -1014,7 +1014,7 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
     ? "bg-[#171a20] text-white"
     : "bg-white text-black border border-black/[0.08]";
 
-  const fontClass = mulish.className;
+    const fontClass = inter.className;
 
   /* ------------------------------------------------ */
   /* Firecracker */
