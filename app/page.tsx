@@ -997,11 +997,11 @@ useEffect(() => {
   /* ------------------------------------------------ */
 
   const glass = darkMode
-  ? "bg-[#0b0b0c] backdrop-blur-2xl"
+  ? "bg-white/[0.06] backdrop-blur-2xl"
   : "bg-white/80 backdrop-blur-2xl";
 
   const strongerGlass = darkMode
-  ? "bg-[#101012] border-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-2xl"
+  ? "bg-[#2b3039] border-white/[0.09] shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl"
   : "bg-white/95 border-white shadow-[0_12px_36px_rgba(17,24,39,0.045)] backdrop-blur-2xl";
 
 const input = darkMode
@@ -1836,7 +1836,7 @@ completedAt: updatedTask.completedAt,
     <main
   className={`${fontClass} min-h-screen w-full overflow-x-hidden transition-colors duration-500 ${
     darkMode
-    ? "bg-[#050505] text-white"
+    ? "bg-[#1f232b] text-white"
     : "bg-[#f7f5f1] text-[#111111]"
     }`}
   >
@@ -2237,8 +2237,8 @@ addTask,
       <section
   className={`relative mb-5 overflow-hidden rounded-[24px] border p-4 sm:mb-6 sm:rounded-[36px] sm:p-6 ${
     darkMode
-    ? "border-white/[0.08] bg-[#101012] shadow-[0_18px_54px_rgba(0,0,0,0.42)]"
-      : "border-white bg-white/95 shadow-[0_14px_42px_rgba(17,24,39,0.045)]"
+  ? "border-white/[0.09] bg-[#2b3039] shadow-[0_18px_54px_rgba(0,0,0,0.32)]"
+  : "border-white bg-white/95 shadow-[0_14px_42px_rgba(17,24,39,0.045)]"
   }`}
 >
   <div
@@ -2276,8 +2276,8 @@ addTask,
     <div
   className={`flex min-h-12 overflow-hidden rounded-[18px] border sm:min-h-14 sm:rounded-[22px] ${
     darkMode
-      ? "border-white/[0.08] bg-white/[0.06] focus-within:border-violet-300/45"
-      : "border-black/[0.06] bg-white focus-within:border-violet-400/55"
+  ? "border-white/[0.09] bg-[#1f232b] focus-within:border-violet-300/45"
+  : "border-black/[0.06] bg-white focus-within:border-violet-400/55"
   }`}
 >
   <input
