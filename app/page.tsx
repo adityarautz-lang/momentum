@@ -1227,8 +1227,6 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
       setExtractError("Paste some text first.");
       return;
     }
-    
-    
   
     setExtractLoading(true);
     setExtractError("");
@@ -1246,61 +1244,37 @@ const border = darkMode ? "border-white/[0.075]" : "border-black/[0.045]";
         }),
       });
   
-      const responseText = await response.text();
-
-      let data: any = null;
-      
-      try {
-        data = responseText ? JSON.parse(responseText) : null;
-      } catch (error) {
-        console.error("Extract API returned non-JSON response:", responseText);
-      
-        throw new Error(
-          "Momentum could not reach the AI service properly. Please try again in a moment."
-        );
-      }
-      
+      const data = await response.json();
+  
       if (!response.ok) {
-        throw new Error(
-          data?.error ||
-            data?.message ||
-            "Momentum could not extract tasks right now."
-        );
+        throw new Error(data.error || "Failed to extract tasks.");
       }
   
-      const normalizedTasks: ExtractedTaskSuggestion[] = (data.tasks || [])
-  .map((task: any) => ({
-    id: crypto.randomUUID(),
-    selected: true,
-    title: String(task.title || "").trim(),
-    priority: ["Low", "Medium", "High"].includes(task.priority)
-      ? task.priority
-      : "Medium",
-    suggestedDueDate: task.suggestedDueDate || null,
-    category:
-      categories.find((category) => category.title === task.category)
-        ?.title ||
-      categories[0]?.title ||
-      "Small Wins",
-    notes: String(task.notes || ""),
-    status: ["Active", "Waiting", "Someday"].includes(task.status)
-      ? task.status
-      : "Active",
-    reason: String(task.reason || ""),
-    confidence:
-      typeof task.confidence === "number" ? task.confidence : 0.7,
-  }))
-  .filter((task: ExtractedTaskSuggestion) => task.title.length > 0);
-
-  if (normalizedTasks.length === 0) {
-    setExtractedTasks([]);
-    setExtractError(
-      "Momentum could not find a clear action item yet. Try adding an action verb, owner, or timing — for example: “Build automated validation for school records before launch.”"
-    );
-    return;
-  }
-
-setExtractedTasks(normalizedTasks);
+      const normalizedTasks: ExtractedTaskSuggestion[] = (data.tasks || []).map(
+        (task: any) => ({
+          id: crypto.randomUUID(),
+          selected: true,
+          title: String(task.title || "").trim(),
+          priority: ["Low", "Medium", "High"].includes(task.priority)
+            ? task.priority
+            : "Medium",
+          suggestedDueDate: task.suggestedDueDate || null,
+          category:
+            categories.find((category) => category.title === task.category)
+              ?.title ||
+            categories[0]?.title ||
+            "Small Wins",
+          notes: String(task.notes || ""),
+          status: ["Active", "Waiting", "Someday"].includes(task.status)
+            ? task.status
+            : "Active",
+          reason: String(task.reason || ""),
+          confidence:
+            typeof task.confidence === "number" ? task.confidence : 0.7,
+        })
+      );
+  
+      setExtractedTasks(normalizedTasks);
     } catch (error) {
       setExtractError(
         error instanceof Error ? error.message : "Failed to extract tasks."
