@@ -93,7 +93,7 @@ export default function Sidebar({
 
           <div>
             <h1 className="text-[15px] font-[800] tracking-[-0.03em] text-white">
-              Momentum
+            VeyraFlow
             </h1>
 
             <p className={`text-[11px] font-medium ${mutedText}`}>
@@ -117,7 +117,7 @@ export default function Sidebar({
           </div>
 
           <p className={`text-[11px] leading-relaxed ${mutedText}`}>
-            Momentum can prioritize and suggest dates from your task titles.
+          VeyraFlow can prioritize and suggest dates from your task titles.
           </p>
         </div>
       </div>
