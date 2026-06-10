@@ -2178,7 +2178,7 @@ addTask,
   return (
     <>
     <section
-  className={`mb-5 hidden overflow-visible rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-5 ${strongerGlass} ${border}`}
+  className={`relative z-[120] mb-5 hidden overflow-visible rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-5 ${strongerGlass} ${border}`}
 >
   <div className="flex items-start justify-between gap-5">
     <div className="min-w-0 flex-1">
@@ -2300,8 +2300,7 @@ addTask,
 
      
       <section
-  className={`relative mb-5 overflow-hidden rounded-[24px] border p-4 sm:mb-6 sm:rounded-[36px] sm:p-6 ${
-    darkMode
+  className={`relative z-[10] mb-5 overflow-hidden rounded-[24px] border p-4 sm:mb-6 sm:rounded-[36px] sm:p-6 ${    darkMode
   ? "border-white/[0.09] bg-[#2b3039] shadow-[0_18px_54px_rgba(0,0,0,0.32)]"
   : "border-white bg-white/95 shadow-[0_14px_42px_rgba(17,24,39,0.045)]"
   }`}
@@ -3178,7 +3177,7 @@ function DayTimeLeftCard({
   };
 
   return (
-    <div className="relative">
+    <div className="relative z-[300]">
       <div
         className={`w-[190px] shrink-0 rounded-[22px] border p-3 ${
           darkMode
