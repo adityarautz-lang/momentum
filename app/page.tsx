@@ -3141,69 +3141,248 @@ function DayTimeLeftCard({
   darkMode,
   themeColor,
 }: any) {
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+
+  const [currentHourRaw, currentMinuteRaw] = dayEndTime.split(":").map(Number);
+
+  const period = currentHourRaw >= 12 ? "PM" : "AM";
+
+  const displayHour =
+    currentHourRaw === 0
+      ? 12
+      : currentHourRaw > 12
+      ? currentHourRaw - 12
+      : currentHourRaw;
+
+  const displayMinute = String(currentMinuteRaw).padStart(2, "0");
+
+  const hourOptions = [5, 6, 7, 8, 9, 10, 11, 12];
+  const minuteOptions = ["00", "15", "30", "45"];
+
+  const updateEndTime = (
+    nextHour: number,
+    nextMinute: string,
+    nextPeriod: "AM" | "PM"
+  ) => {
+    let hour24 = nextHour;
+
+    if (nextPeriod === "AM" && nextHour === 12) {
+      hour24 = 0;
+    }
+
+    if (nextPeriod === "PM" && nextHour !== 12) {
+      hour24 = nextHour + 12;
+    }
+
+    setDayEndTime(`${String(hour24).padStart(2, "0")}:${nextMinute}`);
+  };
+
   return (
-    <div
-      className={`w-full shrink-0 rounded-[22px] border p-3 sm:w-[210px] ${
-        darkMode
-          ? "border-white/[0.08] bg-white/[0.045]"
-          : "border-black/[0.05] bg-white/75"
-      }`}
-    >
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
+    <div className="relative">
+      <div
+        className={`w-[190px] shrink-0 rounded-[22px] border p-3 ${
+          darkMode
+            ? "border-white/[0.08] bg-white/[0.045]"
+            : "border-black/[0.05] bg-white/75"
+        }`}
+      >
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-[14px] text-white"
+              style={{ backgroundColor: themeColor }}
+            >
+              <Clock3 size={15} />
+            </div>
+
+            <div>
+              <p className="text-[10px] font-[900] uppercase tracking-[0.14em] opacity-40">
+                Day Left
+              </p>
+
+              <p className="text-[16px] font-[900] tracking-[-0.04em]">
+                {dayTimeRemaining.label}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={`mb-2 h-2 overflow-hidden rounded-full ${
+            darkMode ? "bg-white/[0.08]" : "bg-black/[0.06]"
+          }`}
+        >
           <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[14px] text-white"
-            style={{ backgroundColor: themeColor }}
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${dayTimeRemaining.percentLeft}%`,
+              backgroundColor: dayTimeRemaining.isOver ? "#71717a" : themeColor,
+            }}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={`text-[10px] font-[800] ${
+              darkMode ? "text-white/38" : "text-black/38"
+            }`}
           >
-            <Clock3 size={15} />
-          </div>
+            Ends at
+          </span>
 
-          <div className="min-w-0">
-            <p className="text-[10px] font-[900] uppercase tracking-[0.14em] opacity-40">
-              Day Left
-            </p>
-
-            <p className="truncate text-[16px] font-[900] tracking-[-0.04em]">
-              {dayTimeRemaining.label}
-            </p>
-          </div>
+          <button
+            onClick={() => setIsPickerOpen((prev) => !prev)}
+            className={`inline-flex h-8 items-center gap-1.5 rounded-[11px] px-2.5 text-[11px] font-[900] transition hover:scale-[1.02] ${
+              darkMode
+                ? "bg-white/[0.07] text-white hover:bg-white/[0.10]"
+                : "bg-black/[0.035] text-black hover:bg-black/[0.06]"
+            }`}
+          >
+            {displayHour}:{displayMinute} {period}
+            <Clock3 size={11} className="opacity-45" />
+          </button>
         </div>
       </div>
 
-      <div
-        className={`mb-2 h-2 overflow-hidden rounded-full ${
-          darkMode ? "bg-white/[0.08]" : "bg-black/[0.06]"
-        }`}
-      >
+      {isPickerOpen && (
         <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: `${dayTimeRemaining.percentLeft}%`,
-            backgroundColor: dayTimeRemaining.isOver ? "#71717a" : themeColor,
-          }}
-        />
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <span
-          className={`text-[10px] font-[800] ${
-            darkMode ? "text-white/38" : "text-black/38"
+          className={`absolute right-0 top-[calc(100%+10px)] z-[80] w-[250px] rounded-[22px] border p-3 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl ${
+            darkMode
+              ? "border-white/[0.10] bg-[#171717]/95"
+              : "border-black/[0.08] bg-white/95"
           }`}
         >
-          Ends at
-        </span>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-[11px] font-[900] uppercase tracking-[0.14em] opacity-45">
+              Set day end
+            </p>
 
-        <input
-          type="time"
-          value={dayEndTime}
-          onChange={(event) => setDayEndTime(event.target.value)}
-          className={`h-7 rounded-[10px] px-2 text-[11px] font-[900] outline-none ${
-            darkMode
-              ? "bg-white/[0.07] text-white"
-              : "bg-black/[0.035] text-black"
-          }`}
-        />
-      </div>
+            <button
+              onClick={() => setIsPickerOpen(false)}
+              className={`rounded-full px-2 py-1 text-[10px] font-[900] ${
+                darkMode
+                  ? "bg-white/[0.07] text-white/55 hover:text-white"
+                  : "bg-black/[0.04] text-black/45 hover:text-black"
+              }`}
+            >
+              Done
+            </button>
+          </div>
+
+          <div className="grid grid-cols-[1fr_1fr_0.8fr] gap-2">
+            <div>
+              <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
+                Hour
+              </p>
+
+              <div className="grid grid-cols-2 gap-1.5">
+                {hourOptions.map((hour) => {
+                  const isActive = displayHour === hour;
+
+                  return (
+                    <button
+                      key={hour}
+                      onClick={() =>
+                        updateEndTime(hour, displayMinute, period as "AM" | "PM")
+                      }
+                      className={`h-9 rounded-[12px] text-xs font-[900] transition ${
+                        isActive
+                          ? "text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
+                          : darkMode
+                          ? "bg-white/[0.055] text-white/55 hover:text-white"
+                          : "bg-black/[0.035] text-black/55 hover:text-black"
+                      }`}
+                      style={
+                        isActive
+                          ? {
+                              backgroundColor: themeColor,
+                            }
+                          : undefined
+                      }
+                    >
+                      {hour}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
+                Min
+              </p>
+
+              <div className="grid grid-cols-2 gap-1.5">
+                {minuteOptions.map((minute) => {
+                  const isActive = displayMinute === minute;
+
+                  return (
+                    <button
+                      key={minute}
+                      onClick={() =>
+                        updateEndTime(displayHour, minute, period as "AM" | "PM")
+                      }
+                      className={`h-9 rounded-[12px] text-xs font-[900] transition ${
+                        isActive
+                          ? "text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
+                          : darkMode
+                          ? "bg-white/[0.055] text-white/55 hover:text-white"
+                          : "bg-black/[0.035] text-black/55 hover:text-black"
+                      }`}
+                      style={
+                        isActive
+                          ? {
+                              backgroundColor: themeColor,
+                            }
+                          : undefined
+                      }
+                    >
+                      {minute}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
+                Mode
+              </p>
+
+              <div className="space-y-1.5">
+                {(["AM", "PM"] as const).map((option) => {
+                  const isActive = period === option;
+
+                  return (
+                    <button
+                      key={option}
+                      onClick={() =>
+                        updateEndTime(displayHour, displayMinute, option)
+                      }
+                      className={`h-9 w-full rounded-[12px] text-xs font-[900] transition ${
+                        isActive
+                          ? "text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
+                          : darkMode
+                          ? "bg-white/[0.055] text-white/55 hover:text-white"
+                          : "bg-black/[0.035] text-black/55 hover:text-black"
+                      }`}
+                      style={
+                        isActive
+                          ? {
+                              backgroundColor: themeColor,
+                            }
+                          : undefined
+                      }
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
