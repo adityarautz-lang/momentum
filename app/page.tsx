@@ -2178,7 +2178,7 @@ addTask,
   return (
     <>
     <section
-  className={`mb-5 hidden overflow-hidden rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-5 ${strongerGlass} ${border}`}
+  className={`mb-5 hidden overflow-visible rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-5 ${strongerGlass} ${border}`}
 >
   <div className="flex items-start justify-between gap-5">
     <div className="min-w-0 flex-1">
@@ -3246,7 +3246,7 @@ function DayTimeLeftCard({
 
       {isPickerOpen && (
         <div
-          className={`absolute right-0 top-[calc(100%+10px)] z-[80] w-[250px] rounded-[22px] border p-3 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl ${
+        className={`absolute right-0 top-[calc(100%+10px)] z-[300] w-[250px] rounded-[22px] border p-3 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl ${
             darkMode
               ? "border-white/[0.10] bg-[#171717]/95"
               : "border-black/[0.08] bg-white/95"
