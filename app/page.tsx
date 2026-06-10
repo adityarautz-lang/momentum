@@ -30,7 +30,6 @@ import {
   Target,
   Trash2,
   TrendingUp,
-  Zap,
 } from "lucide-react";
 
 
@@ -146,6 +145,47 @@ const formatDateLong = () => {
     month: "short",
     day: "numeric",
   });
+};
+
+const getTimeRemainingInDay = (dayEndTime: string) => {
+  const now = new Date();
+  const [hours, minutes] = dayEndTime.split(":").map(Number);
+
+  const endTime = new Date();
+  endTime.setHours(hours, minutes, 0, 0);
+
+  const difference = endTime.getTime() - now.getTime();
+
+  if (difference <= 0) {
+    return {
+      label: "Day ended",
+      shortLabel: "0h 0m",
+      percentLeft: 0,
+      isOver: true,
+    };
+  }
+
+  const totalMinutes = Math.floor(difference / 1000 / 60);
+  const hoursLeft = Math.floor(totalMinutes / 60);
+  const minutesLeft = totalMinutes % 60;
+
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const totalDayDuration = endTime.getTime() - startOfDay.getTime();
+  const elapsed = now.getTime() - startOfDay.getTime();
+
+  const percentLeft = Math.max(
+    0,
+    Math.min(100, Math.round(100 - (elapsed / totalDayDuration) * 100))
+  );
+
+  return {
+    label: `${hoursLeft}h ${minutesLeft}m left`,
+    shortLabel: `${hoursLeft}h ${minutesLeft}m`,
+    percentLeft,
+    isOver: false,
+  };
 };
 
 const getTaskDate = (task: any) => {
@@ -639,9 +679,24 @@ const [boostMessage, setBoostMessage] = useState("");
 const [boostLoading, setBoostLoading] = useState(false);
 const [lastBoostTaskKey, setLastBoostTaskKey] = useState("");
 const [dailyBoostCount, setDailyBoostCount] = useState(0);
+const [dayEndTime, setDayEndTime] = useState("18:00");
+const [currentTime, setCurrentTime] = useState(new Date());
 const [isLoaded, setIsLoaded] = useState(false);
 
   const todayDate = getTodayDate();
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 30000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const dayTimeRemaining = useMemo(() => {
+    currentTime;
+    return getTimeRemainingInDay(dayEndTime);
+  }, [currentTime, dayEndTime]);
 
   /* ------------------------------------------------ */
   /* Load State */
@@ -661,6 +716,7 @@ const [isLoaded, setIsLoaded] = useState(false);
       setEnableAutoPriority(parsed.enableAutoPriority ?? true);
       setArchive(parsed.archive || []);
       setCompletedToday(parsed.completedToday || []);
+      setDayEndTime(parsed.dayEndTime || "18:00");
 
       if (parsed.categories && parsed.categories.length > 0) {
         setSelectedCategory(parsed.categories[0].title);
@@ -692,6 +748,7 @@ const [isLoaded, setIsLoaded] = useState(false);
       enableAutoPriority,
       archive,
       completedToday,
+      dayEndTime,
     } as any);
   }, [
     categories,
@@ -703,6 +760,7 @@ const [isLoaded, setIsLoaded] = useState(false);
     enableAutoPriority,
     archive,
     completedToday,
+    dayEndTime,
     isLoaded,
   ]);
 
@@ -1872,6 +1930,9 @@ completedAt: updatedTask.completedAt,
             completedToday={completedToday}
             boostMessage={boostMessage}
             boostLoading={boostLoading}
+            dayEndTime={dayEndTime}
+            setDayEndTime={setDayEndTime}
+            dayTimeRemaining={dayTimeRemaining}
             newTask={newTask}
 setNewTask={setNewTask}
 newTaskWhy={newTaskWhy}
@@ -2095,6 +2156,9 @@ function TodayView({
   completedToday,
   boostMessage,
   boostLoading,
+  dayEndTime,
+  setDayEndTime,
+  dayTimeRemaining,
   newTask,
 setNewTask,
 newTaskWhy,
@@ -2186,12 +2250,13 @@ addTask,
       </div>
     </div>
 
-    <div
-      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[20px] text-white shadow-[0_18px_45px_rgba(0,0,0,0.16)]"
-      style={{ backgroundColor: themeColor }}
-    >
-      <Zap size={21} />
-    </div>
+    <DayTimeLeftCard
+      dayEndTime={dayEndTime}
+      setDayEndTime={setDayEndTime}
+      dayTimeRemaining={dayTimeRemaining}
+      darkMode={darkMode}
+      themeColor={themeColor}
+    />
   </div>
 
   {completedToday.length > 0 && (
@@ -3068,6 +3133,81 @@ function CompactMetric({
     </div>
   );
 }
+
+function DayTimeLeftCard({
+  dayEndTime,
+  setDayEndTime,
+  dayTimeRemaining,
+  darkMode,
+  themeColor,
+}: any) {
+  return (
+    <div
+      className={`w-full shrink-0 rounded-[22px] border p-3 sm:w-[210px] ${
+        darkMode
+          ? "border-white/[0.08] bg-white/[0.045]"
+          : "border-black/[0.05] bg-white/75"
+      }`}
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <div
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[14px] text-white"
+            style={{ backgroundColor: themeColor }}
+          >
+            <Clock3 size={15} />
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-[10px] font-[900] uppercase tracking-[0.14em] opacity-40">
+              Day Left
+            </p>
+
+            <p className="truncate text-[16px] font-[900] tracking-[-0.04em]">
+              {dayTimeRemaining.label}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={`mb-2 h-2 overflow-hidden rounded-full ${
+          darkMode ? "bg-white/[0.08]" : "bg-black/[0.06]"
+        }`}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${dayTimeRemaining.percentLeft}%`,
+            backgroundColor: dayTimeRemaining.isOver ? "#71717a" : themeColor,
+          }}
+        />
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <span
+          className={`text-[10px] font-[800] ${
+            darkMode ? "text-white/38" : "text-black/38"
+          }`}
+        >
+          Ends at
+        </span>
+
+        <input
+          type="time"
+          value={dayEndTime}
+          onChange={(event) => setDayEndTime(event.target.value)}
+          className={`h-7 rounded-[10px] px-2 text-[11px] font-[900] outline-none ${
+            darkMode
+              ? "bg-white/[0.07] text-white"
+              : "bg-black/[0.035] text-black"
+          }`}
+        />
+      </div>
+    </div>
+  );
+}
+
 
 
 
