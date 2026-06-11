@@ -2322,7 +2322,7 @@ addTask,
   <div className="relative">
     <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4 sm:items-center">
       <div className="min-w-0">
-        <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[22px]">
+        <h2 className="flex items-center gap-2 text-[18px] font-[700] tracking-[-0.035em] sm:text-[22px]">
           <Send size={16} style={{ color: themeColor }} />
           Quick Capture
         </h2>
@@ -3270,7 +3270,7 @@ function DayTimeLeftCard({
 
           <div className="grid grid-cols-[1fr_1fr_0.8fr] gap-2">
             <div>
-              <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
+              <p className="mb-2 text-[10px] font-[700] uppercase tracking-[0.12em] opacity-35">
                 Hour
               </p>
 
@@ -3574,7 +3574,7 @@ function FocusModePanel({
       <div className="relative">
       <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5 sm:gap-4">
   <div className="min-w-0">
-    <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[18px]">
+    <h2 className="flex items-center gap-2 text-[18px] font-[700] tracking-[-0.035em] sm:text-[18px]">
       Focus Mode
       <Sparkles size={15} style={{ color: themeColor }} />
     </h2>
