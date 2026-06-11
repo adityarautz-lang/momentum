@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import { motion } from "framer-motion";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 
 const mainNavItems = [
   {
@@ -69,6 +69,16 @@ export default function Sidebar({
   themeColor,
   inboxCount = 0,
 }: SidebarProps) {
+  const { user, isLoaded } = useUser();
+
+  const displayName =
+    isLoaded && user
+      ? user.fullName ||
+        user.firstName ||
+        user.primaryEmailAddress?.emailAddress ||
+        "Account"
+      : "Account";
+
   const sidebarBg = "bg-[#1f232b]";
 
   const border = "border-white/[0.09]";
@@ -253,11 +263,14 @@ export default function Sidebar({
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-[800] text-white">Account</p>
-            <p className={`text-[11px] font-medium ${mutedText}`}>
-              Profile & sign out
-            </p>
-          </div>
+  <p className="truncate text-sm font-[800] text-white">
+    {displayName}
+  </p>
+
+  <p className={`text-[11px] font-medium ${mutedText}`}>
+    Profile & sign out
+  </p>
+</div>
         </div>
       </div>
     </aside>
