@@ -4198,23 +4198,27 @@ function AirtablePriorityGroup({
               }}
               className={`cursor-pointer truncate text-[14px] font-[700] ${
                 task.completed
-                  ? "text-black/45 line-through decoration-black/45 dark:text-white/65 dark:decoration-white/65"
-                  : ""
+                  ? darkMode
+                    ? "text-white/55 line-through decoration-white/45"
+                    : "text-black/45 line-through decoration-black/45"
+                  : darkMode
+                  ? "text-white"
+                  : "text-black"
               }`}
             >
               {task.title}
             </p>
 
             <p
-              className={`mt-1 text-[12px] ${
-                task.completed
-                  ? darkMode
-                    ? "text-white/45"
-                    : "text-black/35"
-                  : darkMode
-                  ? "text-white/40"
-                  : "text-black/40"
-              }`}
+             className={`mt-1 text-[12px] ${
+              task.completed
+                ? darkMode
+                  ? "text-white/42"
+                  : "text-black/35"
+                : darkMode
+                ? "text-white/48"
+                : "text-black/40"
+            }`}
             >
               {task.category} • {task.priority}
             </p>
