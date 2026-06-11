@@ -2282,8 +2282,8 @@ addTask,
   ) : (
     <>
       Great work — {completedToday.length} tasks{" "}
-      <span className="font-[800] text-emerald-500 dark:text-emerald-300">
-        completed
+      <span className="font-[700] italic text-emerald-500 dark:text-emerald-300">
+      completed
       </span>{" "}
       today.
     </>
