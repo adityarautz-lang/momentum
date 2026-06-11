@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Inter } from "next/font/google";
+import { UserButton } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";
 
 import Sidebar from "@/components/Sidebar";
@@ -5298,25 +5299,25 @@ function MobileBottomNav({
 
   return (
     <nav
-    className={`fixed left-3 right-3 top-3 z-[160] grid grid-cols-5 rounded-[24px] border p-2 backdrop-blur-2xl transition-all duration-300 lg:hidden ${
-      hasScrolled
-  ? darkMode
-    ? "border-white/[0.035] bg-[#111827]/22 shadow-[0_10px_34px_rgba(0,0,0,0.10)]"
-    : "border-white/25 bg-white/22 shadow-[0_10px_34px_rgba(17,24,39,0.045)]"
-  : darkMode
-        ? "border-white/[0.08] bg-[#111827]/90 shadow-[0_18px_60px_rgba(0,0,0,0.22)]"
-        : "border-black/[0.08] bg-white/95 shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
-    }`}
+      className={`fixed left-3 right-3 top-3 z-[160] grid grid-cols-6 rounded-[24px] border p-2 backdrop-blur-2xl transition-all duration-300 lg:hidden ${
+        hasScrolled
+          ? darkMode
+            ? "border-white/[0.035] bg-[#111827]/22 shadow-[0_10px_34px_rgba(0,0,0,0.10)]"
+            : "border-white/25 bg-white/22 shadow-[0_10px_34px_rgba(17,24,39,0.045)]"
+          : darkMode
+          ? "border-white/[0.08] bg-[#111827]/90 shadow-[0_18px_60px_rgba(0,0,0,0.22)]"
+          : "border-black/[0.08] bg-white/95 shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
+      }`}
     >
       {items.map((item) => {
         const Icon = item.icon;
         const isActive = selectedView === item.key;
-
+  
         return (
           <button
             key={item.key}
             onClick={() => setSelectedView(item.key)}
-            className={`relative flex flex-col items-center justify-center gap-1 rounded-[18px] py-2 text-[10px] font-[700] transition ${
+            className={`relative flex flex-col items-center justify-center gap-1 rounded-[18px] py-2 text-[10px] font-[800] transition ${
               isActive
                 ? "text-white"
                 : darkMode
@@ -5332,9 +5333,9 @@ function MobileBottomNav({
             }
           >
             <Icon size={16} />
-
+  
             <span>{item.label}</span>
-
+  
             {item.count ? (
               <span
                 className={`absolute right-2 top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-[900] ${
@@ -5347,8 +5348,21 @@ function MobileBottomNav({
           </button>
         );
       })}
+  
+      <div className="flex flex-col items-center justify-center gap-1 rounded-[18px] py-2">
+        <UserButton afterSignOutUrl="/sign-in" />
+  
+        <span
+          className={`text-[10px] font-[800] ${
+            darkMode ? "text-white/45" : "text-black/45"
+          }`}
+        >
+          Account
+        </span>
+      </div>
     </nav>
   );
+
 }
 
 function ExtractTasksModal({
