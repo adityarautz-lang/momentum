@@ -2211,14 +2211,21 @@ addTask,
       </div>
 
       <p
-        className={`mt-1.5 text-sm font-[700] ${
-          darkMode ? "text-white/42" : "text-black/42"
-        }`}
-      >
-        {allTasks.length} tasks · {completedToday.length} completed ·{" "}
-        {completionPercent}% progress
-      </p>
-
+  className={`mt-1.5 text-sm font-[700] ${
+    darkMode ? "text-white/42" : "text-black/42"
+  }`}
+>
+  {allTasks.length} tasks · {completedToday.length}{" "}
+  <span
+    className="font-[800] italic"
+    style={{
+      color: darkMode ? "#86efac" : "#10b981",
+    }}
+  >
+    completed
+  </span>{" "}
+  · {completionPercent}% progress
+</p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <CompactMetric
           label="High"
@@ -2283,7 +2290,7 @@ addTask,
     <>
       Great work — {completedToday.length} tasks{" "}
       <span className="font-[700] italic text-emerald-500 dark:text-emerald-300">
-      completed
+      completed 
       </span>{" "}
       today.
     </>
