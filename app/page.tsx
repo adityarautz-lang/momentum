@@ -2277,10 +2277,18 @@ addTask,
           </p>
 
           <p className="mt-1 truncate text-[15px] font-[700] tracking-[-0.025em]">
-            {boostLoading
-              ? "Reading your wins..."
-              : `Great work — ${completedToday.length} tasks completed today.`}
-          </p>
+  {boostLoading ? (
+    "Reading your wins..."
+  ) : (
+    <>
+      Great work — {completedToday.length} tasks{" "}
+      <span className="font-[800] text-emerald-500 dark:text-emerald-300">
+        completed
+      </span>{" "}
+      today.
+    </>
+  )}
+</p>
         </div>
 
         <p
