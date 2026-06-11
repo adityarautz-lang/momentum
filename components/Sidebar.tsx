@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { motion } from "framer-motion";
+import { UserButton } from "@clerk/nextjs";
 
 const mainNavItems = [
   {
@@ -83,7 +84,7 @@ export default function Sidebar({
       <div className="mb-7">
         <div className="mb-5 flex items-center gap-3">
           <div
-            className="flex h-13 w-13 items-center justify-center rounded-xl text-sm font-black text-white shadow-[0_14px_34px_rgba(0,0,0,0.28)]"
+            className="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-black text-white shadow-[0_14px_34px_rgba(0,0,0,0.28)]"
             style={{
               backgroundColor: themeColor,
             }}
@@ -206,25 +207,20 @@ export default function Sidebar({
       </nav>
 
       <div className={`mt-4 shrink-0 border-t ${border} pt-4`}>
-        <button
-          className={`flex w-full items-center gap-3 rounded-2xl p-2 text-left transition hover:text-white ${hoverSurface}`}
+        <div
+          className={`flex w-full items-center gap-3 rounded-2xl p-2 text-left transition ${hoverSurface}`}
         >
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-[900] text-white shadow-[0_12px_28px_rgba(0,0,0,0.24)]"
-            style={{
-              backgroundColor: themeColor,
-            }}
-          >
-            A
+          <div className="flex h-9 w-9 items-center justify-center">
+            <UserButton afterSignOutUrl="/sign-in" />
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-[800] text-white">Arnav</p>
+            <p className="truncate text-sm font-[800] text-white">Account</p>
             <p className={`text-[11px] font-medium ${mutedText}`}>
-              View Profile
+              Profile & sign out
             </p>
           </div>
-        </button>
+        </div>
       </div>
     </aside>
   );
