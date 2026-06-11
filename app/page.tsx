@@ -950,7 +950,7 @@ useEffect(() => {
   if (completedBoostTaskKey === lastBoostTaskKey) return;
 
   if (dailyBoostCount >= 3) {
-    const cappedMessage = `You’ve completed ${completedToday.length} tasks today. That is strong progress — and Veira is already visible.`;
+    const cappedMessage = `You’ve completed ${completedToday.length} tasks today. That is strong progress — and momentum is already visible.`;
 
     setBoostMessage(cappedMessage);
     setLastBoostTaskKey(completedBoostTaskKey);
