@@ -4157,7 +4157,7 @@ function AirtablePriorityGroup({
         <div>
           <div className="flex items-center gap-3">
             <span className="h-3 w-3 rounded-full" style={{ backgroundColor: dotColor }} />
-            <h3 className="text-xl font-[800]">{title}</h3>
+            <h3 className="text-[16px] font-[800]">{title}</h3>
           </div>
 
           <p className={`mt-1 text-[12px] ${darkMode ? "text-white/45" : "text-black/45"}`}>
