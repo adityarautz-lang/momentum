@@ -2276,7 +2276,7 @@ addTask,
             AI Veira Boost
           </p>
 
-          <p className="mt-1 truncate text-[15px] font-[900] tracking-[-0.025em]">
+          <p className="mt-1 truncate text-[15px] font-[700] tracking-[-0.025em]">
             {boostLoading
               ? "Reading your wins..."
               : `Great start — ${completedToday.length} completed today.`}
@@ -3607,7 +3607,7 @@ function FocusModePanel({
              : "border-black/[0.04] bg-white/65"
          }`}
        >
-         <h3 className="text-[19px] font-[900] leading-tight tracking-[-0.04em] sm:text-[22px]">
+         <h3 className="text-[19px] font-[700] leading-tight tracking-[-0.04em] sm:text-[22px]">
            Build your focus stack.
          </h3>
        
