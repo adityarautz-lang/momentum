@@ -2186,7 +2186,7 @@ addTask,
     <div className="min-w-0 flex-1">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h1 className="text-[24px] font-[700] leading-tight tracking-[-0.05em]">
-          Today&apos;s Momentum
+          Today&apos;s momentum
         </h1>
 
         <span
