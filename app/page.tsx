@@ -5350,7 +5350,44 @@ function MobileBottomNav({
       })}
   
       <div className="flex flex-col items-center justify-center gap-1 rounded-[18px] py-2">
-        <UserButton afterSignOutUrl="/sign-in" />
+      <UserButton
+  afterSignOutUrl="/sign-in"
+  appearance={{
+    elements: {
+      userButtonAvatarBox: "h-6 w-6",
+
+      userButtonPopoverCard:
+        "w-[280px] rounded-[16px] border border-[#2563eb] bg-[#1f232b] p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
+
+      userButtonPopoverMain:
+        "bg-[#1f232b] text-white",
+
+      userButtonPopoverActions:
+        "bg-[#1f232b]",
+
+      userButtonPopoverActionButton:
+        "h-10 rounded-[10px] px-3 text-white hover:bg-white/[0.08]",
+
+      userButtonPopoverActionButtonText:
+        "text-[13px] font-[700] text-white",
+
+      userButtonPopoverActionButtonIcon:
+        "text-white/60",
+
+      userButtonPopoverFooter:
+        "hidden",
+
+      userPreviewMainIdentifier:
+        "text-sm font-[800] text-white",
+
+      userPreviewSecondaryIdentifier:
+        "text-xs font-[600] text-white/55",
+
+      userPreviewAvatarBox:
+        "h-8 w-8",
+    },
+  }}
+/>
   
         <span
           className={`text-[10px] font-[800] ${
