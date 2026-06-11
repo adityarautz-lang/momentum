@@ -83,7 +83,7 @@ export default function Sidebar({
       <div className="mb-7">
         <div className="mb-5 flex items-center gap-3">
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-white shadow-[0_14px_34px_rgba(0,0,0,0.28)]"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-sm font-black text-white shadow-[0_14px_34px_rgba(0,0,0,0.28)]"
             style={{
               backgroundColor: themeColor,
             }}
@@ -92,7 +92,7 @@ export default function Sidebar({
           </div>
 
           <div>
-            <h1 className="text-[15px] font-[800] tracking-[-0.03em] text-white">
+            <h1 className="text-[35px] font-[800] tracking-[-0.03em] text-white">
               Veira
             </h1>
 
