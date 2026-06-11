@@ -2279,7 +2279,7 @@ addTask,
           <p className="mt-1 truncate text-[15px] font-[700] tracking-[-0.025em]">
             {boostLoading
               ? "Reading your wins..."
-              : `Great start — ${completedToday.length} completed today.`}
+              : `Great start — ${completedToday.length} tasks completed today.`}
           </p>
         </div>
 
@@ -2522,7 +2522,7 @@ const hiddenTaskCount = Math.max(tasks.length - defaultVisibleTaskCount, 0);
   >
       <div className="mb-4 flex flex-col gap-2 sm:mb-5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div>
-        <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[16px] sm:font-[800] sm:tracking-normal">
+        <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[16px] sm:font-[700] sm:tracking-normal">
             {title}
             <Sparkles size={16} style={{ color: themeColor }} />
           </h2>
@@ -2537,7 +2537,7 @@ const hiddenTaskCount = Math.max(tasks.length - defaultVisibleTaskCount, 0);
         </div>
 
         <button
-  className={`w-fit rounded-full px-3 py-1 text-[11px] font-[800] sm:text-xs sm:font-[700] ${
+  className={`w-fit rounded-full px-3 py-1 text-[11px] font-[700] sm:text-xs sm:font-[700] ${
             darkMode
               ? "bg-white/[0.06] text-white/55"
               : "bg-black/[0.04] text-black/55"
@@ -2638,7 +2638,7 @@ const hiddenTaskCount = Math.max(tasks.length - defaultVisibleTaskCount, 0);
 
           {ranked && (
             <div
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[800] text-white"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[700] text-white"
               style={{
                 backgroundColor: index < 3 ? "#f59e0b" : themeColor,
               }}
@@ -2742,7 +2742,7 @@ function CompletedTodaySection({
       <div className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
         <div className="flex items-center gap-3">
           <h2
-            className="text-[11px] font-[900] uppercase tracking-[0.16em] sm:text-[13px] sm:font-[800] sm:tracking-[0.14em]"
+            className="text-[11px] font-[900] uppercase tracking-[0.16em] sm:text-[13px] sm:font-[700] sm:tracking-[0.14em]"
             style={{ color: themeColor }}
           >
             Completed Today
@@ -2782,7 +2782,7 @@ function CompletedTodaySection({
               <CheckCircle2 size={18} className="shrink-0 text-green-500" />
 
               <div className="min-w-0">
-              <p className="truncate text-[13px] font-[800] sm:text-[14px] sm:font-[650]">{task.title}</p>
+              <p className="truncate text-[13px] font-[700] sm:text-[14px] sm:font-[650]">{task.title}</p>
 
               <p className="truncate text-[10.5px] opacity-40 sm:text-[11px]">
                   {task.category}
@@ -2793,7 +2793,7 @@ function CompletedTodaySection({
 
             <button
               onClick={() => restoreCompletedTask(task.id)}
-              className={`h-8 shrink-0 rounded-[14px] px-3 text-[11px] font-[900] transition hover:scale-[1.02] sm:h-9 sm:rounded-xl sm:text-xs sm:font-[800] ${
+              className={`h-8 shrink-0 rounded-[14px] px-3 text-[11px] font-[900] transition hover:scale-[1.02] sm:h-9 sm:rounded-xl sm:text-xs sm:font-[700] ${
                 darkMode
                   ? "bg-white/[0.06] text-white/55 hover:text-white"
                   : "bg-black/[0.04] text-black/55 hover:text-black"
@@ -3013,7 +3013,7 @@ function PageHeader({
   return (
     <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
       <div>
-        <h2 className="text-[28px] font-[800] tracking-[-0.04em] sm:text-[32px]">
+        <h2 className="text-[28px] font-[700] tracking-[-0.04em] sm:text-[32px]">
           {title}
         </h2>
 
@@ -3060,7 +3060,7 @@ function StatCard({
       </div>
 
       <div className="min-w-0">
-        <p className="text-[18px] font-[800] leading-none tracking-[-0.04em] sm:text-[24px]">
+        <p className="text-[18px] font-[700] leading-none tracking-[-0.04em] sm:text-[24px]">
           {value}
         </p>
 
@@ -3083,7 +3083,7 @@ function AssistantItem({ icon, title, description, color, darkMode }: any) {
       </div>
 
       <div>
-        <p className="text-sm font-[800]">{title}</p>
+        <p className="text-sm font-[700]">{title}</p>
         <p
           className={`mt-1 text-xs leading-5 ${
             darkMode ? "text-white/42" : "text-black/42"
@@ -3123,7 +3123,7 @@ function CompactMetric({
       <span className="text-[12px] font-[900]">{value}</span>
 
       <span
-        className={`text-[11px] font-[800] ${
+        className={`text-[11px] font-[700] ${
           darkMode ? "text-white/38" : "text-black/38"
         }`}
       >
@@ -3222,7 +3222,7 @@ function DayTimeLeftCard({
 
         <div className="flex items-center justify-between gap-2">
           <span
-            className={`text-[10px] font-[800] ${
+            className={`text-[10px] font-[700] ${
               darkMode ? "text-white/38" : "text-black/38"
             }`}
           >
@@ -3736,7 +3736,7 @@ function FocusModePanel({
                 </h3>
 
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-[800] ${
+                  className={`rounded-full px-3 py-1 text-xs font-[700] ${
                     darkMode
                       ? "bg-white/[0.06] text-white/45"
                       : "bg-black/[0.04] text-black/40"
@@ -3747,7 +3747,7 @@ function FocusModePanel({
               </div>
 
               {focusError && (
-                <p className="mb-3 rounded-2xl bg-orange-500/10 px-3 py-2 text-xs font-[800] text-orange-500">
+                <p className="mb-3 rounded-2xl bg-orange-500/10 px-3 py-2 text-xs font-[700] text-orange-500">
                   {focusError}
                 </p>
               )}
@@ -3824,7 +3824,7 @@ function DateBadge({ task, visibleDueDate, darkMode }: any) {
 
     return (
       <span
-        className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-[800] tracking-[-0.01em] ${
+        className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-[700] tracking-[-0.01em] ${
           isManualDate
             ? "border-emerald-500/15 bg-emerald-500/[0.08] text-emerald-600 dark:border-emerald-300/10 dark:bg-emerald-300/[0.08] dark:text-emerald-200"
             : "border-violet-500/15 bg-violet-500/[0.08] text-violet-600 dark:border-violet-300/10 dark:bg-violet-300/[0.08] dark:text-violet-200"
@@ -3839,7 +3839,7 @@ function DateBadge({ task, visibleDueDate, darkMode }: any) {
 
   return (
     <span
-      className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-[800] tracking-[-0.01em] ${
+      className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-[700] tracking-[-0.01em] ${
         darkMode
           ? "border-white/[0.08] bg-white/[0.04] text-white/35"
           : "border-black/[0.06] bg-black/[0.025] text-black/35"
@@ -3910,7 +3910,7 @@ function PrioritiesView({
     <div>
       <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[28px] font-[800] tracking-[-0.04em] sm:text-[32px]">
+          <h2 className="text-[28px] font-[700] tracking-[-0.04em] sm:text-[32px]">
             Priority
           </h2>
           <p
@@ -3924,7 +3924,7 @@ function PrioritiesView({
 
         <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
           <div
-            className={`rounded-2xl border px-4 py-3 text-xs font-[800] ${className} ${border}`}
+            className={`rounded-2xl border px-4 py-3 text-xs font-[700] ${className} ${border}`}
           >
             {totalTasks} active task{totalTasks === 1 ? "" : "s"}
           </div>
@@ -3974,7 +3974,7 @@ function PriorityColumn({
         <div>
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
-            <h3 className="text-[15px] font-[800]">{title}</h3>
+            <h3 className="text-[15px] font-[700]">{title}</h3>
           </div>
           <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
             {description}
@@ -4060,7 +4060,7 @@ function CompactTaskCard({
           </p>
 
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${getPriorityClass(task.priority)}`}>
+            <span className={`rounded-full px-2.5 py-1 text-[10px] font-[700] ${getPriorityClass(task.priority)}`}>
               {task.priority}
             </span>
 
@@ -4100,7 +4100,7 @@ function PriorityListGroup({
         <div>
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
-            <h3 className="text-[15px] font-[800]">{title}</h3>
+            <h3 className="text-[15px] font-[700]">{title}</h3>
           </div>
 
           <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
@@ -4157,7 +4157,7 @@ function AirtablePriorityGroup({
         <div>
           <div className="flex items-center gap-3">
             <span className="h-3 w-3 rounded-full" style={{ backgroundColor: dotColor }} />
-            <h3 className="text-[16px] font-[800]">{title}</h3>
+            <h3 className="text-[16px] font-[700]">{title}</h3>
           </div>
 
           <p className={`mt-1 text-[12px] ${darkMode ? "text-white/45" : "text-black/45"}`}>
@@ -4165,7 +4165,7 @@ function AirtablePriorityGroup({
           </p>
         </div>
 
-        <div className={`flex h-8 min-w-8 items-center justify-center rounded-full px-3 text-xs font-[800] ${
+        <div className={`flex h-8 min-w-8 items-center justify-center rounded-full px-3 text-xs font-[700] ${
           darkMode ? "bg-white/10 text-white/70" : "bg-black/[0.04] text-black/60"
         }`}>
           {tasks.length}
@@ -4224,7 +4224,7 @@ function AirtablePriorityGroup({
             </p>
           </div>
 
-          <div className="flex items-center gap-3 text-[12px] font-[800] sm:gap-5 sm:text-[13px] sm:font-[700]">
+          <div className="flex items-center gap-3 text-[12px] font-[700] sm:gap-5 sm:text-[13px] sm:font-[700]">
             {task.dueDate && (
               <div className={`flex items-center gap-1.5 ${
                 darkMode ? "text-white/70" : "text-black/65"
@@ -4404,7 +4404,7 @@ function SettingsView({
             <button
               onClick={clearArchive}
               disabled={archiveCount === 0}
-              className={`h-10 rounded-xl px-4 text-xs font-[800] transition ${
+              className={`h-10 rounded-xl px-4 text-xs font-[700] transition ${
                 archiveCount === 0
                   ? "cursor-not-allowed opacity-30"
                   : darkMode
@@ -4423,7 +4423,7 @@ function SettingsView({
           >
             <button
               onClick={resetAppData}
-              className="h-10 rounded-xl bg-red-500/10 px-4 text-xs font-[800] text-red-500 transition hover:scale-[1.02]"
+              className="h-10 rounded-xl bg-red-500/10 px-4 text-xs font-[700] text-red-500 transition hover:scale-[1.02]"
             >
               Reset data
             </button>
@@ -4445,7 +4445,7 @@ function SettingsCard({
   return (
     <section className={`rounded-[28px] border p-5 shadow-sm ${className} ${border}`}>
       <div className="mb-5">
-        <h3 className="text-[16px] font-[800]">{title}</h3>
+        <h3 className="text-[16px] font-[700]">{title}</h3>
 
         <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
           {description}
@@ -4461,7 +4461,7 @@ function SettingsRow({ title, description, children, darkMode }: any) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <div className="min-w-0">
-        <p className="text-sm font-[800]">{title}</p>
+        <p className="text-sm font-[700]">{title}</p>
 
         <p className={`mt-1 text-xs ${darkMode ? "text-white/38" : "text-black/38"}`}>
           {description}
@@ -4514,7 +4514,7 @@ function SegmentedControl({
           <button
             key={option.value}
             onClick={() => onChange(option.value)}
-            className={`h-9 rounded-xl px-4 text-xs font-[800] transition ${
+            className={`h-9 rounded-xl px-4 text-xs font-[700] transition ${
               isActive
                 ? "text-white"
                 : darkMode
@@ -4592,7 +4592,7 @@ function UpcomingView({
     <div>
       <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[28px] font-[800] tracking-[-0.04em] sm:text-[32px]">
+          <h2 className="text-[28px] font-[700] tracking-[-0.04em] sm:text-[32px]">
             Upcoming
           </h2>
 
@@ -4603,7 +4603,7 @@ function UpcomingView({
 
         <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
           <div
-            className={`rounded-2xl border px-4 py-3 text-xs font-[800] ${className} ${border}`}
+            className={`rounded-2xl border px-4 py-3 text-xs font-[700] ${className} ${border}`}
           >
             {totalScheduled} scheduled task{totalScheduled === 1 ? "" : "s"}
           </div>
@@ -4611,7 +4611,7 @@ function UpcomingView({
           <div className={`flex rounded-2xl border p-1 ${className} ${border}`}>
             <button
               onClick={() => setViewMode("calendar")}
-              className={`h-9 rounded-xl px-4 text-xs font-[800] transition ${
+              className={`h-9 rounded-xl px-4 text-xs font-[700] transition ${
                 viewMode === "calendar"
                   ? "text-white"
                   : darkMode
@@ -4625,7 +4625,7 @@ function UpcomingView({
 
             <button
               onClick={() => setViewMode("list")}
-              className={`h-9 rounded-xl px-4 text-xs font-[800] transition ${
+              className={`h-9 rounded-xl px-4 text-xs font-[700] transition ${
                 viewMode === "list"
                   ? "text-white"
                   : darkMode
@@ -4741,7 +4741,7 @@ function UpcomingCalendarView({
                   }}
                 />
 
-                <h3 className="text-[15px] font-[800]">{day.title}</h3>
+                <h3 className="text-[15px] font-[700]">{day.title}</h3>
               </div>
 
               <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
@@ -4860,7 +4860,7 @@ function UpcomingCalendarTaskCard({
 
       <div className="flex flex-wrap gap-2">
         <span
-      className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[800] tracking-[-0.01em] ${getPriorityClass(
+      className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[700] tracking-[-0.01em] ${getPriorityClass(
         task.priority
       )}`}
         >
@@ -4872,7 +4872,7 @@ function UpcomingCalendarTaskCard({
         {task.suggestedDueDate && !task.dueDate && acceptSuggestedDateById && (
           <button
             onClick={() => acceptSuggestedDateById(task.id)}
-            className={`rounded-full px-2.5 py-1 text-[10px] font-[800] transition hover:scale-[1.03] ${
+            className={`rounded-full px-2.5 py-1 text-[10px] font-[700] transition hover:scale-[1.03] ${
               darkMode
                 ? "bg-white/[0.06] text-white/55 hover:text-white"
                 : "bg-black/[0.04] text-black/55 hover:text-black"
@@ -4907,7 +4907,7 @@ function UpcomingGroup({
         <div>
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
-            <h3 className="text-[15px] font-[800]">{title}</h3>
+            <h3 className="text-[15px] font-[700]">{title}</h3>
           </div>
 
           <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
@@ -5008,7 +5008,7 @@ function TaskRows({
               {task.suggestedDueDate && !task.dueDate && acceptSuggestedDateById && (
                 <button
                   onClick={() => acceptSuggestedDateById(task.id)}
-                  className={`rounded-full px-3 py-1 text-[11px] font-[800] transition hover:scale-[1.03] ${
+                  className={`rounded-full px-3 py-1 text-[11px] font-[700] transition hover:scale-[1.03] ${
                     darkMode
                       ? "bg-white/[0.06] text-white/55 hover:text-white"
                       : "bg-black/[0.04] text-black/55 hover:text-black"
@@ -5019,7 +5019,7 @@ function TaskRows({
               )}
 
               <span
-              className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[800] tracking-[-0.01em] ${getPriorityClass(
+              className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[700] tracking-[-0.01em] ${getPriorityClass(
                 task.priority
               )}`}
               >
@@ -5057,7 +5057,7 @@ function InboxView({
     <div>
       <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[28px] font-[800] tracking-[-0.04em] sm:text-[32px]">
+          <h2 className="text-[28px] font-[700] tracking-[-0.04em] sm:text-[32px]">
             Inbox
           </h2>
 
@@ -5071,7 +5071,7 @@ function InboxView({
         </div>
 
         <div
-          className={`rounded-2xl border px-4 py-3 text-xs font-[800] ${className} ${border}`}
+          className={`rounded-2xl border px-4 py-3 text-xs font-[700] ${className} ${border}`}
         >
           {inboxTasks.length} item{inboxTasks.length === 1 ? "" : "s"} to review
         </div>
@@ -5090,7 +5090,7 @@ function InboxView({
                 }}
               />
 
-              <h3 className="text-[15px] font-[800]">Needs Review</h3>
+              <h3 className="text-[15px] font-[700]">Needs Review</h3>
             </div>
 
             <p
@@ -5174,7 +5174,7 @@ function InboxView({
 
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
                 <span
-                 className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[800] tracking-[-0.01em] ${getPriorityClass(
+                 className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[700] tracking-[-0.01em] ${getPriorityClass(
                   task.priority
                 )}`}
                 >
@@ -5185,7 +5185,7 @@ function InboxView({
                   <>
                     <button
                       onClick={() => scheduleTaskById(task.id, getTodayDate())}
-                      className={`h-9 rounded-xl px-3 text-xs font-[800] transition hover:scale-[1.02] ${
+                      className={`h-9 rounded-xl px-3 text-xs font-[700] transition hover:scale-[1.02] ${
                         darkMode
                           ? "bg-white/[0.06] text-white/55 hover:text-white"
                           : "bg-black/[0.04] text-black/55 hover:text-black"
@@ -5196,7 +5196,7 @@ function InboxView({
 
                     <button
                       onClick={() => scheduleTaskById(task.id, getTomorrowDate())}
-                      className={`h-9 rounded-xl px-3 text-xs font-[800] transition hover:scale-[1.02] ${
+                      className={`h-9 rounded-xl px-3 text-xs font-[700] transition hover:scale-[1.02] ${
                         darkMode
                           ? "bg-white/[0.06] text-white/55 hover:text-white"
                           : "bg-black/[0.04] text-black/55 hover:text-black"
@@ -5212,7 +5212,7 @@ function InboxView({
                     setSelectedTask(task);
                     setIsEditModalOpen(true);
                   }}
-                  className="h-9 rounded-xl px-3 text-xs font-[800] text-white transition hover:scale-[1.02]"
+                  className="h-9 rounded-xl px-3 text-xs font-[700] text-white transition hover:scale-[1.02]"
                   style={{
                     backgroundColor: themeColor,
                   }}
@@ -5307,7 +5307,7 @@ function MobileBottomNav({
           <button
             key={item.key}
             onClick={() => setSelectedView(item.key)}
-            className={`relative flex flex-col items-center justify-center gap-1 rounded-[18px] py-2 text-[10px] font-[800] transition ${
+            className={`relative flex flex-col items-center justify-center gap-1 rounded-[18px] py-2 text-[10px] font-[700] transition ${
               isActive
                 ? "text-white"
                 : darkMode
@@ -5437,7 +5437,7 @@ function ExtractTasksModal({
 
               <button
                 onClick={closeModal}
-                className={`h-10 shrink-0 rounded-2xl px-4 text-sm font-[800] transition hover:scale-[1.02] ${glass}`}
+                className={`h-10 shrink-0 rounded-2xl px-4 text-sm font-[700] transition hover:scale-[1.02] ${glass}`}
               >
                 Close
               </button>
@@ -5495,7 +5495,7 @@ function ExtractTasksModal({
                       Review extracted tasks
                     </h3>
 
-                    <span className="text-xs font-[800] opacity-40">
+                    <span className="text-xs font-[700] opacity-40">
                       {selectedCount} selected
                     </span>
                   </div>
@@ -5647,7 +5647,7 @@ function SuggestionsReviewModal({
                 <Sparkles size={18} />
               </div>
 
-              <h2 className="text-[25px] font-[800] tracking-[-0.04em] sm:text-[30px]">
+              <h2 className="text-[25px] font-[700] tracking-[-0.04em] sm:text-[30px]">
                 Review Veira Suggestions
               </h2>
 
@@ -5663,7 +5663,7 @@ function SuggestionsReviewModal({
 
             <button
               onClick={() => setIsSuggestionsModalOpen(false)}
-              className={`h-10 rounded-2xl px-4 text-sm font-[800] ${glass}`}
+              className={`h-10 rounded-2xl px-4 text-sm font-[700] ${glass}`}
             >
               Close
             </button>
@@ -5673,7 +5673,7 @@ function SuggestionsReviewModal({
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={acceptAllSuggestedDates}
-                className="h-11 rounded-2xl px-5 text-sm font-[800] text-white transition hover:scale-[1.01]"
+                className="h-11 rounded-2xl px-5 text-sm font-[700] text-white transition hover:scale-[1.01]"
                 style={{ backgroundColor: themeColor }}
               >
                 Accept All Suggested Dates
@@ -5681,7 +5681,7 @@ function SuggestionsReviewModal({
 
               <button
                 onClick={() => setIsSuggestionsModalOpen(false)}
-                className={`h-11 rounded-2xl px-5 text-sm font-[800] ${glass}`}
+                className={`h-11 rounded-2xl px-5 text-sm font-[700] ${glass}`}
               >
                 Review Later
               </button>
@@ -5701,7 +5701,7 @@ function SuggestionsReviewModal({
                 <CheckCircle2 size={20} />
               </div>
 
-              <h3 className="text-lg font-[800]">No suggestions to review</h3>
+              <h3 className="text-lg font-[700]">No suggestions to review</h3>
 
               <p
                 className={`mx-auto mt-2 max-w-sm text-sm leading-6 ${
@@ -5723,25 +5723,25 @@ function SuggestionsReviewModal({
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      <p className="text-[15px] font-[800] leading-6">
+                      <p className="text-[15px] font-[700] leading-6">
                         {task.title}
                       </p>
 
                       <div className="mt-3 flex flex-wrap gap-2">
                         <span
-                       className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[800] tracking-[-0.01em] ${getPriorityClass(
+                       className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[700] tracking-[-0.01em] ${getPriorityClass(
                         task.priority
                       )}`}
                         >
                           {task.priority}
                         </span>
 
-                        <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-[800] text-orange-600 dark:bg-orange-500/10 dark:text-orange-300">
+                        <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-[700] text-orange-600 dark:bg-orange-500/10 dark:text-orange-300">
                           Suggested {formatDueDate(task.suggestedDueDate)}
                         </span>
 
                         <span
-                          className={`rounded-full px-2.5 py-1 text-[10px] font-[800] ${
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-[700] ${
                             darkMode
                               ? "bg-white/[0.06] text-white/40"
                               : "bg-black/[0.04] text-black/40"
@@ -5764,7 +5764,7 @@ function SuggestionsReviewModal({
                     <div className="flex shrink-0 flex-col gap-2 sm:w-[150px]">
                       <button
                         onClick={() => acceptSuggestedDateById(task.id)}
-                        className="h-10 rounded-2xl px-4 text-xs font-[800] text-white transition hover:scale-[1.02]"
+                        className="h-10 rounded-2xl px-4 text-xs font-[700] text-white transition hover:scale-[1.02]"
                         style={{ backgroundColor: themeColor }}
                       >
                         Accept Date
@@ -5776,7 +5776,7 @@ function SuggestionsReviewModal({
                           setIsEditModalOpen(true);
                           setIsSuggestionsModalOpen(false);
                         }}
-                        className={`h-10 rounded-2xl px-4 text-xs font-[800] ${glass}`}
+                        className={`h-10 rounded-2xl px-4 text-xs font-[700] ${glass}`}
                       >
                         Edit Task
                       </button>
@@ -5904,7 +5904,7 @@ function EditTaskModal({
 
               <button
   onClick={closeModal}
-  className={`h-10 shrink-0 rounded-2xl px-4 text-sm font-[800] transition hover:scale-[1.02] ${glass}`}
+  className={`h-10 shrink-0 rounded-2xl px-4 text-sm font-[700] transition hover:scale-[1.02] ${glass}`}
 >
   Done
 </button>
@@ -6059,7 +6059,7 @@ function EditTaskModal({
                           : selectedTask.suggestedDueDate,
                       })
                     }
-                    className={`h-14 w-full rounded-[22px] px-4 text-sm font-[800] outline-none transition focus:ring-4 focus:ring-violet-500/15 ${modalSelect}`}
+                    className={`h-14 w-full rounded-[22px] px-4 text-sm font-[700] outline-none transition focus:ring-4 focus:ring-violet-500/15 ${modalSelect}`}
                   />
                 </div>
 
@@ -6076,7 +6076,7 @@ function EditTaskModal({
                         category: e.target.value,
                       })
                     }
-                    className={`h-14 w-full rounded-[22px] px-4 text-sm font-[800] outline-none transition focus:ring-4 focus:ring-violet-500/15 ${modalSelect}`}
+                    className={`h-14 w-full rounded-[22px] px-4 text-sm font-[700] outline-none transition focus:ring-4 focus:ring-violet-500/15 ${modalSelect}`}
                   >
                     {categories.map((category: any) => (
                       <option key={category.id} value={category.title}>
