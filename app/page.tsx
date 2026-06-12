@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Inter } from "next/font/google";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";
 
 import Sidebar from "@/components/Sidebar";
@@ -642,6 +642,7 @@ const getPriorityRowClass = (priority: Priority, darkMode: boolean) => {
 /* ------------------------------------------------ */
 
 export default function Home() {
+  const { user, isLoaded: isUserLoaded } = useUser();
   const [categories, setCategories] = useState<Category[]>([]);
   const [archive, setArchive] = useState<any[]>([]);
   const [completedToday, setCompletedToday] = useState<any[]>([]);
@@ -705,34 +706,47 @@ const [isLoaded, setIsLoaded] = useState(false);
   /* ------------------------------------------------ */
 
   useEffect(() => {
-    const saved = loadState();
-
-    if (saved) {
-      const parsed: any = saved;
-
-      setCategories(parsed.categories || initialCategories);
-      setDarkMode(parsed.darkMode ?? true);
-      setPriorityViewMode(parsed.priorityViewMode || "cards");
-      setUpcomingViewMode(parsed.upcomingViewMode || "calendar");
-      setEnableAppSuggestions(parsed.enableAppSuggestions ?? true);
-      setEnableAutoPriority(parsed.enableAutoPriority ?? true);
-      setArchive(parsed.archive || []);
-      setCompletedToday(parsed.completedToday || []);
-      setDayEndTime(parsed.dayEndTime || "18:00");
-      setManualFocusTaskIds(parsed.manualFocusTaskIds || []);
-
-      if (parsed.categories && parsed.categories.length > 0) {
-        setSelectedCategory(parsed.categories[0].title);
+    if (!isUserLoaded) return;
+  
+    const loadUserState = async () => {
+      if (!user?.id) {
+        setCategories(initialCategories);
+        setSelectedCategory(initialCategories[0].title);
+        setIsLoaded(true);
+        return;
+      }
+  
+      const saved = await loadState(user.id);
+  
+      if (saved) {
+        const parsed: any = saved;
+  
+        setCategories(parsed.categories || initialCategories);
+        setDarkMode(parsed.darkMode ?? true);
+        setPriorityViewMode(parsed.priorityViewMode || "cards");
+        setUpcomingViewMode(parsed.upcomingViewMode || "calendar");
+        setEnableAppSuggestions(parsed.enableAppSuggestions ?? true);
+        setEnableAutoPriority(parsed.enableAutoPriority ?? true);
+        setArchive(parsed.archive || []);
+        setCompletedToday(parsed.completedToday || []);
+        setDayEndTime(parsed.dayEndTime || "18:00");
+        setManualFocusTaskIds(parsed.manualFocusTaskIds || []);
+  
+        if (parsed.categories && parsed.categories.length > 0) {
+          setSelectedCategory(parsed.categories[0].title);
+        } else {
+          setSelectedCategory(initialCategories[0].title);
+        }
       } else {
+        setCategories(initialCategories);
         setSelectedCategory(initialCategories[0].title);
       }
-    } else {
-      setCategories(initialCategories);
-      setSelectedCategory(initialCategories[0].title);
-    }
-
-    setIsLoaded(true);
-  }, []);
+  
+      setIsLoaded(true);
+    };
+  
+    void loadUserState();
+  }, [isUserLoaded, user?.id]);
 
   /* ------------------------------------------------ */
   /* Persist */
@@ -741,7 +755,9 @@ const [isLoaded, setIsLoaded] = useState(false);
   useEffect(() => {
     if (!isLoaded) return;
 
-    saveState({
+    if (!user?.id) return;
+
+void saveState(user.id, {
       categories,
       darkMode,
       themeColor,
@@ -767,7 +783,9 @@ const [isLoaded, setIsLoaded] = useState(false);
     dayEndTime,
     manualFocusTaskIds,
     isLoaded,
+    user?.id,
   ]);
+
 
   /* ------------------------------------------------ */
   /* Derived Data */
