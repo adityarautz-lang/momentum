@@ -3683,12 +3683,12 @@ function FocusModePanel({
 
   return (
     <section
-      className={`relative self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${
-        darkMode
-          ? "border-white/[0.38] bg-[#050505] shadow-[0_24px_80px_rgba(0,0,0,0.40)]"
-          : `${strongerGlass} ${border}`
-      }`}
-    >
+    className={`relative min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${
+      darkMode
+        ? "bg-[#0b0b0b] border-[#05AD98]/18 shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
+        : `${strongerGlass} ${border}`
+    }`}
+  >
       <div className="relative">
         <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5 sm:gap-4">
           <div className="min-w-0">
