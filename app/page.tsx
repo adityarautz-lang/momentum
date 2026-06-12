@@ -683,6 +683,7 @@ const [lastBoostTaskKey, setLastBoostTaskKey] = useState("");
 const [dailyBoostCount, setDailyBoostCount] = useState(0);
 const [dayEndTime, setDayEndTime] = useState("18:00");
 const [currentTime, setCurrentTime] = useState(new Date());
+const [manualFocusTaskIds, setManualFocusTaskIds] = useState<string[]>([]);
 const [isLoaded, setIsLoaded] = useState(false);
 
   const todayDate = getTodayDate();
@@ -719,6 +720,7 @@ const [isLoaded, setIsLoaded] = useState(false);
       setArchive(parsed.archive || []);
       setCompletedToday(parsed.completedToday || []);
       setDayEndTime(parsed.dayEndTime || "18:00");
+      setManualFocusTaskIds(parsed.manualFocusTaskIds || []);
 
       if (parsed.categories && parsed.categories.length > 0) {
         setSelectedCategory(parsed.categories[0].title);
@@ -751,6 +753,7 @@ const [isLoaded, setIsLoaded] = useState(false);
       archive,
       completedToday,
       dayEndTime,
+      manualFocusTaskIds,
     } as any);
   }, [
     categories,
@@ -763,6 +766,7 @@ const [isLoaded, setIsLoaded] = useState(false);
     archive,
     completedToday,
     dayEndTime,
+    manualFocusTaskIds,
     isLoaded,
   ]);
 
@@ -1778,6 +1782,7 @@ completedAt: updatedTask.completedAt,
     setCategories(initialCategories);
     setArchive([]);
     setCompletedToday([]);
+    setManualFocusTaskIds([]);
     setSelectedCategory(initialCategories[0].title);
     setSelectedView("today");
 
@@ -1949,7 +1954,9 @@ addTask={addTask}
             setIsExtractModalOpen={setIsExtractModalOpen}
             archiveCompletedToday={archiveCompletedToday}
             restoreCompletedTask={restoreCompletedTask}
-suggestingTaskIds={suggestingTaskIds}
+            suggestingTaskIds={suggestingTaskIds}
+            manualFocusTaskIds={manualFocusTaskIds}
+            setManualFocusTaskIds={setManualFocusTaskIds}
           />
             )}
 
@@ -2176,6 +2183,8 @@ addTask,
   archiveCompletedToday,
   restoreCompletedTask,
   suggestingTaskIds,
+manualFocusTaskIds,
+setManualFocusTaskIds,
 }: any) {
   return (
     <>
@@ -2451,37 +2460,41 @@ today.
 
 <div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,1fr)]">
   <div className="order-2 xl:order-1">
-    <TaskListPanel
-      title="Veira Prioritized for You"
-      description="Veira lines up your tasks based on intent, urgency, and priority"
-      tasks={prioritizedTasks}
-      darkMode={darkMode}
-      border={border}
-      className={strongerGlass}
-      themeColor={themeColor}
-      toggleTaskById={toggleTaskById}
-      suggestingTaskIds={suggestingTaskIds}
-      deleteTask={deleteTask}
-      acceptSuggestedDateById={acceptSuggestedDateById}
-      setSelectedTask={setSelectedTask}
-      setIsEditModalOpen={setIsEditModalOpen}
-      emptyMessage="Add a task below. Veira will organize it for you."
-      ranked
-    />
+  <TaskListPanel
+  title="Veira Prioritized for You"
+  description="Veira lines up your tasks based on intent, urgency, and priority"
+  tasks={prioritizedTasks}
+  darkMode={darkMode}
+  border={border}
+  className={strongerGlass}
+  themeColor={themeColor}
+  toggleTaskById={toggleTaskById}
+  suggestingTaskIds={suggestingTaskIds}
+  deleteTask={deleteTask}
+  acceptSuggestedDateById={acceptSuggestedDateById}
+  setSelectedTask={setSelectedTask}
+  setIsEditModalOpen={setIsEditModalOpen}
+  emptyMessage="Add a task below. Veira will organize it for you."
+  ranked
+  draggableTasks
+  manualFocusTaskIds={manualFocusTaskIds}
+/>
   </div>
 
   <div className="order-1 xl:order-2">
-    <FocusModePanel
-      prioritizedTasks={prioritizedTasks}
-      completedToday={completedToday}
-      darkMode={darkMode}
-      border={border}
-      strongerGlass={strongerGlass}
-      themeColor={themeColor}
-      toggleTaskById={toggleTaskById}
-      setSelectedTask={setSelectedTask}
-      setIsEditModalOpen={setIsEditModalOpen}
-    />
+  <FocusModePanel
+  prioritizedTasks={prioritizedTasks}
+  completedToday={completedToday}
+  darkMode={darkMode}
+  border={border}
+  strongerGlass={strongerGlass}
+  themeColor={themeColor}
+  toggleTaskById={toggleTaskById}
+  setSelectedTask={setSelectedTask}
+  setIsEditModalOpen={setIsEditModalOpen}
+  manualFocusTaskIds={manualFocusTaskIds}
+  setManualFocusTaskIds={setManualFocusTaskIds}
+/>
   </div>
 </div>
 
@@ -2515,6 +2528,8 @@ function TaskListPanel({
   setSelectedTask,
   setIsEditModalOpen,
   ranked = false,
+draggableTasks = false,
+manualFocusTaskIds = [],
 }: any) {
   const [showAllTasks, setShowAllTasks] = useState(false);
 
@@ -2626,10 +2641,22 @@ const hiddenTaskCount = Math.max(tasks.length - defaultVisibleTaskCount, 0);
 
       {/* Desktop/tablet full row */}
       <div
-  className={`hidden min-h-[72px] min-w-0 items-center gap-4 rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${border} ${getPriorityRowClass(
-    task.priority,
-    darkMode
-  )} ${
+  draggable={draggableTasks}
+  onDragStart={(event) => {
+    if (!draggableTasks) return;
+
+    event.dataTransfer.setData("text/plain", task.id);
+    event.dataTransfer.effectAllowed = "copy";
+  }}
+  className={`hidden min-h-[72px] min-w-0 items-center gap-4 rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${
+    draggableTasks ? "cursor-grab active:cursor-grabbing" : ""
+  } ${
+    manualFocusTaskIds.includes(task.id)
+      ? darkMode
+        ? "border-violet-300/30 bg-violet-300/[0.08]"
+        : "border-violet-500/25 bg-violet-500/[0.06]"
+      : `${border} ${getPriorityRowClass(task.priority, darkMode)}`
+  } ${
     darkMode
       ? "hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
       : "hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
@@ -3409,41 +3436,44 @@ function FocusModePanel({
   toggleTaskById,
   setSelectedTask,
   setIsEditModalOpen,
+  manualFocusTaskIds,
+  setManualFocusTaskIds,
 }: any) {
   const [focusIndex, setFocusIndex] = useState(0);
   const [focusLoading, setFocusLoading] = useState(false);
   const [focusError, setFocusError] = useState("");
   const [focusPlan, setFocusPlan] = useState<any>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const focusCacheDate = getTodayDate();
   const focusCacheKey = `momentum-focus-plan-${focusCacheDate}`;
 
   useEffect(() => {
     const cachedFocusPlan = localStorage.getItem(focusCacheKey);
-  
+
     if (!cachedFocusPlan) return;
-  
+
     try {
       const parsed = JSON.parse(cachedFocusPlan);
-  
+
       if (!parsed?.focusTaskIds?.length) return;
-  
+
       const validTaskIds = parsed.focusTaskIds.filter((taskId: string) =>
         prioritizedTasks.some((task: any) => task.id === taskId)
       );
-  
+
       if (validTaskIds.length === 0) {
         setFocusPlan(null);
         setFocusIndex(0);
         localStorage.removeItem(focusCacheKey);
         return;
       }
-  
+
       setFocusPlan({
         ...parsed,
         focusTaskIds: validTaskIds,
       });
-  
+
       setFocusIndex(0);
     } catch (error) {
       console.error("Failed to load cached focus plan:", error);
@@ -3451,25 +3481,49 @@ function FocusModePanel({
     }
   }, [focusCacheKey, prioritizedTasks]);
 
-
   useEffect(() => {
     if (prioritizedTasks.length > 0) return;
 
     setFocusPlan(null);
     setFocusIndex(0);
+    setManualFocusTaskIds([]);
     localStorage.removeItem(focusCacheKey);
-  }, [prioritizedTasks.length, focusCacheKey]);
+  }, [prioritizedTasks.length, focusCacheKey, setManualFocusTaskIds]);
 
-  const focusTasks =
+  useEffect(() => {
+    setManualFocusTaskIds((prev: string[]) =>
+      prev.filter((taskId) =>
+        prioritizedTasks.some((task: any) => task.id === taskId)
+      )
+    );
+  }, [prioritizedTasks, setManualFocusTaskIds]);
+
+  const manualFocusTasks = manualFocusTaskIds
+    .map((taskId: string) =>
+      prioritizedTasks.find((task: any) => task.id === taskId)
+    )
+    .filter(Boolean);
+
+  const aiFocusTasks =
     focusPlan?.focusTaskIds
       ?.map((taskId: string) =>
         prioritizedTasks.find((task: any) => task.id === taskId)
       )
       .filter(Boolean) || [];
 
-  const currentTask = focusTasks[focusIndex] || focusTasks[0];
+  const activeFocusTasks =
+    manualFocusTasks.length > 0 ? manualFocusTasks : aiFocusTasks;
+
+  const currentTask =
+    activeFocusTasks[focusIndex] || activeFocusTasks[0] || null;
+
+  const isManualMode = manualFocusTasks.length > 0;
 
   const getTaskReason = (taskId: string) => {
+    if (isManualMode) {
+      return "You manually added this to your focus stack.";
+    }
+
     return (
       focusPlan?.reasons?.[taskId] ||
       "Veira selected this as one of the strongest next moves."
@@ -3477,12 +3531,39 @@ function FocusModePanel({
   };
 
   const moveNext = () => {
-    if (focusTasks.length === 0) return;
+    if (activeFocusTasks.length === 0) return;
 
     setFocusIndex((prev) => {
-      if (prev >= focusTasks.length - 1) return 0;
+      if (prev >= activeFocusTasks.length - 1) return 0;
       return prev + 1;
     });
+  };
+
+  const addManualFocusTask = (taskId: string) => {
+    const taskExists = prioritizedTasks.some((task: any) => task.id === taskId);
+    if (!taskExists) return;
+
+    setManualFocusTaskIds((prev: string[]) => {
+      if (prev.includes(taskId)) return prev;
+      if (prev.length >= 3) return prev;
+
+      return [...prev, taskId];
+    });
+
+    setFocusIndex(0);
+  };
+
+  const removeManualFocusTask = (taskId: string) => {
+    setManualFocusTaskIds((prev: string[]) =>
+      prev.filter((id) => id !== taskId)
+    );
+
+    setFocusIndex(0);
+  };
+
+  const clearManualFocusStack = () => {
+    setManualFocusTaskIds([]);
+    setFocusIndex(0);
   };
 
   const computeFocusStack = async () => {
@@ -3538,10 +3619,11 @@ function FocusModePanel({
         generatedAt: new Date().toISOString(),
         source: "ai",
       };
-      
+
       setFocusPlan(nextFocusPlan);
+      setManualFocusTaskIds([]);
       localStorage.setItem(focusCacheKey, JSON.stringify(nextFocusPlan));
-      
+
       setFocusIndex(0);
     } catch (error) {
       console.error(error);
@@ -3561,10 +3643,11 @@ function FocusModePanel({
         generatedAt: new Date().toISOString(),
         source: "fallback",
       };
-      
+
       setFocusPlan(fallbackFocusPlan);
+      setManualFocusTaskIds([]);
       localStorage.setItem(focusCacheKey, JSON.stringify(fallbackFocusPlan));
-      
+
       setFocusIndex(0);
       setFocusError("AI focus was unavailable. Fallback stack used.");
     } finally {
@@ -3574,85 +3657,200 @@ function FocusModePanel({
 
   return (
     <section
-    className={`relative self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
-  >
+      className={`relative self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${strongerGlass} ${border}`}
+    >
       <div
         className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full opacity-[0.14] blur-3xl"
         style={{ backgroundColor: themeColor }}
       />
 
       <div className="relative">
-      <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5 sm:gap-4">
-  <div className="min-w-0">
-    <h2 className="flex items-center gap-2 text-[18px] font-[700] tracking-[-0.035em] sm:text-[18px]">
-      Focus Mode
-      <Sparkles size={15} style={{ color: themeColor }} />
-    </h2>
+        <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5 sm:gap-4">
+          <div className="min-w-0">
+            <h2 className="flex items-center gap-2 text-[18px] font-[700] tracking-[-0.035em] sm:text-[18px]">
+              Focus Mode
+              <Sparkles size={15} style={{ color: themeColor }} />
+            </h2>
 
-    <p
-      className={`mt-1.5 max-w-md text-[12px] leading-5 sm:mt-2 sm:text-sm sm:leading-6 ${
-        darkMode ? "text-white/45" : "text-black/45"
-      }`}
-    >
-      Compute your 3-task execution stack.
-    </p>
-  </div>
+            <p
+              className={`mt-1.5 max-w-md text-[12px] leading-5 sm:mt-2 sm:text-sm sm:leading-6 ${
+                darkMode ? "text-white/45" : "text-black/45"
+              }`}
+            >
+              Pick your own top 3 or let Veira compute them.
+            </p>
+          </div>
 
-  <span
-    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900] sm:px-3 sm:py-1.5 ${
-      darkMode
-        ? "bg-white/[0.07] text-white/55"
-        : "bg-black/[0.04] text-black/45"
-    }`}
-  >
-    AI
-  </span>
-</div>
+          <span
+            className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900] sm:px-3 sm:py-1.5 ${
+              darkMode
+                ? "bg-white/[0.07] text-white/55"
+                : "bg-black/[0.04] text-black/45"
+            }`}
+          >
+            {isManualMode ? "Manual" : "AI"}
+          </span>
+        </div>
 
-        {!focusPlan ? (
-         <div
-         className={`rounded-[22px] border p-4 sm:rounded-[26px] sm:p-5 ${
-           darkMode
-             ? "border-white/[0.08] bg-white/[0.04]"
-             : "border-black/[0.04] bg-white/65"
-         }`}
-       >
-         <h3 className="text-[19px] font-[700] leading-tight tracking-[-0.04em] sm:text-[22px]">
-           Build your focus stack.
-         </h3>
-       
-         <p
-           className={`mt-2 text-[12px] leading-5 sm:mt-3 sm:text-sm sm:leading-6 ${
-             darkMode ? "text-white/45" : "text-black/45"
-           }`}
-         >
-           Veira will choose the 3 strongest tasks to work through next.
-         </p>
-       
-         <button
-           onClick={computeFocusStack}
-           disabled={focusLoading || prioritizedTasks.length === 0}
-           className="mt-4 h-11 w-full rounded-[18px] text-sm font-[900] text-white shadow-[0_14px_30px_rgba(0,0,0,0.14)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-40 sm:mt-5 sm:h-12 sm:rounded-2xl"
-           style={{ backgroundColor: themeColor }}
-         >
-           {focusLoading ? "Computing..." : "Compute Focus Stack"}
-         </button>
-       
-         {prioritizedTasks.length === 0 && (
-           <p className="mt-3 text-center text-xs font-[700] opacity-40">
-             Add a task first.
-           </p>
-         )}
-       </div>
+        <div
+          onDragOver={(event) => {
+            event.preventDefault();
+            setIsDragOver(true);
+          }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setIsDragOver(false);
+
+            const taskId = event.dataTransfer.getData("text/plain");
+            addManualFocusTask(taskId);
+          }}
+          className={`mb-4 rounded-[22px] border border-dashed p-4 transition sm:mb-5 sm:rounded-[26px] sm:p-5 ${
+            isDragOver
+              ? "border-violet-400 bg-violet-500/[0.08]"
+              : darkMode
+              ? "border-white/[0.10] bg-white/[0.035]"
+              : "border-black/[0.07] bg-white/60"
+          }`}
+        >
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <p
+                className="text-[11px] font-[900] uppercase tracking-[0.16em]"
+                style={{ color: themeColor }}
+              >
+                Manual Focus Stack
+              </p>
+
+              <p
+                className={`mt-1 text-xs font-[700] ${
+                  darkMode ? "text-white/40" : "text-black/40"
+                }`}
+              >
+                Drag tasks from the left list. Add up to 3.
+              </p>
+            </div>
+
+            {manualFocusTaskIds.length > 0 && (
+              <button
+                onClick={clearManualFocusStack}
+                className={`rounded-full px-3 py-1 text-[10px] font-[900] transition hover:scale-[1.02] ${
+                  darkMode
+                    ? "bg-white/[0.06] text-white/50 hover:text-white"
+                    : "bg-black/[0.04] text-black/45 hover:text-black"
+                }`}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {[0, 1, 2].map((slotIndex) => {
+              const task = manualFocusTasks[slotIndex];
+
+              if (!task) {
+                return (
+                  <div
+                    key={slotIndex}
+                    className={`flex h-[58px] items-center justify-center rounded-[18px] border text-xs font-[900] ${
+                      darkMode
+                        ? "border-white/[0.08] bg-white/[0.025] text-white/28"
+                        : "border-black/[0.06] bg-black/[0.015] text-black/28"
+                    }`}
+                  >
+                    Drop task #{slotIndex + 1}
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={task.id}
+                  className={`flex min-h-[58px] items-center gap-3 rounded-[18px] border px-3 py-2 ${
+                    darkMode
+                      ? "border-violet-300/20 bg-violet-300/[0.075]"
+                      : "border-violet-500/20 bg-violet-500/[0.06]"
+                  }`}
+                >
+                  <div
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
+                    style={{ backgroundColor: themeColor }}
+                  >
+                    {slotIndex + 1}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setIsEditModalOpen(true);
+                    }}
+                    className="min-w-0 flex-1 truncate text-left text-sm font-[900] hover:opacity-70"
+                  >
+                    {task.title}
+                  </button>
+
+                  <button
+                    onClick={() => removeManualFocusTask(task.id)}
+                    className={`rounded-full px-2.5 py-1 text-[10px] font-[900] transition hover:scale-[1.03] ${
+                      darkMode
+                        ? "bg-white/[0.08] text-white/45 hover:text-white"
+                        : "bg-black/[0.05] text-black/45 hover:text-black"
+                    }`}
+                  >
+                    Remove
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {activeFocusTasks.length === 0 ? (
+          <div
+            className={`rounded-[22px] border p-4 sm:rounded-[26px] sm:p-5 ${
+              darkMode
+                ? "border-white/[0.08] bg-white/[0.04]"
+                : "border-black/[0.04] bg-white/65"
+            }`}
+          >
+            <h3 className="text-[19px] font-[700] leading-tight tracking-[-0.04em] sm:text-[22px]">
+              Build your focus stack.
+            </h3>
+
+            <p
+              className={`mt-2 text-[12px] leading-5 sm:mt-3 sm:text-sm sm:leading-6 ${
+                darkMode ? "text-white/45" : "text-black/45"
+              }`}
+            >
+              Drag 3 tasks from the left, or let Veira choose the strongest next
+              moves.
+            </p>
+
+            <button
+              onClick={computeFocusStack}
+              disabled={focusLoading || prioritizedTasks.length === 0}
+              className="mt-4 h-11 w-full rounded-[18px] text-sm font-[900] text-white shadow-[0_14px_30px_rgba(0,0,0,0.14)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-40 sm:mt-5 sm:h-12 sm:rounded-2xl"
+              style={{ backgroundColor: themeColor }}
+            >
+              {focusLoading ? "Computing..." : "Compute Focus Stack"}
+            </button>
+
+            {prioritizedTasks.length === 0 && (
+              <p className="mt-3 text-center text-xs font-[700] opacity-40">
+                Add a task first.
+              </p>
+            )}
+          </div>
         ) : (
           <>
-           <div
-  className={`mb-4 rounded-[22px] border p-4 sm:mb-5 sm:rounded-[26px] sm:p-5 ${
-    darkMode
-      ? "border-white/[0.08] bg-white/[0.04]"
-      : "border-black/[0.04] bg-white/65"
-  }`}
->
+            <div
+              className={`mb-4 rounded-[22px] border p-4 sm:mb-5 sm:rounded-[26px] sm:p-5 ${
+                darkMode
+                  ? "border-white/[0.08] bg-white/[0.04]"
+                  : "border-black/[0.04] bg-white/65"
+              }`}
+            >
               <div className="mb-4 flex items-center justify-between gap-3">
                 <p
                   className="text-[11px] font-[900] uppercase tracking-[0.16em]"
@@ -3670,7 +3868,7 @@ function FocusModePanel({
                       : "bg-black/[0.04] text-black/45"
                   }`}
                 >
-                  {focusLoading ? "Thinking..." : "Recompute"}
+                  {focusLoading ? "Thinking..." : "Use AI"}
                 </button>
               </div>
 
@@ -3714,9 +3912,9 @@ function FocusModePanel({
               </div>
 
               <p
-               className={`mt-3 text-[12px] leading-5 sm:mt-4 sm:text-sm sm:leading-6 ${
-                darkMode ? "text-white/45" : "text-black/45"
-              }`}
+                className={`mt-3 text-[12px] leading-5 sm:mt-4 sm:text-sm sm:leading-6 ${
+                  darkMode ? "text-white/45" : "text-black/45"
+                }`}
               >
                 {getTaskReason(currentTask?.id)}
               </p>
@@ -3752,7 +3950,7 @@ function FocusModePanel({
                       : "bg-black/[0.04] text-black/40"
                   }`}
                 >
-                  {focusTasks.length}
+                  {activeFocusTasks.length}
                 </span>
               </div>
 
@@ -3763,8 +3961,8 @@ function FocusModePanel({
               )}
 
               <div className="space-y-2">
-                {focusTasks.map((task: any, index: number) => {
-                  const isCurrent = task.id === currentTask.id;
+                {activeFocusTasks.map((task: any, index: number) => {
+                  const isCurrent = currentTask && task.id === currentTask.id;
 
                   return (
                     <button
@@ -3827,7 +4025,6 @@ function FocusModePanel({
     </section>
   );
 }
-
 function DateBadge({ task, visibleDueDate, darkMode }: any) {
   if (visibleDueDate) {
     const isManualDate = Boolean(task.dueDate);
