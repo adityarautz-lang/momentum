@@ -2293,18 +2293,15 @@ setManualFocusTaskIds,
             AI Veira Boost
           </p>
 
-          <p className="mt-1 truncate text-[15px] font-[700] tracking-[-0.025em]">
-  {boostLoading ? (
-    "Reading your wins..."
-  ) : (
-    <>
-      Great work — {completedToday.length} tasks{" "}
-      <span className="mr-1.5 font-[800] italic text-emerald-500 dark:text-emerald-300">
-  completed
-</span>
-today.
-    </>
-  )}
+          <p
+  className={`min-w-0 text-xs font-[700] leading-5 xl:max-w-[620px] ${
+    darkMode ? "text-white/45" : "text-black/45"
+  }`}
+>
+  {boostLoading
+    ? "Your boost will update after a short pause."
+    : boostMessage ||
+      "Your completed tasks are turning into visible progress."}
 </p>
         </div>
 
