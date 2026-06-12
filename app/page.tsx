@@ -812,22 +812,27 @@ const [isLoaded, setIsLoaded] = useState(false);
     });
   }, [allTasks]);
 
-  const highPriorityCount = allTasks.filter(
-    (task) => task.priority === "High"
-  ).length;
+  const activeTasks = allTasks.filter((task) => !task.completed);
 
-  const dueSoonCount = allTasks.filter(
-    (task) =>
-      task.dueDate === todayDate ||
-      task.suggestedDueDate === todayDate ||
-      task.dueDate === getTomorrowDate() ||
-      task.suggestedDueDate === getTomorrowDate()
-  ).length;
+const highPriorityCount = activeTasks.filter(
+  (task) => task.priority === "High"
+).length;
 
-  const completionPercent =
+const dueSoonCount = activeTasks.filter(
+  (task) =>
+    task.dueDate === todayDate ||
+    task.suggestedDueDate === todayDate ||
+    task.dueDate === getTomorrowDate() ||
+    task.suggestedDueDate === getTomorrowDate()
+).length;
+
+const completionPercent =
   allTasks.length === 0
     ? 0
-    : Math.round((completedToday.length / allTasks.length) * 100);
+    : Math.round(
+        (allTasks.filter((task) => task.completed).length / allTasks.length) *
+          100
+      );
 
   const suggestedDateCount = allTasks.filter(
     (task) => !task.dueDate && task.suggestedDueDate
