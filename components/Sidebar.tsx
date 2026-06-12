@@ -79,31 +79,45 @@ export default function Sidebar({
         "Account"
       : "Account";
 
-  const sidebarBg = "bg-[#1f232b]";
+  const sidebarBg = darkMode
+    ? "bg-[#0b1113]"
+    : "bg-white/95 backdrop-blur-2xl";
 
-  const border = "border-white/[0.09]";
-  const mutedText = "text-white/45";
-  const softSurface = "bg-white/[0.06]";
-  const hoverSurface = "hover:bg-white/[0.08]";
-  const activeSurface = "bg-white/[0.12]";
+  const border = darkMode ? "border-white/[0.09]" : "border-[#BBBFBF]/35";
+
+  const text = darkMode ? "text-white" : "text-[#111111]";
+
+  const mutedText = darkMode ? "text-white/45" : "text-[#878787]";
+
+  const softSurface = darkMode ? "bg-[#11191b]" : "bg-white";
+
+  const softBorder = darkMode ? "border-white/[0.09]" : "border-[#BBBFBF]/35";
+
+  const hoverSurface = darkMode ? "hover:bg-[#121a1c]" : "hover:bg-[#f6f8f8]";
+
+  const activeSurface = darkMode
+    ? "border border-[#05AD98]/32 bg-[#05AD98]/14"
+    : "border border-[#05AD98]/18 bg-[#05AD98]/10";
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 text-white shadow-[18px_0_70px_rgba(0,0,0,0.38)] lg:flex ${border} ${sidebarBg}`}
+      className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.30)] lg:flex ${border} ${sidebarBg} ${text}`}
     >
-      <div className="mb-7">
+      <div className="relative z-10 mb-7">
         <div className="mb-5 flex items-center gap-3">
           <div
-            className="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-black text-white shadow-[0_14px_34px_rgba(0,0,0,0.28)]"
+            className="flex h-12 w-12 items-center justify-center rounded-[16px] text-sm font-black text-white shadow-[0_14px_34px_rgba(5,173,152,0.22)]"
             style={{
-              backgroundColor: themeColor,
+              background: `linear-gradient(135deg, ${themeColor}, #048A79)`,
             }}
           >
             V
           </div>
 
           <div>
-            <h1 className="text-[35px] font-[800] tracking-[-0.03em] text-white">
+            <h1
+              className={`text-[35px] font-[850] tracking-[-0.045em] ${text}`}
+            >
               Veira
             </h1>
 
@@ -113,7 +127,9 @@ export default function Sidebar({
           </div>
         </div>
 
-        <div className={`rounded-2xl border ${border} ${softSurface} p-3`}>
+        <div
+          className={`rounded-[20px] border p-3 shadow-[0_12px_30px_rgba(0,0,0,0.08)] ${softBorder} ${softSurface}`}
+        >
           <div className="mb-2 flex items-center gap-2">
             <Sparkles
               size={14}
@@ -122,7 +138,7 @@ export default function Sidebar({
               }}
             />
 
-            <p className="text-xs font-[800] text-white">
+            <p className={`text-xs font-[850] ${text}`}>
               AI planning enabled
             </p>
           </div>
@@ -133,7 +149,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      <nav className="min-h-0 flex-1 overflow-y-auto pr-1">
+      <nav className="relative z-10 min-h-0 flex-1 overflow-y-auto pr-1">
         <SidebarSectionLabel label="Plan" mutedText={mutedText} />
 
         <div className="mb-6 space-y-1.5">
@@ -149,6 +165,7 @@ export default function Sidebar({
               activeSurface={activeSurface}
               hoverSurface={hoverSurface}
               themeColor={themeColor}
+              darkMode={darkMode}
             />
           ))}
         </div>
@@ -165,6 +182,7 @@ export default function Sidebar({
               activeSurface={activeSurface}
               hoverSurface={hoverSurface}
               themeColor={themeColor}
+              darkMode={darkMode}
             />
           ))}
         </div>
@@ -183,6 +201,7 @@ export default function Sidebar({
             activeSurface={activeSurface}
             hoverSurface={hoverSurface}
             themeColor={themeColor}
+            darkMode={darkMode}
           />
 
           <motion.button
@@ -193,7 +212,11 @@ export default function Sidebar({
               scale: 0.98,
             }}
             onClick={() => setDarkMode(!darkMode)}
-            className={`flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[700] text-white/70 transition hover:text-white ${hoverSurface}`}
+            className={`flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[750] transition ${
+              darkMode
+                ? "text-white/68 hover:text-white"
+                : "text-black/62 hover:text-black"
+            } ${hoverSurface}`}
           >
             <div className="flex items-center gap-3">
               {darkMode ? <Sun size={17} /> : <Moon size={17} />}
@@ -201,9 +224,15 @@ export default function Sidebar({
               <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
             </div>
 
-            <div className="flex h-6 w-11 items-center rounded-full bg-white/12 p-1 transition">
+            <div
+              className={`flex h-6 w-11 items-center rounded-full p-1 transition ${
+                darkMode
+                  ? "border border-white/[0.09] bg-white/[0.06]"
+                  : "border border-[#BBBFBF]/45 bg-[#BBBFBF]/30"
+              }`}
+            >
               <div
-                className="h-4 w-4 rounded-full transition-transform"
+                className="h-4 w-4 rounded-full shadow-[0_8px_18px_rgba(0,0,0,0.20)] transition-transform"
                 style={{
                   backgroundColor: themeColor,
                   transform: darkMode
@@ -216,61 +245,60 @@ export default function Sidebar({
         </div>
       </nav>
 
-      <div className={`mt-4 shrink-0 border-t ${border} pt-4`}>
+      <div className={`relative z-10 mt-4 shrink-0 border-t ${border} pt-4`}>
         <div
-          className={`flex w-full items-center gap-3 rounded-2xl p-2 text-left transition ${hoverSurface}`}
+          className={`flex w-full items-center gap-3 rounded-[20px] border p-2 text-left transition ${
+            darkMode
+              ? "border-white/[0.09] bg-[#11191b] hover:bg-[#121a1c]"
+              : "border-[#BBBFBF]/35 bg-white hover:bg-[#f6f8f8]"
+          }`}
         >
           <div className="flex h-9 w-9 items-center justify-center">
-          <UserButton
-  afterSignOutUrl="/sign-in"
-  appearance={{
-    elements: {
-      userButtonAvatarBox:
-        "h-9 w-9 shadow-[0_12px_28px_rgba(0,0,0,0.24)]",
+            <UserButton
+              afterSignOutUrl="/sign-in"
+              appearance={{
+                elements: {
+                  userButtonAvatarBox:
+                    "h-9 w-9 shadow-[0_12px_28px_rgba(0,0,0,0.24)]",
 
-      userButtonPopoverCard:
-        "w-[280px] rounded-[16px] border border-[#2563eb] bg-[#1f232b] p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
+                  userButtonPopoverCard:
+                    "w-[280px] rounded-[16px] border border-[#05AD98]/35 bg-[#11191b] p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
 
-      userButtonPopoverMain:
-        "bg-[#1f232b] text-white",
+                  userButtonPopoverMain: "bg-[#11191b] text-white",
 
-      userButtonPopoverActions:
-        "bg-[#1f232b]",
+                  userButtonPopoverActions: "bg-[#11191b]",
 
-      userButtonPopoverActionButton:
-        "h-10 rounded-[10px] px-3 text-white hover:bg-white/[0.08]",
+                  userButtonPopoverActionButton:
+                    "h-10 rounded-[10px] px-3 text-white hover:bg-white/[0.08]",
 
-      userButtonPopoverActionButtonText:
-        "text-[13px] font-[700] text-white",
+                  userButtonPopoverActionButtonText:
+                    "text-[13px] font-[700] text-white",
 
-      userButtonPopoverActionButtonIcon:
-        "text-white/60",
+                  userButtonPopoverActionButtonIcon: "text-white/60",
 
-      userButtonPopoverFooter:
-        "hidden",
+                  userButtonPopoverFooter: "hidden",
 
-      userPreviewMainIdentifier:
-        "text-sm font-[800] text-white",
+                  userPreviewMainIdentifier:
+                    "text-sm font-[800] text-white",
 
-      userPreviewSecondaryIdentifier:
-        "text-xs font-[600] text-white/55",
+                  userPreviewSecondaryIdentifier:
+                    "text-xs font-[600] text-white/55",
 
-      userPreviewAvatarBox:
-        "h-9 w-9",
-    },
-  }}
-/>
+                  userPreviewAvatarBox: "h-9 w-9",
+                },
+              }}
+            />
           </div>
 
           <div className="min-w-0">
-  <p className="truncate text-sm font-[800] text-white">
-    {displayName}
-  </p>
+            <p className={`truncate text-sm font-[850] ${text}`}>
+              {displayName}
+            </p>
 
-  <p className={`text-[11px] font-medium ${mutedText}`}>
-    Profile & sign out
-  </p>
-</div>
+            <p className={`text-[11px] font-medium ${mutedText}`}>
+              Profile & sign out
+            </p>
+          </div>
         </div>
       </div>
     </aside>
@@ -286,7 +314,7 @@ function SidebarSectionLabel({
 }) {
   return (
     <p
-      className={`mb-2 px-1 text-[11px] font-[800] uppercase tracking-[0.16em] ${mutedText}`}
+      className={`mb-2 px-1 text-[11px] font-[850] uppercase tracking-[0.18em] ${mutedText}`}
     >
       {label}
     </p>
@@ -300,6 +328,7 @@ function SidebarNavButton({
   activeSurface,
   hoverSurface,
   themeColor,
+  darkMode,
 }: any) {
   const Icon = item.icon;
   const isActive = selectedView === item.key;
@@ -313,10 +342,16 @@ function SidebarNavButton({
         scale: 0.98,
       }}
       onClick={() => setSelectedView(item.key)}
-      className={`flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[700] transition ${
+      className={`flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[750] transition ${
         isActive
-          ? `${activeSurface} text-white shadow-[0_14px_34px_rgba(0,0,0,0.22)]`
-          : `text-white/58 hover:text-white ${hoverSurface}`
+          ? `${activeSurface} ${
+              darkMode ? "text-white" : "text-[#111111]"
+            } shadow-[0_14px_34px_rgba(5,173,152,0.10)]`
+          : `${
+              darkMode
+                ? "text-white/62 hover:text-white"
+                : "text-black/58 hover:text-black"
+            } ${hoverSurface}`
       }`}
     >
       <div className="flex items-center gap-3">
@@ -336,7 +371,7 @@ function SidebarNavButton({
 
       {item.count ? (
         <span
-          className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-[900] text-white shadow-sm"
+          className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-[900] text-white shadow-[0_10px_20px_rgba(5,173,152,0.20)]"
           style={{
             backgroundColor: themeColor,
           }}
