@@ -1904,11 +1904,8 @@ completedAt: updatedTask.completedAt,
 : "bg-[#f6f8f8] text-[#111111]"
     }`}
   >
-    {darkMode && (
-  <>
-    <div className="pointer-events-none fixed inset-0 z-0 bg-[#0b1113]" />
-    <div className="pointer-events-none fixed inset-0 z-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:44px_44px] opacity-40" />
-  </>
+   {darkMode && (
+  <div className="pointer-events-none fixed inset-0 z-0 bg-[#0b1113]" />
 )}
 
 <FirecrackerLayer firecrackers={firecrackers} themeColor={themeColor} />
@@ -2330,19 +2327,7 @@ today.
     : "border-[#BBBFBF]/35 bg-white/95 shadow-[0_14px_42px_rgba(17,24,39,0.045)]"
   }`}
 >
-  <div
-    className="pointer-events-none absolute left-0 top-0 h-1 w-full"
-    style={{
-      background: `linear-gradient(90deg, ${themeColor}, transparent)`,
-    }}
-  />
 
-  <div
-    className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full opacity-[0.14] blur-3xl"
-    style={{
-      backgroundColor: themeColor,
-    }}
-  />
 
   <div className="relative">
     <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4 sm:items-center">
@@ -2405,9 +2390,9 @@ today.
 
   <button
     onClick={addTask}
-    className="m-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] text-white shadow-[0_14px_30px_rgba(5,173,152,0.24)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-11 sm:w-11 sm:rounded-[18px]"
+    className="m-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] text-white shadow-[0_14px_30px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-11 sm:w-11 sm:rounded-[18px]"
     style={{
-      background: `linear-gradient(135deg, ${themeColor}, #048A79)`,
+      backgroundColor: themeColor,
     }}
   >
     <Send size={16} />
@@ -3701,10 +3686,7 @@ function FocusModePanel({
             : `${strongerGlass} ${border}`
         }`}
       >
-        <div
-          className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full opacity-[0.18] blur-3xl"
-          style={{ backgroundColor: themeColor }}
-        />
+      
     
         <div className="relative">
           <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5 sm:gap-4">
@@ -3856,8 +3838,8 @@ function FocusModePanel({
                         <div
                           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
                           style={{
-                            background: isCurrent
-                              ? `linear-gradient(135deg, ${themeColor}, #048A79)`
+                            backgroundColor: isCurrent
+                              ? themeColor
                               : darkMode
                               ? "#34424f"
                               : "#a1a1aa",
@@ -3936,7 +3918,7 @@ function FocusModePanel({
                               }}
                               className="h-11 rounded-[18px] text-sm font-[900] text-white shadow-[0_16px_34px_rgba(5,173,152,0.24)] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl"
                               style={{
-                                background: `linear-gradient(135deg, ${themeColor}, #048A79)`,
+                                backgroundColor: themeColor,
                               }}
                             >
                               Complete
@@ -5616,10 +5598,7 @@ function ExtractTasksModal({
         className={`max-h-[92vh] w-full max-w-[860px] overflow-hidden rounded-[34px] border shadow-[0_35px_140px_rgba(0,0,0,0.38)] backdrop-blur-3xl ${strongerGlass} ${border}`}
       >
         <div className="relative overflow-hidden">
-          <div
-            className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full opacity-20 blur-3xl"
-            style={{ backgroundColor: themeColor }}
-          />
+         
 
           <div className={`relative border-b px-5 py-5 sm:px-7 sm:py-6 ${border}`}>
             <div className="flex items-start justify-between gap-5">
@@ -6078,15 +6057,9 @@ function EditTaskModal({
   className={`max-h-[92vh] w-full max-w-[760px] overflow-hidden rounded-[34px] border shadow-[0_35px_140px_rgba(0,0,0,0.38)] backdrop-blur-3xl ${strongerGlass} ${border}`}
 >
         <div className="relative overflow-hidden">
-          <div
-            className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full opacity-20 blur-3xl"
-            style={{ backgroundColor: themeColor }}
-          />
+         
 
-          <div
-            className="pointer-events-none absolute -left-20 top-20 h-40 w-40 rounded-full opacity-10 blur-3xl"
-            style={{ backgroundColor: themeColor }}
-          />
+       
 
           <div className={`relative border-b px-5 py-5 sm:px-7 sm:py-6 ${border}`}>
             <div className="flex items-start justify-between gap-5">

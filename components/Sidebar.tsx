@@ -96,9 +96,8 @@ export default function Sidebar({
   const hoverSurface = darkMode ? "hover:bg-[#121a1c]" : "hover:bg-[#f6f8f8]";
 
   const activeSurface = darkMode
-    ? "border border-[#05AD98]/32 bg-[#05AD98]/14"
-    : "border border-[#05AD98]/18 bg-[#05AD98]/10";
-
+  ? "border border-[#05AD98]/30 bg-[#05AD98]/10"
+  : "border border-[#05AD98]/20 bg-[#05AD98]/10";
   return (
     <aside
       className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.30)] lg:flex ${border} ${sidebarBg} ${text}`}
@@ -106,9 +105,9 @@ export default function Sidebar({
       <div className="relative z-10 mb-7">
         <div className="mb-5 flex items-center gap-3">
           <div
-            className="flex h-12 w-12 items-center justify-center rounded-[16px] text-sm font-black text-white shadow-[0_14px_34px_rgba(5,173,152,0.22)]"
+            className="flex h-12 w-12 items-center justify-center rounded-[16px] text-sm font-black text-white shadow-[0_12px_28px_rgba(0,0,0,0.22)]"
             style={{
-              background: `linear-gradient(135deg, ${themeColor}, #048A79)`,
+              backgroundColor: themeColor,
             }}
           >
             V
@@ -116,7 +115,7 @@ export default function Sidebar({
 
           <div>
             <h1
-              className={`text-[35px] font-[850] tracking-[-0.045em] ${text}`}
+              className={`text-[35px] font-[800] tracking-[-0.045em] ${text}`}
             >
               Veira
             </h1>
@@ -138,7 +137,7 @@ export default function Sidebar({
               }}
             />
 
-            <p className={`text-xs font-[850] ${text}`}>
+            <p className={`text-xs font-[800] ${text}`}>
               AI planning enabled
             </p>
           </div>
@@ -291,7 +290,7 @@ export default function Sidebar({
           </div>
 
           <div className="min-w-0">
-            <p className={`truncate text-sm font-[850] ${text}`}>
+            <p className={`truncate text-sm font-[800] ${text}`}>
               {displayName}
             </p>
 
@@ -314,7 +313,7 @@ function SidebarSectionLabel({
 }) {
   return (
     <p
-      className={`mb-2 px-1 text-[11px] font-[850] uppercase tracking-[0.18em] ${mutedText}`}
+      className={`mb-2 px-1 text-[11px] font-[800] uppercase tracking-[0.18em] ${mutedText}`}
     >
       {label}
     </p>
@@ -346,7 +345,7 @@ function SidebarNavButton({
         isActive
           ? `${activeSurface} ${
               darkMode ? "text-white" : "text-[#111111]"
-            } shadow-[0_14px_34px_rgba(5,173,152,0.10)]`
+            } shadow-[0_14px_34px_rgba(0,0,0,0.16)]`
           : `${
               darkMode
                 ? "text-white/62 hover:text-white"
