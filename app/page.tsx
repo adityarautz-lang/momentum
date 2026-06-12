@@ -3423,7 +3423,6 @@ function DayTimeLeftCard({
   );
 }
 
-
 function FocusModePanel({
   prioritizedTasks,
   completedToday,
@@ -3531,17 +3530,50 @@ function FocusModePanel({
     setFocusIndex(0);
   };
 
-  const removeManualFocusTask = (taskId: string) => {
-    setManualFocusTaskIds((prev: string[]) =>
-      prev.filter((id) => id !== taskId)
-    );
+  const removeFocusTask = (taskId: string) => {
+    if (isManualMode) {
+      setManualFocusTaskIds((prev: string[]) =>
+        prev.filter((id) => id !== taskId)
+      );
+
+      setFocusIndex(0);
+      return;
+    }
+
+    setFocusPlan((prev: any) => {
+      if (!prev?.focusTaskIds) return prev;
+
+      const nextFocusTaskIds = prev.focusTaskIds.filter(
+        (id: string) => id !== taskId
+      );
+
+      const nextReasons = { ...(prev.reasons || {}) };
+      delete nextReasons[taskId];
+
+      const nextPlan = {
+        ...prev,
+        focusTaskIds: nextFocusTaskIds,
+        reasons: nextReasons,
+      };
+
+      if (nextFocusTaskIds.length === 0) {
+        localStorage.removeItem(focusCacheKey);
+        return null;
+      }
+
+      localStorage.setItem(focusCacheKey, JSON.stringify(nextPlan));
+
+      return nextPlan;
+    });
 
     setFocusIndex(0);
   };
 
-  const clearManualFocusStack = () => {
+  const clearFocusStack = () => {
     setManualFocusTaskIds([]);
+    setFocusPlan(null);
     setFocusIndex(0);
+    localStorage.removeItem(focusCacheKey);
   };
 
   const moveNext = () => {
@@ -3732,9 +3764,9 @@ function FocusModePanel({
             </div>
 
             <div className="flex items-center gap-2">
-              {manualFocusTaskIds.length > 0 && (
+              {activeFocusTasks.length > 0 && (
                 <button
-                  onClick={clearManualFocusStack}
+                  onClick={clearFocusStack}
                   className={`rounded-full px-3 py-1 text-[10px] font-[900] transition hover:scale-[1.02] ${
                     darkMode
                       ? "bg-white/[0.06] text-white/50 hover:text-white"
@@ -3754,7 +3786,11 @@ function FocusModePanel({
                     : "bg-black/[0.04] text-black/45 hover:text-black"
                 }`}
               >
-                {focusLoading ? "Thinking..." : activeFocusTasks.length > 0 ? "Use AI" : "Compute"}
+                {focusLoading
+                  ? "Thinking..."
+                  : activeFocusTasks.length > 0
+                  ? "Use AI"
+                  : "Compute"}
               </button>
             </div>
           </div>
@@ -3831,7 +3867,8 @@ function FocusModePanel({
                           }`}
                         >
                           {task.priority}
-                          {visibleDueDate && ` · ${formatDueDate(visibleDueDate)}`}
+                          {visibleDueDate &&
+                            ` · ${formatDueDate(visibleDueDate)}`}
                         </p>
                       </div>
 
@@ -3847,21 +3884,19 @@ function FocusModePanel({
                         </span>
                       )}
 
-                      {isManualMode && (
-                        <button
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            removeManualFocusTask(task.id);
-                          }}
-                          className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900] opacity-60 transition hover:scale-[1.03] hover:opacity-100 ${
-                            darkMode
-                              ? "bg-white/[0.08] text-white/55"
-                              : "bg-black/[0.05] text-black/50"
-                          }`}
-                        >
-                          Remove
-                        </button>
-                      )}
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          removeFocusTask(task.id);
+                        }}
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900] opacity-60 transition hover:scale-[1.03] hover:opacity-100 ${
+                          darkMode
+                            ? "bg-white/[0.08] text-white/55"
+                            : "bg-black/[0.05] text-black/50"
+                        }`}
+                      >
+                        Remove
+                      </button>
                     </div>
 
                     {isCurrent && (
