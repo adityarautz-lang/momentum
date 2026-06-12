@@ -2194,7 +2194,7 @@ setManualFocusTaskIds,
 }: any) {
   return (
     <>
-    <section
+  <section
   className={`relative z-[120] mb-5 hidden overflow-visible rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-5 ${strongerGlass} ${border}`}
 >
   <div className="flex items-start justify-between gap-5">
@@ -2237,33 +2237,10 @@ setManualFocusTaskIds,
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <CompactMetric
-          label="High"
-          value={highPriorityCount}
-          color="#ef4444"
-          darkMode={darkMode}
-        />
-
-        <CompactMetric
-          label="Due soon"
-          value={dueSoonCount}
-          color="#f59e0b"
-          darkMode={darkMode}
-        />
-
-        <CompactMetric
-          label="Completed"
-          value={`${completionPercent}%`}
-          color="#10b981"
-          darkMode={darkMode}
-        />
-
-        <CompactMetric
-          label="Streak"
-          value="4 Day"
-          color={themeColor}
-          darkMode={darkMode}
-        />
+        <CompactMetric label="High" value={highPriorityCount} color="#ef4444" darkMode={darkMode} />
+        <CompactMetric label="Due soon" value={dueSoonCount} color="#f59e0b" darkMode={darkMode} />
+        <CompactMetric label="Completed" value={`${completionPercent}%`} color="#10b981" darkMode={darkMode} />
+        <CompactMetric label="Streak" value="4 Day" color={themeColor} darkMode={darkMode} />
       </div>
     </div>
 
@@ -2284,38 +2261,23 @@ setManualFocusTaskIds,
           : "border-black/[0.045] bg-black/[0.018]"
       }`}
     >
-      <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
-        <div className="min-w-0">
-          <p
-            className="text-[11px] font-[900] uppercase tracking-[0.16em]"
-            style={{ color: themeColor }}
-          >
-            AI Veira Boost
-          </p>
+      <p
+        className="text-[11px] font-[900] uppercase tracking-[0.16em]"
+        style={{ color: themeColor }}
+      >
+        AI Veira Boost
+      </p>
 
-          <p
-  className={`min-w-0 text-xs font-[700] leading-5 xl:max-w-[620px] ${
-    darkMode ? "text-white/45" : "text-black/45"
-  }`}
->
-  {boostLoading
-    ? "Your boost will update after a short pause."
-    : boostMessage ||
-      "Your completed tasks are turning into visible progress."}
-</p>
-        </div>
-
-        <p
-          className={`min-w-0 truncate text-xs font-[700] xl:max-w-[620px] ${
-            darkMode ? "text-white/45" : "text-black/45"
-          }`}
-        >
-          {boostLoading
-            ? "Your boost will update after a short pause."
-            : boostMessage ||
-              "Your completed tasks are turning into visible progress."}
-        </p>
-      </div>
+      <p
+        className={`mt-1 max-w-[980px] text-[15px] font-[700] leading-6 tracking-[-0.025em] ${
+          darkMode ? "text-white/58" : "text-black/58"
+        }`}
+      >
+        {boostLoading
+          ? "Reading your wins..."
+          : boostMessage ||
+            "Your completed tasks are turning into visible progress."}
+      </p>
     </div>
   )}
 </section>
