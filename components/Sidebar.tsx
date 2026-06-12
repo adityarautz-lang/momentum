@@ -80,20 +80,20 @@ export default function Sidebar({
       : "Account";
 
   const sidebarBg = darkMode
-    ? "bg-[#0b1113]"
+    ? "bg-[#050505]"
     : "bg-white/95 backdrop-blur-2xl";
 
-  const border = darkMode ? "border-white/[0.09]" : "border-[#BBBFBF]/35";
+  const border = darkMode ? "border-[#05AD98]/18" : "border-[#BBBFBF]/35";
 
   const text = darkMode ? "text-white" : "text-[#111111]";
 
   const mutedText = darkMode ? "text-white/45" : "text-[#878787]";
 
-  const softSurface = darkMode ? "bg-[#11191b]" : "bg-white";
+  const softSurface = darkMode ? "bg-[#0b0b0b]" : "bg-white";
 
-  const softBorder = darkMode ? "border-white/[0.09]" : "border-[#BBBFBF]/35";
+  const softBorder = darkMode ? "border-[#05AD98]/18" : "border-[#BBBFBF]/35";
 
-  const hoverSurface = darkMode ? "hover:bg-[#121a1c]" : "hover:bg-[#f6f8f8]";
+  const hoverSurface = darkMode ? "hover:bg-[#0d0d0d]" : "hover:bg-[#f6f8f8]";
 
   const activeSurface = darkMode
   ? "border border-[#05AD98]/30 bg-[#05AD98]/10"

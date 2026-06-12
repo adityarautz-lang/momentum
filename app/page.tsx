@@ -631,7 +631,7 @@ const getPriorityClass = (priority: Priority) => {
 
 const getPriorityRowClass = (priority: Priority, darkMode: boolean) => {
   if (darkMode) {
-    return "bg-[#121a1c] hover:bg-[#182224]";
+    return "bg-[#080808] hover:bg-[#0d0d0d]";
   }
 
   return "bg-white hover:bg-[#f6f8f8]";
@@ -1060,21 +1060,21 @@ useEffect(() => {
   /* ------------------------------------------------ */
 
   const glass = darkMode
-  ? "bg-white/[0.055] backdrop-blur-2xl"
+  ? "bg-[#0b0b0b] border border-[#05AD98]/16"
   : "bg-white/82 backdrop-blur-2xl";
 
 const strongerGlass = darkMode
-  ? "bg-[#11191b] border-white/[0.09] shadow-[0_24px_80px_rgba(0,0,0,0.34)] backdrop-blur-2xl"
+  ? "bg-[#0b0b0b] border-[#05AD98]/22 shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
   : "bg-white/95 border-[#BBBFBF]/35 shadow-[0_12px_36px_rgba(17,24,39,0.045)] backdrop-blur-2xl";
 
 const input = darkMode
-  ? "bg-[#0d1416] text-white placeholder:text-white/35 border border-white/[0.08] focus:border-[#05AD98]/60"
+    ? "bg-[#070707] text-white placeholder:text-white/35 border border-[#05AD98]/18 focus:border-[#05AD98]/70"
   : "bg-white text-[#111111] placeholder:text-[#878787] border border-[#BBBFBF]/45 focus:border-[#05AD98]/55";
 
-const border = darkMode ? "border-white/[0.085]" : "border-[#BBBFBF]/35";
+  const border = darkMode ? "border-[#05AD98]/18" : "border-[#BBBFBF]/35";
 
 const modalSelect = darkMode
-  ? "bg-[#0d1416] text-white border border-white/[0.08]"
+  ? "bg-[#070707] text-white border border-white/[0.08]"
   : "bg-white text-black border border-[#BBBFBF]/45";
 
     const fontClass = inter.className;
@@ -1900,14 +1900,14 @@ completedAt: updatedTask.completedAt,
     <main
   className={`${fontClass} min-h-screen w-full overflow-x-hidden transition-colors duration-500 ${
     darkMode
-? "bg-[#0b1113] text-white"
+? "bg-[#050505] text-white"
 : "bg-[#f6f8f8] text-[#111111]"
     }`}
   >
     {darkMode && (
   <>
-    <div className="pointer-events-none fixed inset-0 z-0 bg-[#0b1113]" />
-    <div className="pointer-events-none fixed inset-0 z-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:44px_44px] opacity-40" />
+    <div className="pointer-events-none fixed inset-0 z-0 bg-[#050505]" />
+    
   </>
 )}
 
@@ -2326,7 +2326,7 @@ today.
      
       <section
   className={`relative z-[10] mb-5 overflow-hidden rounded-[24px] border p-4 sm:mb-6 sm:rounded-[36px] sm:p-6 ${    darkMode
-    ? "border-white/[0.09] bg-[#11191b] shadow-[0_18px_54px_rgba(0,0,0,0.32)]"
+    ? "border-white/[0.09] bg-[#0b0b0b] shadow-[0_18px_54px_rgba(0,0,0,0.32)]"
     : "border-[#BBBFBF]/35 bg-white/95 shadow-[0_14px_42px_rgba(17,24,39,0.045)]"
   }`}
 >
@@ -2365,7 +2365,7 @@ today.
     <div
   className={`flex min-h-12 overflow-hidden rounded-[18px] border sm:min-h-14 sm:rounded-[22px] ${
     darkMode
-    ? "border-white/[0.09] bg-[#0d1416] focus-within:border-[#05AD98]/60"
+    ? "border-white/[0.09] bg-[#070707] focus-within:border-[#05AD98]/60"
     : "border-[#BBBFBF]/45 bg-white focus-within:border-[#05AD98]/55"
   }`}
 >
@@ -3290,7 +3290,7 @@ function DayTimeLeftCard({
         <div
         className={`absolute right-0 top-[calc(100%+10px)] z-[300] w-[250px] rounded-[22px] border p-3 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl ${
             darkMode
-              ? "border-white/[0.09] bg-[#11191b]/95"
+              ? "border-white/[0.09] bg-[#0b0b0b]/95"
               : "border-black/[0.08] bg-white/95"
           }`}
         >
@@ -3697,7 +3697,7 @@ function FocusModePanel({
       <section
         className={`relative self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${
           darkMode
-            ? "border-white/[0.09] bg-[#11191b] shadow-[0_24px_80px_rgba(0,0,0,0.34)]"
+            ? "border-white/[0.09] bg-[#0b0b0b] shadow-[0_24px_80px_rgba(0,0,0,0.34)]"
             : `${strongerGlass} ${border}`
         }`}
       >
@@ -3751,7 +3751,7 @@ function FocusModePanel({
               isDragOver
                 ? "border-[#05AD98] bg-[#05AD98]/12"
                 : darkMode
-                ? "border-white/[0.09] bg-[#121a1c]"
+                ? "border-white/[0.09] bg-[#080808]"
                 : "border-black/[0.04] bg-white/65"
             }`}
           >
@@ -3781,7 +3781,7 @@ function FocusModePanel({
                     onClick={clearFocusStack}
                     className={`rounded-[13px] border px-3 py-1.5 text-[10px] font-[900] transition hover:scale-[1.02] ${
                       darkMode
-                        ? "border-white/[0.09] bg-[#0d1416] text-white/55 hover:text-white"
+                        ? "border-white/[0.09] bg-[#070707] text-white/55 hover:text-white"
                         : "bg-black/[0.04] text-black/45 hover:text-black"
                     }`}
                   >
@@ -3817,7 +3817,7 @@ function FocusModePanel({
               <div
                 className={`flex min-h-[220px] items-center justify-center rounded-[22px] border border-dashed text-center ${
                   darkMode
-                    ? "border-[#3b4b58] bg-[#0d1416]/45 text-white/35"
+                    ? "border-[#3b4b58] bg-[#070707]/45 text-white/35"
                     : "border-black/[0.07] bg-black/[0.015] text-black/35"
                 }`}
               >
@@ -3848,7 +3848,7 @@ function FocusModePanel({
                             ? "border-[#05AD98]/40 bg-[#05AD98]/10"
                             : "border-[#05AD98]/45 bg-[#05AD98]/[0.07]"
                           : darkMode
-                          ? "border-white/[0.09] bg-[#121a1c]"
+                          ? "border-white/[0.09] bg-[#080808]"
                           : "border-black/[0.045] bg-white/70"
                       }`}
                     >
@@ -3910,7 +3910,7 @@ function FocusModePanel({
                           }}
                           className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900] opacity-70 transition hover:scale-[1.03] hover:opacity-100 ${
                             darkMode
-                              ? "bg-[#0d1416] text-white/58"
+                              ? "bg-[#070707] text-white/58"
                               : "bg-black/[0.05] text-black/50"
                           }`}
                         >
@@ -3949,7 +3949,7 @@ function FocusModePanel({
                               }}
                               className={`h-11 rounded-[18px] border text-sm font-[900] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl ${
                                 darkMode
-                                  ? "border-white/[0.09] bg-[#0d1416] text-white/82"
+                                  ? "border-white/[0.09] bg-[#070707] text-white/82"
                                   : border
                               }`}
                             >
@@ -3966,7 +3966,7 @@ function FocusModePanel({
                   <div
                     className={`flex h-[58px] items-center justify-center rounded-[18px] border border-dashed text-xs font-[900] ${
                       darkMode
-                        ? "border-white/[0.09] bg-[#0d1416] text-white/28"
+                        ? "border-white/[0.09] bg-[#070707] text-white/28"
                         : "border-black/[0.06] bg-black/[0.015] text-black/28"
                     }`}
                   >
@@ -4313,7 +4313,7 @@ function AirtablePriorityGroup({
           : "border-l-emerald-500"
       } ${
         darkMode
-          ? "border-y-white/[0.09] border-r-white/[0.09] bg-[#11191b]"
+          ? "border-y-white/[0.09] border-r-white/[0.09] bg-[#0b0b0b]"
           : "border-y-black/[0.07] border-r-black/[0.07] bg-white"
       }`}
     >
@@ -5511,13 +5511,13 @@ function MobileBottomNav({
       userButtonAvatarBox: "h-6 w-6",
 
       userButtonPopoverCard:
-      "w-[280px] rounded-[16px] border border-[#05AD98]/35 bg-[#11191b] p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
+      "w-[280px] rounded-[16px] border border-[#05AD98]/35 bg-[#0b0b0b] p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
     
     userButtonPopoverMain:
-      "bg-[#11191b] text-white",
+      "bg-[#0b0b0b] text-white",
     
     userButtonPopoverActions:
-      "bg-[#11191b]",
+      "bg-[#0b0b0b]",
 
       userButtonPopoverActionButton:
         "h-10 rounded-[10px] px-3 text-white hover:bg-white/[0.08]",
