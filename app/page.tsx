@@ -631,7 +631,7 @@ const getPriorityClass = (priority: Priority) => {
 
 const getPriorityRowClass = (priority: Priority, darkMode: boolean) => {
   if (darkMode) {
-    return "bg-[#121a1c] hover:bg-[#182224]";
+    return "bg-[#080808] hover:bg-[#0d0d0d]";
   }
 
   return "bg-white hover:bg-[#f6f8f8]";
@@ -1060,21 +1060,21 @@ useEffect(() => {
   /* ------------------------------------------------ */
 
   const glass = darkMode
-  ? "bg-white/[0.055] backdrop-blur-2xl"
+  ? "bg-[#0b0b0b] border border-[#05AD98]/16"
   : "bg-white/82 backdrop-blur-2xl";
 
 const strongerGlass = darkMode
-  ? "bg-[#11191b] border-white/[0.09] shadow-[0_24px_80px_rgba(0,0,0,0.34)] backdrop-blur-2xl"
+  ? "bg-[#0b0b0b] border-[#05AD98]/22 shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
   : "bg-white/95 border-[#BBBFBF]/35 shadow-[0_12px_36px_rgba(17,24,39,0.045)] backdrop-blur-2xl";
 
 const input = darkMode
-  ? "bg-[#0d1416] text-white placeholder:text-white/35 border border-white/[0.08] focus:border-[#05AD98]/60"
+    ? "bg-[#070707] text-white placeholder:text-white/35 border border-[#05AD98]/18 focus:border-[#05AD98]/70"
   : "bg-white text-[#111111] placeholder:text-[#878787] border border-[#BBBFBF]/45 focus:border-[#05AD98]/55";
 
-const border = darkMode ? "border-white/[0.085]" : "border-[#BBBFBF]/35";
+  const border = darkMode ? "border-[#05AD98]/18" : "border-[#BBBFBF]/35";
 
 const modalSelect = darkMode
-  ? "bg-[#0d1416] text-white border border-white/[0.08]"
+  ? "bg-[#070707] text-white border border-white/[0.08]"
   : "bg-white text-black border border-[#BBBFBF]/45";
 
     const fontClass = inter.className;
@@ -1900,14 +1900,14 @@ completedAt: updatedTask.completedAt,
     <main
   className={`${fontClass} min-h-screen w-full overflow-x-hidden transition-colors duration-500 ${
     darkMode
-? "bg-[#0b1113] text-white"
+? "bg-[#050505] text-white"
 : "bg-[#f6f8f8] text-[#111111]"
     }`}
   >
     {darkMode && (
   <>
-    <div className="pointer-events-none fixed inset-0 z-0 bg-[#0b1113]" />
-    <div className="pointer-events-none fixed inset-0 z-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:44px_44px] opacity-40" />
+    <div className="pointer-events-none fixed inset-0 z-0 bg-[#050505]" />
+    
   </>
 )}
 
@@ -2194,14 +2194,14 @@ setManualFocusTaskIds,
 }: any) {
   return (
     <>
-    <section
+  <section
   className={`relative z-[120] mb-5 hidden overflow-visible rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-5 ${strongerGlass} ${border}`}
 >
   <div className="flex items-start justify-between gap-5">
     <div className="min-w-0 flex-1">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h1 className="text-[24px] font-[700] leading-tight tracking-[-0.05em]">
-          Today&apos;s momentum
+          Today&apos;s Momentum
         </h1>
 
         <span
@@ -2237,33 +2237,10 @@ setManualFocusTaskIds,
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <CompactMetric
-          label="High"
-          value={highPriorityCount}
-          color="#ef4444"
-          darkMode={darkMode}
-        />
-
-        <CompactMetric
-          label="Due soon"
-          value={dueSoonCount}
-          color="#f59e0b"
-          darkMode={darkMode}
-        />
-
-        <CompactMetric
-          label="Completed"
-          value={`${completionPercent}%`}
-          color="#10b981"
-          darkMode={darkMode}
-        />
-
-        <CompactMetric
-          label="Streak"
-          value="4 Day"
-          color={themeColor}
-          darkMode={darkMode}
-        />
+        <CompactMetric label="High" value={highPriorityCount} color="#ef4444" darkMode={darkMode} />
+        <CompactMetric label="Due soon" value={dueSoonCount} color="#f59e0b" darkMode={darkMode} />
+        <CompactMetric label="Completed" value={`${completionPercent}%`} color="#10b981" darkMode={darkMode} />
+        <CompactMetric label="Streak" value="4 Day" color={themeColor} darkMode={darkMode} />
       </div>
     </div>
 
@@ -2284,41 +2261,23 @@ setManualFocusTaskIds,
           : "border-black/[0.045] bg-black/[0.018]"
       }`}
     >
-      <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
-        <div className="min-w-0">
-          <p
-            className="text-[11px] font-[900] uppercase tracking-[0.16em]"
-            style={{ color: themeColor }}
-          >
-            AI Veira Boost
-          </p>
+      <p
+        className="text-[11px] font-[900] uppercase tracking-[0.16em]"
+        style={{ color: themeColor }}
+      >
+        AI Veira Boost
+      </p>
 
-          <p className="mt-1 truncate text-[15px] font-[700] tracking-[-0.025em]">
-  {boostLoading ? (
-    "Reading your wins..."
-  ) : (
-    <>
-      Great work — {completedToday.length} tasks{" "}
-      <span className="mr-1.5 font-[800] italic text-emerald-500 dark:text-emerald-300">
-  completed
-</span>
-today.
-    </>
-  )}
-</p>
-        </div>
-
-        <p
-          className={`min-w-0 truncate text-xs font-[700] xl:max-w-[620px] ${
-            darkMode ? "text-white/45" : "text-black/45"
-          }`}
-        >
-          {boostLoading
-            ? "Your boost will update after a short pause."
-            : boostMessage ||
-              "Your completed tasks are turning into visible progress."}
-        </p>
-      </div>
+      <p
+        className={`mt-1 max-w-[980px] text-[15px] font-[700] leading-6 tracking-[-0.025em] ${
+          darkMode ? "text-white/58" : "text-black/58"
+        }`}
+      >
+        {boostLoading
+          ? "Reading your wins..."
+          : boostMessage ||
+            "Your completed tasks are turning into visible progress."}
+      </p>
     </div>
   )}
 </section>
@@ -2326,7 +2285,7 @@ today.
      
       <section
   className={`relative z-[10] mb-5 overflow-hidden rounded-[24px] border p-4 sm:mb-6 sm:rounded-[36px] sm:p-6 ${    darkMode
-    ? "border-white/[0.09] bg-[#11191b] shadow-[0_18px_54px_rgba(0,0,0,0.32)]"
+    ? "border-white/[0.09] bg-[#0b0b0b] shadow-[0_18px_54px_rgba(0,0,0,0.32)]"
     : "border-[#BBBFBF]/35 bg-white/95 shadow-[0_14px_42px_rgba(17,24,39,0.045)]"
   }`}
 >
@@ -2365,7 +2324,7 @@ today.
     <div
   className={`flex min-h-12 overflow-hidden rounded-[18px] border sm:min-h-14 sm:rounded-[22px] ${
     darkMode
-    ? "border-white/[0.09] bg-[#0d1416] focus-within:border-[#05AD98]/60"
+    ? "border-white/[0.09] bg-[#070707] focus-within:border-[#05AD98]/60"
     : "border-[#BBBFBF]/45 bg-white focus-within:border-[#05AD98]/55"
   }`}
 >
@@ -3290,7 +3249,7 @@ function DayTimeLeftCard({
         <div
         className={`absolute right-0 top-[calc(100%+10px)] z-[300] w-[250px] rounded-[22px] border p-3 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl ${
             darkMode
-              ? "border-white/[0.09] bg-[#11191b]/95"
+              ? "border-white/[0.09] bg-[#0b0b0b]/95"
               : "border-black/[0.08] bg-white/95"
           }`}
         >
@@ -3453,12 +3412,10 @@ function FocusModePanel({
 
   useEffect(() => {
     const cachedFocusPlan = localStorage.getItem(focusCacheKey);
-
     if (!cachedFocusPlan) return;
 
     try {
       const parsed = JSON.parse(cachedFocusPlan);
-
       if (!parsed?.focusTaskIds?.length) return;
 
       const validTaskIds = parsed.focusTaskIds.filter((taskId: string) =>
@@ -3472,11 +3429,7 @@ function FocusModePanel({
         return;
       }
 
-      setFocusPlan({
-        ...parsed,
-        focusTaskIds: validTaskIds,
-      });
-
+      setFocusPlan({ ...parsed, focusTaskIds: validTaskIds });
       setFocusIndex(0);
     } catch (error) {
       console.error("Failed to load cached focus plan:", error);
@@ -3529,7 +3482,6 @@ function FocusModePanel({
     setManualFocusTaskIds((prev: string[]) => {
       if (prev.includes(taskId)) return prev;
       if (prev.length >= 3) return prev;
-
       return [...prev, taskId];
     });
 
@@ -3568,7 +3520,6 @@ function FocusModePanel({
       }
 
       localStorage.setItem(focusCacheKey, JSON.stringify(nextPlan));
-
       return nextPlan;
     });
 
@@ -3659,7 +3610,6 @@ function FocusModePanel({
       setFocusPlan(nextFocusPlan);
       setManualFocusTaskIds([]);
       localStorage.setItem(focusCacheKey, JSON.stringify(nextFocusPlan));
-
       setFocusIndex(0);
     } catch (error) {
       console.error(error);
@@ -3683,7 +3633,6 @@ function FocusModePanel({
       setFocusPlan(fallbackFocusPlan);
       setManualFocusTaskIds([]);
       localStorage.setItem(focusCacheKey, JSON.stringify(fallbackFocusPlan));
-
       setFocusIndex(0);
       setFocusError("AI focus was unavailable. Fallback stack used.");
     } finally {
@@ -3691,293 +3640,292 @@ function FocusModePanel({
     }
   };
 
+  return (
+    <section
+    className={`relative min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${
+      darkMode
+        ? "bg-[#0b0b0b] border-[#05AD98]/18 shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
+        : `${strongerGlass} ${border}`
+    }`}
+  >
+      <div className="relative">
+        <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5 sm:gap-4">
+          <div className="min-w-0">
+            <h2 className="flex items-center gap-2 text-[18px] font-[800] tracking-[-0.035em] sm:text-[20px]">
+              Focus Mode
+              <Sparkles size={15} style={{ color: themeColor }} />
+            </h2>
 
-
-    return (
-      <section
-        className={`relative self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${
-          darkMode
-            ? "border-white/[0.09] bg-[#11191b] shadow-[0_24px_80px_rgba(0,0,0,0.34)]"
-            : `${strongerGlass} ${border}`
-        }`}
-      >
-        <div
-          className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full opacity-[0.18] blur-3xl"
-          style={{ backgroundColor: themeColor }}
-        />
-    
-        <div className="relative">
-          <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5 sm:gap-4">
-            <div className="min-w-0">
-              <h2 className="flex items-center gap-2 text-[18px] font-[800] tracking-[-0.035em] sm:text-[20px]">
-                Focus Mode
-                <Sparkles size={15} style={{ color: themeColor }} />
-              </h2>
-    
-              <p
-                className={`mt-1.5 max-w-md text-[12px] leading-5 sm:mt-2 sm:text-sm sm:leading-6 ${
-                  darkMode ? "text-white/52" : "text-black/45"
-                }`}
-              >
-                Drag up to 3 tasks here, or let Veira choose them.
-              </p>
-            </div>
-    
-            <span
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-[10px] font-[900] ${
-                darkMode
-                  ? "border-[#05AD98]/30 bg-[#05AD98]/10 text-[#7EE7DC]"
-                  : "bg-black/[0.04] text-black/45"
+            <p
+              className={`mt-1.5 max-w-md text-[12px] leading-5 sm:mt-2 sm:text-sm sm:leading-6 ${
+                darkMode ? "text-white/64" : "text-black/45"
               }`}
             >
-              {isManualMode ? "Manual" : "AI Mode"}
-            </span>
+              Drag up to 3 tasks here, or let Veira choose them.
+            </p>
           </div>
-    
-          <div
-            onDragOver={(event) => {
-              event.preventDefault();
-              setIsDragOver(true);
-            }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setIsDragOver(false);
-    
-              const taskId = event.dataTransfer.getData("text/plain");
-              addManualFocusTask(taskId);
-            }}
-            className={`rounded-[22px] border p-4 transition sm:rounded-[26px] sm:p-5 ${
-              isDragOver
-                ? "border-[#05AD98] bg-[#05AD98]/12"
-                : darkMode
-                ? "border-white/[0.09] bg-[#121a1c]"
-                : "border-black/[0.04] bg-white/65"
+
+          <span
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-[10px] font-[900] ${
+              darkMode
+                ? "border-white/[0.16] bg-white/[0.06] text-white/72"
+                : "bg-black/[0.04] text-black/45"
             }`}
           >
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p
-                  className="text-[11px] font-[900] uppercase tracking-[0.16em]"
-                  style={{ color: themeColor }}
-                >
-                  Focus Stack
-                </p>
-    
-                <p
-                  className={`mt-1 text-xs font-[700] ${
-                    darkMode ? "text-white/42" : "text-black/40"
-                  }`}
-                >
-                  {activeFocusTasks.length > 0
-                    ? `${activeFocusTasks.length} selected`
-                    : "Drop tasks here to build your stack."}
-                </p>
-              </div>
-    
-              <div className="flex items-center gap-2">
-                {activeFocusTasks.length > 0 && (
-                  <button
-                    onClick={clearFocusStack}
-                    className={`rounded-[13px] border px-3 py-1.5 text-[10px] font-[900] transition hover:scale-[1.02] ${
-                      darkMode
-                        ? "border-white/[0.09] bg-[#0d1416] text-white/55 hover:text-white"
-                        : "bg-black/[0.04] text-black/45 hover:text-black"
-                    }`}
-                  >
-                    Clear
-                  </button>
-                )}
-    
+            {isManualMode ? "Manual" : "AI Mode"}
+          </span>
+        </div>
+
+        <div
+          onDragOver={(event) => {
+            event.preventDefault();
+            setIsDragOver(true);
+          }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setIsDragOver(false);
+
+            const taskId = event.dataTransfer.getData("text/plain");
+            addManualFocusTask(taskId);
+          }}
+          className={`rounded-[22px] border p-4 transition sm:rounded-[26px] sm:p-5 ${
+            isDragOver
+              ? darkMode
+                ? "border-white/[0.24] bg-white/[0.08]"
+                : "border-[#05AD98] bg-[#05AD98]/10"
+              : darkMode
+              ? "border-white/[0.14] bg-[#050505]"
+              : "border-black/[0.04] bg-white/65"
+          }`}
+        >
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p
+                className="text-[11px] font-[900] uppercase tracking-[0.16em]"
+                style={{ color: themeColor }}
+              >
+                Focus Stack
+              </p>
+
+              <p
+                className={`mt-1 text-xs font-[700] ${
+                  darkMode ? "text-white/48" : "text-black/40"
+                }`}
+              >
+                {activeFocusTasks.length > 0
+                  ? `${activeFocusTasks.length} selected`
+                  : "Drop tasks here to build your stack."}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {activeFocusTasks.length > 0 && (
                 <button
-                  onClick={computeFocusStack}
-                  disabled={focusLoading || prioritizedTasks.length === 0}
-                  className={`rounded-[13px] border px-3 py-1.5 text-[10px] font-[900] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 ${
+                  onClick={clearFocusStack}
+                  className={`rounded-[13px] border px-3 py-1.5 text-[10px] font-[900] transition hover:scale-[1.02] ${
                     darkMode
-                      ? "border-[#05AD98]/35 bg-[#05AD98]/18 text-[#7EE7DC] hover:bg-[#05AD98]/25"
+                      ? "border-white/[0.14] bg-[#050505] text-white/58 hover:text-white"
                       : "bg-black/[0.04] text-black/45 hover:text-black"
                   }`}
                 >
-                  {focusLoading
-                    ? "Thinking..."
-                    : activeFocusTasks.length > 0
-                    ? "Use AI"
-                    : "Compute"}
+                  Clear
                 </button>
-              </div>
-            </div>
-    
-            {focusError && (
-              <p className="mb-3 rounded-2xl border border-[#05AD98]/20 bg-[#05AD98]/10 px-3 py-2 text-xs font-[700] text-[#7EE7DC]">
-                {focusError}
-              </p>
-            )}
-    
-            {activeFocusTasks.length === 0 ? (
-              <div
-                className={`flex min-h-[220px] items-center justify-center rounded-[22px] border border-dashed text-center ${
+              )}
+
+              <button
+                onClick={computeFocusStack}
+                disabled={focusLoading || prioritizedTasks.length === 0}
+                className={`rounded-[13px] border px-3 py-1.5 text-[10px] font-[900] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 ${
                   darkMode
-                    ? "border-[#3b4b58] bg-[#0d1416]/45 text-white/35"
-                    : "border-black/[0.07] bg-black/[0.015] text-black/35"
+                    ? "border-white/[0.14] bg-[#050505] text-white/70 hover:border-[#05AD98]/50 hover:text-white"
+                    : "bg-black/[0.04] text-black/45 hover:text-black"
                 }`}
               >
-                <div className="max-w-xs px-5">
-                  <h3 className="text-[19px] font-[900] tracking-[-0.04em] text-current">
-                    Build your focus stack.
-                  </h3>
-    
-                  <p className="mt-2 text-sm font-[700] leading-6 opacity-80">
-                    Drag tasks from the left list, or press Compute to let Veira
-                    choose your top 3.
-                  </p>
-                </div>
+                {focusLoading
+                  ? "Thinking..."
+                  : activeFocusTasks.length > 0
+                  ? "Use AI"
+                  : "Compute"}
+              </button>
+            </div>
+          </div>
+
+          {focusError && (
+            <p className="mb-3 rounded-2xl border border-white/[0.12] bg-white/[0.06] px-3 py-2 text-xs font-[700] text-white/65">
+              {focusError}
+            </p>
+          )}
+
+          {activeFocusTasks.length === 0 ? (
+            <div
+              className={`flex min-h-[220px] items-center justify-center rounded-[22px] border border-dashed text-center ${
+                darkMode
+                  ? "border-white/[0.14] bg-[#050505] text-white/35"
+                  : "border-black/[0.07] bg-black/[0.015] text-black/35"
+              }`}
+            >
+              <div className="max-w-xs px-5">
+                <h3 className="text-[19px] font-[900] tracking-[-0.04em] text-current">
+                  Build your focus stack.
+                </h3>
+
+                <p className="mt-2 text-sm font-[700] leading-6 opacity-80">
+                  Drag tasks from the left list, or press Compute to let Veira
+                  choose your top 3.
+                </p>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {activeFocusTasks.map((task: any, index: number) => {
-                  const isCurrent = currentTask && task.id === currentTask.id;
-                  const visibleDueDate = task.dueDate || task.suggestedDueDate;
-    
-                  return (
-                    <div
-                      key={task.id}
-                      onClick={() => setFocusIndex(index)}
-                      className={`group cursor-pointer rounded-[20px] border px-3 py-3 transition hover:scale-[1.005] sm:px-4 ${
-                        isCurrent
-                          ? darkMode
-                            ? "border-[#05AD98]/40 bg-[#05AD98]/10"
-                            : "border-[#05AD98]/45 bg-[#05AD98]/[0.07]"
-                          : darkMode
-                          ? "border-white/[0.09] bg-[#121a1c]"
-                          : "border-black/[0.045] bg-white/70"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
-                          style={{
-                            background: isCurrent
-                              ? `linear-gradient(135deg, ${themeColor}, #048A79)`
-                              : darkMode
-                              ? "#34424f"
-                              : "#a1a1aa",
-                          }}
-                        >
-                          {index + 1}
-                        </div>
-    
-                        <div className="min-w-0 flex-1">
-                          <p
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setSelectedTask(task);
-                              setIsEditModalOpen(true);
-                            }}
-                            title={task.title}
-                            className="truncate text-[15px] font-[900] tracking-[-0.025em] hover:opacity-70"
-                          >
-                            {task.title}
-                          </p>
-    
-                          <p
-                            className={`mt-1 truncate text-[11px] font-[700] ${
-                              darkMode ? "text-white/42" : "text-black/38"
-                            }`}
-                          >
-                            {task.priority}
-                            {visibleDueDate &&
-                              ` · ${formatDueDate(visibleDueDate)}`}
-                          </p>
-                        </div>
-    
-                        {isCurrent && (
-                          <span
-                            className="hidden shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-[900] sm:inline-flex"
-                            style={{
-                              color: darkMode ? "#7EE7DC" : themeColor,
-                              backgroundColor: `${themeColor}18`,
-                              borderColor: `${themeColor}55`,
-                            }}
-                          >
-                            Now
-                          </span>
-                        )}
-    
-                        <button
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            removeFocusTask(task.id);
-                          }}
-                          className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900] opacity-70 transition hover:scale-[1.03] hover:opacity-100 ${
-                            darkMode
-                              ? "bg-[#0d1416] text-white/58"
-                              : "bg-black/[0.05] text-black/50"
-                          }`}
-                        >
-                          Remove
-                        </button>
-                      </div>
-    
-                      {isCurrent && (
-                        <div className="mt-4">
-                          <p
-                            className={`text-[12px] leading-5 sm:text-sm sm:leading-6 ${
-                              darkMode ? "text-white/48" : "text-black/45"
-                            }`}
-                          >
-                            {getTaskReason(task.id)}
-                          </p>
-    
-                          <div className="mt-4 grid grid-cols-[1fr_0.72fr] gap-2 sm:gap-3">
-                            <button
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                toggleTaskById(task.id, event);
-                              }}
-                              className="h-11 rounded-[18px] text-sm font-[900] text-white shadow-[0_16px_34px_rgba(5,173,152,0.24)] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl"
-                              style={{
-                                background: `linear-gradient(135deg, ${themeColor}, #048A79)`,
-                              }}
-                            >
-                              Complete
-                            </button>
-    
-                            <button
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                moveNext();
-                              }}
-                              className={`h-11 rounded-[18px] border text-sm font-[900] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl ${
-                                darkMode
-                                  ? "border-white/[0.09] bg-[#0d1416] text-white/82"
-                                  : border
-                              }`}
-                            >
-                              Next
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-    
-                {activeFocusTasks.length < 3 && (
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {activeFocusTasks.map((task: any, index: number) => {
+                const isCurrent = currentTask && task.id === currentTask.id;
+                const visibleDueDate = task.dueDate || task.suggestedDueDate;
+
+                return (
                   <div
-                    className={`flex h-[58px] items-center justify-center rounded-[18px] border border-dashed text-xs font-[900] ${
-                      darkMode
-                        ? "border-white/[0.09] bg-[#0d1416] text-white/28"
-                        : "border-black/[0.06] bg-black/[0.015] text-black/28"
+                    key={task.id}
+                    onClick={() => setFocusIndex(index)}
+                    className={`group cursor-pointer rounded-[20px] border px-3 py-3 transition hover:scale-[1.005] sm:px-4 ${
+                      isCurrent
+                        ? darkMode
+                          ? "border-[#05AD98]/45 bg-[#050505]"
+                          : "border-[#05AD98]/45 bg-[#05AD98]/[0.07]"
+                        : darkMode
+                        ? "border-white/[0.12] bg-[#050505]"
+                        : "border-black/[0.045] bg-white/70"
                     }`}
                   >
-                    Drop task #{activeFocusTasks.length + 1}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
+                        style={{
+                          backgroundColor: isCurrent
+                            ? themeColor
+                            : darkMode
+                            ? "#334155"
+                            : "#a1a1aa",
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedTask(task);
+                            setIsEditModalOpen(true);
+                          }}
+                          title={task.title}
+                          className="truncate text-[15px] font-[900] tracking-[-0.025em] hover:opacity-70"
+                        >
+                          {task.title}
+                        </p>
+
+                        <p
+                          className={`mt-1 truncate text-[11px] font-[700] ${
+                            darkMode ? "text-white/48" : "text-black/38"
+                          }`}
+                        >
+                          {task.priority}
+                          {visibleDueDate &&
+                            ` · ${formatDueDate(visibleDueDate)}`}
+                        </p>
+                      </div>
+
+                      {isCurrent && (
+                        <span
+                          className="hidden shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-[900] sm:inline-flex"
+                          style={{
+                            color: darkMode
+                              ? "rgba(255,255,255,0.72)"
+                              : "#111111",
+                            backgroundColor: darkMode
+                              ? "rgba(255,255,255,0.06)"
+                              : "#ffffff",
+                            borderColor: darkMode
+                              ? "rgba(255,255,255,0.12)"
+                              : "#BBBFBF",
+                          }}
+                        >
+                          Now
+                        </span>
+                      )}
+
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          removeFocusTask(task.id);
+                        }}
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900] opacity-70 transition hover:scale-[1.03] hover:opacity-100 ${
+                          darkMode
+                            ? "bg-white/[0.06] text-white/58 hover:text-white"
+                            : "bg-black/[0.05] text-black/50"
+                        }`}
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    {isCurrent && (
+                      <div className="mt-4">
+                        <p
+                          className={`text-[12px] leading-5 sm:text-sm sm:leading-6 ${
+                            darkMode ? "text-white/52" : "text-black/45"
+                          }`}
+                        >
+                          {getTaskReason(task.id)}
+                        </p>
+
+                        <div className="mt-4 grid grid-cols-[1fr_0.72fr] gap-2 sm:gap-3">
+                          <button
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggleTaskById(task.id, event);
+                            }}
+                            className="h-11 rounded-[18px] text-sm font-[900] text-white shadow-[0_16px_34px_rgba(0,0,0,0.22)] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl"
+                            style={{ backgroundColor: themeColor }}
+                          >
+                            Complete
+                          </button>
+
+                          <button
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              moveNext();
+                            }}
+                            className={`h-11 rounded-[18px] border text-sm font-[900] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl ${
+                              darkMode
+                                ? "border-white/[0.12] bg-[#050505] text-white/82"
+                                : border
+                            }`}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                );
+              })}
+
+              {activeFocusTasks.length < 3 && (
+                <div
+                  className={`flex h-[58px] items-center justify-center rounded-[18px] border border-dashed text-xs font-[900] ${
+                    darkMode
+                      ? "border-white/[0.12] bg-[#050505] text-white/28"
+                      : "border-black/[0.06] bg-black/[0.015] text-black/28"
+                  }`}
+                >
+                  Drop task #{activeFocusTasks.length + 1}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        </section>
+      </div>
+    </section>
   );
 }
 
@@ -4313,7 +4261,7 @@ function AirtablePriorityGroup({
           : "border-l-emerald-500"
       } ${
         darkMode
-          ? "border-y-white/[0.09] border-r-white/[0.09] bg-[#11191b]"
+          ? "border-y-white/[0.09] border-r-white/[0.09] bg-[#0b0b0b]"
           : "border-y-black/[0.07] border-r-black/[0.07] bg-white"
       }`}
     >
@@ -5511,13 +5459,13 @@ function MobileBottomNav({
       userButtonAvatarBox: "h-6 w-6",
 
       userButtonPopoverCard:
-      "w-[280px] rounded-[16px] border border-[#05AD98]/35 bg-[#11191b] p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
+      "w-[280px] rounded-[16px] border border-[#05AD98]/35 bg-[#0b0b0b] p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
     
     userButtonPopoverMain:
-      "bg-[#11191b] text-white",
+      "bg-[#0b0b0b] text-white",
     
     userButtonPopoverActions:
-      "bg-[#11191b]",
+      "bg-[#0b0b0b]",
 
       userButtonPopoverActionButton:
         "h-10 rounded-[10px] px-3 text-white hover:bg-white/[0.08]",
