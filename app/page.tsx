@@ -2245,7 +2245,7 @@ setManualFocusTaskIds,
         <CompactMetric label="High" value={highPriorityCount} color="#ef4444" darkMode={darkMode} />
         <CompactMetric label="Due soon" value={dueSoonCount} color="#f59e0b" darkMode={darkMode} />
         <CompactMetric label="Completed" value={`${completionPercent}%`} color="#10b981" darkMode={darkMode} />
-        <CompactMetric label="Streak" value="4 Day" color={themeColor} darkMode={darkMode} />
+        {/* <CompactMetric label="Streak" value="4 Day" color={themeColor} darkMode={darkMode} /> */}
       </div>
     </div>
 
