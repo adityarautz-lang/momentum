@@ -103,28 +103,26 @@ export default function Sidebar({
       className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.30)] lg:flex ${border} ${sidebarBg} ${text}`}
     >
       <div className="relative z-10 mb-7">
-        <div className="mb-5 flex items-center gap-3">
-          <div
-            className="flex h-12 w-12 items-center justify-center rounded-[16px] text-sm font-black text-white shadow-[0_12px_28px_rgba(0,0,0,0.22)]"
-            style={{
-              backgroundColor: themeColor,
-            }}
-          >
-            V
-          </div>
+      <div className="mb-5 flex items-center gap-4">
+  <div
+    className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-[19px] text-[22px] font-[900] leading-none text-white shadow-[0_12px_28px_rgba(0,0,0,0.22)]"
+    style={{
+      backgroundColor: themeColor,
+    }}
+  >
+    V
+  </div>
 
-          <div>
-            <h1
-              className={`text-[35px] font-[800] tracking-[-0.045em] ${text}`}
-            >
-              Veira
-            </h1>
+  <div className="flex min-w-0 flex-col justify-center">
+    <h1 className={`text-[39px] font-[900] leading-none tracking-[-0.055em] ${text}`}>
+      Veira
+    </h1>
 
-            <p className={`text-[11px] font-medium ${mutedText}`}>
-              Personal OS
-            </p>
-          </div>
-        </div>
+    <p className={`mt-2 text-[12px] font-[800] leading-none ${mutedText}`}>
+      Personal OS
+    </p>
+  </div>
+</div>
 
         <div
           className={`rounded-[20px] border p-3 shadow-[0_12px_30px_rgba(0,0,0,0.08)] ${softBorder} ${softSurface}`}
