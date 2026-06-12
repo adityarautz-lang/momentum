@@ -2269,7 +2269,7 @@ setManualFocusTaskIds,
       </p>
 
       <p
-        className={`mt-1 max-w-[980px] text-[15px] leading-6 tracking-[-0.025em] ${
+        className={`mt-1 max-w-[980px] text-[15px] font-[700] leading-6 tracking-[-0.025em] ${
           darkMode ? "text-white/58" : "text-black/58"
         }`}
       >
