@@ -5445,7 +5445,7 @@ function MobileBottomNav({
               darkMode ? "text-white/40" : "text-black/40"
             }`}
           >
-            Personal OS
+            Clarity on what matters.
           </p>
         </div>
       </div>
