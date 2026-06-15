@@ -1721,11 +1721,11 @@ const priority: Priority = updatedTask.priority || inferPriority(title);
                 whyThisMatters,
                 priority,
                 dueDate: updatedTask.dueDate || undefined,
-                suggestedDueDate:
-                  updatedTask.dueDate
-                    ? undefined
-                    : updatedTask.suggestedDueDate ||
-                      (enableAppSuggestions ? suggestDueDate(title) : undefined),
+                suggestedDueDate: updatedTask.dueDate
+                ? undefined
+                : enableAppSuggestions
+                ? suggestDueDate(title)
+                : undefined,
                 notes: updatedTask.notes || "",
                 status: updatedTask.status || "Active",
                 aiReason:
@@ -6314,7 +6314,8 @@ function EditTaskModal({
                 />
               </section>
 
-              {selectedTask.aiReason && (
+              {selectedTask.aiReason &&
+  selectedTask.aiReason !== "You manually scheduled this task." && (
                 <section className={`rounded-[26px] border p-4 ${border}`}>
                   <div className="mb-4 flex items-start justify-between gap-4">
                     <div>
