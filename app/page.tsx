@@ -6266,9 +6266,11 @@ function EditTaskModal({
                       setSelectedTask({
                         ...selectedTask,
                         dueDate: e.target.value || undefined,
-                        suggestedDueDate: e.target.value
-                          ? undefined
-                          : selectedTask.suggestedDueDate,
+                        suggestedDueDate: undefined,
+                        aiReason: e.target.value
+                          ? "You manually scheduled this task."
+                          : undefined,
+                        aiConfidence: e.target.value ? 1 : 0,
                       })
                     }
                     className={`h-14 w-full rounded-[22px] px-4 text-sm font-[700] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${modalSelect}`}
