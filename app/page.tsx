@@ -6261,7 +6261,7 @@ function EditTaskModal({
 
                   <input
                     type="date"
-                    value={selectedTask.dueDate || ""}
+                    value={selectedTask.dueDate || selectedTask.suggestedDueDate || ""}
                     onChange={(e) =>
                       setSelectedTask({
                         ...selectedTask,
