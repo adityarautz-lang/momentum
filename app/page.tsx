@@ -6318,7 +6318,7 @@ function EditTaskModal({
                 <section className={`rounded-[26px] border p-4 ${border}`}>
                   <div className="mb-4 flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-[900]">Veira’s read</p>
+                      <p className="text-sm font-[900]">Veira’s suggestion</p>
                       <p className="mt-1 text-xs leading-5 opacity-45">
                         This is how Veira interpreted the task.
                       </p>
@@ -6328,7 +6328,7 @@ function EditTaskModal({
                       className="rounded-full px-2.5 py-1 text-[10px] font-[900] text-white"
                       style={{ backgroundColor: themeColor }}
                     >
-                      {Math.round((selectedTask.aiConfidence || 0) * 100)}%
+                     {Math.round((selectedTask.aiConfidence || 0) * 100)}% confidence
                     </span>
                   </div>
 
