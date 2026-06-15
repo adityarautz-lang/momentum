@@ -964,7 +964,7 @@ useEffect(() => {
 
   if (completedToday.length === 1) {
     const firstWinMessage =
-      "Nice — first win logged. Veira is starting to build.";
+      "Nice — first win logged. Momentum is starting to build.";
 
     setBoostMessage(firstWinMessage);
     setLastBoostTaskKey(completedBoostTaskKey);
