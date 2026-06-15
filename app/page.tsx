@@ -755,10 +755,17 @@ const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
-
+  
     if (!user?.id) return;
-
-void saveState(user.id, {
+  
+    const hasAnyUserData =
+      categories.some((category) => category.tasks.length > 0) ||
+      completedToday.length > 0 ||
+      archive.length > 0;
+  
+    if (!hasAnyUserData) return;
+  
+    void saveState(user.id, {
       categories,
       darkMode,
       themeColor,
