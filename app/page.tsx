@@ -2260,20 +2260,81 @@ addTask,
 manualFocusTaskIds,
 setManualFocusTaskIds,
 }: any) {
+  const [showMorningBrief, setShowMorningBrief] = useState(false);
+  const [morningBrief, setMorningBrief] = useState({
+    quote: "Small steps still move the day forward.",
+  });
+  
+  useEffect(() => {
+    const now = new Date();
+    const morningBriefKey = `veira-morning-brief-${getTodayDate()}`;
+  
+    if (now.getHours() < 7 || now.getHours() >= 12) return;
+  
+    const cachedBrief = localStorage.getItem(morningBriefKey);
+  
+    if (cachedBrief) {
+      try {
+        setMorningBrief(JSON.parse(cachedBrief));
+        setShowMorningBrief(true);
+        return;
+      } catch {
+        localStorage.removeItem(morningBriefKey);
+      }
+    }
+  
+    const loadMorningBrief = async () => {
+      try {
+        const response = await fetch("/api/morning-brief", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            dueSoonCount,
+            highPriorityCount,
+            completedTodayCount: completedToday.length,
+            activeTaskCount: prioritizedTasks.length,
+          }),
+        });
+  
+        const data = await response.json();
+  
+        const nextBrief = {
+          quote:
+            data.quote || "Small steps still move the day forward.",
+        };
+  
+        setMorningBrief(nextBrief);
+        setShowMorningBrief(true);
+        localStorage.setItem(morningBriefKey, JSON.stringify(nextBrief));
+      } catch {
+        setShowMorningBrief(true);
+      }
+    };
+  
+    void loadMorningBrief();
+  }, [dueSoonCount, highPriorityCount, completedToday.length, prioritizedTasks.length]);
+
   return (
     <>
   <section
-  className={`relative z-[120] mb-5 hidden overflow-visible rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-5 ${strongerGlass} ${border}`}
+  className={`relative z-[120] mb-5 hidden overflow-visible rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-3 ${strongerGlass} ${border}`}
 >
-  <div className="flex items-start justify-between gap-5">
+<div className="flex items-center justify-between gap-5">
     <div className="min-w-0 flex-1">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+    <div
+  className="mb-3 h-1.5 w-[220px] rounded-full"
+  style={{ backgroundColor: themeColor }}
+/>
+
+<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h1 className="text-[24px] font-[700] leading-tight tracking-[-0.05em]">
           Today&apos;s Momentum
         </h1>
 
         <span
-          className={`rounded-full px-3 py-1 text-[11px] font-[900] ${
+          className={`rounded-full px-3 py-1 text-[11px] font-[700] ${
             darkMode
               ? "bg-white/[0.06] text-white/50"
               : "bg-black/[0.035] text-black/45"
@@ -2284,7 +2345,7 @@ setManualFocusTaskIds,
 
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className={`inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[11px] font-[900] transition hover:scale-[1.02] ${
+          className={`inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[11px] font-[700] transition hover:scale-[1.02] ${
             darkMode
               ? "bg-white/[0.06] text-white/55 hover:text-white"
               : "bg-black/[0.035] text-black/50 hover:text-black"
@@ -2304,21 +2365,49 @@ setManualFocusTaskIds,
         {completionPercent}% progress
       </p>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <CompactMetric label="High" value={highPriorityCount} color="#ef4444" darkMode={darkMode} />
-        <CompactMetric label="Due soon" value={dueSoonCount} color="#f59e0b" darkMode={darkMode} />
-        <CompactMetric label="Completed" value={`${completionPercent}%`} color="#10b981" darkMode={darkMode} />
-        {/* <CompactMetric label="Streak" value="4 Day" color={themeColor} darkMode={darkMode} /> */}
+     
+      {showMorningBrief && (
+<div
+  className={`mt-4 rounded-[22px] border px-4 py-3 ${
+          darkMode
+            ? "border-white/[0.07] bg-white/[0.035]"
+            : "border-black/[0.045] bg-black/[0.018]"
+        }`}
+      >
+        {/* <p
+          className="text-[11px] font-[900] uppercase tracking-[0.16em]"
+          style={{ color: themeColor }}
+        >
+          Morning Brief
+        </p> */}
+
+<p
+  className="mt-1 text-[16px] font-[700] tracking-[-0.035em]"
+  style={{ color: themeColor }}
+>
+  Good morning! {morningBrief.quote}
+</p>
+
+<p
+  className={`mt-2 text-sm font-[600] ${
+    darkMode ? "text-white/50" : "text-black/50"
+  }`}
+>
+You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention today, including {highPriorityCount} high-priority item{highPriorityCount === 1 ? "" : "s"}. Your focus stack is ready.
+</p>
       </div>
+      )}
     </div>
 
-    <DayTimeLeftCard
-      dayEndTime={dayEndTime}
-      setDayEndTime={setDayEndTime}
-      dayTimeRemaining={dayTimeRemaining}
-      darkMode={darkMode}
-      themeColor={themeColor}
-    />
+
+
+   <DayTimeLeftCard
+  dayEndTime={dayEndTime}
+  setDayEndTime={setDayEndTime}
+  dayTimeRemaining={dayTimeRemaining}
+  darkMode={darkMode}
+  themeColor={themeColor}
+/>
   </div>
 
   {completedToday.length > 0 && (
@@ -2349,6 +2438,8 @@ setManualFocusTaskIds,
     </div>
   )}
 </section>
+
+
 
      
       <section
@@ -3307,15 +3398,15 @@ useEffect(() => {
   return (
     <div ref={pickerRef} className="relative z-[300]">
       <div
-        className={`w-[190px] shrink-0 rounded-[22px] border p-3 ${
+        className={`w-[168px] shrink-0 rounded-[18px] border p-2.5 ${
           darkMode
             ? "border-white/[0.08] bg-white/[0.045]"
             : "border-black/[0.05] bg-white/75"
         }`}
       >
-        <div className="mb-2 flex items-center gap-2">
+       <div className="mb-1.5 flex items-center gap-2">
           <div
-            className="flex h-8 w-8 items-center justify-center rounded-[14px] text-white"
+            className="flex h-7 w-7 items-center justify-center rounded-[12px] text-white"
             style={{ backgroundColor: themeColor }}
           >
             <Clock3 size={15} />
@@ -3326,14 +3417,14 @@ useEffect(() => {
               Day Left
             </p>
 
-            <p className="text-[16px] font-[900] tracking-[-0.04em]">
+            <p className="text-[14px] font-[900] tracking-[-0.04em]">
               {dayTimeRemaining.label}
             </p>
           </div>
         </div>
 
         <div
-          className={`mb-2 h-2 overflow-hidden rounded-full ${
+          className={`mb-1.5 h-1.5 overflow-hidden rounded-full ${
             darkMode ? "bg-white/[0.08]" : "bg-black/[0.06]"
           }`}
         >
@@ -3357,7 +3448,7 @@ useEffect(() => {
 
           <button
             onClick={() => setIsPickerOpen((prev) => !prev)}
-            className={`inline-flex h-8 items-center gap-1.5 rounded-[11px] px-2.5 text-[11px] font-[900] transition hover:scale-[1.02] ${
+            className={`inline-flex h-7 items-center gap-1.5 rounded-[10px] px-2 text-[10px] font-[900] transition hover:scale-[1.02] ${
               darkMode
                 ? "bg-white/[0.07] text-white hover:bg-white/[0.10]"
                 : "bg-black/[0.035] text-black hover:bg-black/[0.06]"
