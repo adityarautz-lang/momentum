@@ -150,6 +150,43 @@ const formatDateLong = () => {
   });
 };
 
+const getTaskAgeInDays = (createdAt?: string) => {
+  if (!createdAt) return 0;
+
+  const created = new Date(createdAt);
+  const now = new Date();
+
+  return Math.floor(
+    (now.getTime() - created.getTime()) /
+      (1000 * 60 * 60 * 24)
+  );
+};
+
+const getTaskAgeLabel = (task: any) => {
+  const age = getTaskAgeInDays(task.createdAt);
+
+  if (age < 3) return null;
+
+  if (age < 7) {
+    return {
+      text: `${age}d old`,
+      color: "neutral",
+    };
+  }
+
+  if (age < 14) {
+    return {
+      text: `${age}d untouched`,
+      color: "warning",
+    };
+  }
+
+  return {
+    text: `${age}d needs review`,
+    color: "danger",
+  };
+};
+
 const getTimeRemainingInDay = (dayEndTime: string) => {
   const now = new Date();
   const [hours, minutes] = dayEndTime.split(":").map(Number);
@@ -2724,6 +2761,24 @@ const addTaskToFocus = (taskId: string) => {
 
         <div className="flex w-auto items-center justify-end gap-2">
           <div className="flex items-center gap-5 text-[13px] font-[700]">
+
+
+          {getTaskAgeLabel(task) && (
+  <span
+    className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
+      getTaskAgeLabel(task)?.color === "danger"
+        ? "bg-red-500/10 text-red-400"
+        : getTaskAgeLabel(task)?.color === "warning"
+        ? "bg-amber-500/10 text-amber-400"
+        : darkMode
+        ? "bg-white/[0.06] text-white/45"
+        : "bg-black/[0.04] text-black/45"
+    }`}
+  >
+    {getTaskAgeLabel(task)?.text}
+  </span>
+)}
+
             {visibleDueDate && (
               <div
                 className={`flex items-center gap-1.5 ${
