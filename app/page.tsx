@@ -2315,7 +2315,7 @@ setManualFocusTaskIds,
 
      
       <section
-  className={`relative z-[10] mb-5 overflow-hidden rounded-[24px] border p-4 sm:mb-6 sm:rounded-[36px] sm:p-6 ${    darkMode
+  className={`relative z-[10] mb-4 overflow-hidden rounded-[24px] border p-4 sm:mb-4 sm:rounded-[32px] sm:px-6 sm:py-4 ${    darkMode
     ? "border-white/[0.09] bg-[#171717] shadow-[0_18px_54px_rgba(0,0,0,0.32)]"
     : "border-[#BBBFBF]/35 bg-white/95 shadow-[0_14px_42px_rgba(17,24,39,0.045)]"
   }`}
@@ -2335,7 +2335,7 @@ setManualFocusTaskIds,
   />
 
   <div className="relative">
-    <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4 sm:items-center">
+  <div className="mb-2 flex items-start justify-between gap-3 sm:mb-3 sm:items-center">
       <div className="min-w-0">
         <h2 className="flex items-center gap-2 text-[18px] font-[700] tracking-[-0.035em] sm:text-[22px]">
           <Send size={16} style={{ color: themeColor }} />
@@ -2343,7 +2343,7 @@ setManualFocusTaskIds,
         </h2>
 
         <p
-          className={`mt-1 text-[11px] font-[700] sm:text-xs ${
+            className={`mt-0.5 text-[11px] font-[700] sm:text-xs ${
             darkMode ? "text-white/42" : "text-black/38"
           }`}
         >
