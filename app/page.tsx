@@ -6314,7 +6314,7 @@ function EditTaskModal({
                 />
               </section>
 
-              {selectedTask.suggestedDueDate && (
+              {selectedTask.aiReason && (
                 <section className={`rounded-[26px] border p-4 ${border}`}>
                   <div className="mb-4 flex items-start justify-between gap-4">
                     <div>
@@ -6328,13 +6328,17 @@ function EditTaskModal({
                       className="rounded-full px-2.5 py-1 text-[10px] font-[900] text-white"
                       style={{ backgroundColor: themeColor }}
                     >
-                     {Math.round((selectedTask.aiConfidence || 0) * 100)}% confidence
+                     {Math.round((selectedTask.aiConfidence || 0) * 100)}% suggestion confidence
                     </span>
                   </div>
 
                   <div className="flex flex-wrap gap-2">
                     <span className="rounded-full bg-orange-50 px-3 py-1.5 text-[11px] font-[900] text-orange-600 dark:bg-orange-500/10 dark:text-orange-300">
-                      Suggested {formatDueDate(selectedTask.suggestedDueDate)}
+                    {selectedTask.suggestedDueDate
+  ? `Suggested ${formatDueDate(selectedTask.suggestedDueDate)}`
+  : selectedTask.dueDate
+  ? `Due ${formatDueDate(selectedTask.dueDate)}`
+  : "No date suggested"}
                     </span>
 
                     <span
@@ -6359,43 +6363,7 @@ function EditTaskModal({
             </div>
           </div>
 
-          <div className={`relative border-t px-5 py-4 sm:px-7 ${border}`}>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_1.4fr]">
-              <button
-                onClick={() => deleteTaskEverywhere(selectedTask.id)}
-                className="h-12 rounded-2xl bg-red-500/10 text-sm font-[900] text-red-500 transition hover:scale-[1.01]"
-              >
-                Delete
-              </button>
-
-              {isCompleted ? (
-                <button
-                  onClick={() => {
-                    restoreCompletedTask(selectedTask.id);
-                    closeModal();
-                  }}
-                  className={`h-12 rounded-2xl text-sm font-[900] transition hover:scale-[1.01] ${glass}`}
-                >
-                  Restore
-                </button>
-              ) : (
-                <button
-                  onClick={() => completeTaskFromModal(selectedTask.id)}
-                  className={`h-12 rounded-2xl text-sm font-[900] transition hover:scale-[1.01] ${glass}`}
-                >
-                  Complete
-                </button>
-              )}
-
-              <button
-                onClick={() => saveTaskChanges(selectedTask)}
-                className="h-12 rounded-2xl text-sm font-[900] text-white shadow-[0_16px_36px_rgba(0,0,0,0.20)] transition hover:scale-[1.01]"
-                style={{ backgroundColor: themeColor }}
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
+         
         </div>
       </motion.div>
     </motion.div>
