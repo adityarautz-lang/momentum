@@ -2535,7 +2535,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
     <div className="mt-3 flex flex-wrap items-center gap-2">
       <button
         onClick={() => setIsExtractModalOpen(true)}
-        className={`rounded-full border px-3 py-1.5 text-[11px] font-[900] transition hover:scale-[1.02] sm:text-xs ${
+        className={`rounded-full border px-3 py-1.5 text-[11px] font-[700] transition hover:scale-[1.02] sm:text-xs ${
           darkMode
           ? "border-[#05AD98]/25 bg-[#05AD98]/12 text-[#7EE7DC]"
 : "border-[#05AD98]/20 bg-[#05AD98]/10 text-[#047E70]"
