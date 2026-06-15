@@ -119,7 +119,7 @@ export default function Sidebar({
     </h1>
 
     <p className={`mt-2 text-[12px] font-[800] leading-none ${mutedText}`}>
-      Personal OS
+    Clarity on what matters.
     </p>
   </div>
 </div>
