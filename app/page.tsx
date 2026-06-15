@@ -3413,11 +3413,11 @@ useEffect(() => {
           </div>
 
           <div>
-            <p className="text-[10px] font-[900] uppercase tracking-[0.14em] opacity-40">
+            <p className="text-[10px] font-[700] uppercase tracking-[0.14em] opacity-40">
               Day Left
             </p>
 
-            <p className="text-[14px] font-[900] tracking-[-0.04em]">
+            <p className="text-[14px] font-[700] tracking-[-0.04em]">
               {dayTimeRemaining.label}
             </p>
           </div>
