@@ -6324,12 +6324,14 @@ function EditTaskModal({
                       </p>
                     </div>
 
-                    <span
-                      className="rounded-full px-2.5 py-1 text-[10px] font-[900] text-white"
-                      style={{ backgroundColor: themeColor }}
-                    >
-                     {Math.round((selectedTask.aiConfidence || 0) * 100)}% suggestion confidence
-                    </span>
+                    {selectedTask.aiReason !== "You manually scheduled this task." && (
+  <span
+    className="rounded-full px-2.5 py-1 text-[10px] font-[900] text-white"
+    style={{ backgroundColor: themeColor }}
+  >
+    {Math.round((selectedTask.aiConfidence || 0) * 100)}% suggestion confidence
+  </span>
+)}
                   </div>
 
                   <div className="flex flex-wrap gap-2">
