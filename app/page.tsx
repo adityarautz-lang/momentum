@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Inter } from "next/font/google";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";
@@ -2570,15 +2570,7 @@ const addTaskToFocus = (taskId: string) => {
           </p>
         </div>
 
-        <button
-  className={`w-fit rounded-full px-3 py-1 text-[11px] font-[700] sm:text-xs sm:font-[700] ${
-            darkMode
-              ? "bg-white/[0.06] text-white/55"
-              : "bg-black/[0.04] text-black/55"
-          }`}
-        >
-          Why this order?
-        </button>
+       
       </div>
 
       <div className="space-y-0 sm:space-y-3">
@@ -3200,6 +3192,24 @@ function DayTimeLeftCard({
   themeColor,
 }: any) {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+const pickerRef = useRef<HTMLDivElement | null>(null);
+
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      pickerRef.current &&
+      !pickerRef.current.contains(event.target as Node)
+    ) {
+      setIsPickerOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
 
   const [currentHourRaw, currentMinuteRaw] = dayEndTime.split(":").map(Number);
 
@@ -3214,8 +3224,11 @@ function DayTimeLeftCard({
 
   const displayMinute = String(currentMinuteRaw).padStart(2, "0");
 
-  const hourOptions = [5, 6, 7, 8, 9, 10, 11, 12];
-  const minuteOptions = ["00", "15", "30", "45"];
+  const hourOptions = Array.from({ length: 12 }, (_, index) => index + 1);
+  const minuteOptions = Array.from({ length: 12 }, (_, index) =>
+    String(index * 5).padStart(2, "0")
+  );
+  const secondOptions = ["00"];
 
   const updateEndTime = (
     nextHour: number,
@@ -3224,19 +3237,20 @@ function DayTimeLeftCard({
   ) => {
     let hour24 = nextHour;
 
-    if (nextPeriod === "AM" && nextHour === 12) {
-      hour24 = 0;
-    }
-
-    if (nextPeriod === "PM" && nextHour !== 12) {
-      hour24 = nextHour + 12;
-    }
+    if (nextPeriod === "AM" && nextHour === 12) hour24 = 0;
+    if (nextPeriod === "PM" && nextHour !== 12) hour24 = nextHour + 12;
 
     setDayEndTime(`${String(hour24).padStart(2, "0")}:${nextMinute}`);
   };
 
+  const selectClass = `h-11 w-full appearance-none rounded-[16px] border px-3 text-sm font-[900] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${
+    darkMode
+      ? "border-white/[0.09] bg-[#1f1f21] text-white"
+      : "border-black/[0.08] bg-white text-black"
+  }`;
+
   return (
-    <div className="relative z-[300]">
+    <div ref={pickerRef} className="relative z-[300]">
       <div
         className={`w-[190px] shrink-0 rounded-[22px] border p-3 ${
           darkMode
@@ -3244,24 +3258,22 @@ function DayTimeLeftCard({
             : "border-black/[0.05] bg-white/75"
         }`}
       >
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-[14px] text-white"
-              style={{ backgroundColor: themeColor }}
-            >
-              <Clock3 size={15} />
-            </div>
+        <div className="mb-2 flex items-center gap-2">
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-[14px] text-white"
+            style={{ backgroundColor: themeColor }}
+          >
+            <Clock3 size={15} />
+          </div>
 
-            <div>
-              <p className="text-[10px] font-[900] uppercase tracking-[0.14em] opacity-40">
-                Day Left
-              </p>
+          <div>
+            <p className="text-[10px] font-[900] uppercase tracking-[0.14em] opacity-40">
+              Day Left
+            </p>
 
-              <p className="text-[16px] font-[900] tracking-[-0.04em]">
-                {dayTimeRemaining.label}
-              </p>
-            </div>
+            <p className="text-[16px] font-[900] tracking-[-0.04em]">
+              {dayTimeRemaining.label}
+            </p>
           </div>
         </div>
 
@@ -3304,139 +3316,96 @@ function DayTimeLeftCard({
 
       {isPickerOpen && (
         <div
-        className={`absolute right-0 top-[calc(100%+10px)] z-[300] w-[250px] rounded-[22px] border p-3 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl ${
+          className={`absolute right-0 top-[calc(100%+10px)] z-[300] w-[360px] rounded-[24px] border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl ${
             darkMode
               ? "border-white/[0.09] bg-[#171717]/95"
               : "border-black/[0.08] bg-white/95"
           }`}
         >
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between">
             <p className="text-[11px] font-[900] uppercase tracking-[0.14em] opacity-45">
               Set day end
             </p>
 
             <button
               onClick={() => setIsPickerOpen(false)}
-              className={`rounded-full px-2 py-1 text-[10px] font-[900] ${
-                darkMode
-                  ? "bg-white/[0.07] text-white/55 hover:text-white"
-                  : "bg-black/[0.04] text-black/45 hover:text-black"
-              }`}
+              className="rounded-full px-3 py-1.5 text-[10px] font-[900] text-white shadow-[0_10px_24px_rgba(5,173,152,0.22)] transition hover:scale-[1.03]"
+              style={{ backgroundColor: themeColor }}
             >
               Done
             </button>
           </div>
 
-          <div className="grid grid-cols-[1fr_1fr_0.8fr] gap-2">
+          <div className="grid grid-cols-[1fr_1fr_1fr_0.9fr] gap-2">
             <div>
-              <p className="mb-2 text-[10px] font-[700] uppercase tracking-[0.12em] opacity-35">
-                Hour
+              <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
+                Hrs
               </p>
-
-              <div className="grid grid-cols-2 gap-1.5">
-                {hourOptions.map((hour) => {
-                  const isActive = displayHour === hour;
-
-                  return (
-                    <button
-                      key={hour}
-                      onClick={() =>
-                        updateEndTime(hour, displayMinute, period as "AM" | "PM")
-                      }
-                      className={`h-9 rounded-[12px] text-xs font-[900] transition ${
-                        isActive
-                          ? "text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
-                          : darkMode
-                          ? "bg-white/[0.055] text-white/55 hover:text-white"
-                          : "bg-black/[0.035] text-black/55 hover:text-black"
-                      }`}
-                      style={
-                        isActive
-                          ? {
-                              backgroundColor: themeColor,
-                            }
-                          : undefined
-                      }
-                    >
-                      {hour}
-                    </button>
-                  );
-                })}
-              </div>
+              <select
+                value={displayHour}
+                onChange={(e) =>
+                  updateEndTime(Number(e.target.value), displayMinute, period)
+                }
+                className={selectClass}
+              >
+                {hourOptions.map((hour) => (
+                  <option key={hour} value={hour}>
+                    {String(hour).padStart(2, "0")}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
                 Min
               </p>
+              <select
+                value={displayMinute}
+                onChange={(e) =>
+                  updateEndTime(displayHour, e.target.value, period)
+                }
+                className={selectClass}
+              >
+                {minuteOptions.map((minute) => (
+                  <option key={minute} value={minute}>
+                    {minute}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              <div className="grid grid-cols-2 gap-1.5">
-                {minuteOptions.map((minute) => {
-                  const isActive = displayMinute === minute;
-
-                  return (
-                    <button
-                      key={minute}
-                      onClick={() =>
-                        updateEndTime(displayHour, minute, period as "AM" | "PM")
-                      }
-                      className={`h-9 rounded-[12px] text-xs font-[900] transition ${
-                        isActive
-                          ? "text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
-                          : darkMode
-                          ? "bg-white/[0.055] text-white/55 hover:text-white"
-                          : "bg-black/[0.035] text-black/55 hover:text-black"
-                      }`}
-                      style={
-                        isActive
-                          ? {
-                              backgroundColor: themeColor,
-                            }
-                          : undefined
-                      }
-                    >
-                      {minute}
-                    </button>
-                  );
-                })}
-              </div>
+            <div>
+              <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
+                Sec
+              </p>
+              <select value="00" disabled className={`${selectClass} opacity-70`}>
+                {secondOptions.map((second) => (
+                  <option key={second} value={second}>
+                    {second}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
                 Mode
               </p>
-
-              <div className="space-y-1.5">
-                {(["AM", "PM"] as const).map((option) => {
-                  const isActive = period === option;
-
-                  return (
-                    <button
-                      key={option}
-                      onClick={() =>
-                        updateEndTime(displayHour, displayMinute, option)
-                      }
-                      className={`h-9 w-full rounded-[12px] text-xs font-[900] transition ${
-                        isActive
-                          ? "text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
-                          : darkMode
-                          ? "bg-white/[0.055] text-white/55 hover:text-white"
-                          : "bg-black/[0.035] text-black/55 hover:text-black"
-                      }`}
-                      style={
-                        isActive
-                          ? {
-                              backgroundColor: themeColor,
-                            }
-                          : undefined
-                      }
-                    >
-                      {option}
-                    </button>
-                  );
-                })}
-              </div>
+              <select
+                value={period}
+                onChange={(e) =>
+                  updateEndTime(
+                    displayHour,
+                    displayMinute,
+                    e.target.value as "AM" | "PM"
+                  )
+                }
+                className={selectClass}
+              >
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
             </div>
           </div>
         </div>
@@ -3444,7 +3413,6 @@ function DayTimeLeftCard({
     </div>
   );
 }
-
 function FocusModePanel({
   prioritizedTasks,
   completedToday,
