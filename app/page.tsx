@@ -2658,14 +2658,58 @@ manualFocusTaskIds = [],
 setManualFocusTaskIds,
 }: any) {
   const [showAllTasks, setShowAllTasks] = useState(false);
+const [sortMode, setSortMode] = useState<"veira" | "date" | "priority">("veira");
 
-  const defaultVisibleTaskCount = 6;
+const defaultVisibleTaskCount = 6;
+
+const priorityRank: Record<string, number> = {
+  High: 3,
+  Medium: 2,
+  Low: 1,
+};
+
+const sortedTasks = useMemo(() => {
+  const nextTasks = [...tasks];
+
+  if (sortMode === "date") {
+    return nextTasks.sort((a, b) => {
+      const dateA = getTaskDate(a);
+      const dateB = getTaskDate(b);
+
+      if (!dateA && !dateB) return b.score - a.score;
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+
+      return dateA.localeCompare(dateB);
+    });
+  }
+
+  if (sortMode === "priority") {
+    return nextTasks.sort((a, b) => {
+      const priorityDiff =
+        (priorityRank[b.priority] || 0) - (priorityRank[a.priority] || 0);
+
+      if (priorityDiff !== 0) return priorityDiff;
+
+      const dateA = getTaskDate(a);
+      const dateB = getTaskDate(b);
+
+      if (!dateA && !dateB) return b.score - a.score;
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+
+      return dateA.localeCompare(dateB);
+    });
+  }
+
+  return nextTasks;
+}, [tasks, sortMode]);
 
 const visibleTasks = showAllTasks
-  ? tasks
-  : tasks.slice(0, defaultVisibleTaskCount);
+  ? sortedTasks
+  : sortedTasks.slice(0, defaultVisibleTaskCount);
 
-const hiddenTaskCount = Math.max(tasks.length - defaultVisibleTaskCount, 0);
+const hiddenTaskCount = Math.max(sortedTasks.length - defaultVisibleTaskCount, 0);
 
 const addTaskToFocus = (taskId: string) => {
   if (!setManualFocusTaskIds) return;
@@ -2683,20 +2727,65 @@ const addTaskToFocus = (taskId: string) => {
     className={`min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
   >
       <div className="mb-4 flex flex-col gap-2 sm:mb-5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-        <div>
-        <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[16px] sm:font-[700] sm:tracking-normal">
-            {title}
-            <Sparkles size={16} style={{ color: themeColor }} />
-          </h2>
+      <div className="min-w-0">
+  <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[16px] sm:font-[700] sm:tracking-normal">
+    {title}
+    <Sparkles size={16} style={{ color: themeColor }} />
+  </h2>
 
-          <p
-            className={`mt-1 text-[12px] leading-5 sm:text-xs ${
-              darkMode ? "text-white/40" : "text-black/40"
-            }`}
-          >
-            {description}
-          </p>
-        </div>
+  <p
+    className={`mt-1 text-[12px] leading-5 sm:text-xs ${
+      darkMode ? "text-white/40" : "text-black/40"
+    }`}
+  >
+    {description}
+  </p>
+</div>
+
+{ranked && (
+  <div className="flex shrink-0 items-center gap-2">
+  <span
+    className={`text-[10px] font-[700] tracking-[0.12em] ${
+      darkMode ? "text-white/35" : "text-black/35"
+    }`}
+  >
+    Sort by
+  </span>
+
+  <div
+    className={`flex rounded-2xl border p-1 ${
+      darkMode
+        ? "border-white/[0.08] bg-white/[0.04]"
+        : "border-black/[0.06] bg-black/[0.025]"
+    }`}
+  >
+    {[
+      { label: "Veira", value: "veira" },
+      { label: "Date", value: "date" },
+      { label: "Priority", value: "priority" },
+    ].map((option) => {
+      const isActive = sortMode === option.value;
+
+      return (
+        <button
+          key={option.value}
+          onClick={() => setSortMode(option.value as "veira" | "date" | "priority")}
+          className={`h-8 rounded-xl px-3 text-[11px] font-[900] transition ${
+            isActive
+              ? "text-white"
+              : darkMode
+              ? "text-white/45 hover:text-white"
+              : "text-black/45 hover:text-black"
+          }`}
+          style={isActive ? { backgroundColor: themeColor } : undefined}
+        >
+          {option.label}
+        </button>
+      );
+    })}
+   </div>
+</div>
+)}
 
        
       </div>
