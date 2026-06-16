@@ -17,39 +17,15 @@ import { motion } from "framer-motion";
 import { UserButton, useUser } from "@clerk/nextjs";
 
 const mainNavItems = [
-  {
-    key: "today",
-    label: "Today",
-    icon: CalendarDays,
-  },
-  {
-    key: "inbox",
-    label: "Inbox",
-    icon: Inbox,
-  },
-  {
-    key: "upcoming",
-    label: "Upcoming",
-    icon: Calendar,
-  },
-  {
-    key: "priorities",
-    label: "Priority",
-    icon: Star,
-  },
+  { key: "today", label: "Today", icon: CalendarDays },
+  { key: "inbox", label: "Inbox", icon: Inbox },
+  { key: "upcoming", label: "Upcoming", icon: Calendar },
+  { key: "priorities", label: "Priority", icon: Star },
 ];
 
 const libraryNavItems = [
-  {
-    key: "categories",
-    label: "Categories",
-    icon: Tag,
-  },
-  {
-    key: "archive",
-    label: "Archive",
-    icon: Archive,
-  },
+  { key: "categories", label: "Categories", icon: Tag },
+  { key: "archive", label: "Archive", icon: Archive },
 ];
 
 type SidebarProps = {
@@ -79,65 +55,47 @@ export default function Sidebar({
         "Account"
       : "Account";
 
-  const sidebarBg = darkMode
-    ? "bg-[#050505]"
-    : "bg-white/95 backdrop-blur-2xl";
-
-    const border = darkMode ? "border-white/[0.055]" : "border-[#BBBFBF]/35";
-
+  const sidebarBg = darkMode ? "bg-[#050505]" : "bg-white/95 backdrop-blur-2xl";
+  const border = darkMode ? "border-white/[0.055]" : "border-[#BBBFBF]/35";
   const text = darkMode ? "text-white" : "text-[#111111]";
-
   const mutedText = darkMode ? "text-white/45" : "text-[#878787]";
-
   const softSurface = darkMode ? "bg-[#0b0b0b]" : "bg-white";
-
   const softBorder = darkMode ? "border-white/[0.055]" : "border-[#BBBFBF]/35";
-
   const hoverSurface = darkMode ? "hover:bg-[#0d0d0d]" : "hover:bg-[#f6f8f8]";
 
-  const activeSurface = darkMode
-  ? "border border-[#05AD98]/30 bg-[#05AD98]/10"
-  : "border border-[#05AD98]/20 bg-[#05AD98]/10";
   return (
     <aside
       className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.30)] lg:flex ${border} ${sidebarBg} ${text}`}
     >
       <div className="relative z-10 mb-7">
-      <div className="mb-5 flex items-center gap-4">
-  <div
-    className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-[19px] text-[22px] font-[900] leading-none text-white shadow-[0_12px_28px_rgba(0,0,0,0.22)]"
-    style={{
-      backgroundColor: themeColor,
-    }}
-  >
-    V
-  </div>
+        <div className="mb-5 flex items-center gap-4">
+          <div
+            className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-[19px] text-[22px] font-[900] leading-none text-white shadow-[0_12px_28px_rgba(0,0,0,0.22)]"
+            style={{ backgroundColor: themeColor }}
+          >
+            V
+          </div>
 
-  <div className="flex min-w-0 flex-col justify-center">
-    <h1 className={`text-[39px] font-[900] leading-none tracking-[-0.055em] ${text}`}>
-      Veira
-    </h1>
+          <div className="flex min-w-0 flex-col justify-center">
+            <h1
+              className={`text-[39px] font-[900] leading-none tracking-[-0.055em] ${text}`}
+            >
+              Veira
+            </h1>
 
-    <p className={`mt-2 text-[12px] font-[800] leading-none ${mutedText}`}>
-    Clarity on what matters.
-    </p>
-  </div>
-</div>
+            <p className={`mt-2 text-[12px] font-[800] leading-none ${mutedText}`}>
+              Clarity on what matters.
+            </p>
+          </div>
+        </div>
 
         <div
           className={`rounded-[20px] border p-3 shadow-[0_12px_30px_rgba(0,0,0,0.08)] ${softBorder} ${softSurface}`}
         >
           <div className="mb-2 flex items-center gap-2">
-            <Sparkles
-              size={14}
-              style={{
-                color: themeColor,
-              }}
-            />
+            <Sparkles size={14} style={{ color: themeColor }} />
 
-            <p className={`text-xs font-[800] ${text}`}>
-              AI planning enabled
-            </p>
+            <p className={`text-xs font-[800] ${text}`}>AI planning enabled</p>
           </div>
 
           <p className={`text-[11px] leading-relaxed ${mutedText}`}>
@@ -159,7 +117,6 @@ export default function Sidebar({
               }}
               selectedView={selectedView}
               setSelectedView={setSelectedView}
-              activeSurface={activeSurface}
               hoverSurface={hoverSurface}
               themeColor={themeColor}
               darkMode={darkMode}
@@ -176,7 +133,6 @@ export default function Sidebar({
               item={item}
               selectedView={selectedView}
               setSelectedView={setSelectedView}
-              activeSurface={activeSurface}
               hoverSurface={hoverSurface}
               themeColor={themeColor}
               darkMode={darkMode}
@@ -188,26 +144,17 @@ export default function Sidebar({
 
         <div className="space-y-1.5">
           <SidebarNavButton
-            item={{
-              key: "settings",
-              label: "Settings",
-              icon: Settings,
-            }}
+            item={{ key: "settings", label: "Settings", icon: Settings }}
             selectedView={selectedView}
             setSelectedView={setSelectedView}
-            activeSurface={activeSurface}
             hoverSurface={hoverSurface}
             themeColor={themeColor}
             darkMode={darkMode}
           />
 
           <motion.button
-            whileHover={{
-              scale: 1.01,
-            }}
-            whileTap={{
-              scale: 0.98,
-            }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setDarkMode(!darkMode)}
             className={`flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[750] transition ${
               darkMode
@@ -217,7 +164,6 @@ export default function Sidebar({
           >
             <div className="flex items-center gap-3">
               {darkMode ? <Sun size={17} /> : <Moon size={17} />}
-
               <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
             </div>
 
@@ -232,9 +178,7 @@ export default function Sidebar({
                 className="h-4 w-4 rounded-full shadow-[0_8px_18px_rgba(0,0,0,0.20)] transition-transform"
                 style={{
                   backgroundColor: themeColor,
-                  transform: darkMode
-                    ? "translateX(20px)"
-                    : "translateX(0px)",
+                  transform: darkMode ? "translateX(20px)" : "translateX(0px)",
                 }}
               />
             </div>
@@ -251,47 +195,11 @@ export default function Sidebar({
           }`}
         >
           <div className="flex h-9 w-9 items-center justify-center">
-            <UserButton
-              afterSignOutUrl="/sign-in"
-              appearance={{
-                elements: {
-                  userButtonAvatarBox:
-                    "h-9 w-9 shadow-[0_12px_28px_rgba(0,0,0,0.24)]",
-
-                  userButtonPopoverCard:
-                    "w-[280px] rounded-[16px] border border-[#05AD98]/35 bg-[#11191b] p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
-
-                  userButtonPopoverMain: "bg-[#11191b] text-white",
-
-                  userButtonPopoverActions: "bg-[#11191b]",
-
-                  userButtonPopoverActionButton:
-                    "h-10 rounded-[10px] px-3 text-white hover:bg-white/[0.08]",
-
-                  userButtonPopoverActionButtonText:
-                    "text-[13px] font-[700] text-white",
-
-                  userButtonPopoverActionButtonIcon: "text-white/60",
-
-                  userButtonPopoverFooter: "hidden",
-
-                  userPreviewMainIdentifier:
-                    "text-sm font-[800] text-white",
-
-                  userPreviewSecondaryIdentifier:
-                    "text-xs font-[600] text-white/55",
-
-                  userPreviewAvatarBox: "h-9 w-9",
-                },
-              }}
-            />
+            <UserButton afterSignOutUrl="/sign-in" />
           </div>
 
           <div className="min-w-0">
-            <p className={`truncate text-sm font-[800] ${text}`}>
-              {displayName}
-            </p>
-
+            <p className={`truncate text-sm font-[800] ${text}`}>{displayName}</p>
             <p className={`text-[11px] font-medium ${mutedText}`}>
               Profile & sign out
             </p>
@@ -322,7 +230,6 @@ function SidebarNavButton({
   item,
   selectedView,
   setSelectedView,
-  activeSurface,
   hoverSurface,
   themeColor,
   darkMode,
@@ -332,18 +239,21 @@ function SidebarNavButton({
 
   return (
     <motion.button
-      whileHover={{
-        scale: 1.01,
-      }}
-      whileTap={{
-        scale: 0.98,
-      }}
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
       onClick={() => setSelectedView(item.key)}
+      style={
+        isActive
+          ? ({
+              "--theme-color": themeColor,
+              "--theme-border": `${themeColor}45`,
+              "--theme-soft": `${themeColor}14`,
+            } as React.CSSProperties)
+          : undefined
+      }
       className={`flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[750] transition ${
         isActive
-          ? `${activeSurface} ${
-              darkMode ? "text-white" : "text-[#111111]"
-            } shadow-[0_14px_34px_rgba(0,0,0,0.16)]`
+          ? "border border-[color:var(--theme-border)] bg-[color:var(--theme-soft)] text-[color:var(--theme-color)] shadow-[0_14px_34px_rgba(0,0,0,0.16)]"
           : `${
               darkMode
                 ? "text-white/62 hover:text-white"
@@ -352,26 +262,14 @@ function SidebarNavButton({
       }`}
     >
       <div className="flex items-center gap-3">
-        <Icon
-          size={17}
-          style={
-            isActive
-              ? {
-                  color: themeColor,
-                }
-              : undefined
-          }
-        />
-
+        <Icon size={17} />
         <span>{item.label}</span>
       </div>
 
       {item.count ? (
         <span
-          className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-[900] text-white shadow-[0_10px_20px_rgba(5,173,152,0.20)]"
-          style={{
-            backgroundColor: themeColor,
-          }}
+          className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-[900] text-white shadow-[0_10px_20px_rgba(0,0,0,0.18)]"
+          style={{ backgroundColor: themeColor }}
         >
           {item.count}
         </span>

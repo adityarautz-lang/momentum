@@ -684,7 +684,7 @@ export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [archive, setArchive] = useState<any[]>([]);
   const [completedToday, setCompletedToday] = useState<any[]>([]);
-  const [themeColor] = useState("#05AD98");
+  const [themeColor, setThemeColor] = useState("#05AD98");
   const [darkMode, setDarkMode] = useState(true);
   const [selectedView, setSelectedView] = useState("today");
   const [priorityViewMode, setPriorityViewMode] =
@@ -760,7 +760,8 @@ const [isLoaded, setIsLoaded] = useState(false);
         const parsed: any = saved;
   
         setCategories(parsed.categories || initialCategories);
-        setDarkMode(parsed.darkMode ?? true);
+setDarkMode(parsed.darkMode ?? true);
+setThemeColor(parsed.themeColor || "#05AD98");
         setPriorityViewMode(parsed.priorityViewMode || "cards");
         setUpcomingViewMode(parsed.upcomingViewMode || "calendar");
         setEnableAppSuggestions(parsed.enableAppSuggestions ?? true);
@@ -800,7 +801,7 @@ const [isLoaded, setIsLoaded] = useState(false);
       completedToday.length > 0 ||
       archive.length > 0;
   
-    if (!hasAnyUserData) return;
+      if (!hasAnyUserData && themeColor === "#05AD98" && darkMode === true) return;
   
     void saveState(user.id, {
       categories,
@@ -2126,13 +2127,14 @@ addTask={addTask}
             )}
 
             {selectedView === "settings" && (
-              <SettingsView
-                darkMode={darkMode}
-                setDarkMode={setDarkMode}
-                border={border}
-                className={strongerGlass}
-                themeColor={themeColor}
-                enableAppSuggestions={enableAppSuggestions}
+             <SettingsView
+             darkMode={darkMode}
+             setDarkMode={setDarkMode}
+             border={border}
+             className={strongerGlass}
+             themeColor={themeColor}
+             setThemeColor={setThemeColor}
+             enableAppSuggestions={enableAppSuggestions}
                 setEnableAppSuggestions={setEnableAppSuggestions}
                 enableAutoPriority={enableAutoPriority}
                 setEnableAutoPriority={setEnableAutoPriority}
@@ -2537,10 +2539,17 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
     <div className="mt-3 flex flex-wrap items-center gap-2">
       <button
         onClick={() => setIsExtractModalOpen(true)}
+
+        style={{
+          "--theme-border": `${themeColor}40`,
+          "--theme-soft": `${themeColor}18`,
+          color: themeColor,
+        } as React.CSSProperties}
+
         className={`rounded-full border px-3 py-1.5 text-[11px] font-[700] transition hover:scale-[1.02] sm:text-xs ${
           darkMode
-          ? "border-[#05AD98]/25 bg-[#05AD98]/12 text-[#7EE7DC]"
-: "border-[#05AD98]/20 bg-[#05AD98]/10 text-[#047E70]"
+        ? "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
+: "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
         }`}
       >
         Extract from text
@@ -2875,6 +2884,14 @@ const addTaskToFocus = (taskId: string) => {
       {/* Desktop/tablet full row */}
       <div
   draggable={draggableTasks}
+  style={
+    manualFocusTaskIds.includes(task.id)
+      ? {
+          "--theme-color": `${themeColor}55`,
+          "--theme-soft": `${themeColor}18`,
+        } as React.CSSProperties
+      : undefined
+  }
   onDragStart={(event) => {
     if (!draggableTasks) return;
 
@@ -2885,9 +2902,9 @@ const addTaskToFocus = (taskId: string) => {
     draggableTasks ? "cursor-grab active:cursor-grabbing" : ""
   } ${
     manualFocusTaskIds.includes(task.id)
-  ? darkMode
-    ? "border-[#05AD98]/35 bg-[#05AD98]/10"
-    : "border-[#05AD98]/25 bg-[#05AD98]/[0.06]"
+    ? darkMode
+    ? "border-[color:var(--theme-color)] bg-[color:var(--theme-soft)]"
+    : "border-[color:var(--theme-color)] bg-[color:var(--theme-soft)]"
     : `${
       darkMode ? "border-white/[0.07]" : border
     } ${getPriorityRowClass(task.priority, darkMode)}`
@@ -3991,14 +4008,22 @@ function FocusModePanel({
                 const visibleDueDate = task.dueDate || task.suggestedDueDate;
 
                 return (
-                  <div
-                    key={task.id}
-                    onClick={() => setFocusIndex(index)}
+                 <div
+  key={task.id}
+  onClick={() => setFocusIndex(index)}
+  style={
+    isCurrent
+      ? {
+          "--theme-border": `${themeColor}70`,
+          "--theme-soft": `${themeColor}14`,
+        } as React.CSSProperties
+      : undefined
+  }
                     className={`group cursor-pointer rounded-[20px] border px-3 py-3 transition hover:scale-[1.005] sm:px-4 ${
                       isCurrent
                         ? darkMode
-                          ? "border-[#05AD98]/45 bg-[#111111]"
-                          : "border-[#05AD98]/45 bg-[#05AD98]/[0.07]"
+                         ? "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
+: "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
                         : darkMode
                         ? "border-white/[0.12] bg-[#111111]"
                         : "border-black/[0.045] bg-white/70"
@@ -4584,7 +4609,8 @@ function SettingsView({
   border,
   className,
   themeColor,
-  enableAppSuggestions,
+setThemeColor,
+enableAppSuggestions,
   setEnableAppSuggestions,
   enableAutoPriority,
   setEnableAutoPriority,
@@ -4629,10 +4655,50 @@ function SettingsView({
               border={border}
             />
           </SettingsRow>
-        </SettingsCard>
+          </SettingsCard>
 
-        <SettingsCard
-          title="App Suggestions"
+          <SettingsCard
+  title="Theme Color"
+  description="Choose the accent color used across Veira."
+  darkMode={darkMode}
+  border={border}
+  className={className}
+>
+  <div className="grid grid-cols-6 gap-3 sm:grid-cols-8 lg:grid-cols-10">
+    {[
+        "#2FB7A7", // Veira Teal
+        "#EBCB8B", // Warm Gold
+        "#0E95A8", // Deep Teal
+        "#64748B", // Slate
+        "#C4B5FD", // Soft Lavender
+        "#A7D7C5", // Soft Sage
+    ].map((color) => {
+      const isActive = themeColor === color;
+
+      return (
+        <button
+          key={color}
+          onClick={() => setThemeColor(color)}
+          className={`relative h-8 w-8 rounded-full transition hover:scale-110 ${
+            isActive ? "scale-110" : "opacity-90"
+          }`}
+          style={{ backgroundColor: color }}
+        >
+          {isActive && (
+            <span
+              className={`absolute inset-[-5px] rounded-full border ${
+                darkMode ? "border-white/70" : "border-black/35"
+              }`}
+            />
+          )}
+        </button>
+      );
+    })}
+  </div>
+</SettingsCard>
+
+<SettingsCard
+  title="App Suggestions"
           description="Control how much Veira helps organize new tasks."
           darkMode={darkMode}
           border={border}
@@ -4749,6 +4815,8 @@ function SettingsView({
             </button>
           </SettingsRow>
         </SettingsCard>
+
+
       </div>
     </div>
   );
