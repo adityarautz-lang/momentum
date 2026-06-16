@@ -3043,12 +3043,12 @@ useEffect(() => {
       <div
   draggable={draggableTasks}
   style={
-    manualFocusTaskIds.includes(task.id)
-      ? {
-          "--theme-color": `${themeColor}55`,
-          "--theme-soft": `${themeColor}18`,
-        } as React.CSSProperties
-      : undefined
+    {
+      "--theme-color": `${themeColor}55`,
+      "--theme-soft": `${themeColor}18`,
+      "--theme-row-soft": `${themeColor}0D`,
+      "--theme-row-hover": `${themeColor}18`,
+    } as React.CSSProperties
   }
   onDragStart={(event) => {
     if (!draggableTasks) return;
@@ -3065,7 +3065,15 @@ useEffect(() => {
     : "border-[color:var(--theme-color)] bg-[color:var(--theme-soft)]"
     : `${
       darkMode ? "border-white/[0.07]" : border
-    } ${getPriorityRowClass(task.priority, darkMode)}`
+    } ${
+      darkMode
+        ? index % 2 === 0
+          ? "bg-[#1a1a1a] hover:bg-[#222222]"
+          : "bg-[#181818] hover:bg-[#222222]"
+      : index % 2 === 0
+? "bg-white hover:bg-[#f6f8f8]"
+: "bg-[color:var(--theme-row-soft)] hover:bg-[color:var(--theme-row-hover)]"
+    }`
   } ${
     darkMode
       ? "hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
