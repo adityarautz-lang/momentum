@@ -2321,7 +2321,7 @@ setManualFocusTaskIds,
   <section
   className={`relative z-[120] mb-5 hidden overflow-visible rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-3 ${strongerGlass} ${border}`}
 >
-<div className="flex items-center justify-between gap-5">
+<div className="relative pr-[300px]">
     <div className="min-w-0 flex-1">
     <div
   className="mb-3 h-1.5 w-[220px] rounded-full"
@@ -2401,13 +2401,15 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
 
 
 
-   <DayTimeLeftCard
-  dayEndTime={dayEndTime}
-  setDayEndTime={setDayEndTime}
-  dayTimeRemaining={dayTimeRemaining}
-  darkMode={darkMode}
-  themeColor={themeColor}
-/>
+    <div className="absolute right-0 top-0 z-[400]">
+  <DayTimeLeftCard
+    dayEndTime={dayEndTime}
+    setDayEndTime={setDayEndTime}
+    dayTimeRemaining={dayTimeRemaining}
+    darkMode={darkMode}
+    themeColor={themeColor}
+  />
+</div>
   </div>
 
   {completedToday.length > 0 && (
@@ -3429,35 +3431,24 @@ function DayTimeLeftCard({
   themeColor,
 }: any) {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
-const pickerRef = useRef<HTMLDivElement | null>(null);
+  const pickerRef = useRef<HTMLDivElement | null>(null);
 
-useEffect(() => {
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      pickerRef.current &&
-      !pickerRef.current.contains(event.target as Node)
-    ) {
-      setIsPickerOpen(false);
-    }
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setIsPickerOpen(false);
+      }
+    };
 
-  document.addEventListener("mousedown", handleClickOutside);
-
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, []);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const [currentHourRaw, currentMinuteRaw] = dayEndTime.split(":").map(Number);
-
   const period = currentHourRaw >= 12 ? "PM" : "AM";
 
   const displayHour =
-    currentHourRaw === 0
-      ? 12
-      : currentHourRaw > 12
-      ? currentHourRaw - 12
-      : currentHourRaw;
+    currentHourRaw === 0 ? 12 : currentHourRaw > 12 ? currentHourRaw - 12 : currentHourRaw;
 
   const displayMinute = String(currentMinuteRaw).padStart(2, "0");
 
@@ -3465,7 +3456,6 @@ useEffect(() => {
   const minuteOptions = Array.from({ length: 12 }, (_, index) =>
     String(index * 5).padStart(2, "0")
   );
-  const secondOptions = ["00"];
 
   const updateEndTime = (
     nextHour: number,
@@ -3480,80 +3470,49 @@ useEffect(() => {
     setDayEndTime(`${String(hour24).padStart(2, "0")}:${nextMinute}`);
   };
 
-  const selectClass = `h-11 w-full appearance-none rounded-[16px] border px-3 text-sm font-[900] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${
+  const selectClass = `h-10 w-full appearance-none rounded-[14px] border px-3 text-sm font-[800] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${
     darkMode
       ? "border-white/[0.09] bg-[#1f1f21] text-white"
       : "border-black/[0.08] bg-white text-black"
   }`;
 
   return (
-    <div ref={pickerRef} className="relative z-[300]">
-      <div
-        className={`w-[168px] shrink-0 rounded-[18px] border p-2.5 ${
-          darkMode
-            ? "border-white/[0.08] bg-white/[0.045]"
-            : "border-black/[0.05] bg-white/75"
-        }`}
-      >
-       <div className="mb-1.5 flex items-center gap-2">
-          <div
-            className="flex h-7 w-7 items-center justify-center rounded-[12px] text-white"
-            style={{ backgroundColor: themeColor }}
-          >
-            <Clock3 size={15} />
-          </div>
+    <div ref={pickerRef} className="relative z-[500] w-[250px]">
+      <div className="flex items-center justify-end gap-3">
+        <div className="text-right">
+          <p className="text-[15px] font-[600] leading-none tracking-[-0.035em]">
+            {dayTimeRemaining.label}
+          </p>
 
-          <div>
-            <p className="text-[10px] font-[700] uppercase tracking-[0.14em] opacity-40">
-              Day Left
-            </p>
-
-            <p className="text-[14px] font-[700] tracking-[-0.04em]">
-              {dayTimeRemaining.label}
-            </p>
-          </div>
-        </div>
-
-        <div
-          className={`mb-1.5 h-1.5 overflow-hidden rounded-full ${
-            darkMode ? "bg-white/[0.08]" : "bg-black/[0.06]"
-          }`}
-        >
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${dayTimeRemaining.percentLeft}%`,
-              backgroundColor: dayTimeRemaining.isOver ? "#71717a" : themeColor,
-            }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between gap-2">
-          <span
-            className={`text-[10px] font-[700] ${
+          <p
+            className={`mt-1 text-[10px] font-[700] ${
               darkMode ? "text-white/38" : "text-black/38"
             }`}
           >
-            Ends at
-          </span>
-
-          <button
-            onClick={() => setIsPickerOpen((prev) => !prev)}
-            className={`inline-flex h-7 items-center gap-1.5 rounded-[10px] px-2 text-[10px] font-[900] transition hover:scale-[1.02] ${
-              darkMode
-                ? "bg-white/[0.07] text-white hover:bg-white/[0.10]"
-                : "bg-black/[0.035] text-black hover:bg-black/[0.06]"
-            }`}
-          >
-            {displayHour}:{displayMinute} {period}
-            <Clock3 size={11} className="opacity-45" />
-          </button>
+            Ends {displayHour}:{displayMinute} {period}
+          </p>
         </div>
+
+        <button
+          onClick={() => setIsPickerOpen((prev) => !prev)}
+          className={`rounded-full px-3 py-1.5 text-[10px] font-[900] transition hover:scale-[1.02] ${
+            darkMode
+              ? "bg-white/[0.06] text-white/60 hover:text-white"
+              : "bg-black/[0.04] text-black/60 hover:text-black"
+          }`}
+        >
+          Edit
+        </button>
       </div>
 
-      {isPickerOpen && (
-        <div
-          className={`absolute right-0 top-[calc(100%+10px)] z-[300] w-[360px] rounded-[24px] border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-2xl ${
+      <div
+        className="mt-2 ml-auto h-1 w-[150px] rounded-full"
+        style={{ backgroundColor: themeColor }}
+      />
+
+{isPickerOpen && (
+  <div
+    className={`absolute right-0 top-[calc(100%+10px)] z-[600] w-[280px] rounded-[20px] border p-3 shadow-[0_20px_60px_rgba(0,0,0,0.38)] backdrop-blur-2xl ${
             darkMode
               ? "border-white/[0.09] bg-[#171717]/95"
               : "border-black/[0.08] bg-white/95"
@@ -3566,16 +3525,16 @@ useEffect(() => {
 
             <button
               onClick={() => setIsPickerOpen(false)}
-              className="rounded-full px-3 py-1.5 text-[10px] font-[900] text-white shadow-[0_10px_24px_rgba(5,173,152,0.22)] transition hover:scale-[1.03]"
+              className="rounded-full px-3 py-1.5 text-[10px] font-[900] text-white"
               style={{ backgroundColor: themeColor }}
             >
               Done
             </button>
           </div>
 
-          <div className="grid grid-cols-[1fr_1fr_1fr_0.9fr] gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <div>
-              <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
+              <p className="mb-2 text-[10px] font-[600] uppercase tracking-[0.12em] opacity-35">
                 Hrs
               </p>
               <select
@@ -3594,7 +3553,7 @@ useEffect(() => {
             </div>
 
             <div>
-              <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
+              <p className="mb-2 text-[10px] font-[700] uppercase tracking-[0.12em] opacity-35">
                 Min
               </p>
               <select
@@ -3607,19 +3566,6 @@ useEffect(() => {
                 {minuteOptions.map((minute) => (
                   <option key={minute} value={minute}>
                     {minute}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
-                Sec
-              </p>
-              <select value="00" disabled className={`${selectClass} opacity-70`}>
-                {secondOptions.map((second) => (
-                  <option key={second} value={second}>
-                    {second}
                   </option>
                 ))}
               </select>
