@@ -28,8 +28,9 @@ import {
   Plus,
   Send,
   Sparkles,
-  Sun,
-  Target,
+Star,
+Sun,
+Target,
   Trash2,
   TrendingUp,
 Eye,
@@ -851,6 +852,10 @@ setThemeColor(parsed.themeColor || "#05AD98");
     return [...allTasks]
       .filter((task) => !task.completed)
       .sort((a, b) => {
+        if (a.pinned !== b.pinned) {
+          return a.pinned ? -1 : 1;
+        }
+      
         if (b.score !== a.score) {
           return b.score - a.score;
         }
@@ -1584,6 +1589,23 @@ setExtractError("");
     setCompletedToday((prev) => prev.filter((task) => task.id !== taskId));
   };
 
+
+  const togglePinTask = (taskId: string) => {
+    setCategories((prev) =>
+      prev.map((category) => ({
+        ...category,
+        tasks: category.tasks.map((task: any) =>
+          task.id === taskId
+            ? {
+                ...task,
+                pinned: !task.pinned,
+              }
+            : task
+        ),
+      }))
+    );
+  };
+
   /* ------------------------------------------------ */
   /* Delete Task */
   /* ------------------------------------------------ */
@@ -2032,6 +2054,7 @@ addTask={addTask}
             suggestingTaskIds={suggestingTaskIds}
             manualFocusTaskIds={manualFocusTaskIds}
             setManualFocusTaskIds={setManualFocusTaskIds}
+togglePinTask={togglePinTask}
           />
             )}
 
@@ -2261,6 +2284,7 @@ addTask,
   suggestingTaskIds,
 manualFocusTaskIds,
 setManualFocusTaskIds,
+togglePinTask,
 }: any) {
   const [showMorningBrief, setShowMorningBrief] = useState(false);
   const [morningBrief, setMorningBrief] = useState({
@@ -2614,7 +2638,8 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
   draggableTasks
   manualFocusTaskIds={manualFocusTaskIds}
   setManualFocusTaskIds={setManualFocusTaskIds}
-  />
+togglePinTask={togglePinTask}
+/>
   </div>
 
   <div className="order-2 xl:order-2">
@@ -2629,8 +2654,8 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
   setSelectedTask={setSelectedTask}
   setIsEditModalOpen={setIsEditModalOpen}
   manualFocusTaskIds={manualFocusTaskIds}
-setManualFocusTaskIds={setManualFocusTaskIds}
-/>
+  setManualFocusTaskIds={setManualFocusTaskIds}
+  />
   </div>
 </div>
 
@@ -2667,6 +2692,7 @@ function TaskListPanel({
 draggableTasks = false,
 manualFocusTaskIds = [],
 setManualFocusTaskIds,
+togglePinTask,
 }: any) {
   const [showAllTasks, setShowAllTasks] = useState(false);
 const [sortMode, setSortMode] = useState<"veira" | "date" | "priority">("veira");
@@ -3006,11 +3032,24 @@ const addTaskToFocus = (taskId: string) => {
           </div>
 
           <button
-            onClick={() => deleteTask(task.id)}
-            className="opacity-0 transition hover:!opacity-100 hover:text-red-500 sm:group-hover:opacity-35"
-          >
-            <Trash2 size={16} />
-          </button>
+  onClick={() => togglePinTask(task.id)}
+  title={task.pinned ? "Pinned" : "Pin to top"}
+  className={`transition hover:scale-110 ${
+    task.pinned
+      ? "opacity-100"
+      : "opacity-0 sm:group-hover:opacity-35"
+  }`}
+  style={{ color: task.pinned ? themeColor : undefined }}
+>
+  <Star size={16} fill={task.pinned ? themeColor : "none"} />
+</button>
+
+<button
+  onClick={() => deleteTask(task.id)}
+  className="opacity-0 transition hover:!opacity-100 hover:text-red-500 sm:group-hover:opacity-35"
+>
+  <Trash2 size={16} />
+</button>
         </div>
       </div>
     </motion.div>
