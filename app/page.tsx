@@ -2271,7 +2271,7 @@ setManualFocusTaskIds,
     const now = new Date();
     const morningBriefKey = `veira-morning-brief-${getTodayDate()}`;
   
-    if (now.getHours() < 7 || now.getHours() >= 12) return;
+    if (now.getHours() < 7 || now.getHours() >= 10) return;
   
     const cachedBrief = localStorage.getItem(morningBriefKey);
   
