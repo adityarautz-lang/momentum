@@ -1131,15 +1131,15 @@ useEffect(() => {
   ? "bg-[#171717] border border-[#05AD98]/16"
   : "bg-white/82 backdrop-blur-2xl";
 
-const strongerGlass = darkMode
-  ? "bg-[#171717] border-[#05AD98]/22 shadow-[0_24px_80px_rgba(0,0,0,0.32)]"
+  const strongerGlass = darkMode
+  ? "bg-[#171717] border-white/[0.055] shadow-[0_24px_80px_rgba(0,0,0,0.32)]"
   : "bg-white/95 border-[#BBBFBF]/35 shadow-[0_12px_36px_rgba(17,24,39,0.045)] backdrop-blur-2xl";
 
 const input = darkMode
     ? "bg-[#1f1f21] text-white placeholder:text-white/35 border border-[#05AD98]/18 focus:border-[#05AD98]/70"
   : "bg-white text-[#111111] placeholder:text-[#878787] border border-[#BBBFBF]/45 focus:border-[#05AD98]/55";
 
-  const border = darkMode ? "border-[#05AD98]/18" : "border-[#BBBFBF]/35";
+  const border = darkMode ? "border-white/[0.055]" : "border-[#BBBFBF]/35";
 
 const modalSelect = darkMode
   ? "bg-[#1f1f21] text-white border border-white/[0.08]"
@@ -2357,7 +2357,7 @@ setManualFocusTaskIds,
       </div>
 
       <p
-        className={`mt-1.5 text-sm font-[700] ${
+        className={`mt-1.5 text-sm font-[500] ${
           darkMode ? "text-white/42" : "text-black/42"
         }`}
       >
@@ -2886,7 +2886,9 @@ const addTaskToFocus = (taskId: string) => {
   ? darkMode
     ? "border-[#05AD98]/35 bg-[#05AD98]/10"
     : "border-[#05AD98]/25 bg-[#05AD98]/[0.06]"
-      : `${border} ${getPriorityRowClass(task.priority, darkMode)}`
+    : `${
+      darkMode ? "border-white/[0.07]" : border
+    } ${getPriorityRowClass(task.priority, darkMode)}`
   } ${
     darkMode
       ? "hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
@@ -3904,8 +3906,8 @@ function FocusModePanel({
     <section
     className={`relative min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${
       darkMode
-        ? "bg-[#171717] border-[#05AD98]/18 shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
-        : `${strongerGlass} ${border}`
+      ? "bg-[#171717] border-white/[0.055] shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
+      : `${strongerGlass} ${border}`
     }`}
   >
       <div className="relative">
@@ -3955,7 +3957,7 @@ function FocusModePanel({
                 ? "border-white/[0.24] bg-white/[0.08]"
                 : "border-[#05AD98] bg-[#05AD98]/10"
               : darkMode
-              ? "border-white/[0.14] bg-[#111111]"
+              ? "border-white/[0.055] bg-[#111111]"
               : "border-black/[0.04] bg-white/65"
           }`}
         >
@@ -3985,7 +3987,7 @@ function FocusModePanel({
                   onClick={clearFocusStack}
                   className={`rounded-[13px] border px-3 py-1.5 text-[10px] font-[900] transition hover:scale-[1.02] ${
                     darkMode
-                      ? "border-white/[0.14] bg-[#111111] text-white/58 hover:text-white"
+                      ? "border-white/[0.07] bg-[#111111] text-white/58 hover:text-white"
                       : "bg-black/[0.04] text-black/45 hover:text-black"
                   }`}
                 >

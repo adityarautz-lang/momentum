@@ -83,7 +83,7 @@ export default function Sidebar({
     ? "bg-[#050505]"
     : "bg-white/95 backdrop-blur-2xl";
 
-  const border = darkMode ? "border-[#05AD98]/18" : "border-[#BBBFBF]/35";
+    const border = darkMode ? "border-white/[0.055]" : "border-[#BBBFBF]/35";
 
   const text = darkMode ? "text-white" : "text-[#111111]";
 
@@ -91,7 +91,7 @@ export default function Sidebar({
 
   const softSurface = darkMode ? "bg-[#0b0b0b]" : "bg-white";
 
-  const softBorder = darkMode ? "border-[#05AD98]/18" : "border-[#BBBFBF]/35";
+  const softBorder = darkMode ? "border-white/[0.055]" : "border-[#BBBFBF]/35";
 
   const hoverSurface = darkMode ? "hover:bg-[#0d0d0d]" : "hover:bg-[#f6f8f8]";
 
