@@ -34,6 +34,8 @@ Target,
   Trash2,
   TrendingUp,
 Eye,
+ChevronDown,
+Check,
 } from "lucide-react";
 
 
@@ -721,6 +723,7 @@ const [boostLoading, setBoostLoading] = useState(false);
 const [lastBoostTaskKey, setLastBoostTaskKey] = useState("");
 const [dailyBoostCount, setDailyBoostCount] = useState(0);
 const [dayEndTime, setDayEndTime] = useState("18:00");
+const [userRole, setUserRole] = useState("");
 const [currentTime, setCurrentTime] = useState(new Date());
 const [manualFocusTaskIds, setManualFocusTaskIds] = useState<string[]>([]);
 const [isLoaded, setIsLoaded] = useState(false);
@@ -770,6 +773,7 @@ setThemeColor(parsed.themeColor || "#05AD98");
         setArchive(parsed.archive || []);
         setCompletedToday(parsed.completedToday || []);
         setDayEndTime(parsed.dayEndTime || "18:00");
+        setUserRole(parsed.userRole || "");
         setManualFocusTaskIds(parsed.manualFocusTaskIds || []);
   
         if (parsed.categories && parsed.categories.length > 0) {
@@ -815,6 +819,7 @@ setThemeColor(parsed.themeColor || "#05AD98");
       archive,
       completedToday,
       dayEndTime,
+      userRole,
       manualFocusTaskIds,
     } as any);
   }, [
@@ -828,6 +833,7 @@ setThemeColor(parsed.themeColor || "#05AD98");
     archive,
     completedToday,
     dayEndTime,
+    userRole,
     manualFocusTaskIds,
     isLoaded,
     user?.id,
@@ -1295,14 +1301,53 @@ const modalSelect = darkMode
     }
   };
 
+  const generateWhySuggestions = async (title: string) => {
+    const response = await fetch("/api/why-matters", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title,
+        role: userRole || "professional",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to generate why suggestions.");
+    }
+
+    return Array.isArray(data.suggestions) ? data.suggestions : [];
+  };
+
+  const selectWhySuggestion = (taskId: string, suggestion: string, index: number) => {
+    setCategories((prev) =>
+      prev.map((category) => ({
+        ...category,
+        tasks: category.tasks.map((task: any) =>
+          task.id === taskId
+            ? {
+                ...task,
+                whyThisMatters: suggestion,
+                selectedWhyIndex: index,
+                aiReason: suggestion,
+              }
+            : task
+        ),
+      }))
+    );
+  };
+
   /* ------------------------------------------------ */
   /* Add Task */
   /* ------------------------------------------------ */
-  const addTask = () => {
+  const addTask = async () => {
     if (!newTask.trim()) return;
   
     const title = newTask.trim();
-    const whyThisMatters = newTaskWhy.trim();
+    const manualWhy = newTaskWhy.trim();
   
     const categoryTitle =
       selectedCategory || categories[0]?.title || "Small Wins";
@@ -1314,22 +1359,21 @@ const modalSelect = darkMode
       : undefined;
   
     const taskId = crypto.randomUUID();
+    const initialWhy = manualWhy || "Veira is finding why this matters...";
   
     const taskToAdd = {
       id: taskId,
       title,
-      whyThisMatters,
+      whyThisMatters: initialWhy,
+      whySuggestions: manualWhy ? [manualWhy] : [],
+      selectedWhyIndex: 0,
       priority,
       dueDate: undefined,
       suggestedDueDate,
       notes: "",
       status: "Active",
-      aiReason: whyThisMatters
-        ? `This matters because: ${whyThisMatters}`
-        : enableAppSuggestions
-        ? getAppSuggestionReason(title, priority)
-        : "App suggestions are turned off.",
-      aiConfidence: whyThisMatters ? 0.9 : suggestedDueDate ? 0.82 : 0,
+      aiReason: initialWhy,
+      aiConfidence: manualWhy ? 0.95 : 0.5,
       completed: false,
       createdAt: new Date().toISOString(),
     };
@@ -1350,8 +1394,65 @@ const modalSelect = darkMode
     setNewTask("");
     setNewTaskWhy("");
   
-    if (enableAppSuggestions) {
-      void improveTaskWithAI(taskId, title, whyThisMatters);
+    try {
+      if (!manualWhy) {
+        setSuggestingTaskIds((prev) => [...prev, taskId]);
+
+        const whySuggestions = await generateWhySuggestions(title);
+        const bestWhy =
+          whySuggestions[0] ||
+          "This task may support meaningful progress on active work.";
+
+        setCategories((prev) =>
+          prev.map((category) => ({
+            ...category,
+            tasks: category.tasks.map((task: any) =>
+              task.id === taskId
+                ? {
+                    ...task,
+                    whyThisMatters: bestWhy,
+                    whySuggestions,
+                    selectedWhyIndex: 0,
+                    aiReason: bestWhy,
+                    aiConfidence: 0.86,
+                  }
+                : task
+            ),
+          }))
+        );
+      }
+
+      if (enableAppSuggestions) {
+        void improveTaskWithAI(taskId, title, manualWhy);
+      }
+    } catch (error) {
+      console.error(error);
+
+      setCategories((prev) =>
+        prev.map((category) => ({
+          ...category,
+          tasks: category.tasks.map((task: any) =>
+            task.id === taskId
+              ? {
+                  ...task,
+                  whyThisMatters:
+                    "This may deserve attention because it could unblock future work.",
+                  whySuggestions: [
+                    "This may deserve attention because it could unblock future work.",
+                    "Completing this can reduce open-loop mental load.",
+                    "It may help maintain progress on an active responsibility.",
+                  ],
+                  selectedWhyIndex: 0,
+                  aiReason:
+                    "This may deserve attention because it could unblock future work.",
+                  aiConfidence: 0.6,
+                }
+              : task
+          ),
+        }))
+      );
+    } finally {
+      setSuggestingTaskIds((prev) => prev.filter((id) => id !== taskId));
     }
   };
 
@@ -1478,6 +1579,9 @@ const modalSelect = darkMode
             suggestedDueDate: task.suggestedDueDate || undefined,
             notes: task.notes,
             status: task.status,
+            whyThisMatters: task.reason || "",
+            whySuggestions: task.reason ? [task.reason] : [],
+            selectedWhyIndex: 0,
             aiReason: task.reason,
             aiConfidence: task.confidence,
             completed: false,
@@ -1794,6 +1898,8 @@ const priority: Priority = updatedTask.priority || inferPriority(title);
                     ? getAppSuggestionReason(title, priority)
                     : "App suggestions are turned off."),
                 aiConfidence: updatedTask.aiConfidence || 0.72,
+                whySuggestions: updatedTask.whySuggestions || [],
+                selectedWhyIndex: updatedTask.selectedWhyIndex || 0,
                 completed: Boolean(updatedTask.completed),
 completedAt: updatedTask.completedAt,
                 createdAt: updatedTask.createdAt || new Date().toISOString(),
@@ -2055,6 +2161,7 @@ addTask={addTask}
             manualFocusTaskIds={manualFocusTaskIds}
             setManualFocusTaskIds={setManualFocusTaskIds}
 togglePinTask={togglePinTask}
+            selectWhySuggestion={selectWhySuggestion}
           />
             )}
 
@@ -2157,6 +2264,9 @@ togglePinTask={togglePinTask}
              className={strongerGlass}
              themeColor={themeColor}
              setThemeColor={setThemeColor}
+             userRole={userRole}
+             setUserRole={setUserRole}
+             input={input}
              enableAppSuggestions={enableAppSuggestions}
                 setEnableAppSuggestions={setEnableAppSuggestions}
                 enableAutoPriority={enableAutoPriority}
@@ -2285,6 +2395,7 @@ addTask,
 manualFocusTaskIds,
 setManualFocusTaskIds,
 togglePinTask,
+selectWhySuggestion,
 }: any) {
   const [showMorningBrief, setShowMorningBrief] = useState(false);
   const [morningBrief, setMorningBrief] = useState({
@@ -2541,7 +2652,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
     onKeyDown={(e) => {
       if (e.key === "Enter") addTask();
     }}
-    placeholder="Why it matters..."
+    placeholder="Optional context..."
     className={`h-12 min-w-0 flex-1 bg-transparent px-4 text-[13px] font-[700] tracking-[-0.02em] outline-none sm:h-14 sm:px-5 sm:text-sm ${
       darkMode
         ? "text-white placeholder:text-white/35"
@@ -2639,6 +2750,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
   manualFocusTaskIds={manualFocusTaskIds}
   setManualFocusTaskIds={setManualFocusTaskIds}
 togglePinTask={togglePinTask}
+  selectWhySuggestion={selectWhySuggestion}
 />
   </div>
 
@@ -2693,9 +2805,12 @@ draggableTasks = false,
 manualFocusTaskIds = [],
 setManualFocusTaskIds,
 togglePinTask,
+selectWhySuggestion,
 }: any) {
   const [showAllTasks, setShowAllTasks] = useState(false);
 const [sortMode, setSortMode] = useState<"veira" | "date" | "priority">("veira");
+const [expandedWhyTaskId, setExpandedWhyTaskId] = useState<string | null>(null);
+const whyDropdownRef = useRef<HTMLDivElement | null>(null);
 
 const defaultVisibleTaskCount = 6;
 
@@ -2758,6 +2873,23 @@ const addTaskToFocus = (taskId: string) => {
     return [...prev, taskId];
   });
 };
+
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      whyDropdownRef.current &&
+      !whyDropdownRef.current.contains(event.target as Node)
+    ) {
+      setExpandedWhyTaskId(null);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
 
   return (
     <section
@@ -2940,7 +3072,7 @@ const addTaskToFocus = (taskId: string) => {
       : "hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
   }`}
 >
-        <div className="flex w-full min-w-0 flex-1 items-center gap-4 overflow-hidden">
+        <div className="flex w-full min-w-0 flex-1 items-start gap-4 overflow-hidden">
           <button
             onClick={(e) => toggleTaskById(task.id, e)}
             className="shrink-0 opacity-70 transition hover:opacity-100"
@@ -2952,15 +3084,15 @@ const addTaskToFocus = (taskId: string) => {
           </button>
 
           {ranked && (
-            <div
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[700] text-white"
-              style={{
-                backgroundColor: index < 3 ? themeColor : "#878787",
-              }}
-            >
-              {index + 1}
-            </div>
-          )}
+  <div
+    className="mt-[2px] flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[700] text-white"
+    style={{
+      backgroundColor: index < 3 ? themeColor : "#878787",
+    }}
+  >
+    {index + 1}
+  </div>
+)}
 
           <div className="min-w-0 flex-1">
             <p
@@ -2983,6 +3115,95 @@ const addTaskToFocus = (taskId: string) => {
              {task.whyThisMatters ? " · Context added" : ""}
 {isSuggesting ? " · Veira thinking..." : ""}
             </p>
+
+      
+
+{Array.isArray(task.whySuggestions) && task.whySuggestions.length > 0 && (
+  <div
+  ref={expandedWhyTaskId === task.id ? whyDropdownRef : null}
+  className={`mt-2 ${ranked ? "ml-[-44px]" : ""}`}
+>
+    <button
+      onClick={() =>
+        setExpandedWhyTaskId(expandedWhyTaskId === task.id ? null : task.id)
+      }
+      className={`flex max-w-[520px] items-stretch gap-0 overflow-hidden rounded-[18px] border text-left transition ${
+        darkMode
+          ? "border-white/[0.07] bg-white/[0.035] hover:bg-white/[0.055]"
+          : "border-black/[0.05] bg-black/[0.018] hover:bg-black/[0.03]"
+      }`}
+    >
+     <span
+  className="flex shrink-0 items-center justify-center gap-1.5 border-r px-3 text-[10px] font-[900] uppercase tracking-[0.13em]"
+  style={{
+    color: themeColor,
+    borderColor: darkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+  }}
+>
+  <Sparkles size={12} />
+  Why
+</span>
+
+      <span
+        className={`min-w-0 flex-1 px-3 py-2 whitespace-normal break-words text-[12px] leading-4 ${
+          darkMode ? "text-white/48" : "text-black/48"
+        }`}
+      >
+        {task.whyThisMatters}
+      </span>
+
+      <span
+  className={`flex shrink-0 items-center justify-center border-l px-3 transition ${
+    expandedWhyTaskId === task.id ? "rotate-180" : ""
+  }`}
+  style={{
+    borderColor: darkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+  }}
+>
+  <ChevronDown size={13} className="opacity-45" />
+</span>
+    </button>
+
+    {expandedWhyTaskId === task.id && (
+      <div className="mt-2 max-w-[520px] space-y-1.5">
+        {task.whySuggestions.map(
+          (suggestion: string, suggestionIndex: number) => {
+            const isSelected = task.whyThisMatters === suggestion;
+
+            return (
+              <button
+                key={suggestion}
+                onClick={() => {
+                  selectWhySuggestion(task.id, suggestion, suggestionIndex);
+                  setExpandedWhyTaskId(null);
+                }}
+                className={`flex w-full items-center justify-between gap-3 rounded-[14px] border px-3 py-2 text-left text-[11px] font-[700] transition ${
+                  isSelected
+                    ? "text-white"
+                    : darkMode
+                    ? "border-white/[0.07] bg-[#111111] text-white/55 hover:text-white"
+                    : "border-black/[0.06] bg-white text-black/55 hover:text-black"
+                }`}
+                style={
+                  isSelected
+                    ? {
+                        backgroundColor: themeColor,
+                        borderColor: themeColor,
+                      }
+                    : undefined
+                }
+              >
+                <span>{suggestion}</span>
+                {isSelected && <Check size={13} />}
+              </button>
+            );
+          }
+        )}
+      </div>
+    )}
+  </div>
+)}
+
           </div>
         </div>
 
@@ -4649,6 +4870,9 @@ function SettingsView({
   className,
   themeColor,
 setThemeColor,
+userRole,
+setUserRole,
+input,
 enableAppSuggestions,
   setEnableAppSuggestions,
   enableAutoPriority,
@@ -4734,6 +4958,27 @@ enableAppSuggestions,
       );
     })}
   </div>
+</SettingsCard>
+
+<SettingsCard
+  title="Work Context"
+  description="Help Veira make task reasoning specific to your work."
+  darkMode={darkMode}
+  border={border}
+  className={className}
+>
+  <SettingsRow
+    title="Your role"
+    description="Used by AI to suggest stronger reasons why each task matters."
+    darkMode={darkMode}
+  >
+    <input
+      value={userRole}
+      onChange={(e) => setUserRole(e.target.value)}
+      placeholder="Director of Engineering"
+      className={`h-11 w-full rounded-2xl px-4 text-sm font-[700] outline-none sm:w-[260px] ${input}`}
+    />
+  </SettingsRow>
 </SettingsCard>
 
 <SettingsCard
