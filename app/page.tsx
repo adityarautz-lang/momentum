@@ -2660,15 +2660,16 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
     }`}
   />
 
-  <button
-    onClick={addTask}
-    className="m-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] text-white shadow-[0_14px_30px_rgba(5,173,152,0.24)] transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-11 sm:w-11 sm:rounded-[18px]"
-    style={{
-      background: `linear-gradient(135deg, ${themeColor}, #048A79)`,
-    }}
-  >
-    <Send size={16} />
-  </button>
+<button
+  onClick={addTask}
+  className="m-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] text-white transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-11 sm:w-11 sm:rounded-[18px]"
+  style={{
+    backgroundColor: themeColor,
+    boxShadow: `0 14px 30px ${themeColor}3D`,
+  }}
+>
+  <Send size={16} />
+</button>
 </div>
 
     <div className="mt-3 flex flex-wrap items-center gap-2">
