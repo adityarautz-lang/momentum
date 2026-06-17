@@ -4943,6 +4943,8 @@ enableAppSuggestions,
         "#64748B", // Slate
         "#C4B5FD", // Soft Lavender
         "#A7D7C5", // Soft Sage
+        "#1F2937", // Charcoal Navy
+        "#4B5563", // Soft Graphite
     ].map((color) => {
       const isActive = themeColor === color;
 
