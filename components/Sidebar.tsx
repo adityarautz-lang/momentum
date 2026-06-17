@@ -37,6 +37,45 @@ type SidebarProps = {
   inboxCount?: number;
 };
 
+function VeiraLogo({ darkMode }: { darkMode: boolean }) {
+  return (
+    <svg
+      width="118"
+      viewBox="0 0 360 180"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ shapeRendering: "geometricPrecision" }}
+      aria-label="Veira logo"
+    >
+      <defs>
+        <linearGradient id="veiraGradient" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#22C1A1" />
+          <stop offset="100%" stopColor="#0D8F7A" />
+        </linearGradient>
+      </defs>
+
+      <g fill="url(#veiraGradient)" transform="translate(0, -6)">
+        <path d="M98 20 L155 78 Q167 90 180 78 L238 20 L268 20 L188 125 Q174 143 154 143 Q135 143 120 125 L65 58 Z" />
+        <rect x="237" y="48" width="11" height="45" rx="5" transform="rotate(40 242 70)" />
+        <rect x="264" y="26" width="11" height="32" rx="5" transform="rotate(40 269 42)" />
+        <rect x="286" y="8" width="11" height="22" rx="5" transform="rotate(40 291 19)" />
+      </g>
+
+      <text
+        x="180"
+        y="165"
+        textAnchor="middle"
+        fontFamily="Arial, Helvetica, sans-serif"
+        fontSize="42"
+        fontWeight="800"
+        letterSpacing="14"
+        fill={darkMode ? "#FFFFFF" : "#111827"}
+      >
+        VEIRA
+      </text>
+    </svg>
+  );
+}
+
 export default function Sidebar({
   darkMode,
   setDarkMode,
@@ -67,42 +106,86 @@ export default function Sidebar({
     <aside
       className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.30)] lg:flex ${border} ${sidebarBg} ${text}`}
     >
-      <div className="relative z-10 mb-7">
-        <div className="mb-5 flex items-center gap-4">
-          <div
-            className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-[19px] text-[22px] font-[900] leading-none text-white shadow-[0_12px_28px_rgba(0,0,0,0.22)]"
-            style={{ backgroundColor: themeColor }}
-          >
-            V
-          </div>
+   <div className="mb-7 flex items-center gap-3">
+  <div
+    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[17px] text-[20px] font-[900] shadow-[0_12px_28px_rgba(0,0,0,0.18)]"
+    style={{
+      backgroundColor: darkMode ? "#FFFFFF" : "#1F2937",
+      color: darkMode ? "#1F2937" : "#FFFFFF",
+    }}
+  >
+  <svg
+  width="30"
+  height="30"
+  viewBox="0 0 36 36"
+  fill="none"
+  aria-hidden="true"
+>
+  <path
+    d="M7.5 18.6L14.2 25.2L29 10.3"
+    stroke="currentColor"
+    strokeWidth="4.4"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  />
 
-          <div className="flex min-w-0 flex-col justify-center">
-            <h1
-              className={`text-[39px] font-[900] leading-none tracking-[-0.055em] ${text}`}
-            >
-              Veira
-            </h1>
+  <path
+    d="M24.8 10.4H29V14.6"
+    stroke="currentColor"
+    strokeWidth="4.4"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    opacity="0.55"
+  />
 
-            <p className={`mt-2 text-[12px] font-[800] leading-none ${mutedText}`}>
-              Clarity on what matters.
-            </p>
-          </div>
-        </div>
+  <path
+    d="M6.5 10.2H15.5"
+    stroke="currentColor"
+    strokeWidth="2.8"
+    strokeLinecap="round"
+    opacity="0.35"
+  />
 
-        <div
-          className={`rounded-[20px] border p-3 shadow-[0_12px_30px_rgba(0,0,0,0.08)] ${softBorder} ${softSurface}`}
-        >
-          <div className="mb-2 flex items-center gap-2">
-            <Sparkles size={14} style={{ color: themeColor }} />
+  <path
+    d="M4.8 14.2H10.8"
+    stroke="currentColor"
+    strokeWidth="2.8"
+    strokeLinecap="round"
+    opacity="0.22"
+  />
+</svg>
+  </div>
 
-            <p className={`text-xs font-[800] ${text}`}>AI planning enabled</p>
-          </div>
+  <div className="min-w-0">
+    <h1
+      className="text-[30px] font-[900] leading-none tracking-[-0.055em]"
+      style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
+    >
+      Veira
+    </h1>
 
-          <p className={`text-[11px] leading-relaxed ${mutedText}`}>
-            Veira can prioritize and suggest dates from your task titles.
-          </p>
-        </div>
-      </div>
+    <p
+      className="uppercase mt-1.5 whitespace-nowrap text-[9px] font-[700] leading-none tracking-[0.04em]"
+      style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
+    >
+      Focus. Prioritize. Move forward.
+    </p>
+  </div>
+</div>
+
+<div
+  className={`mb-6 rounded-[20px] border p-3 shadow-[0_12px_30px_rgba(0,0,0,0.08)] ${softBorder} ${softSurface}`}
+>
+  <div className="mb-2 flex items-center gap-2">
+    <Sparkles size={14} style={{ color: themeColor }} />
+
+    <p className={`text-xs font-[800] ${text}`}>AI planning enabled</p>
+  </div>
+
+  <p className={`text-[11px] leading-relaxed ${mutedText}`}>
+    Veira can prioritize and suggest dates from your task titles.
+  </p>
+</div>
 
       <nav className="relative z-10 min-h-0 flex-1 overflow-y-auto pr-1">
         <SidebarSectionLabel label="Plan" mutedText={mutedText} />
@@ -199,7 +282,9 @@ export default function Sidebar({
           </div>
 
           <div className="min-w-0">
-            <p className={`truncate text-sm font-[800] ${text}`}>{displayName}</p>
+            <p className={`truncate text-sm font-[800] ${text}`}>
+              {displayName}
+            </p>
             <p className={`text-[11px] font-medium ${mutedText}`}>
               Profile & sign out
             </p>
