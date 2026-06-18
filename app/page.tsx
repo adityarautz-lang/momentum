@@ -3070,6 +3070,10 @@ useEffect(() => {
     event.dataTransfer.effectAllowed = "copy";
   }}
   className={`relative hidden min-h-[72px] min-w-0 items-center gap-4 rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${
+    task.dueDate && isOverdue(task.dueDate)
+      ? "border-red-400/45 bg-red-50/35 shadow-[0_14px_35px_rgba(239,68,68,0.10)]"
+      : ""
+  } ${
     draggableTasks ? "cursor-grab active:cursor-grabbing" : ""
   } ${
     manualFocusTaskIds.includes(task.id)
@@ -3260,10 +3264,36 @@ useEffect(() => {
 )}
 
 {task.dueDate && isOverdue(task.dueDate) && (
-  <span className="absolute right-4 top-4 rotate-[-8deg] rounded-[6px] border-2 border-red-500/70 px-2.5 py-1 text-[10px] font-[900] uppercase tracking-[0.12em] text-red-500 opacity-80 shadow-[0_6px_18px_rgba(239,68,68,0.14)]">
-  OVERDUE
-</span>
+  <div className="pointer-events-none absolute right-5 top-3 rotate-[7deg]">
+    <div className="relative">
+      <span
+        className={`relative inline-flex items-center rounded-[7px] border-2 px-3 py-1.5 text-[11px] font-[900] uppercase tracking-[0.14em] shadow-[0_8px_22px_rgba(185,28,28,0.14)] ${
+          darkMode
+            ? "border-red-300/70 bg-red-500/[0.06] text-red-300"
+            : "border-red-600/70 bg-white/50 text-red-600"
+        }`}
+      >
+        OVERDUE
+
+        <span className="pointer-events-none absolute inset-[3px] rounded-[4px] border border-red-500/25" />
+
+        <span className="pointer-events-none absolute left-1.5 top-1 h-0.5 w-2 rounded-full bg-red-500/45" />
+        <span className="pointer-events-none absolute bottom-1.5 left-3 h-0.5 w-3 rounded-full bg-red-500/35" />
+        <span className="pointer-events-none absolute right-2 top-2 h-0.5 w-2.5 rounded-full bg-red-500/35" />
+        <span className="pointer-events-none absolute bottom-1 right-3 h-0.5 w-2 rounded-full bg-red-500/30" />
+
+        <span className="pointer-events-none absolute left-2 top-1/2 h-1 w-1 rounded-full bg-red-500/30" />
+        <span className="pointer-events-none absolute right-4 top-1/2 h-1 w-1 rounded-full bg-red-500/25" />
+      </span>
+
+      {/* <span className="absolute -right-2 -top-3 h-2 w-0.5 rotate-[18deg] rounded-full bg-red-500/65" />
+      <span className="absolute -right-4 top-0 h-2 w-0.5 rotate-[70deg] rounded-full bg-red-500/55" />
+      <span className="absolute -right-1 -top-5 h-2 w-0.5 rotate-[-18deg] rounded-full bg-red-500/50" /> */}
+    </div>
+  </div>
 )}
+
+
 
             <div
               className={`flex items-center gap-1.5 ${
