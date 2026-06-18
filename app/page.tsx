@@ -249,6 +249,12 @@ const isLater = (date?: string) => {
   return date > getTomorrowDate();
 };
 
+const isOverdue = (date?: string) => {
+  if (!date) return false;
+
+  return date < getTodayDate();
+};
+
 const textIncludesAny = (text: string, words: string[]) => {
   return words.some((word) => text.includes(word));
 };
@@ -861,6 +867,12 @@ setThemeColor(parsed.themeColor || "#05AD98");
         if (a.pinned !== b.pinned) {
           return a.pinned ? -1 : 1;
         }
+      
+        const overdueA = a.dueDate && isOverdue(a.dueDate);
+        const overdueB = b.dueDate && isOverdue(b.dueDate);
+      
+        if (overdueA && !overdueB) return -1;
+        if (!overdueA && overdueB) return 1;
       
         if (b.score !== a.score) {
           return b.score - a.score;
@@ -3057,7 +3069,7 @@ useEffect(() => {
     event.dataTransfer.setData("text/plain", task.id);
     event.dataTransfer.effectAllowed = "copy";
   }}
-  className={`hidden min-h-[72px] min-w-0 items-center gap-4 rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${
+  className={`relative hidden min-h-[72px] min-w-0 items-center gap-4 rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${
     draggableTasks ? "cursor-grab active:cursor-grabbing" : ""
   } ${
     manualFocusTaskIds.includes(task.id)
@@ -3236,16 +3248,22 @@ useEffect(() => {
   </span>
 )}
 
-            {visibleDueDate && (
-              <div
-                className={`flex items-center gap-1.5 ${
-                  darkMode ? "text-white/70" : "text-black/65"
-                }`}
-              >
-                <Calendar size={14} />
-                <span>{formatDueDate(visibleDueDate)}</span>
-              </div>
-            )}
+{visibleDueDate && (
+  <div
+    className={`flex items-center gap-1.5 ${
+      darkMode ? "text-white/70" : "text-black/65"
+    }`}
+  >
+    <Calendar size={14} />
+    <span>{formatDueDate(visibleDueDate)}</span>
+  </div>
+)}
+
+{task.dueDate && isOverdue(task.dueDate) && (
+  <span className="absolute right-4 top-4 rotate-[-8deg] rounded-[6px] border-2 border-red-500/70 px-2.5 py-1 text-[10px] font-[900] uppercase tracking-[0.12em] text-red-500 opacity-80 shadow-[0_6px_18px_rgba(239,68,68,0.14)]">
+  OVERDUE
+</span>
+)}
 
             <div
               className={`flex items-center gap-1.5 ${
