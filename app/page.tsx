@@ -35,9 +35,12 @@ Target,
   TrendingUp,
 Eye,
 ChevronDown,
+ChevronRight,
 Check,
 } from "lucide-react";
 
+
+type TaskTag = "follow-up";
 
 type ExtractedTaskSuggestion = {
   id: string;
@@ -50,6 +53,7 @@ type ExtractedTaskSuggestion = {
   status: "Active" | "Waiting" | "Someday";
   reason: string;
   confidence: number;
+  tags: TaskTag[];
 };
 
 /* ------------------------------------------------ */
@@ -253,6 +257,18 @@ const isOverdue = (date?: string) => {
   if (!date) return false;
 
   return date < getTodayDate();
+};
+
+const getOverdueDays = (date?: string) => {
+  if (!date) return 0;
+
+  const today = new Date(`${getTodayDate()}T00:00:00`);
+  const due = new Date(`${date}T00:00:00`);
+
+  return Math.max(
+    0,
+    Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24))
+  );
 };
 
 const textIncludesAny = (text: string, words: string[]) => {
@@ -683,6 +699,32 @@ const getPriorityRowClass = (priority: Priority, darkMode: boolean) => {
 
   return "bg-white hover:bg-[#f6f8f8]";
 };
+
+const normalizeTaskTags = (tags: any): TaskTag[] => {
+  if (!Array.isArray(tags)) return [];
+
+  return tags.filter((tag) => tag === "follow-up");
+};
+
+const hasFollowUpTag = (task: any) => {
+  return Array.isArray(task.tags) && task.tags.includes("follow-up");
+};
+
+function FollowUpTag({ darkMode }: { darkMode: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-[850] tracking-[-0.01em] ${
+        darkMode
+          ? "border-amber-300/15 bg-amber-300/[0.08] text-amber-200/80"
+          : "border-amber-500/15 bg-amber-500/[0.07] text-amber-700"
+      }`}
+    >
+      <span className="text-[11px] leading-none">↗</span>
+      Follow-up
+    </span>
+  );
+}
+
 
 /* ------------------------------------------------ */
 /* Component */
@@ -1239,6 +1281,7 @@ const modalSelect = darkMode
               suggestedDueDate: suggestion.suggestedDueDate || task.suggestedDueDate,
               status: suggestion.status || task.status || "Active",
               notes: suggestion.notes || task.notes || "",
+              tags: normalizeTaskTags(suggestion.tags || task.tags),
               aiReason:
                 suggestion.reason ||
                 task.aiReason ||
@@ -1287,6 +1330,7 @@ const modalSelect = darkMode
                 suggestion.suggestedDueDate || taskToMove.suggestedDueDate,
               status: suggestion.status || taskToMove.status || "Active",
               notes: suggestion.notes || taskToMove.notes || "",
+              tags: normalizeTaskTags(suggestion.tags || taskToMove.tags),
               aiReason:
                 suggestion.reason ||
                 taskToMove.aiReason ||
@@ -1384,6 +1428,7 @@ const modalSelect = darkMode
       suggestedDueDate,
       notes: "",
       status: "Active",
+      tags: [],
       aiReason: initialWhy,
       aiConfidence: manualWhy ? 0.95 : 0.5,
       completed: false,
@@ -1535,6 +1580,7 @@ const modalSelect = darkMode
           reason: String(task.reason || ""),
           confidence:
             typeof task.confidence === "number" ? task.confidence : 0.7,
+          tags: normalizeTaskTags(task.tags),
         })
       );
   
@@ -1596,6 +1642,7 @@ const modalSelect = darkMode
             selectedWhyIndex: 0,
             aiReason: task.reason,
             aiConfidence: task.confidence,
+            tags: normalizeTaskTags(task.tags),
             completed: false,
             createdAt: new Date().toISOString(),
           }));
@@ -1910,6 +1957,7 @@ const priority: Priority = updatedTask.priority || inferPriority(title);
                     ? getAppSuggestionReason(title, priority)
                     : "App suggestions are turned off."),
                 aiConfidence: updatedTask.aiConfidence || 0.72,
+                tags: normalizeTaskTags(updatedTask.tags),
                 whySuggestions: updatedTask.whySuggestions || [],
                 selectedWhyIndex: updatedTask.selectedWhyIndex || 0,
                 completed: Boolean(updatedTask.completed),
@@ -2354,6 +2402,7 @@ togglePinTask={togglePinTask}
    restoreCompletedTask={restoreCompletedTask}
    categories={categories}
    themeColor={themeColor}
+   darkMode={darkMode}
    input={input}
    modalSelect={modalSelect}
    glass={glass}
@@ -3030,6 +3079,8 @@ useEffect(() => {
           {task.title}
         </button>
 
+        {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
+
         {isSuggesting && (
   <Sparkles
     size={13}
@@ -3069,9 +3120,11 @@ useEffect(() => {
     event.dataTransfer.setData("text/plain", task.id);
     event.dataTransfer.effectAllowed = "copy";
   }}
-  className={`relative hidden min-h-[72px] min-w-0 items-center gap-4 rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${
+  className={`relative hidden min-h-[72px] min-w-0 items-center gap-4 overflow-hidden rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${
     task.dueDate && isOverdue(task.dueDate)
-      ? "border-red-400/45 bg-red-50/35 shadow-[0_14px_35px_rgba(239,68,68,0.10)]"
+      ? darkMode
+        ? "border-red-400/35 shadow-[0_14px_35px_rgba(239,68,68,0.10)]"
+        : "border-red-400/35 bg-red-50/25 shadow-[0_14px_35px_rgba(239,68,68,0.08)]"
       : ""
   } ${
     draggableTasks ? "cursor-grab active:cursor-grabbing" : ""
@@ -3097,6 +3150,7 @@ useEffect(() => {
       : "hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
   }`}
 >
+
         <div className="flex w-full min-w-0 flex-1 items-start gap-4 overflow-hidden">
           <button
             onClick={(e) => toggleTaskById(task.id, e)}
@@ -3120,26 +3174,43 @@ useEffect(() => {
 )}
 
           <div className="min-w-0 flex-1">
-            <p
-              onClick={() => {
-                setSelectedTask(task);
-                setIsEditModalOpen(true);
-              }}
-              title={task.title}
-              className="block max-w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
-            >
-              {task.title}
-            </p>
+          <div className="flex min-w-0 items-center gap-2">
+  <p
+    onClick={() => {
+      setSelectedTask(task);
+      setIsEditModalOpen(true);
+    }}
+    title={task.title}
+    className="block min-w-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
+  >
+    {task.title}
+  </p>
 
-            <p
-              className={`mt-1.5 truncate text-[11px] font-[650] ${
-                darkMode ? "text-white/38" : "text-black/38"
-              }`}
-            >
-             {task.category} · {task.priority}
-             {task.whyThisMatters ? " · Context added" : ""}
-{isSuggesting ? " · Veira thinking..." : ""}
-            </p>
+  
+</div>
+
+<div
+  className={`mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] font-[650] ${
+    darkMode ? "text-white/38" : "text-black/38"
+  }`}
+>
+  <span className="truncate">
+    {task.category} · {task.priority}
+    {task.whyThisMatters ? " · Context added" : ""}
+    {hasFollowUpTag(task) ? " · " : ""}
+    {isSuggesting ? " · Veira thinking..." : ""}
+  </span>
+
+  {hasFollowUpTag(task) && (
+  <span
+    className="inline-flex shrink-0 items-center gap-0.5 rounded-full font-[850]"
+    style={{ color: themeColor }}
+  >
+    <ChevronRight size={12} />
+    Follow-up
+  </span>
+)}
+</div>
 
       
 
@@ -3158,10 +3229,10 @@ useEffect(() => {
           : "border-black/[0.05] bg-black/[0.018] hover:bg-black/[0.03]"
       }`}
     >
-     <span
+    <span
   className="flex shrink-0 items-center justify-center gap-1.5 border-r px-3 text-[10px] font-[900] uppercase tracking-[0.13em]"
   style={{
-    color: themeColor,
+    color: darkMode ? "rgba(255,255,255,0.86)" : themeColor,
     borderColor: darkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
   }}
 >
@@ -3264,8 +3335,16 @@ useEffect(() => {
 )}
 
 {task.dueDate && isOverdue(task.dueDate) && (
-  <div className="pointer-events-none absolute right-5 top-3 rotate-[7deg]">
+  <div className="pointer-events-none absolute right-5 bottom-3">
     <div className="relative">
+      <span
+        className={`absolute -top-[15px] right-1 text-[9px] font-[900] leading-none tracking-[0.02em] ${
+          darkMode ? "text-red-300/80" : "text-red-600/75"
+        }`}
+      >
+        {getOverdueDays(task.dueDate)}d 
+      </span>
+
       <span
         className={`relative inline-flex items-center rounded-[7px] border-2 px-3 py-1.5 text-[11px] font-[900] uppercase tracking-[0.14em] shadow-[0_8px_22px_rgba(185,28,28,0.14)] ${
           darkMode
@@ -3285,10 +3364,6 @@ useEffect(() => {
         <span className="pointer-events-none absolute left-2 top-1/2 h-1 w-1 rounded-full bg-red-500/30" />
         <span className="pointer-events-none absolute right-4 top-1/2 h-1 w-1 rounded-full bg-red-500/25" />
       </span>
-
-      {/* <span className="absolute -right-2 -top-3 h-2 w-0.5 rotate-[18deg] rounded-full bg-red-500/65" />
-      <span className="absolute -right-4 top-0 h-2 w-0.5 rotate-[70deg] rounded-full bg-red-500/55" />
-      <span className="absolute -right-1 -top-5 h-2 w-0.5 rotate-[-18deg] rounded-full bg-red-500/50" /> */}
     </div>
   </div>
 )}
@@ -4727,6 +4802,8 @@ function CompactTaskCard({
             </span>
 
             <DateBadge task={task} visibleDueDate={visibleDueDate} darkMode={darkMode} />
+
+            {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
           </div>
         </div>
 
@@ -4870,6 +4947,12 @@ function AirtablePriorityGroup({
             >
               {task.title}
             </p>
+
+            {hasFollowUpTag(task) && (
+              <div className="mt-1.5">
+                <FollowUpTag darkMode={darkMode} />
+              </div>
+            )}
 
             <p
              className={`mt-1 text-[11px] sm:text-[12px] ${
@@ -5600,6 +5683,8 @@ function UpcomingCalendarTaskCard({
 
         <DateBadge task={task} visibleDueDate={visibleDueDate} darkMode={darkMode} />
 
+        {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
+
         {task.suggestedDueDate && !task.dueDate && acceptSuggestedDateById && (
           <button
             onClick={() => acceptSuggestedDateById(task.id)}
@@ -5735,6 +5820,8 @@ function TaskRows({
 
             <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
               <DateBadge task={task} visibleDueDate={visibleDueDate} darkMode={darkMode} />
+
+              {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
 
               {task.suggestedDueDate && !task.dueDate && acceptSuggestedDateById && (
                 <button
@@ -5904,6 +5991,8 @@ function InboxView({
               </div>
 
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+                {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
+
                 <span
                  className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[700] tracking-[-0.01em] ${getPriorityClass(
                   task.priority
@@ -6416,6 +6505,8 @@ function ExtractTasksModal({
                               >
                                 {Math.round(task.confidence * 100)}%
                               </span>
+
+                              {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
                             </div>
 
                             {task.notes && (
@@ -6653,6 +6744,7 @@ function EditTaskModal({
   restoreCompletedTask,
   categories,
   themeColor,
+  darkMode,
   input,
   modalSelect,
   glass,
@@ -6993,6 +7085,8 @@ function EditTaskModal({
                     >
                       {selectedTask.priority} priority
                     </span>
+
+                    {hasFollowUpTag(selectedTask) && <FollowUpTag darkMode={darkMode} />}
                   </div>
 
                   <p className="mt-4 text-sm leading-6 opacity-50">

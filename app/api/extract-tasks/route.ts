@@ -9,6 +9,7 @@ type ExtractedTask = {
   status: "Active" | "Waiting" | "Someday";
   reason: string;
   confidence: number;
+  tags: string[];
 };
 
 const taskExtractionSchema = {
@@ -59,6 +60,15 @@ const taskExtractionSchema = {
             minimum: 0,
             maximum: 1,
           },
+          tags: {
+            type: "array",
+            items: {
+              type: "string",
+              enum: ["follow-up"],
+            },
+            description:
+              "Task tags. Use ['follow-up'] only when the task is a follow-up with another person or external party. Otherwise use an empty array.",
+          },
         },
         required: [
           "title",
@@ -69,6 +79,7 @@ const taskExtractionSchema = {
           "status",
           "reason",
           "confidence",
+          "tags",
         ],
       },
     },
@@ -135,7 +146,7 @@ export async function POST(request: Request) {
           {
             role: "system",
             content: `
-You extract practical action items for a calm task-planning app called Momentum.
+You extract practical action items for a calm task-planning app called Veira.
 
 Rules:
 - Extract only clear or strongly implied action items.
@@ -149,6 +160,14 @@ Rules:
 - Prefer verbs like Submit, Review, Call, Book, Prepare, Send, Follow up, Pay, Buy, Schedule.
 - Return no more than 8 tasks.
 - If there are no real action items, return an empty tasks array.
+
+Tag rules:
+- Allowed tags: ["follow-up"].
+- Add "follow-up" when the task is about checking back with another person, team, manager, client, stakeholder, colleague, vendor, or external party.
+- Add "follow-up" when the user needs to ask, remind, ping, nudge, chase, confirm, get approval, get a response, or continue a previous conversation.
+- Add "follow-up" even if the exact words "follow up" are not used.
+- Do not add "follow-up" for generic personal reminders unless another person or external party is involved.
+- If no tag applies, return an empty array: [].
 `.trim(),
           },
           {
@@ -167,7 +186,7 @@ ${text}
         text: {
           format: {
             type: "json_schema",
-            name: "momentum_task_extraction",
+            name: "veira_task_extraction",
             strict: true,
             schema: taskExtractionSchema,
           },
@@ -195,8 +214,14 @@ ${text}
     }
 
     const parsed = JSON.parse(outputText);
+
     const tasks: ExtractedTask[] = Array.isArray(parsed.tasks)
-      ? parsed.tasks
+      ? parsed.tasks.map((task: any) => ({
+          ...task,
+          tags: Array.isArray(task.tags)
+            ? task.tags.filter((tag: string) => tag === "follow-up")
+            : [],
+        }))
       : [];
 
     return NextResponse.json({ tasks });

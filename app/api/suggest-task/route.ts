@@ -41,7 +41,7 @@ export async function POST(request: Request) {
           {
             role: "system",
             content:
-              "You are Momentum, a calm execution assistant. Your job is to interpret a captured task and suggest practical planning metadata. Return only valid JSON.",
+              "You are Veira, a calm execution assistant. Your job is to interpret a captured task and suggest practical planning metadata. Return only valid JSON.",
           },
           {
             role: "user",
@@ -62,7 +62,8 @@ Return JSON only with this exact shape:
   "status": "Active" | "Waiting" | "Someday",
   "notes": string,
   "reason": string,
-  "confidence": number
+  "confidence": number,
+  "tags": string[]
 }
 
 Rules:
@@ -74,6 +75,14 @@ Rules:
 - Keep notes short.
 - reason should explain the suggestion in plain language.
 - confidence should be between 0 and 1.
+
+Tag rules:
+- Allowed tags: ["follow-up"].
+- Add "follow-up" when the task is about checking back with another person, team, manager, client, stakeholder, colleague, vendor, or external party.
+- Add "follow-up" when the user needs to ask, remind, ping, nudge, chase, confirm, get approval, get a response, or continue a previous conversation.
+- Add "follow-up" even if the exact words "follow up" are not used.
+- Do not add "follow-up" for generic personal reminders unless another person or external party is involved.
+- If no tag applies, return an empty array: [].
             `.trim(),
           },
         ],
@@ -121,6 +130,9 @@ Rules:
         reason: String(parsed.reason || ""),
         confidence:
           typeof parsed.confidence === "number" ? parsed.confidence : 0.7,
+        tags: Array.isArray(parsed.tags)
+          ? parsed.tags.filter((tag: string) => tag === "follow-up")
+          : [],
       },
     });
   } catch (error) {
