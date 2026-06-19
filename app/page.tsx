@@ -279,7 +279,7 @@ const inferPriority = (title: string): Priority => {
   }
 
   if (mediumPriorityWords.some((word) => text.includes(word))) {
-    return "Medium";
+    return "Med";
   }
 
   return "Low";
