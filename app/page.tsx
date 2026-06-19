@@ -157,42 +157,7 @@ const formatDateLong = () => {
   });
 };
 
-const getTaskAgeInDays = (createdAt?: string) => {
-  if (!createdAt) return 0;
 
-  const created = new Date(createdAt);
-  const now = new Date();
-
-  return Math.floor(
-    (now.getTime() - created.getTime()) /
-      (1000 * 60 * 60 * 24)
-  );
-};
-
-const getTaskAgeLabel = (task: any) => {
-  const age = getTaskAgeInDays(task.createdAt);
-
-  if (age < 3) return null;
-
-  if (age < 7) {
-    return {
-      text: `${age}d old`,
-      color: "neutral",
-    };
-  }
-
-  if (age < 14) {
-    return {
-      text: `${age}d untouched`,
-      color: "warning",
-    };
-  }
-
-  return {
-    text: `${age}d needs review`,
-    color: "danger",
-  };
-};
 
 const getTimeRemainingInDay = (dayEndTime: string) => {
   const now = new Date();
@@ -3151,258 +3116,244 @@ useEffect(() => {
   }`}
 >
 
-        <div className="flex w-full min-w-0 flex-1 items-start gap-4 overflow-hidden">
-          <button
-            onClick={(e) => toggleTaskById(task.id, e)}
-            className="shrink-0 opacity-70 transition hover:opacity-100"
-          >
-            <Circle
-              size={19}
-              className={darkMode ? "text-white/25" : "text-black/25"}
-            />
-          </button>
-
-          {ranked && (
-  <div
-    className="mt-[2px] flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[700] text-white"
-    style={{
-      backgroundColor: index < 3 ? themeColor : "#878787",
-    }}
-  >
-    {index + 1}
-  </div>
-)}
-
-          <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
-  <p
-    onClick={() => {
-      setSelectedTask(task);
-      setIsEditModalOpen(true);
-    }}
-    title={task.title}
-    className="block min-w-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
-  >
-    {task.title}
-  </p>
-
-  
-</div>
-
-<div
-  className={`mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] font-[650] ${
-    darkMode ? "text-white/38" : "text-black/38"
-  }`}
->
-  <span className="truncate">
-    {task.category} · {task.priority}
-    {task.whyThisMatters ? " · Context added" : ""}
-    {hasFollowUpTag(task) ? " · " : ""}
-    {isSuggesting ? " · Veira thinking..." : ""}
-  </span>
-
-  {hasFollowUpTag(task) && (
-  <span
-    className="inline-flex shrink-0 items-center gap-0.5 rounded-full font-[850]"
-    style={{ color: themeColor }}
-  >
-    <ChevronRight size={12} />
-    Follow-up
-  </span>
-)}
-</div>
-
-      
-
-{Array.isArray(task.whySuggestions) && task.whySuggestions.length > 0 && (
-  <div
-  ref={expandedWhyTaskId === task.id ? whyDropdownRef : null}
-  className={`mt-2 ${ranked ? "ml-[-44px]" : ""}`}
->
-    <button
-      onClick={() =>
-        setExpandedWhyTaskId(expandedWhyTaskId === task.id ? null : task.id)
-      }
-      className={`flex max-w-[520px] items-stretch gap-0 overflow-hidden rounded-[18px] border text-left transition ${
-        darkMode
-          ? "border-white/[0.07] bg-white/[0.035] hover:bg-white/[0.055]"
-          : "border-black/[0.05] bg-black/[0.018] hover:bg-black/[0.03]"
-      }`}
-    >
-    <span
-  className="flex shrink-0 items-center justify-center gap-1.5 border-r px-3 text-[10px] font-[900] uppercase tracking-[0.13em]"
-  style={{
-    color: darkMode ? "rgba(255,255,255,0.86)" : themeColor,
-    borderColor: darkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-  }}
->
-  <Sparkles size={12} />
-  Why
-</span>
-
-      <span
-        className={`min-w-0 flex-1 px-3 py-2 whitespace-normal break-words text-[12px] leading-4 ${
-          darkMode ? "text-white/48" : "text-black/48"
-        }`}
-      >
-        {task.whyThisMatters}
-      </span>
-
-      <span
-  className={`flex shrink-0 items-center justify-center border-l px-3 transition ${
-    expandedWhyTaskId === task.id ? "rotate-180" : ""
-  }`}
-  style={{
-    borderColor: darkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-  }}
->
-  <ChevronDown size={13} className="opacity-45" />
-</span>
-    </button>
-
-    {expandedWhyTaskId === task.id && (
-      <div className="mt-2 max-w-[520px] space-y-1.5">
-        {task.whySuggestions.map(
-          (suggestion: string, suggestionIndex: number) => {
-            const isSelected = task.whyThisMatters === suggestion;
-
-            return (
-              <button
-                key={suggestion}
-                onClick={() => {
-                  selectWhySuggestion(task.id, suggestion, suggestionIndex);
-                  setExpandedWhyTaskId(null);
-                }}
-                className={`flex w-full items-center justify-between gap-3 rounded-[14px] border px-3 py-2 text-left text-[11px] font-[700] transition ${
-                  isSelected
-                    ? "text-white"
-                    : darkMode
-                    ? "border-white/[0.07] bg-[#111111] text-white/55 hover:text-white"
-                    : "border-black/[0.06] bg-white text-black/55 hover:text-black"
-                }`}
-                style={
-                  isSelected
-                    ? {
-                        backgroundColor: themeColor,
-                        borderColor: themeColor,
-                      }
-                    : undefined
-                }
-              >
-                <span>{suggestion}</span>
-                {isSelected && <Check size={13} />}
-              </button>
-            );
-          }
-        )}
-      </div>
-    )}
-  </div>
-)}
-
-          </div>
-        </div>
-
-        <div className="flex w-auto items-center justify-end gap-2">
-          <div className="flex items-center gap-5 text-[13px] font-[700]">
-
-
-          {getTaskAgeLabel(task) && (
-  <span
-    className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
-      getTaskAgeLabel(task)?.color === "danger"
-        ? "bg-red-500/10 text-red-400"
-        : getTaskAgeLabel(task)?.color === "warning"
-        ? "bg-amber-500/10 text-amber-400"
-        : darkMode
-        ? "bg-white/[0.06] text-white/45"
-        : "bg-black/[0.04] text-black/45"
-    }`}
-  >
-    {getTaskAgeLabel(task)?.text}
-  </span>
-)}
-
-{visibleDueDate && (
-  <div
-    className={`flex items-center gap-1.5 ${
-      darkMode ? "text-white/70" : "text-black/65"
-    }`}
-  >
-    <Calendar size={14} />
-    <span>{formatDueDate(visibleDueDate)}</span>
-  </div>
-)}
-
-{task.dueDate && isOverdue(task.dueDate) && (
-  <div className="pointer-events-none absolute right-5 bottom-3">
-    <div className="relative">
-      <span
-        className={`absolute -top-[15px] right-1 text-[9px] font-[900] leading-none tracking-[0.02em] ${
-          darkMode ? "text-red-300/80" : "text-red-600/75"
-        }`}
-      >
-        {getOverdueDays(task.dueDate)}d 
-      </span>
-
-      <span
-        className={`relative inline-flex items-center rounded-[7px] border-2 px-3 py-1.5 text-[11px] font-[900] uppercase tracking-[0.14em] shadow-[0_8px_22px_rgba(185,28,28,0.14)] ${
-          darkMode
-            ? "border-red-300/70 bg-red-500/[0.06] text-red-300"
-            : "border-red-600/70 bg-white/50 text-red-600"
-        }`}
-      >
-        OVERDUE
-
-        <span className="pointer-events-none absolute inset-[3px] rounded-[4px] border border-red-500/25" />
-
-        <span className="pointer-events-none absolute left-1.5 top-1 h-0.5 w-2 rounded-full bg-red-500/45" />
-        <span className="pointer-events-none absolute bottom-1.5 left-3 h-0.5 w-3 rounded-full bg-red-500/35" />
-        <span className="pointer-events-none absolute right-2 top-2 h-0.5 w-2.5 rounded-full bg-red-500/35" />
-        <span className="pointer-events-none absolute bottom-1 right-3 h-0.5 w-2 rounded-full bg-red-500/30" />
-
-        <span className="pointer-events-none absolute left-2 top-1/2 h-1 w-1 rounded-full bg-red-500/30" />
-        <span className="pointer-events-none absolute right-4 top-1/2 h-1 w-1 rounded-full bg-red-500/25" />
-      </span>
-    </div>
-  </div>
-)}
-
-
-
-            <div
-              className={`flex items-center gap-1.5 ${
-                task.priority === "High"
-                  ? "text-red-500"
-                  : task.priority === "Medium"
-                  ? "text-orange-500"
-                  : "text-emerald-500"
-              }`}
+        <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_190px] gap-4">
+          <div className="flex min-w-0 items-start gap-4">
+            <button
+              onClick={(e) => toggleTaskById(task.id, e)}
+              className="shrink-0 opacity-70 transition hover:opacity-100"
             >
-              <span className="text-[12px]">●</span>
-              <span>{task.priority}</span>
+              <Circle
+                size={19}
+                className={darkMode ? "text-white/25" : "text-black/25"}
+              />
+            </button>
+
+            {ranked && (
+              <div
+                className="mt-[2px] flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[700] text-white"
+                style={{
+                  backgroundColor: index < 3 ? themeColor : "#878787",
+                }}
+              >
+                {index + 1}
+              </div>
+            )}
+
+            <div className="min-w-0 flex-1">
+              <p
+                onClick={() => {
+                  setSelectedTask(task);
+                  setIsEditModalOpen(true);
+                }}
+                title={task.title}
+                className="block min-w-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
+              >
+                {task.title}
+              </p>
+
+              <div
+                className={`mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] font-[650] ${
+                  darkMode ? "text-white/38" : "text-black/38"
+                }`}
+              >
+                <span className="truncate">
+                  {task.category} · {task.priority}
+                  {task.whyThisMatters ? " · Context added" : ""}
+                  {isSuggesting ? " · Veira thinking..." : ""}
+                </span>
+
+                {hasFollowUpTag(task) && (
+                  <span
+                    className="inline-flex shrink-0 items-center gap-0.5 rounded-full font-[850]"
+                    style={{ color: themeColor }}
+                  >
+                    <ChevronRight size={12} />
+                    Follow-up
+                  </span>
+                )}
+              </div>
+
+              {Array.isArray(task.whySuggestions) && task.whySuggestions.length > 0 && (
+                <div
+                  ref={expandedWhyTaskId === task.id ? whyDropdownRef : null}
+                  className="mt-2 w-full max-w-full"
+                >
+                  <button
+                    onClick={() =>
+                      setExpandedWhyTaskId(
+                        expandedWhyTaskId === task.id ? null : task.id
+                      )
+                    }
+                    className={`flex w-full max-w-full items-stretch gap-0 overflow-hidden rounded-[18px] border text-left transition ${
+                      darkMode
+                        ? "border-white/[0.07] bg-white/[0.035] hover:bg-white/[0.055]"
+                        : "border-black/[0.05] bg-black/[0.018] hover:bg-black/[0.03]"
+                    }`}
+                  >
+                    <span
+                      className="flex shrink-0 items-center justify-center gap-1.5 border-r px-3 text-[10px] font-[900] uppercase tracking-[0.13em]"
+                      style={{
+                        color: darkMode ? "rgba(255,255,255,0.86)" : themeColor,
+                        borderColor: darkMode
+                          ? "rgba(255,255,255,0.08)"
+                          : "rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <Sparkles size={12} />
+                      Why
+                    </span>
+
+                    <span
+                      className={`min-w-0 flex-1 px-3 py-2 whitespace-normal break-words text-[12px] leading-4 ${
+                        darkMode ? "text-white/48" : "text-black/48"
+                      }`}
+                    >
+                      {task.whyThisMatters}
+                    </span>
+
+                    <span
+                      className={`flex shrink-0 items-center justify-center border-l px-3 transition ${
+                        expandedWhyTaskId === task.id ? "rotate-180" : ""
+                      }`}
+                      style={{
+                        borderColor: darkMode
+                          ? "rgba(255,255,255,0.08)"
+                          : "rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <ChevronDown size={13} className="opacity-45" />
+                    </span>
+                  </button>
+
+                  {expandedWhyTaskId === task.id && (
+                    <div className="mt-2 w-full max-w-full space-y-1.5">
+                      {task.whySuggestions.map(
+                        (suggestion: string, suggestionIndex: number) => {
+                          const isSelected = task.whyThisMatters === suggestion;
+
+                          return (
+                            <button
+                              key={suggestion}
+                              onClick={() => {
+                                selectWhySuggestion(
+                                  task.id,
+                                  suggestion,
+                                  suggestionIndex
+                                );
+                                setExpandedWhyTaskId(null);
+                              }}
+                              className={`flex w-full items-center justify-between gap-3 rounded-[14px] border px-3 py-2 text-left text-[11px] font-[700] transition ${
+                                isSelected
+                                  ? "text-white"
+                                  : darkMode
+                                  ? "border-white/[0.07] bg-[#111111] text-white/55 hover:text-white"
+                                  : "border-black/[0.06] bg-white text-black/55 hover:text-black"
+                              }`}
+                              style={
+                                isSelected
+                                  ? {
+                                      backgroundColor: themeColor,
+                                      borderColor: themeColor,
+                                    }
+                                  : undefined
+                              }
+                            >
+                              <span>{suggestion}</span>
+                              {isSelected && <Check size={13} />}
+                            </button>
+                          );
+                        }
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          <button
-  onClick={() => togglePinTask(task.id)}
-  title={task.pinned ? "Pinned" : "Pin to top"}
-  className={`transition hover:scale-110 ${
-    task.pinned
-      ? "opacity-100"
-      : "opacity-0 sm:group-hover:opacity-35"
-  }`}
-  style={{ color: task.pinned ? themeColor : undefined }}
->
-  <Star size={16} fill={task.pinned ? themeColor : "none"} />
-</button>
+          <div className="relative flex min-h-[88px] flex-col items-end justify-start">
+            <div className="flex items-center justify-end gap-2">
+              <div className="flex items-center gap-5 text-[13px] font-[700]">
+                {visibleDueDate && (
+                  <div
+                    className={`flex items-center gap-1.5 ${
+                      darkMode ? "text-white/70" : "text-black/65"
+                    }`}
+                  >
+                    <Calendar size={14} />
+                    <span>{formatDueDate(visibleDueDate)}</span>
+                  </div>
+                )}
 
-<button
-  onClick={() => deleteTask(task.id)}
-  className="opacity-0 transition hover:!opacity-100 hover:text-red-500 sm:group-hover:opacity-35"
->
-  <Trash2 size={16} />
-</button>
+                <div
+                  className={`flex items-center gap-1.5 ${
+                    task.priority === "High"
+                      ? "text-red-500"
+                      : task.priority === "Medium"
+                      ? "text-orange-500"
+                      : "text-emerald-500"
+                  }`}
+                >
+                  <span className="text-[12px]">●</span>
+                  <span>{task.priority}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => togglePinTask(task.id)}
+                title={task.pinned ? "Pinned" : "Pin to top"}
+                className={`transition hover:scale-110 ${
+                  task.pinned
+                    ? "opacity-100"
+                    : "opacity-0 sm:group-hover:opacity-35"
+                }`}
+                style={{ color: task.pinned ? themeColor : undefined }}
+              >
+                <Star size={16} fill={task.pinned ? themeColor : "none"} />
+              </button>
+
+              <button
+                onClick={() => deleteTask(task.id)}
+                className="opacity-0 transition hover:!opacity-100 hover:text-red-500 sm:group-hover:opacity-35"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+
+            {task.dueDate && isOverdue(task.dueDate) && (
+              <div className="pointer-events-none absolute bottom-0 right-0">
+                <div className="relative">
+                  <span
+                    className={`absolute -top-[13px] right-1 text-[9px] font-[900] leading-none tracking-[0.02em] ${
+                      darkMode ? "text-red-300/80" : "text-red-600/75"
+                    }`}
+                  >
+                    {getOverdueDays(task.dueDate)}d
+                  </span>
+
+                  <span
+                    className={`relative inline-flex items-center rounded-[7px] border-2 px-3 py-1.5 text-[11px] font-[900] uppercase tracking-[0.14em] shadow-[0_8px_22px_rgba(185,28,28,0.14)] ${
+                      darkMode
+                        ? "border-red-300/70 bg-red-500/[0.06] text-red-300"
+                        : "border-red-600/70 bg-white/50 text-red-600"
+                    }`}
+                  >
+                    OVERDUE
+
+                    <span className="pointer-events-none absolute inset-[3px] rounded-[4px] border border-red-500/25" />
+
+                    <span className="pointer-events-none absolute left-1.5 top-1 h-0.5 w-2 rounded-full bg-red-500/45" />
+                    <span className="pointer-events-none absolute bottom-1.5 left-3 h-0.5 w-3 rounded-full bg-red-500/35" />
+                    <span className="pointer-events-none absolute right-2 top-2 h-0.5 w-2.5 rounded-full bg-red-500/35" />
+                    <span className="pointer-events-none absolute bottom-1 right-3 h-0.5 w-2 rounded-full bg-red-500/30" />
+
+                    <span className="pointer-events-none absolute left-2 top-1/2 h-1 w-1 rounded-full bg-red-500/30" />
+                    <span className="pointer-events-none absolute right-4 top-1/2 h-1 w-1 rounded-full bg-red-500/25" />
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>
