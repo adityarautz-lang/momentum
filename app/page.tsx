@@ -279,7 +279,7 @@ const inferPriority = (title: string): Priority => {
   }
 
   if (mediumPriorityWords.some((word) => text.includes(word))) {
-    return "Med";
+    return "Medium";
   }
 
   return "Low";
@@ -3295,7 +3295,7 @@ useEffect(() => {
                   }`}
                 >
                   <span className="text-[12px]">●</span>
-                  <span>{task.priority}</span>
+                  <span>{task.priority === "Medium" || task.priority === "Med" ? "Mid" : task.priority}</span>
                 </div>
               </div>
 
