@@ -3300,24 +3300,56 @@ useEffect(() => {
               </div>
 
               <button
-                onClick={() => togglePinTask(task.id)}
-                title={task.pinned ? "Pinned" : "Pin to top"}
-                className={`transition hover:scale-110 ${
-                  task.pinned
-                    ? "opacity-100"
-                    : "opacity-0 sm:group-hover:opacity-35"
-                }`}
-                style={{ color: task.pinned ? themeColor : undefined }}
-              >
-                <Star size={16} fill={task.pinned ? themeColor : "none"} />
-              </button>
+  onClick={() => addTaskToFocus(task.id)}
+  title={
+    manualFocusTaskIds.includes(task.id)
+      ? "Already in focus"
+      : "Add to focus"
+  }
+  className={`flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 ${
+    manualFocusTaskIds.includes(task.id)
+      ? "opacity-100"
+      : "opacity-0 sm:group-hover:opacity-100"
+  }`}
+  style={{
+    color: manualFocusTaskIds.includes(task.id)
+      ? themeColor
+      : darkMode
+      ? "rgba(255,255,255,0.45)"
+      : "rgba(0,0,0,0.45)",
+    backgroundColor: manualFocusTaskIds.includes(task.id)
+      ? `${themeColor}18`
+      : darkMode
+      ? "rgba(255,255,255,0.055)"
+      : "rgba(0,0,0,0.04)",
+  }}
+>
+  <Eye size={15} />
+</button>
 
-              <button
-                onClick={() => deleteTask(task.id)}
-                className="opacity-0 transition hover:!opacity-100 hover:text-red-500 sm:group-hover:opacity-35"
-              >
-                <Trash2 size={16} />
-              </button>
+<button
+  onClick={() => togglePinTask(task.id)}
+  title={task.pinned ? "Pinned" : "Pin to top"}
+  className={`transition hover:scale-110 ${
+    task.pinned
+      ? "opacity-100"
+      : "opacity-0 sm:group-hover:opacity-35"
+  }`}
+  style={{ color: task.pinned ? themeColor : undefined }}
+>
+  <Star size={16} fill={task.pinned ? themeColor : "none"} />
+</button>
+
+<button
+  onClick={() => deleteTask(task.id)}
+  className="opacity-0 transition hover:!opacity-100 hover:text-red-500 sm:group-hover:opacity-35"
+>
+  <Trash2 size={16} />
+</button>
+              
+
+
+
             </div>
 
             {task.dueDate && isOverdue(task.dueDate) && (
