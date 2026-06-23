@@ -3075,8 +3075,7 @@ useEffect(() => {
     {
       "--theme-color": `${themeColor}55`,
       "--theme-soft": `${themeColor}18`,
-      "--theme-row-soft": `${themeColor}0D`,
-      "--theme-row-hover": `${themeColor}18`,
+    
     } as React.CSSProperties
   }
   onDragStart={(event) => {
@@ -3101,13 +3100,9 @@ useEffect(() => {
     : `${
       darkMode ? "border-white/[0.07]" : border
     } ${
-      darkMode
-        ? index % 2 === 0
-          ? "bg-[#1a1a1a] hover:bg-[#222222]"
-          : "bg-[#181818] hover:bg-[#222222]"
-      : index % 2 === 0
-? "bg-white hover:bg-[#f6f8f8]"
-: "bg-[color:var(--theme-row-soft)] hover:bg-[color:var(--theme-row-hover)]"
+     darkMode
+  ? "bg-[#1a1a1a] hover:bg-[#222222]"
+  : "bg-white hover:bg-[#f6f8f8]"
     }`
   } ${
     darkMode
