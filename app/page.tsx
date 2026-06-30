@@ -43,6 +43,11 @@ Check,
 
 type TaskTag = "follow-up";
 
+type SortMode = "veira" | "date" | "priority";
+type GroupMode = "none" | "category" | "priority" | "date";
+
+const DEFAULT_THEME_COLOR = "#1F2937";
+
 type Subtask = {
   id: string;
   title: string;
@@ -749,10 +754,12 @@ export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [archive, setArchive] = useState<any[]>([]);
   const [completedToday, setCompletedToday] = useState<any[]>([]);
-  const [themeColor, setThemeColor] = useState("#05AD98");
-  const [darkMode, setDarkMode] = useState(true);
-  const [selectedView, setSelectedView] = useState("today");
-  const [priorityViewMode, setPriorityViewMode] =
+  const [themeColor, setThemeColor] = useState(DEFAULT_THEME_COLOR);
+  const [darkMode, setDarkMode] = useState(false);
+const [selectedView, setSelectedView] = useState("today");
+const [todayTaskSortMode, setTodayTaskSortMode] = useState<SortMode>("veira");
+const [todayTaskGroupMode, setTodayTaskGroupMode] = useState<GroupMode>("none");
+const [priorityViewMode, setPriorityViewMode] =
   useState<"cards" | "list">("list");
   const [upcomingViewMode, setUpcomingViewMode] = useState<
     "calendar" | "list"
@@ -816,6 +823,7 @@ const [isLoaded, setIsLoaded] = useState(false);
       if (!user?.id) {
         setCategories(initialCategories);
         setSelectedCategory(initialCategories[0].title);
+        setThemeColor(DEFAULT_THEME_COLOR);
         setIsLoaded(true);
         return;
       }
@@ -826,8 +834,23 @@ const [isLoaded, setIsLoaded] = useState(false);
         const parsed: any = saved;
   
         setCategories(parsed.categories || initialCategories);
-setDarkMode(parsed.darkMode ?? true);
-setThemeColor(parsed.themeColor || "#05AD98");
+        setDarkMode(parsed.darkMode ?? false);
+setThemeColor(parsed.themeColor || DEFAULT_THEME_COLOR);
+
+        setTodayTaskSortMode(
+          ["veira", "date", "priority"].includes(parsed.todayTaskSortMode)
+            ? (parsed.todayTaskSortMode as SortMode)
+            : "veira"
+        );
+
+        setTodayTaskGroupMode(
+          ["none", "category", "priority", "date"].includes(
+            parsed.todayTaskGroupMode
+          )
+            ? (parsed.todayTaskGroupMode as GroupMode)
+            : "none"
+        );
+
         setPriorityViewMode(parsed.priorityViewMode || "cards");
         setUpcomingViewMode(parsed.upcomingViewMode || "calendar");
         setEnableAppSuggestions(parsed.enableAppSuggestions ?? true);
@@ -846,6 +869,7 @@ setThemeColor(parsed.themeColor || "#05AD98");
       } else {
         setCategories(initialCategories);
         setSelectedCategory(initialCategories[0].title);
+        setThemeColor(DEFAULT_THEME_COLOR);
       }
   
       setIsLoaded(true);
@@ -868,14 +892,22 @@ setThemeColor(parsed.themeColor || "#05AD98");
       completedToday.length > 0 ||
       archive.length > 0;
   
-      if (!hasAnyUserData && themeColor === "#05AD98" && darkMode === true) return;
+      if (
+        !hasAnyUserData &&
+        themeColor === DEFAULT_THEME_COLOR &&
+        darkMode === false &&
+        todayTaskSortMode === "veira" &&
+        todayTaskGroupMode === "none"
+      ) return;
   
     void saveState(user.id, {
       categories,
       darkMode,
       themeColor,
-      priorityViewMode,
-      upcomingViewMode,
+todayTaskSortMode,
+todayTaskGroupMode,
+priorityViewMode,
+upcomingViewMode,
       enableAppSuggestions,
       enableAutoPriority,
       archive,
@@ -888,8 +920,10 @@ setThemeColor(parsed.themeColor || "#05AD98");
     categories,
     darkMode,
     themeColor,
-    priorityViewMode,
-    upcomingViewMode,
+todayTaskSortMode,
+todayTaskGroupMode,
+priorityViewMode,
+upcomingViewMode,
     enableAppSuggestions,
     enableAutoPriority,
     archive,
@@ -2058,6 +2092,10 @@ completedAt: updatedTask.completedAt,
     setManualFocusTaskIds([]);
     setSelectedCategory(initialCategories[0].title);
     setSelectedView("today");
+    setTodayTaskSortMode("veira");
+setTodayTaskGroupMode("none");
+setThemeColor(DEFAULT_THEME_COLOR);
+setDarkMode(false);
 
     setArchiveToast("Veira data reset");
 
@@ -2210,7 +2248,11 @@ completedAt: updatedTask.completedAt,
             border={border}
             allTasks={allTasks}
             prioritizedTasks={prioritizedTasks}
-            highPriorityCount={highPriorityCount}
+taskSortMode={todayTaskSortMode}
+setTaskSortMode={setTodayTaskSortMode}
+taskGroupMode={todayTaskGroupMode}
+setTaskGroupMode={setTodayTaskGroupMode}
+highPriorityCount={highPriorityCount}
             dueSoonCount={dueSoonCount}
             completionPercent={completionPercent}
             suggestedDateCount={suggestedDateCount}
@@ -2445,7 +2487,11 @@ function TodayView({
   border,
   allTasks,
   prioritizedTasks,
-  highPriorityCount,
+taskSortMode,
+setTaskSortMode,
+taskGroupMode,
+setTaskGroupMode,
+highPriorityCount,
   dueSoonCount,
   completionPercent,
   suggestedDateCount,
@@ -2560,7 +2606,7 @@ selectWhySuggestion,
 
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className={`inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[11px] font-[700] transition hover:scale-[1.02] ${
+          className={`hidden h-7 items-center gap-1.5 rounded-full px-3 text-[11px] font-[700] transition hover:scale-[1.02] ${
             darkMode
               ? "bg-white/[0.06] text-white/55 hover:text-white"
               : "bg-black/[0.035] text-black/50 hover:text-black"
@@ -2807,13 +2853,18 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
 </section>
 
 
-<div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,1fr)]">
+<div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(360px,9fr)]">
+
 <div className="order-1 xl:order-1">
   <TaskListPanel
   title="Veira Prioritized for You"
-  description="Veira lines up your tasks based on intent, urgency, and priority"
+  description="Veira lines up your tasks based on intent, urgency, & priority"
   tasks={prioritizedTasks}
-  darkMode={darkMode}
+sortMode={taskSortMode}
+setSortMode={setTaskSortMode}
+groupMode={taskGroupMode}
+setGroupMode={setTaskGroupMode}
+darkMode={darkMode}
   border={border}
   className={strongerGlass}
   themeColor={themeColor}
@@ -2868,7 +2919,11 @@ function TaskListPanel({
   title,
   description,
   tasks,
-  emptyMessage,
+sortMode = "veira",
+setSortMode = () => {},
+groupMode = "none",
+setGroupMode = () => {},
+emptyMessage,
   darkMode,
   border,
   className,
@@ -2887,10 +2942,9 @@ function TaskListPanel({
   selectWhySuggestion,
 }: any) {
   const [showAllTasks, setShowAllTasks] = useState(false);
-  const [sortMode, setSortMode] = useState<"veira" | "date" | "priority">("veira");
   const [expandedWhyTaskId, setExpandedWhyTaskId] = useState<string | null>(null);
   const whyDropdownRef = useRef<HTMLDivElement | null>(null);
-
+  
   const defaultVisibleTaskCount = 6;
 
   const priorityRank: Record<string, number> = {
@@ -2936,12 +2990,168 @@ function TaskListPanel({
     return nextTasks;
   }, [tasks, sortMode]);
 
+  const categoryGroupOrder: Record<string, number> = {};
+
+  sortedTasks.forEach((task: any) => {
+    const categoryTitle = task.category || "No Category";
+
+    if (categoryGroupOrder[categoryTitle] === undefined) {
+      categoryGroupOrder[categoryTitle] = Object.keys(categoryGroupOrder).length;
+    }
+  });
+
+  const getTaskGroupMeta = (task: any) => {
+    if (groupMode === "category") {
+      const categoryTitle = task.category || "No Category";
+
+      return {
+        key: `category:${categoryTitle}`,
+        title: categoryTitle,
+        description: "Category",
+        order: categoryGroupOrder[categoryTitle] ?? 999,
+        dotColor: themeColor,
+      };
+    }
+
+    if (groupMode === "priority") {
+      const normalizedPriority =
+        task.priority === "Med" ? "Medium" : task.priority || "Low";
+
+      const priorityMeta: Record<
+        string,
+        {
+          key: string;
+          title: string;
+          description: string;
+          order: number;
+          dotColor: string;
+        }
+      > = {
+        High: {
+          key: "priority:high",
+          title: "High",
+          description: "Highest attention",
+          order: 0,
+          dotColor: "#ef4444",
+        },
+        Medium: {
+          key: "priority:medium",
+          title: "Mid",
+          description: "Useful, but less urgent",
+          order: 1,
+          dotColor: "#f97316",
+        },
+        Low: {
+          key: "priority:low",
+          title: "Low",
+          description: "Keep visible",
+          order: 2,
+          dotColor: "#10b981",
+        },
+      };
+
+      return priorityMeta[normalizedPriority] || priorityMeta.Low;
+    }
+
+    if (groupMode === "date") {
+      const date = getTaskDate(task);
+
+      if (!date) {
+        return {
+          key: "date:no-date",
+          title: "No date",
+          description: "Needs scheduling",
+          order: 9999999999999,
+          dotColor: "#71717a",
+        };
+      }
+
+      if (isOverdue(date)) {
+        return {
+          key: "date:overdue",
+          title: "Overdue",
+          description: "Past due",
+          order: 0,
+          dotColor: "#ef4444",
+        };
+      }
+
+      if (isToday(date)) {
+        return {
+          key: "date:today",
+          title: "Today",
+          description: formatDueDate(date),
+          order: 1,
+          dotColor: themeColor,
+        };
+      }
+
+      if (isTomorrow(date)) {
+        return {
+          key: "date:tomorrow",
+          title: "Tomorrow",
+          description: formatDueDate(date),
+          order: 2,
+          dotColor: "#f59e0b",
+        };
+      }
+
+      return {
+        key: `date:${date}`,
+        title: formatDueDate(date),
+        description: "Scheduled date",
+        order: 3 + new Date(`${date}T00:00:00`).getTime(),
+        dotColor: "#3b82f6",
+      };
+    }
+
+    return {
+      key: "none",
+      title: "",
+      description: "",
+      order: 0,
+      dotColor: themeColor,
+    };
+  };
+
+  const displayTasks =
+    groupMode === "none"
+      ? sortedTasks
+      : sortedTasks
+          .map((task: any, index: number) => ({
+            task,
+            index,
+          }))
+          .sort((a, b) => {
+            const groupA = getTaskGroupMeta(a.task);
+            const groupB = getTaskGroupMeta(b.task);
+
+            if (groupA.order !== groupB.order) {
+              return groupA.order - groupB.order;
+            }
+
+            return a.index - b.index;
+          })
+          .map(({ task }) => task);
+
+  const groupCounts = displayTasks.reduce<Record<string, number>>(
+    (acc, task: any) => {
+      if (groupMode === "none") return acc;
+
+      const groupKey = getTaskGroupMeta(task).key;
+      acc[groupKey] = (acc[groupKey] || 0) + 1;
+
+      return acc;
+    },
+    {}
+  );
+
   const visibleTasks = showAllTasks
-    ? sortedTasks
-    : sortedTasks.slice(0, defaultVisibleTaskCount);
+    ? displayTasks
+    : displayTasks.slice(0, defaultVisibleTaskCount);
 
   const hiddenTaskCount = Math.max(
-    sortedTasks.length - defaultVisibleTaskCount,
+    displayTasks.length - defaultVisibleTaskCount,
     0
   );
 
@@ -2977,7 +3187,7 @@ function TaskListPanel({
     <section
       className={`min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
     >
-      <div className="mb-4 flex flex-col gap-2 sm:mb-5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+      <div className="mb-2 flex flex-col gap-3 sm:mb-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[16px] sm:font-[700] sm:tracking-normal">
             {title}
@@ -2985,63 +3195,118 @@ function TaskListPanel({
           </h2>
 
           <p
-            className={`mt-1 text-[12px] leading-5 sm:text-xs ${
-              darkMode ? "text-white/40" : "text-black/40"
-            }`}
-          >
-            {description}
-          </p>
+  className="mt-1 text-[12px] font-[600] leading-5 sm:text-xs"
+  style={{
+    color: themeColor,
+  }}
+>
+  {description}
+</p>
         </div>
 
         {ranked && (
-          <div className="flex shrink-0 items-center gap-2">
-            <span
-              className={`text-[10px] font-[700] tracking-[0.12em] ${
-                darkMode ? "text-white/35" : "text-black/35"
-              }`}
-            >
-              Sort by
-            </span>
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:items-end">
+            <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+              <span
+                className={`shrink-0 text-[10px] font-[700] tracking-[0.12em] ${
+                  darkMode ? "text-white/35" : "text-black/35"
+                }`}
+              >
+                Group by
+              </span>
 
-            <div
-              className={`flex rounded-2xl border p-1 ${
-                darkMode
-                  ? "border-white/[0.08] bg-white/[0.04]"
-                  : "border-black/[0.06] bg-black/[0.025]"
-              }`}
-            >
-              {[
-                { label: "Veira", value: "veira" },
-                { label: "Date", value: "date" },
-                { label: "Priority", value: "priority" },
-              ].map((option) => {
-                const isActive = sortMode === option.value;
+              <div
+                className={`flex max-w-full overflow-x-auto rounded-2xl border p-1 ${
+                  darkMode
+                    ? "border-white/[0.08] bg-white/[0.04]"
+                    : "border-black/[0.06] bg-black/[0.025]"
+                }`}
+              >
+                {[
+                  { label: "None", value: "none" },
+                  { label: "Category", value: "category" },
+                  { label: "Priority", value: "priority" },
+                  { label: "Due date", value: "date" },
+                ].map((option) => {
+                  const isActive = groupMode === option.value;
 
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() =>
-                      setSortMode(option.value as "veira" | "date" | "priority")
-                    }
-                    className={`h-8 rounded-xl px-3 text-[11px] font-[900] transition ${
-                      isActive
-                        ? "text-white"
-                        : darkMode
-                        ? "text-white/45 hover:text-white"
-                        : "text-black/45 hover:text-black"
-                    }`}
-                    style={isActive ? { backgroundColor: themeColor } : undefined}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setGroupMode(option.value as GroupMode);
+                        setShowAllTasks(false);
+                      }}
+                      className={`h-8 shrink-0 rounded-xl px-2.5 text-[11px] font-[900] transition ${
+                        isActive
+                          ? "text-white"
+                          : darkMode
+                          ? "text-white/45 hover:text-white"
+                          : "text-black/45 hover:text-black"
+                      }`}
+                      style={
+                        isActive ? { backgroundColor: themeColor } : undefined
+                      }
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+              <span
+                className={`shrink-0 text-[10px] font-[700] tracking-[0.12em] ${
+                  darkMode ? "text-white/35" : "text-black/35"
+                }`}
+              >
+                Sort by
+              </span>
+
+              <div
+                className={`flex rounded-2xl border p-1 ${
+                  darkMode
+                    ? "border-white/[0.08] bg-white/[0.04]"
+                    : "border-black/[0.06] bg-black/[0.025]"
+                }`}
+              >
+                {[
+                  { label: "Veira", value: "veira" },
+                  { label: "Date", value: "date" },
+                  { label: "Priority", value: "priority" },
+                ].map((option) => {
+                  const isActive = sortMode === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSortMode(option.value as SortMode);
+                        setShowAllTasks(false);
+                      }}
+                      className={`h-8 rounded-xl px-3 text-[11px] font-[900] transition ${
+                        isActive
+                          ? "text-white"
+                          : darkMode
+                          ? "text-white/45 hover:text-white"
+                          : "text-black/45 hover:text-black"
+                      }`}
+                      style={
+                        isActive ? { backgroundColor: themeColor } : undefined
+                      }
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      <div className="space-y-0 sm:space-y-3">
+      <div className={groupMode === "none" ? "space-y-0 sm:space-y-3" : "space-y-0"}>
         {tasks.length === 0 && (
           <div
             className={`rounded-2xl border border-dashed p-8 text-center text-sm ${
@@ -3058,412 +3323,531 @@ function TaskListPanel({
           const isSuggesting = suggestingTaskIds.includes(task.id);
           const visibleDueDate = task.dueDate || task.suggestedDueDate;
           const visibleDueDateParts = formatDueDateParts(visibleDueDate);
-
+          
+          const rankIndex = sortedTasks.findIndex(
+            (candidate: any) => candidate.id === task.id
+          );
+          
+          const rankDisplay = rankIndex >= 0 ? rankIndex + 1 : index + 1;
+          
+          const groupMeta = getTaskGroupMeta(task);
+          const previousTask = index > 0 ? visibleTasks[index - 1] : null;
+          const previousGroupKey = previousTask
+            ? getTaskGroupMeta(previousTask).key
+            : "";
+          
+          const shouldShowGroupHeader =
+            groupMode !== "none" && groupMeta.key !== previousGroupKey;
+          
+          const isGrouped = groupMode !== "none";
+          
+          const groupAccent =
+            groupMode === "priority" ? groupMeta.dotColor : themeColor;
+          
+          const currentGroupCount = groupCounts[groupMeta.key] || 0;
+          
+          const groupLabel =
+            groupMode === "category"
+              ? "Category"
+              : groupMode === "priority"
+              ? "Priority"
+              : "Due date";
+          
+          const taskPanelClass = isGrouped
+            ? `relative hidden min-h-[78px] min-w-0 items-center gap-4 overflow-visible rounded-none border-0 px-1 py-3 transition-colors duration-150 sm:flex ${
+                draggableTasks ? "cursor-grab active:cursor-grabbing" : ""
+              } ${
+                manualFocusTaskIds.includes(task.id)
+                  ? "rounded-[18px] border border-[color:var(--theme-color)] bg-[color:var(--theme-soft)] px-3"
+                  : darkMode
+                  ? "hover:bg-white/[0.025]"
+                  : "hover:bg-black/[0.012]"
+              }`
+            : `relative hidden min-h-[72px] min-w-0 items-center gap-4 overflow-hidden rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${
+                task.dueDate && isOverdue(task.dueDate)
+                  ? darkMode
+                    ? "border-red-400/35 shadow-[0_14px_35px_rgba(239,68,68,0.10)]"
+                    : "border-red-400/35 bg-red-50/25 shadow-[0_14px_35px_rgba(239,68,68,0.08)]"
+                  : ""
+              } ${draggableTasks ? "cursor-grab active:cursor-grabbing" : ""} ${
+                manualFocusTaskIds.includes(task.id)
+                  ? "border-[color:var(--theme-color)] bg-[color:var(--theme-soft)]"
+                  : `${
+                      darkMode ? "border-white/[0.07]" : border
+                    } ${
+                      darkMode
+                        ? "bg-[#1a1a1a] hover:bg-[#222222]"
+                        : "bg-white hover:bg-[#f6f8f8]"
+                    }`
+              } ${
+                darkMode
+                  ? "hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
+                  : "hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+              }`;
+          
           return (
-            <motion.div
-              key={task.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`group overflow-hidden border-b last:border-b-0 sm:overflow-visible sm:border-b-0 ${border}`}
-            >
-              {/* Mobile compact row */}
-              <div className="flex min-h-[44px] items-center gap-3 px-1 py-2 sm:hidden">
-                <button
-                  onClick={(e) => toggleTaskById(task.id, e)}
-                  className="shrink-0 opacity-70 transition hover:opacity-100"
-                >
-                  <Circle
-                    size={18}
-                    className={darkMode ? "text-white/28" : "text-black/28"}
-                  />
-                </button>
+            <div key={task.id} className="contents">
+           
+           {shouldShowGroupHeader && (
+  <div className={index === 0 ? "pt-1" : "pt-5"}>
+    {index === 0 && (
+      <div className="mb-3 px-1">
+        <span
+          className="inline-flex rounded-[8px] px-2.5 py-1 text-[9px] font-[900] uppercase tracking-[0.16em]"
+          style={{
+            color: themeColor,
+            backgroundColor: `${themeColor}${darkMode ? "16" : "12"}`,
+          }}
+        >
+          {groupLabel}
+        </span>
+      </div>
+    )}
 
-                {ranked && (
-                  <span
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-[900] text-white"
-                    style={{
-                      backgroundColor: index < 3 ? themeColor : "#878787",
-                    }}
-                  >
-                    {index + 1}
-                  </span>
-                )}
+    <div className="mb-2 flex items-center gap-2 px-1">
+      <span
+        className="h-[3px] w-4 shrink-0 rounded-full"
+        style={{ backgroundColor: groupAccent }}
+      />
 
-                <button
-                  onClick={() => {
-                    setSelectedTask(task);
-                    setIsEditModalOpen(true);
-                  }}
-                  title={task.title}
-                  className="min-w-0 flex-1 truncate text-left text-[13px] font-[850] tracking-[-0.02em] transition hover:opacity-70"
-                >
-                  {task.title}
-                </button>
+      <span className="truncate text-[13px] font-[900] leading-none tracking-[-0.025em]">
+        {groupMeta.title}
+      </span>
 
-                {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
+      <span
+        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-[900] ${
+          darkMode
+            ? "bg-white/[0.07] text-white/45"
+            : "bg-black/[0.045] text-black/45"
+        }`}
+      >
+        {currentGroupCount}
+      </span>
+    </div>
 
-                {isSuggesting && (
-                  <Sparkles
-                    size={13}
-                    className="shrink-0 animate-pulse"
-                    style={{ color: themeColor }}
-                  />
-                )}
+    <div
+      className="mb-1 h-px w-full"
+      style={{
+        background: darkMode
+          ? `linear-gradient(90deg, ${groupAccent}70, rgba(255,255,255,0.055), transparent)`
+          : `linear-gradient(90deg, ${groupAccent}60, rgba(0,0,0,0.055), transparent)`,
+      }}
+    />
+  </div>
+)}
 
-                <button
-                  onClick={() => addTaskToFocus(task.id)}
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition active:scale-95 ${
-                    manualFocusTaskIds.includes(task.id)
-                      ? "bg-[#05AD98]/15 text-[#05AD98]"
-                      : darkMode
-                      ? "bg-white/[0.06] text-white/45"
-                      : "bg-black/[0.04] text-black/45"
-                  }`}
-                >
-                  <Eye size={15} />
-                </button>
-              </div>
-
-              {/* Desktop/tablet full row */}
-              <div
-                draggable={draggableTasks}
-                style={
-                  {
-                    "--theme-color": `${themeColor}55`,
-                    "--theme-soft": `${themeColor}18`,
-                  } as React.CSSProperties
-                }
-                onDragStart={(event) => {
-                  if (!draggableTasks) return;
-
-                  event.dataTransfer.setData("text/plain", task.id);
-                  event.dataTransfer.effectAllowed = "copy";
-                }}
-                className={`relative hidden min-h-[72px] min-w-0 items-center gap-4 overflow-hidden rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${
-                  task.dueDate && isOverdue(task.dueDate)
-                    ? darkMode
-                      ? "border-red-400/35 shadow-[0_14px_35px_rgba(239,68,68,0.10)]"
-                      : "border-red-400/35 bg-red-50/25 shadow-[0_14px_35px_rgba(239,68,68,0.08)]"
-                    : ""
-                } ${draggableTasks ? "cursor-grab active:cursor-grabbing" : ""} ${
-                  manualFocusTaskIds.includes(task.id)
-                    ? darkMode
-                      ? "border-[color:var(--theme-color)] bg-[color:var(--theme-soft)]"
-                      : "border-[color:var(--theme-color)] bg-[color:var(--theme-soft)]"
-                    : `${
-                        darkMode ? "border-white/[0.07]" : border
-                      } ${
-                        darkMode
-                          ? "bg-[#1a1a1a] hover:bg-[#222222]"
-                          : "bg-white hover:bg-[#f6f8f8]"
-                      }`
-                } ${
-                  darkMode
-                    ? "hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
-                    : "hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`group overflow-hidden sm:overflow-visible ${
+                  isGrouped
+                    ? `border-b last:border-b-0 ${border}`
+                    : `border-b last:border-b-0 sm:border-b-0 ${border}`
                 }`}
               >
-                <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_250px] gap-4">
-                  <div className="flex min-w-0 items-start gap-4">
-                    <button
-                      onClick={(e) => toggleTaskById(task.id, e)}
-                      className="shrink-0 opacity-70 transition hover:opacity-100"
+                {/* Mobile compact row */}
+                <div className="flex min-h-[44px] items-center gap-3 px-1 py-2 sm:hidden">
+                  <button
+                    onClick={(e) => toggleTaskById(task.id, e)}
+                    className="shrink-0 opacity-70 transition hover:opacity-100"
+                  >
+                    <Circle
+                      size={18}
+                      className={darkMode ? "text-white/28" : "text-black/28"}
+                    />
+                  </button>
+
+                  {ranked && (
+                    <span
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-[900] text-white"
+                      style={{
+                        backgroundColor: isGrouped
+  ? "#878787"
+  : rankDisplay <= 3
+  ? themeColor
+  : "#878787",
+                      }}
                     >
-                      <Circle
-                        size={19}
-                        className={darkMode ? "text-white/25" : "text-black/25"}
-                      />
-                    </button>
+                      {rankDisplay}
+                    </span>
+                  )}
 
-                    {ranked && (
-                      <div
-                        className="mt-[2px] flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[700] text-white"
-                        style={{
-                          backgroundColor: index < 3 ? themeColor : "#878787",
-                        }}
-                      >
-                        {index + 1}
-                      </div>
-                    )}
+                  <button
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setIsEditModalOpen(true);
+                    }}
+                    title={task.title}
+                    className="min-w-0 flex-1 truncate text-left text-[13px] font-[850] tracking-[-0.02em] transition hover:opacity-70"
+                  >
+                    {task.title}
+                  </button>
 
-                    <div className="min-w-0 flex-1">
-                      <p
-                        onClick={() => {
-                          setSelectedTask(task);
-                          setIsEditModalOpen(true);
-                        }}
-                        title={task.title}
-                        className="block min-w-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
-                      >
-                        {task.title}
-                      </p>
+                  {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
 
-                      <div
-                        className={`mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] font-[650] ${
-                          darkMode ? "text-white/38" : "text-black/38"
-                        }`}
-                      >
-                        <span className="truncate">
-                          {task.category} · {task.priority}
-                          {task.whyThisMatters ? " · Context added" : ""}
-                          {isSuggesting ? " · Veira thinking..." : ""}
-                        </span>
+                  {isSuggesting && (
+                    <Sparkles
+                      size={13}
+                      className="shrink-0 animate-pulse"
+                      style={{ color: themeColor }}
+                    />
+                  )}
 
-                        {hasFollowUpTag(task) && (
-                          <span
-                            className="inline-flex shrink-0 items-center gap-0.5 rounded-full font-[850]"
-                            style={{ color: themeColor }}
-                          >
-                            <ChevronRight size={12} />
-                            Follow-up
-                          </span>
-                        )}
-                      </div>
+                  <button
+                    onClick={() => addTaskToFocus(task.id)}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition active:scale-95 ${
+                      manualFocusTaskIds.includes(task.id)
+                        ? "bg-[#05AD98]/15 text-[#05AD98]"
+                        : darkMode
+                        ? "bg-white/[0.06] text-white/45"
+                        : "bg-black/[0.04] text-black/45"
+                    }`}
+                  >
+                    <Eye size={15} />
+                  </button>
+                </div>
 
-                      {Array.isArray(task.whySuggestions) && task.whySuggestions.length > 0 && (
-  <div
-    ref={expandedWhyTaskId === task.id ? whyDropdownRef : null}
-    className="mt-2 w-full max-w-full sm:w-[calc(100%+166px)] sm:max-w-[calc(100%+166px)]"
-  >
-                            <button
-                              onClick={() =>
-                                setExpandedWhyTaskId(
-                                  expandedWhyTaskId === task.id ? null : task.id
-                                )
-                              }
-                              className={`flex w-full max-w-full items-stretch gap-0 overflow-hidden rounded-[18px] border text-left transition ${
-                                darkMode
-                                  ? "border-white/[0.07] bg-white/[0.035] hover:bg-white/[0.055]"
-                                  : "border-black/[0.05] bg-black/[0.018] hover:bg-black/[0.03]"
-                              }`}
-                            >
-                              <span
-                                className="flex shrink-0 items-center justify-center gap-1.5 border-r px-3 text-[10px] font-[900] uppercase tracking-[0.13em]"
-                                style={{
-                                  color: darkMode
-                                    ? "rgba(255,255,255,0.86)"
-                                    : themeColor,
-                                  borderColor: darkMode
-                                    ? "rgba(255,255,255,0.08)"
-                                    : "rgba(0,0,0,0.06)",
-                                }}
-                              >
-                                <Sparkles size={12} />
-                                Why
-                              </span>
+                {/* Desktop/tablet full row */}
+                <div
+                  draggable={draggableTasks}
+                  style={
+                    {
+                      "--theme-color": `${themeColor}55`,
+                      "--theme-soft": `${themeColor}18`,
+                    } as React.CSSProperties
+                  }
+                  onDragStart={(event) => {
+                    if (!draggableTasks) return;
 
-                              <span
-                                className={`min-w-0 flex-1 whitespace-normal break-words px-3 py-2 text-[12px] leading-4 ${
-                                  darkMode ? "text-white/48" : "text-black/48"
-                                }`}
-                              >
-                                {task.whyThisMatters}
-                              </span>
-
-                              <span
-                                className={`flex shrink-0 items-center justify-center border-l px-3 transition ${
-                                  expandedWhyTaskId === task.id ? "rotate-180" : ""
-                                }`}
-                                style={{
-                                  borderColor: darkMode
-                                    ? "rgba(255,255,255,0.08)"
-                                    : "rgba(0,0,0,0.06)",
-                                }}
-                              >
-                                <ChevronDown size={13} className="opacity-45" />
-                              </span>
-                            </button>
-
-                            {expandedWhyTaskId === task.id && (
-                              <div className="mt-2 w-full max-w-full space-y-1.5">
-                                {task.whySuggestions.map(
-                                  (
-                                    suggestion: string,
-                                    suggestionIndex: number
-                                  ) => {
-                                    const isSelected =
-                                      task.whyThisMatters === suggestion;
-
-                                    return (
-                                      <button
-                                        key={suggestion}
-                                        onClick={() => {
-                                          selectWhySuggestion(
-                                            task.id,
-                                            suggestion,
-                                            suggestionIndex
-                                          );
-                                          setExpandedWhyTaskId(null);
-                                        }}
-                                        className={`flex w-full items-center justify-between gap-3 rounded-[14px] border px-3 py-2 text-left text-[11px] font-[700] transition ${
-                                          isSelected
-                                            ? "text-white"
-                                            : darkMode
-                                            ? "border-white/[0.07] bg-[#111111] text-white/55 hover:text-white"
-                                            : "border-black/[0.06] bg-white text-black/55 hover:text-black"
-                                        }`}
-                                        style={
-                                          isSelected
-                                            ? {
-                                                backgroundColor: themeColor,
-                                                borderColor: themeColor,
-                                              }
-                                            : undefined
-                                        }
-                                      >
-                                        <span>{suggestion}</span>
-                                        {isSelected && <Check size={13} />}
-                                      </button>
-                                    );
-                                  }
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                    </div>
-                  </div>
-
-                  <div className="relative flex min-h-[88px] flex-col items-end justify-start">
-                    <div className="flex items-center justify-end gap-2">
-                    <div className="grid w-[150px] shrink-0 grid-cols-[62px_76px] items-start gap-3">
-  <div className="flex h-10 w-[62px] items-start justify-start gap-1.5">
-    {visibleDueDate ? (
-      <>
-        <Calendar
-          size={13}
-          className={`mt-[3px] shrink-0 ${
-            darkMode ? "text-white/55" : "text-black/48"
-          }`}
-        />
-
-        <span
-          className={`flex min-w-0 flex-col text-left leading-none ${
-            darkMode ? "text-white/70" : "text-black/65"
-          }`}
-        >
-          <span className="text-[16px] font-[900] tracking-[-0.04em]">
-            {visibleDueDateParts.day}
-          </span>
-
-          <span className="mt-1 text-[13px] font-[800] tracking-[-0.03em]">
-            {visibleDueDateParts.month}
-          </span>
-        </span>
-      </>
-    ) : (
-      <span className="block h-10 w-[62px]" />
-    )}
-  </div>
-
-  <div
-    className={`flex h-10 w-[76px] items-start justify-start gap-1.5 pt-[4px] ${
-      task.priority === "High"
-        ? "text-red-500"
-        : task.priority === "Medium"
-        ? "text-orange-500"
-        : "text-emerald-500"
-    }`}
-  >
-    <span className="mt-[4px] text-[12px] leading-none">●</span>
-
-    <span className="text-[16px] font-[900] leading-none tracking-[-0.03em]">
-      {task.priority === "Medium" || task.priority === "Med"
-        ? "Mid"
-        : task.priority}
-    </span>
-  </div>
-</div>
-
+                    event.dataTransfer.setData("text/plain", task.id);
+                    event.dataTransfer.effectAllowed = "copy";
+                  }}
+                  className={taskPanelClass}
+                >
+                  <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_250px] gap-4">
+                    <div className="flex min-w-0 items-start gap-4">
                       <button
-                        onClick={() => addTaskToFocus(task.id)}
-                        title={
-                          manualFocusTaskIds.includes(task.id)
-                            ? "Already in focus"
-                            : "Add to focus"
-                        }
-                        className={`flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 ${
-                          manualFocusTaskIds.includes(task.id)
-                            ? "opacity-100"
-                            : "opacity-0 sm:group-hover:opacity-100"
-                        }`}
-                        style={{
-                          color: manualFocusTaskIds.includes(task.id)
-                            ? themeColor
-                            : darkMode
-                            ? "rgba(255,255,255,0.45)"
-                            : "rgba(0,0,0,0.45)",
-                          backgroundColor: manualFocusTaskIds.includes(task.id)
-                            ? `${themeColor}18`
-                            : darkMode
-                            ? "rgba(255,255,255,0.055)"
-                            : "rgba(0,0,0,0.04)",
-                        }}
+                        onClick={(e) => toggleTaskById(task.id, e)}
+                        className="shrink-0 opacity-70 transition hover:opacity-100"
                       >
-                        <Eye size={15} />
-                      </button>
-
-                      <button
-                        onClick={() => togglePinTask(task.id)}
-                        title={task.pinned ? "Pinned" : "Pin to top"}
-                        className={`transition hover:scale-110 ${
-                          task.pinned
-                            ? "opacity-100"
-                            : "opacity-0 sm:group-hover:opacity-35"
-                        }`}
-                        style={{ color: task.pinned ? themeColor : undefined }}
-                      >
-                        <Star
-                          size={16}
-                          fill={task.pinned ? themeColor : "none"}
+                        <Circle
+                          size={19}
+                          className={
+                            darkMode ? "text-white/25" : "text-black/25"
+                          }
                         />
                       </button>
 
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        className="opacity-0 transition hover:!opacity-100 hover:text-red-500 sm:group-hover:opacity-35"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {ranked && (
+                        <div
+                          className="mt-[2px] flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[700] text-white"
+                          style={{
+                            backgroundColor: isGrouped
+                              ? "#878787"
+                              : rankDisplay <= 3
+                              ? themeColor
+                              : "#878787",
+                          }}
+                        >
+                          {rankDisplay}
+                        </div>
+                      )}
+
+                      <div className="min-w-0 flex-1">
+                        <p
+                          onClick={() => {
+                            setSelectedTask(task);
+                            setIsEditModalOpen(true);
+                          }}
+                          title={task.title}
+                          className="block min-w-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
+                        >
+                          {task.title}
+                        </p>
+
+                        <div
+                          className={`mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] font-[650] ${
+                            darkMode ? "text-white/38" : "text-black/38"
+                          }`}
+                        >
+                          <span className="truncate">
+                            {task.category} · {task.priority}
+                            {task.whyThisMatters ? " · Context added" : ""}
+                            {isSuggesting ? " · Veira thinking..." : ""}
+                          </span>
+
+                          {hasFollowUpTag(task) && (
+                            <span
+                              className="inline-flex shrink-0 items-center gap-0.5 rounded-full font-[850]"
+                              style={{ color: themeColor }}
+                            >
+                              <ChevronRight size={12} />
+                              Follow-up
+                            </span>
+                          )}
+                        </div>
+
+                        {Array.isArray(task.whySuggestions) &&
+                          task.whySuggestions.length > 0 && (
+                            <div
+                              ref={
+                                expandedWhyTaskId === task.id
+                                  ? whyDropdownRef
+                                  : null
+                              }
+                              className="mt-2 w-full max-w-full sm:w-[calc(100%+166px)] sm:max-w-[calc(100%+166px)]"
+                            >
+                              <button
+                                onClick={() =>
+                                  setExpandedWhyTaskId(
+                                    expandedWhyTaskId === task.id
+                                      ? null
+                                      : task.id
+                                  )
+                                }
+                                className={`flex w-full max-w-full items-stretch gap-0 overflow-hidden rounded-[18px] border text-left transition ${
+                                  darkMode
+                                    ? "border-white/[0.07] bg-white/[0.035] hover:bg-white/[0.055]"
+                                    : "border-black/[0.05] bg-black/[0.018] hover:bg-black/[0.03]"
+                                }`}
+                              >
+                                <span
+                                  className="flex shrink-0 items-center justify-center gap-1.5 border-r px-3 text-[10px] font-[900] uppercase tracking-[0.13em]"
+                                  style={{
+                                    color: darkMode
+                                      ? "rgba(255,255,255,0.86)"
+                                      : themeColor,
+                                    borderColor: darkMode
+                                      ? "rgba(255,255,255,0.08)"
+                                      : "rgba(0,0,0,0.06)",
+                                  }}
+                                >
+                                  <Sparkles size={12} />
+                                  Why
+                                </span>
+
+                                <span
+                                  className={`min-w-0 flex-1 whitespace-normal break-words px-3 py-2 text-[12px] leading-4 ${
+                                    darkMode
+                                      ? "text-white/48"
+                                      : "text-black/48"
+                                  }`}
+                                >
+                                  {task.whyThisMatters}
+                                </span>
+
+                                <span
+                                  className={`flex shrink-0 items-center justify-center border-l px-3 transition ${
+                                    expandedWhyTaskId === task.id
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                  style={{
+                                    borderColor: darkMode
+                                      ? "rgba(255,255,255,0.08)"
+                                      : "rgba(0,0,0,0.06)",
+                                  }}
+                                >
+                                  <ChevronDown size={13} className="opacity-45" />
+                                </span>
+                              </button>
+
+                              {expandedWhyTaskId === task.id && (
+                                <div className="mt-2 w-full max-w-full space-y-1.5">
+                                  {task.whySuggestions.map(
+                                    (
+                                      suggestion: string,
+                                      suggestionIndex: number
+                                    ) => {
+                                      const isSelected =
+                                        task.whyThisMatters === suggestion;
+
+                                      return (
+                                        <button
+                                          key={suggestion}
+                                          onClick={() => {
+                                            selectWhySuggestion(
+                                              task.id,
+                                              suggestion,
+                                              suggestionIndex
+                                            );
+                                            setExpandedWhyTaskId(null);
+                                          }}
+                                          className={`flex w-full items-center justify-between gap-3 rounded-[14px] border px-3 py-2 text-left text-[11px] font-[700] transition ${
+                                            isSelected
+                                              ? "text-white"
+                                              : darkMode
+                                              ? "border-white/[0.07] bg-[#111111] text-white/55 hover:text-white"
+                                              : "border-black/[0.06] bg-white text-black/55 hover:text-black"
+                                          }`}
+                                          style={
+                                            isSelected
+                                              ? {
+                                                  backgroundColor: themeColor,
+                                                  borderColor: themeColor,
+                                                }
+                                              : undefined
+                                          }
+                                        >
+                                          <span>{suggestion}</span>
+                                          {isSelected && <Check size={13} />}
+                                        </button>
+                                      );
+                                    }
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                      </div>
                     </div>
 
-                    {task.dueDate && isOverdue(task.dueDate) && (
-                      <div className="pointer-events-none absolute bottom-0 right-0">
-                        <div className="relative">
-                          <span
-                            className={`absolute -top-[13px] right-1 text-[9px] font-[900] leading-none tracking-[0.02em] ${
-                              darkMode ? "text-red-300/80" : "text-red-600/75"
+                    <div
+  className={`relative flex ${
+    isGrouped ? "min-h-[72px]" : "min-h-[88px]"
+  } flex-col items-end justify-start`}
+>
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="grid w-[150px] shrink-0 grid-cols-[62px_76px] items-start gap-3">
+                          <div className="flex h-10 w-[62px] items-start justify-start gap-1.5">
+                            {visibleDueDate ? (
+                              <>
+                                <Calendar
+                                  size={13}
+                                  className={`mt-[3px] shrink-0 ${
+                                    darkMode
+                                      ? "text-white/55"
+                                      : "text-black/48"
+                                  }`}
+                                />
+
+                                <span
+                                  className={`flex min-w-0 flex-col text-left leading-none ${
+                                    darkMode
+                                      ? "text-white/70"
+                                      : "text-black/65"
+                                  }`}
+                                >
+                                  <span className="text-[16px] font-[900] tracking-[-0.04em]">
+                                    {visibleDueDateParts.day}
+                                  </span>
+
+                                  <span className="mt-1 text-[13px] font-[800] tracking-[-0.03em]">
+                                    {visibleDueDateParts.month}
+                                  </span>
+                                </span>
+                              </>
+                            ) : (
+                              <span className="block h-10 w-[62px]" />
+                            )}
+                          </div>
+
+                          <div
+                            className={`flex h-10 w-[76px] items-start justify-start gap-1.5 pt-[4px] ${
+                              task.priority === "High"
+                                ? "text-red-500"
+                                : task.priority === "Medium"
+                                ? "text-orange-500"
+                                : "text-emerald-500"
                             }`}
                           >
-                            {getOverdueDays(task.dueDate)}d
-                          </span>
+                            <span className="mt-[4px] text-[12px] leading-none">
+                              ●
+                            </span>
 
-                          <span
-                            className={`relative inline-flex items-center rounded-[7px] border-2 px-3 py-1.5 text-[11px] font-[900] uppercase tracking-[0.14em] shadow-[0_8px_22px_rgba(185,28,28,0.14)] ${
-                              darkMode
-                                ? "border-red-300/70 bg-red-500/[0.06] text-red-300"
-                                : "border-red-600/70 bg-white/50 text-red-600"
-                            }`}
-                          >
-                            OVERDUE
-
-                            <span className="pointer-events-none absolute inset-[3px] rounded-[4px] border border-red-500/25" />
-
-                            <span className="pointer-events-none absolute left-1.5 top-1 h-0.5 w-2 rounded-full bg-red-500/45" />
-                            <span className="pointer-events-none absolute bottom-1.5 left-3 h-0.5 w-3 rounded-full bg-red-500/35" />
-                            <span className="pointer-events-none absolute right-2 top-2 h-0.5 w-2.5 rounded-full bg-red-500/35" />
-                            <span className="pointer-events-none absolute bottom-1 right-3 h-0.5 w-2 rounded-full bg-red-500/30" />
-
-                            <span className="pointer-events-none absolute left-2 top-1/2 h-1 w-1 rounded-full bg-red-500/30" />
-                            <span className="pointer-events-none absolute right-4 top-1/2 h-1 w-1 rounded-full bg-red-500/25" />
-                          </span>
+                            <span className="text-[16px] font-[900] leading-none tracking-[-0.03em]">
+                              {task.priority === "Medium" ||
+                              task.priority === "Med"
+                                ? "Mid"
+                                : task.priority}
+                            </span>
+                          </div>
                         </div>
+
+                        <button
+                          onClick={() => addTaskToFocus(task.id)}
+                          title={
+                            manualFocusTaskIds.includes(task.id)
+                              ? "Already in focus"
+                              : "Add to focus"
+                          }
+                         className="flex h-8 w-8 items-center justify-center rounded-full opacity-100 transition hover:scale-110"
+                          style={{
+                            color: manualFocusTaskIds.includes(task.id)
+                              ? themeColor
+                              : darkMode
+                              ? "rgba(255,255,255,0.45)"
+                              : "rgba(0,0,0,0.45)",
+                            backgroundColor: manualFocusTaskIds.includes(task.id)
+                              ? `${themeColor}18`
+                              : darkMode
+                              ? "rgba(255,255,255,0.055)"
+                              : "rgba(0,0,0,0.04)",
+                          }}
+                        >
+                          <Eye size={15} />
+                        </button>
+
+                        <button
+                          onClick={() => togglePinTask(task.id)}
+                          title={task.pinned ? "Pinned" : "Pin to top"}
+                          className={`flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 ${
+                            task.pinned ? "opacity-100" : "opacity-55 hover:opacity-100"
+                          }`}
+                          style={{ color: task.pinned ? themeColor : undefined }}
+                        >
+                          <Star
+                            size={16}
+                            fill={task.pinned ? themeColor : "none"}
+                          />
+                        </button>
+
+                        <button
+                          onClick={() => deleteTask(task.id)}
+                          className="flex h-8 w-8 items-center justify-center rounded-full opacity-45 transition hover:scale-110 hover:opacity-100 hover:text-red-500"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
-                    )}
+
+                      {task.dueDate && isOverdue(task.dueDate) && (
+                        <div className="pointer-events-none absolute bottom-0 right-0">
+                          <div className="relative">
+                            <span
+                              className={`absolute -top-[13px] right-1 text-[9px] font-[900] leading-none tracking-[0.02em] ${
+                                darkMode ? "text-red-300/80" : "text-red-600/75"
+                              }`}
+                            >
+                              {getOverdueDays(task.dueDate)}d
+                            </span>
+
+                            <span
+                              className={`relative inline-flex items-center rounded-[7px] border-2 px-3 py-1.5 text-[11px] font-[900] uppercase tracking-[0.14em] shadow-[0_8px_22px_rgba(185,28,28,0.14)] ${
+                                darkMode
+                                  ? "border-red-300/70 bg-red-500/[0.06] text-red-300"
+                                  : "border-red-600/70 bg-white/50 text-red-600"
+                              }`}
+                            >
+                              OVERDUE
+
+                              <span className="pointer-events-none absolute inset-[3px] rounded-[4px] border border-red-500/25" />
+
+                              <span className="pointer-events-none absolute left-1.5 top-1 h-0.5 w-2 rounded-full bg-red-500/45" />
+                              <span className="pointer-events-none absolute bottom-1.5 left-3 h-0.5 w-3 rounded-full bg-red-500/35" />
+                              <span className="pointer-events-none absolute right-2 top-2 h-0.5 w-2.5 rounded-full bg-red-500/35" />
+                              <span className="pointer-events-none absolute bottom-1 right-3 h-0.5 w-2 rounded-full bg-red-500/30" />
+
+                              <span className="pointer-events-none absolute left-2 top-1/2 h-1 w-1 rounded-full bg-red-500/30" />
+                              <span className="pointer-events-none absolute right-4 top-1/2 h-1 w-1 rounded-full bg-red-500/25" />
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
           );
         })}
 
@@ -5097,7 +5481,7 @@ enableAppSuggestions,
           description="Choose how Veira looks."
           darkMode={darkMode}
           border={border}
-          className={className}
+          className={`hidden ${className}`}
         >
           <SettingsRow
             title="Theme"
@@ -5127,14 +5511,22 @@ enableAppSuggestions,
 >
   <div className="grid grid-cols-6 gap-3 sm:grid-cols-8 lg:grid-cols-10">
     {[
-        "#2FB7A7", // Veira Teal
-        "#EBCB8B", // Warm Gold
-        "#0E95A8", // Deep Teal
-        "#64748B", // Slate
-        "#C4B5FD", // Soft Lavender
-        "#A7D7C5", // Soft Sage
-        "#1F2937", // Charcoal Navy
-        "#4B5563", // Soft Graphite
+           "#2FB7A7", // Veira Teal
+           "#0E95A8", // Deep Teal
+         
+           "#2563EB", // Calm Blue
+           "#7C3AED", // Deep Violet
+           "#059669", // Emerald
+         
+           "#D97706", // Burnt Amber
+           "#C2410C", // Terracotta
+           "#BE185D", // Raspberry
+         
+           "#334155", // Blue Slate
+           "#6D5D6E", // Muted Plum
+           "#1F2937", // Charcoal Navy
+           "#4B5563", // Soft Graphite
+           "#D72246", // Reddish Pink
     ].map((color) => {
       const isActive = themeColor === color;
 
@@ -6149,11 +6541,6 @@ function MobileBottomNav({
       count: inboxCount,
     },
     
-    {
-      key: "priorities",
-      label: "Priority",
-      icon: Flame,
-    },
     {
       key: "settings",
       label: "Settings",

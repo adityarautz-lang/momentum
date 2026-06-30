@@ -20,7 +20,6 @@ const mainNavItems = [
   { key: "today", label: "Today", icon: CalendarDays },
   { key: "inbox", label: "Inbox", icon: Inbox },
   { key: "upcoming", label: "Upcoming", icon: Calendar },
-  { key: "priorities", label: "Priority", icon: Star },
 ];
 
 const libraryNavItems = [
@@ -106,86 +105,86 @@ export default function Sidebar({
     <aside
       className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.30)] lg:flex ${border} ${sidebarBg} ${text}`}
     >
-   <div className="mb-7 flex items-center gap-3">
-  <div
-    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[17px] text-[20px] font-[900] shadow-[0_12px_28px_rgba(0,0,0,0.18)]"
-    style={{
-      backgroundColor: darkMode ? "#FFFFFF" : "#1F2937",
-      color: darkMode ? "#1F2937" : "#FFFFFF",
-    }}
-  >
-  <svg
-  width="30"
-  height="30"
-  viewBox="0 0 36 36"
-  fill="none"
-  aria-hidden="true"
->
-  <path
-    d="M7.5 18.6L14.2 25.2L29 10.3"
-    stroke="currentColor"
-    strokeWidth="4.4"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  />
+      <div className="mb-7 flex items-center gap-3">
+        <div
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[17px] text-[20px] font-[900] shadow-[0_12px_28px_rgba(0,0,0,0.18)]"
+          style={{
+            backgroundColor: darkMode ? "#FFFFFF" : "#1F2937",
+            color: darkMode ? "#1F2937" : "#FFFFFF",
+          }}
+        >
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 36 36"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M7.5 18.6L14.2 25.2L29 10.3"
+              stroke="currentColor"
+              strokeWidth="4.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
 
-  <path
-    d="M24.8 10.4H29V14.6"
-    stroke="currentColor"
-    strokeWidth="4.4"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    opacity="0.55"
-  />
+            <path
+              d="M24.8 10.4H29V14.6"
+              stroke="currentColor"
+              strokeWidth="4.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity="0.55"
+            />
 
-  <path
-    d="M6.5 10.2H15.5"
-    stroke="currentColor"
-    strokeWidth="2.8"
-    strokeLinecap="round"
-    opacity="0.35"
-  />
+            <path
+              d="M6.5 10.2H15.5"
+              stroke="currentColor"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+              opacity="0.35"
+            />
 
-  <path
-    d="M4.8 14.2H10.8"
-    stroke="currentColor"
-    strokeWidth="2.8"
-    strokeLinecap="round"
-    opacity="0.22"
-  />
-</svg>
-  </div>
+            <path
+              d="M4.8 14.2H10.8"
+              stroke="currentColor"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+              opacity="0.22"
+            />
+          </svg>
+        </div>
 
-  <div className="min-w-0">
-    <h1
-      className="text-[30px] font-[900] leading-none tracking-[-0.055em]"
-      style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
-    >
-      Veira
-    </h1>
+        <div className="min-w-0">
+          <h1
+            className="text-[30px] font-[900] leading-none tracking-[-0.055em]"
+            style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
+          >
+            Veira
+          </h1>
 
-    <p
-      className="uppercase mt-1.5 whitespace-nowrap text-[9px] font-[700] leading-none tracking-[0.04em]"
-      style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
-    >
-      Focus. Prioritize. Move forward.
-    </p>
-  </div>
-</div>
+          <p
+            className="mt-1.5 whitespace-nowrap text-[9px] font-[700] uppercase leading-none tracking-[0.04em]"
+            style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
+          >
+            Focus. Prioritize. Move forward.
+          </p>
+        </div>
+      </div>
 
-<div
-  className={`mb-6 rounded-[20px] border p-3 shadow-[0_12px_30px_rgba(0,0,0,0.08)] ${softBorder} ${softSurface}`}
->
-  <div className="mb-2 flex items-center gap-2">
-    <Sparkles size={14} style={{ color: themeColor }} />
+      <div
+        className={`mb-6 rounded-[20px] border p-3 shadow-[0_12px_30px_rgba(0,0,0,0.08)] ${softBorder} ${softSurface}`}
+      >
+        <div className="mb-2 flex items-center gap-2">
+          <Sparkles size={14} style={{ color: themeColor }} />
 
-    <p className={`text-xs font-[800] ${text}`}>AI planning enabled</p>
-  </div>
+          <p className={`text-xs font-[800] ${text}`}>AI planning enabled</p>
+        </div>
 
-  <p className={`text-[11px] leading-relaxed ${mutedText}`}>
-    Veira can prioritize and suggest dates from your task titles.
-  </p>
-</div>
+        <p className={`text-[11px] leading-relaxed ${mutedText}`}>
+          Veira can prioritize and suggest dates from your task titles.
+        </p>
+      </div>
 
       <nav className="relative z-10 min-h-0 flex-1 overflow-y-auto pr-1">
         <SidebarSectionLabel label="Plan" mutedText={mutedText} />
@@ -239,7 +238,7 @@ export default function Sidebar({
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setDarkMode(!darkMode)}
-            className={`flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[750] transition ${
+            className={`hidden h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[750] transition ${
               darkMode
                 ? "text-white/68 hover:text-white"
                 : "text-black/62 hover:text-black"
