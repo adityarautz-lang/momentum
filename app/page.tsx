@@ -3389,7 +3389,20 @@ emptyMessage,
             <div key={task.id} className="contents">
            
            {shouldShowGroupHeader && (
-  <div className={index === 0 ? "pt-1" : "pt-5"}>
+  <motion.div
+    layout="position"
+    initial={{ opacity: 0, y: -8 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{
+      duration: 0.45,
+      ease: [0.16, 1, 0.3, 1],
+      layout: {
+        duration: 0.78,
+        ease: [0.16, 1, 0.3, 1],
+      },
+    }}
+    className={index === 0 ? "pt-1" : "pt-5"}
+  >
     {index === 0 && (
       <div className="mb-3 px-1">
         <span
@@ -3433,13 +3446,29 @@ emptyMessage,
           : `linear-gradient(90deg, ${groupAccent}60, rgba(0,0,0,0.055), transparent)`,
       }}
     />
-  </div>
+  </motion.div>
 )}
 
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`group overflow-hidden sm:overflow-visible ${
+             <motion.div
+  layout="position"
+  initial={{ opacity: 0, y: -10, scale: 0.985 }}
+  animate={{ opacity: 1, y: 0, scale: 1 }}
+  transition={{
+    opacity: { duration: 0.26 },
+    y: {
+      duration: 0.62,
+      ease: [0.16, 1, 0.3, 1],
+    },
+    scale: {
+      duration: 0.62,
+      ease: [0.16, 1, 0.3, 1],
+    },
+    layout: {
+      duration: 0.86,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  }}
+  className={`group overflow-hidden will-change-transform sm:overflow-visible ${
                   isGrouped
                     ? `border-b last:border-b-0 ${border}`
                     : `border-b last:border-b-0 sm:border-b-0 ${border}`
