@@ -844,6 +844,7 @@ const taskListRef = useRef<HTMLElement | null>(null);
 const lastClipboardTextRef = useRef("");
 const clipboardCheckInFlightRef = useRef(false);
 const anchorScrollAnimationRef = useRef<number | null>(null);
+const anchorRequestIdRef = useRef(0);
 const anchorPreviousScrollBehaviorRef = useRef<string | null>(null);
 
 const easeAnchorScroll = (progress: number) => {
@@ -902,34 +903,48 @@ const animateWindowScrollTo = (targetTop: number, duration = 1500) => {
   anchorScrollAnimationRef.current = window.requestAnimationFrame(step);
 };
 
-const anchorTaskList = () => {
-  if (typeof window === "undefined") return;
+const getTaskListAnchorElement = () => {
+  if (typeof document === "undefined") return null;
 
-  const el = taskListRef.current;
-  if (!el) return;
+  return taskListRef.current || document.getElementById("veira-task-list-anchor");
+};
+
+const anchorTaskList = () => {
+  if (typeof window === "undefined") return false;
+
+  const el = getTaskListAnchorElement();
+  if (!el) return false;
 
   const rect = el.getBoundingClientRect();
   const idealTopOffset = window.innerWidth < 1024 ? 148 : 32;
-  const goodViewTop = idealTopOffset - 16;
-  const goodViewBottom = window.innerHeight * 0.4;
-
-  const alreadyInGoodView =
-    rect.top >= goodViewTop && rect.top <= goodViewBottom;
-
-  if (alreadyInGoodView) return;
-
   const targetTop = Math.max(0, rect.top + window.scrollY - idealTopOffset);
 
-  animateWindowScrollTo(targetTop, 1000);
+  if (Math.abs(targetTop - window.scrollY) < 4) return true;
+
+  animateWindowScrollTo(targetTop, 950);
+  return true;
 };
 
 const anchorTaskListSoon = () => {
   if (typeof window === "undefined") return;
 
-  requestAnimationFrame(() => {
+  const requestId = anchorRequestIdRef.current + 1;
+  anchorRequestIdRef.current = requestId;
+
+  [80, 260, 520, 900].forEach((delay) => {
     window.setTimeout(() => {
-      anchorTaskList();
-    }, 280);
+      if (anchorRequestIdRef.current !== requestId) return;
+
+      window.requestAnimationFrame(() => {
+        if (anchorRequestIdRef.current !== requestId) return;
+
+        const anchored = anchorTaskList();
+
+        if (anchored) {
+          anchorRequestIdRef.current = requestId + 1;
+        }
+      });
+    }, delay);
   });
 };
 
@@ -3577,9 +3592,10 @@ emptyMessage,
 
   return (
     <section
-      ref={taskListRef}
-      className={`scroll-mt-[148px] min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:px-6 sm:py-5 lg:scroll-mt-8 ${className} ${border}`}
-    >
+  id="veira-task-list-anchor"
+  ref={taskListRef}
+  className={`scroll-mt-[148px] min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:px-6 sm:py-5 lg:scroll-mt-8 ${className} ${border}`}
+>
       <div className="mb-0 flex flex-col gap-2 sm:mb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[16px] sm:font-[700] sm:tracking-normal">
@@ -3792,7 +3808,7 @@ emptyMessage,
       duration: 0.45,
       ease: [0.16, 1, 0.3, 1],
       layout: {
-        duration: 0.78,
+        duration: 1.05,
         ease: [0.16, 1, 0.3, 1],
       },
     }}
@@ -3859,7 +3875,7 @@ emptyMessage,
       ease: [0.16, 1, 0.3, 1],
     },
     layout: {
-      duration: 0.86,
+      duration: 1.15,
       ease: [0.16, 1, 0.3, 1],
     },
   }}
