@@ -800,6 +800,96 @@ const [userRole, setUserRole] = useState("");
 const [currentTime, setCurrentTime] = useState(new Date());
 const [manualFocusTaskIds, setManualFocusTaskIds] = useState<string[]>([]);
 const [isLoaded, setIsLoaded] = useState(false);
+const taskListRef = useRef<HTMLElement | null>(null);
+const anchorScrollAnimationRef = useRef<number | null>(null);
+const anchorPreviousScrollBehaviorRef = useRef<string | null>(null);
+
+const easeAnchorScroll = (progress: number) => {
+  return -(Math.cos(Math.PI * progress) - 1) / 2;
+};
+
+const restoreNativeScrollBehavior = () => {
+  if (typeof document === "undefined") return;
+
+  if (anchorPreviousScrollBehaviorRef.current === null) return;
+
+  document.documentElement.style.scrollBehavior =
+    anchorPreviousScrollBehaviorRef.current;
+  anchorPreviousScrollBehaviorRef.current = null;
+};
+
+const animateWindowScrollTo = (targetTop: number, duration = 1500) => {
+  if (typeof window === "undefined") return;
+
+  if (anchorScrollAnimationRef.current !== null) {
+    window.cancelAnimationFrame(anchorScrollAnimationRef.current);
+    anchorScrollAnimationRef.current = null;
+    restoreNativeScrollBehavior();
+  }
+
+  const startTop = window.scrollY;
+  const distance = targetTop - startTop;
+
+  if (Math.abs(distance) < 8) return;
+
+  anchorPreviousScrollBehaviorRef.current =
+    document.documentElement.style.scrollBehavior;
+  document.documentElement.style.scrollBehavior = "auto";
+
+  const startTime = performance.now();
+
+  const step = (currentTime: number) => {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easedProgress = easeAnchorScroll(progress);
+
+    window.scrollTo({
+      top: startTop + distance * easedProgress,
+      behavior: "auto",
+    });
+
+    if (progress < 1) {
+      anchorScrollAnimationRef.current = window.requestAnimationFrame(step);
+      return;
+    }
+
+    anchorScrollAnimationRef.current = null;
+    restoreNativeScrollBehavior();
+  };
+
+  anchorScrollAnimationRef.current = window.requestAnimationFrame(step);
+};
+
+const anchorTaskList = () => {
+  if (typeof window === "undefined") return;
+
+  const el = taskListRef.current;
+  if (!el) return;
+
+  const rect = el.getBoundingClientRect();
+  const idealTopOffset = window.innerWidth < 1024 ? 148 : 32;
+  const goodViewTop = idealTopOffset - 16;
+  const goodViewBottom = window.innerHeight * 0.4;
+
+  const alreadyInGoodView =
+    rect.top >= goodViewTop && rect.top <= goodViewBottom;
+
+  if (alreadyInGoodView) return;
+
+  const targetTop = Math.max(0, rect.top + window.scrollY - idealTopOffset);
+
+  animateWindowScrollTo(targetTop, 1000);
+};
+
+const anchorTaskListSoon = () => {
+  if (typeof window === "undefined") return;
+
+  requestAnimationFrame(() => {
+    window.setTimeout(() => {
+      anchorTaskList();
+    }, 280);
+  });
+};
 
   const todayDate = getTodayDate();
 
@@ -1095,10 +1185,7 @@ const viewDueReminderTasks = () => {
   setTodayTaskGroupMode("date");
   setTodayTaskSortMode("date");
   closeDueReminderPopup();
-
-  window.setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, 50);
+  anchorTaskListSoon();
 };
 
 const openDueReminderTask = (task: any) => {
@@ -1546,6 +1633,7 @@ const modalSelect = darkMode
   
     setNewTask("");
     setNewTaskWhy("");
+    anchorTaskListSoon();
   
     try {
       if (!manualWhy) {
@@ -1770,6 +1858,7 @@ setNewTask("");
 setExtractInput("");
 setExtractedTasks([]);
 setExtractError("");
+anchorTaskListSoon();
   };
 
   /* ------------------------------------------------ */
@@ -1813,6 +1902,7 @@ setExtractError("");
   
     if (isAlreadyCompleted) {
       setCompletedToday((prev) => prev.filter((task) => task.id !== taskId));
+      anchorTaskListSoon();
       return;
     }
   
@@ -1824,6 +1914,8 @@ setExtractError("");
       },
       ...prev.filter((task) => task.id !== taskId),
     ]);
+
+    anchorTaskListSoon();
   };
 
   /* ------------------------------------------------ */
@@ -1847,6 +1939,7 @@ setExtractError("");
     );
   
     setCompletedToday((prev) => prev.filter((task) => task.id !== taskId));
+    anchorTaskListSoon();
   };
 
 
@@ -1934,6 +2027,7 @@ setExtractError("");
   
     setIsEditModalOpen(false);
     setSelectedTask(null);
+    anchorTaskListSoon();
   };
 
   /* ------------------------------------------------ */
@@ -2328,6 +2422,8 @@ addTask={addTask}
             setManualFocusTaskIds={setManualFocusTaskIds}
 togglePinTask={togglePinTask}
             selectWhySuggestion={selectWhySuggestion}
+            taskListRef={taskListRef}
+            anchorTaskListSoon={anchorTaskListSoon}
           />
             )}
 
@@ -2576,6 +2672,8 @@ manualFocusTaskIds,
 setManualFocusTaskIds,
 togglePinTask,
 selectWhySuggestion,
+taskListRef,
+anchorTaskListSoon,
 }: any) {
   const [showMorningBrief, setShowMorningBrief] = useState(false);
   const [morningBrief, setMorningBrief] = useState({
@@ -2937,6 +3035,8 @@ darkMode={darkMode}
   setManualFocusTaskIds={setManualFocusTaskIds}
 togglePinTask={togglePinTask}
 selectWhySuggestion={selectWhySuggestion}
+taskListRef={taskListRef}
+anchorTaskListSoon={anchorTaskListSoon}
 />
   </div>
 
@@ -2996,6 +3096,8 @@ emptyMessage,
   setManualFocusTaskIds,
   togglePinTask,
   selectWhySuggestion,
+  taskListRef,
+  anchorTaskListSoon = () => {},
 }: any) {
   const [showAllTasks, setShowAllTasks] = useState(false);
   const [expandedWhyTaskId, setExpandedWhyTaskId] = useState<string | null>(null);
@@ -3241,7 +3343,8 @@ emptyMessage,
 
   return (
     <section
-      className={`min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${className} ${border}`}
+      ref={taskListRef}
+      className={`scroll-mt-[148px] min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 lg:scroll-mt-8 ${className} ${border}`}
     >
       <div className="mb-2 flex flex-col gap-3 sm:mb-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="min-w-0">
@@ -3292,6 +3395,7 @@ emptyMessage,
                       onClick={() => {
                         setGroupMode(option.value as GroupMode);
                         setShowAllTasks(false);
+                        anchorTaskListSoon();
                       }}
                       className={`h-8 shrink-0 rounded-xl px-2.5 text-[11px] font-[900] transition ${
                         isActive
@@ -3340,6 +3444,7 @@ emptyMessage,
                       onClick={() => {
                         setSortMode(option.value as SortMode);
                         setShowAllTasks(false);
+                        anchorTaskListSoon();
                       }}
                       className={`h-8 rounded-xl px-3 text-[11px] font-[900] transition ${
                         isActive
