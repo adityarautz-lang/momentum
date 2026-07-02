@@ -3344,9 +3344,9 @@ emptyMessage,
   return (
     <section
       ref={taskListRef}
-      className={`scroll-mt-[148px] min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 lg:scroll-mt-8 ${className} ${border}`}
+      className={`scroll-mt-[148px] min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:px-6 sm:py-5 lg:scroll-mt-8 ${className} ${border}`}
     >
-      <div className="mb-2 flex flex-col gap-3 sm:mb-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+      <div className="mb-0 flex flex-col gap-2 sm:mb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[16px] sm:font-[700] sm:tracking-normal">
             {title}
@@ -3364,7 +3364,7 @@ emptyMessage,
         </div>
 
         {ranked && (
-          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:items-end">
+          <div className="flex w-full shrink-0 flex-col gap-1 sm:w-auto sm:items-end">
             <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
               <span
                 className={`shrink-0 text-[10px] font-[700] tracking-[0.12em] ${
@@ -3375,7 +3375,7 @@ emptyMessage,
               </span>
 
               <div
-                className={`flex max-w-full overflow-x-auto rounded-2xl border p-1 ${
+                className={`flex max-w-full overflow-x-auto rounded-[14px] border p-0.5 ${
                   darkMode
                     ? "border-white/[0.08] bg-white/[0.04]"
                     : "border-black/[0.06] bg-black/[0.025]"
@@ -3397,7 +3397,7 @@ emptyMessage,
                         setShowAllTasks(false);
                         anchorTaskListSoon();
                       }}
-                      className={`h-8 shrink-0 rounded-xl px-2.5 text-[11px] font-[900] transition ${
+                      className={`h-7 shrink-0 rounded-[11px] px-2 text-[10px] font-[900] transition ${
                         isActive
                           ? "text-white"
                           : darkMode
@@ -3425,7 +3425,7 @@ emptyMessage,
               </span>
 
               <div
-                className={`flex rounded-2xl border p-1 ${
+                className={`flex rounded-[14px] border p-0.5 ${
                   darkMode
                     ? "border-white/[0.08] bg-white/[0.04]"
                     : "border-black/[0.06] bg-black/[0.025]"
@@ -3446,7 +3446,7 @@ emptyMessage,
                         setShowAllTasks(false);
                         anchorTaskListSoon();
                       }}
-                      className={`h-8 rounded-xl px-3 text-[11px] font-[900] transition ${
+                      className={`h-7 rounded-[11px] px-2.5 text-[10px] font-[900] transition ${
                         isActive
                           ? "text-white"
                           : darkMode
@@ -3562,10 +3562,10 @@ emptyMessage,
         ease: [0.16, 1, 0.3, 1],
       },
     }}
-    className={index === 0 ? "pt-1" : "pt-5"}
+    className={index === 0 ? "pt-0" : "pt-3"}
   >
     {index === 0 && (
-      <div className="mb-3 px-1">
+      <div className="mb-1.5 px-1">
         <span
           className="inline-flex rounded-[8px] px-2.5 py-1 text-[9px] font-[900] uppercase tracking-[0.16em]"
           style={{
@@ -3578,7 +3578,7 @@ emptyMessage,
       </div>
     )}
 
-    <div className="mb-2 flex items-center gap-2 px-1">
+    <div className="mb-1.5 flex items-center gap-2 px-1">
       <span
         className="h-[3px] w-4 shrink-0 rounded-full"
         style={{ backgroundColor: groupAccent }}
@@ -3600,7 +3600,7 @@ emptyMessage,
     </div>
 
     <div
-      className="mb-1 h-px w-full"
+      className="h-px w-full"
       style={{
         background: darkMode
           ? `linear-gradient(90deg, ${groupAccent}70, rgba(255,255,255,0.055), transparent)`
