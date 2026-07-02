@@ -732,6 +732,43 @@ const hasFollowUpTag = (task: any) => {
   return Array.isArray(task.tags) && task.tags.includes("follow-up");
 };
 
+const MIN_CLIPBOARD_ASSIST_LENGTH = 35;
+const MAX_CLIPBOARD_ASSIST_LENGTH = 8000;
+
+const normalizeClipboardText = (text: string) => {
+  return text.replace(/\s+/g, " ").trim();
+};
+
+const isUsefulClipboardText = (text: string) => {
+  const normalizedText = normalizeClipboardText(text);
+
+  if (normalizedText.length < MIN_CLIPBOARD_ASSIST_LENGTH) return false;
+  if (normalizedText.length > 50000) return false;
+  if (normalizedText.split(/\s+/).length < 5) return false;
+  if (/^\d{4,8}$/.test(normalizedText)) return false;
+  if (/^(https?:\/\/|www\.)\S+$/i.test(normalizedText)) return false;
+
+  return true;
+};
+
+const prepareClipboardTextForExtraction = (text: string) => {
+  return text.trim().slice(0, MAX_CLIPBOARD_ASSIST_LENGTH);
+};
+
+const getClipboardTaskTitle = (text: string) => {
+  const normalizedText = normalizeClipboardText(text);
+  const firstUsefulLine = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
+
+  const preferredTitle = firstUsefulLine || normalizedText || "Copied item";
+
+  if (preferredTitle.length <= 140) return preferredTitle;
+
+  return `${preferredTitle.slice(0, 137).trim()}...`;
+};
+
 function FollowUpTag({ darkMode }: { darkMode: boolean }) {
   return (
     <span
@@ -769,6 +806,9 @@ const [priorityViewMode, setPriorityViewMode] =
   >("calendar");
   const [enableAppSuggestions, setEnableAppSuggestions] = useState(true);
   const [enableAutoPriority, setEnableAutoPriority] = useState(true);
+const [enableClipboardAssist, setEnableClipboardAssist] = useState(true);
+const [clipboardCandidate, setClipboardCandidate] = useState("");
+const [showClipboardPrompt, setShowClipboardPrompt] = useState(false);
   const [archiveToast, setArchiveToast] = useState("");
   const [firecrackers, setFirecrackers] = useState<Firecracker[]>([]);
   const [newTask, setNewTask] = useState("");
@@ -801,6 +841,8 @@ const [currentTime, setCurrentTime] = useState(new Date());
 const [manualFocusTaskIds, setManualFocusTaskIds] = useState<string[]>([]);
 const [isLoaded, setIsLoaded] = useState(false);
 const taskListRef = useRef<HTMLElement | null>(null);
+const lastClipboardTextRef = useRef("");
+const clipboardCheckInFlightRef = useRef(false);
 const anchorScrollAnimationRef = useRef<number | null>(null);
 const anchorPreviousScrollBehaviorRef = useRef<string | null>(null);
 
@@ -949,6 +991,7 @@ setThemeColor(parsed.themeColor || DEFAULT_THEME_COLOR);
         setUpcomingViewMode(parsed.upcomingViewMode || "calendar");
         setEnableAppSuggestions(parsed.enableAppSuggestions ?? true);
         setEnableAutoPriority(parsed.enableAutoPriority ?? true);
+        setEnableClipboardAssist(parsed.enableClipboardAssist ?? true);
         setArchive(parsed.archive || []);
         setCompletedToday(parsed.completedToday || []);
         setDayEndTime(parsed.dayEndTime || "18:00");
@@ -991,7 +1034,12 @@ setThemeColor(parsed.themeColor || DEFAULT_THEME_COLOR);
         themeColor === DEFAULT_THEME_COLOR &&
         darkMode === false &&
         todayTaskSortMode === "veira" &&
-        todayTaskGroupMode === "none"
+        todayTaskGroupMode === "none" &&
+        enableAppSuggestions === true &&
+        enableAutoPriority === true &&
+        enableClipboardAssist === true &&
+        dayEndTime === "18:00" &&
+        userRole === ""
       ) return;
   
     void saveState(user.id, {
@@ -1004,6 +1052,7 @@ priorityViewMode,
 upcomingViewMode,
       enableAppSuggestions,
       enableAutoPriority,
+      enableClipboardAssist,
       archive,
       completedToday,
       dayEndTime,
@@ -1020,6 +1069,7 @@ priorityViewMode,
 upcomingViewMode,
     enableAppSuggestions,
     enableAutoPriority,
+    enableClipboardAssist,
     archive,
     completedToday,
     dayEndTime,
@@ -1193,7 +1243,90 @@ const openDueReminderTask = (task: any) => {
   setIsEditModalOpen(true);
   closeDueReminderPopup();
 };
-  
+
+/* ------------------------------------------------ */
+/* Clipboard Assist */
+/* ------------------------------------------------ */
+
+useEffect(() => {
+  if (!isLoaded) return;
+  if (!enableClipboardAssist) return;
+  if (typeof window === "undefined") return;
+  if (!navigator.clipboard?.readText) return;
+
+  let isMounted = true;
+
+  const checkClipboard = async () => {
+    if (clipboardCheckInFlightRef.current) return;
+    if (document.visibilityState !== "visible") return;
+    if (isExtractModalOpen || isEditModalOpen || showClipboardPrompt) return;
+
+    clipboardCheckInFlightRef.current = true;
+
+    try {
+      const clipboardText = await navigator.clipboard.readText();
+
+      if (!isMounted) return;
+
+      const normalizedText = normalizeClipboardText(clipboardText);
+
+      if (!isUsefulClipboardText(normalizedText)) return;
+
+      if (!lastClipboardTextRef.current) {
+        lastClipboardTextRef.current = normalizedText;
+        return;
+      }
+
+      if (normalizedText === lastClipboardTextRef.current) return;
+
+      lastClipboardTextRef.current = normalizedText;
+      setClipboardCandidate(prepareClipboardTextForExtraction(clipboardText));
+      setShowClipboardPrompt(true);
+    } catch (error) {
+      // Clipboard reads can be blocked until the browser grants permission.
+    } finally {
+      clipboardCheckInFlightRef.current = false;
+    }
+  };
+
+  const handleFocus = () => {
+    void checkClipboard();
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      void checkClipboard();
+    }
+  };
+
+  const baselineTimer = window.setTimeout(() => {
+    void checkClipboard();
+  }, 700);
+
+  window.addEventListener("focus", handleFocus);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+
+  return () => {
+    isMounted = false;
+    window.clearTimeout(baselineTimer);
+    window.removeEventListener("focus", handleFocus);
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
+  };
+}, [
+  isLoaded,
+  enableClipboardAssist,
+  isExtractModalOpen,
+  isEditModalOpen,
+  showClipboardPrompt,
+]);
+
+useEffect(() => {
+  if (enableClipboardAssist) return;
+
+  setClipboardCandidate("");
+  setShowClipboardPrompt(false);
+}, [enableClipboardAssist]);
+
   const completedBoostTaskKey = completedToday
   .map((task) => task.id)
   .sort()
@@ -1698,8 +1831,10 @@ const modalSelect = darkMode
   };
 
 
-  const extractTasksFromText = async () => {
-    if (!extractInput.trim()) {
+  const extractTasksFromText = async (sourceTextOverride?: string) => {
+    const sourceText = (sourceTextOverride ?? extractInput).trim();
+
+    if (!sourceText) {
       setExtractError("Paste some text first.");
       return;
     }
@@ -1715,7 +1850,7 @@ const modalSelect = darkMode
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          text: extractInput,
+          text: sourceText,
           categories: categories.map((category) => category.title),
           today: getTodayDate(),
         }),
@@ -1788,6 +1923,92 @@ const modalSelect = darkMode
     }
   };
   
+  const dismissClipboardCandidate = () => {
+    setShowClipboardPrompt(false);
+    setClipboardCandidate("");
+  };
+
+  const extractClipboardCandidate = () => {
+    const sourceText = clipboardCandidate.trim();
+
+    if (!sourceText) {
+      dismissClipboardCandidate();
+      return;
+    }
+
+    setShowClipboardPrompt(false);
+    setIsExtractModalOpen(true);
+    setExtractInput(sourceText);
+    setExtractedTasks([]);
+    setExtractError("");
+    void extractTasksFromText(sourceText);
+  };
+
+  const addClipboardCandidateAsTask = () => {
+    const sourceText = clipboardCandidate.trim();
+
+    if (!sourceText) {
+      dismissClipboardCandidate();
+      return;
+    }
+
+    const title = getClipboardTaskTitle(sourceText);
+    const categoryTitle = selectedCategory || categories[0]?.title || "Small Wins";
+    const priority: Priority = enableAutoPriority ? inferPriority(title) : "Medium";
+    const suggestedDueDate = enableAppSuggestions
+      ? suggestDueDate(title)
+      : undefined;
+    const normalizedText = normalizeClipboardText(sourceText);
+
+    const taskToAdd = {
+      id: crypto.randomUUID(),
+      title,
+      whyThisMatters: "Captured from clipboard.",
+      whySuggestions: ["Captured from clipboard."],
+      selectedWhyIndex: 0,
+      priority,
+      dueDate: undefined,
+      suggestedDueDate,
+      notes: normalizedText === title ? "" : sourceText,
+      status: "Active",
+      tags: [],
+      subtasks: [],
+      aiReason: "Added directly from copied text.",
+      aiConfidence: 1,
+      completed: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    setCategories((prev) => {
+      const targetCategoryTitle = prev.some(
+        (category) => category.title === categoryTitle
+      )
+        ? categoryTitle
+        : prev[0]?.title;
+
+      if (!targetCategoryTitle) return prev;
+
+      return prev.map((category) => {
+        if (category.title !== targetCategoryTitle) return category;
+
+        return {
+          ...category,
+          tasks: [taskToAdd, ...category.tasks],
+        };
+      });
+    });
+
+    setArchiveToast("Copied text added as task");
+
+    setTimeout(() => {
+      setArchiveToast("");
+    }, 2200);
+
+    dismissClipboardCandidate();
+    setSelectedView("today");
+    anchorTaskListSoon();
+  };
+
   const toggleExtractedTask = (taskId: string) => {
     setExtractedTasks((prev) =>
       prev.map((task) =>
@@ -2533,6 +2754,8 @@ togglePinTask={togglePinTask}
                 setEnableAppSuggestions={setEnableAppSuggestions}
                 enableAutoPriority={enableAutoPriority}
                 setEnableAutoPriority={setEnableAutoPriority}
+                enableClipboardAssist={enableClipboardAssist}
+                setEnableClipboardAssist={setEnableClipboardAssist}
                 upcomingViewMode={upcomingViewMode}
                 setUpcomingViewMode={setUpcomingViewMode}
                 priorityViewMode={priorityViewMode}
@@ -2564,6 +2787,17 @@ togglePinTask={togglePinTask}
       onClose={closeDueReminderPopup}
       onViewAll={viewDueReminderTasks}
       onOpenTask={openDueReminderTask}
+    />
+  )}
+
+  {showClipboardPrompt && clipboardCandidate && (
+    <ClipboardAssistPrompt
+      text={clipboardCandidate}
+      themeColor={themeColor}
+      darkMode={darkMode}
+      onClose={dismissClipboardCandidate}
+      onExtract={extractClipboardCandidate}
+      onAddAsIs={addClipboardCandidateAsTask}
     />
   )}
 
@@ -5649,6 +5883,8 @@ enableAppSuggestions,
   setEnableAppSuggestions,
   enableAutoPriority,
   setEnableAutoPriority,
+enableClipboardAssist,
+setEnableClipboardAssist,
   upcomingViewMode,
   setUpcomingViewMode,
   priorityViewMode,
@@ -5791,6 +6027,19 @@ enableAppSuggestions,
             <ToggleSwitch
               checked={enableAutoPriority}
               onChange={setEnableAutoPriority}
+              themeColor={themeColor}
+              darkMode={darkMode}
+            />
+          </SettingsRow>
+
+          <SettingsRow
+            title="Clipboard Assist"
+            description="When you return to Veira, check copied text and offer to extract tasks. Nothing is sent until you approve."
+            darkMode={darkMode}
+          >
+            <ToggleSwitch
+              checked={enableClipboardAssist}
+              onChange={setEnableClipboardAssist}
               themeColor={themeColor}
               darkMode={darkMode}
             />
@@ -6911,6 +7160,158 @@ function MobileBottomNav({
       </div>
       </nav>
   </>
+  );
+}
+
+function ClipboardAssistPrompt({
+  text,
+  themeColor,
+  darkMode,
+  onClose,
+  onExtract,
+  onAddAsIs,
+}: any) {
+  const preview = normalizeClipboardText(text);
+  const clippedPreview =
+    preview.length > 260 ? `${preview.slice(0, 260)}...` : preview;
+  const wordCount = preview ? preview.split(/\s+/).length : 0;
+
+  return (
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 22,
+        scale: 0.96,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        scale: 1,
+      }}
+      exit={{
+        opacity: 0,
+        y: 18,
+        scale: 0.97,
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 360,
+        damping: 32,
+        mass: 0.85,
+      }}
+      className="pointer-events-none fixed inset-0 z-[193] flex items-center justify-center p-4 sm:p-6"
+    >
+      <div
+        className={`pointer-events-auto relative w-full max-w-[500px] overflow-hidden rounded-[28px] border p-4 shadow-[0_28px_90px_rgba(15,23,42,0.22)] backdrop-blur-2xl sm:p-5 ${
+          darkMode
+            ? "border-white/[0.10] bg-[#171717]/96 text-white"
+            : "border-[#BBBFBF]/45 bg-white/96 text-[#111827]"
+        }`}
+      >
+        <div
+          className="pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full opacity-[0.14] blur-3xl"
+          style={{ backgroundColor: themeColor }}
+        />
+
+        <button
+          onClick={onClose}
+          className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-105 ${
+            darkMode
+              ? "bg-white/[0.06] text-white/45 hover:text-white"
+              : "bg-black/[0.035] text-black/42 hover:text-black"
+          }`}
+        >
+          <X size={15} />
+        </button>
+
+        <div className="relative pr-8">
+          <div className="flex items-start gap-3">
+            <div
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_14px_34px_rgba(0,0,0,0.18)]"
+              style={{ backgroundColor: themeColor }}
+            >
+              <Sparkles size={18} />
+            </div>
+
+            <div className="min-w-0">
+              <p
+                className="text-[10px] font-[900] uppercase tracking-[0.16em]"
+                style={{ color: themeColor }}
+              >
+                Clipboard Assist
+              </p>
+
+              <h3 className="mt-1 text-[18px] font-[900] leading-tight tracking-[-0.04em]">
+                Copied text detected
+              </h3>
+
+              <p
+                className={`mt-1 text-xs font-[700] ${
+                  darkMode ? "text-white/42" : "text-black/42"
+                }`}
+              >
+                Want Veira to find action items from it?
+              </p>
+            </div>
+          </div>
+
+          <div
+            className={`mt-4 max-h-[112px] overflow-hidden rounded-[18px] border px-3 py-2.5 text-[12px] font-[650] leading-5 ${
+              darkMode
+                ? "border-white/[0.08] bg-white/[0.045] text-white/54"
+                : "border-black/[0.06] bg-black/[0.018] text-black/54"
+            }`}
+          >
+            {clippedPreview}
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <span
+              className={`text-[11px] font-[800] ${
+                darkMode ? "text-white/34" : "text-black/34"
+              }`}
+            >
+              {wordCount} words copied
+            </span>
+
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                onClick={onClose}
+                className={`h-10 rounded-[15px] px-3 text-xs font-[900] transition hover:scale-[1.02] ${
+                  darkMode
+                    ? "bg-white/[0.06] text-white/48 hover:text-white"
+                    : "bg-black/[0.04] text-black/46 hover:text-black"
+                }`}
+              >
+                Dismiss
+              </button>
+
+              <button
+                onClick={onAddAsIs}
+                className={`h-10 rounded-[15px] border px-3.5 text-xs font-[900] transition hover:scale-[1.02] ${
+                  darkMode
+                    ? "border-white/[0.10] bg-white/[0.04] text-white/62 hover:text-white"
+                    : "border-black/[0.07] bg-white text-black/58 hover:text-black"
+                }`}
+              >
+                Add as is
+              </button>
+
+              <button
+                onClick={onExtract}
+                className="h-10 rounded-[15px] px-4 text-xs font-[900] text-white shadow-[0_16px_34px_rgba(0,0,0,0.18)] transition hover:scale-[1.02]"
+                style={{
+                  backgroundColor: themeColor,
+                  boxShadow: `0 16px 34px ${themeColor}30`,
+                }}
+              >
+                Find tasks
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
