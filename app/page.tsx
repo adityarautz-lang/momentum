@@ -38,6 +38,7 @@ Eye,
 ChevronDown,
 ChevronRight,
 Check,
+X,
 } from "lucide-react";
 
 
@@ -226,6 +227,7 @@ const getTimeRemainingInDay = (dayEndTime: string) => {
     return {
       label: "Day ended",
       shortLabel: "0h 0m",
+      minutesLeft: 0,
       percentLeft: 0,
       isOver: true,
     };
@@ -249,6 +251,7 @@ const getTimeRemainingInDay = (dayEndTime: string) => {
   return {
     label: `${hoursLeft}h ${minutesLeft}m left`,
     shortLabel: `${hoursLeft}h ${minutesLeft}m`,
+    minutesLeft: totalMinutes,
     percentLeft,
     isOver: false,
   };
@@ -780,6 +783,7 @@ const [selectedCategory, setSelectedCategory] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 const [isSuggestionsModalOpen, setIsSuggestionsModalOpen] = useState(false);
 const [isExtractModalOpen, setIsExtractModalOpen] = useState(false);
+const [showDueReminderPopup, setShowDueReminderPopup] = useState(false);
 const [extractInput, setExtractInput] = useState("");
 const [extractLoading, setExtractLoading] = useState(false);
 const [extractError, setExtractError] = useState("");
@@ -1057,8 +1061,51 @@ const completionPercent =
   );
 
   const suggestionReviewTasks = prioritizedTasks.filter(
-    (task) => !task.dueDate && task.suggestedDueDate
-  );
+  (task) => !task.dueDate && task.suggestedDueDate
+);
+
+const dueReminderKey = `veira-due-reminder-${todayDate}-${dayEndTime}`;
+
+useEffect(() => {
+  if (!isLoaded) return;
+  if (todayTasks.length === 0) return;
+  if (dayTimeRemaining.isOver) return;
+  if (dayTimeRemaining.minutesLeft > 120 || dayTimeRemaining.minutesLeft <= 0) return;
+
+  const dismissed = localStorage.getItem(dueReminderKey) === "dismissed";
+
+  if (dismissed) return;
+
+  setShowDueReminderPopup(true);
+}, [
+  isLoaded,
+  todayTasks.length,
+  dayTimeRemaining.minutesLeft,
+  dayTimeRemaining.isOver,
+  dueReminderKey,
+]);
+
+const closeDueReminderPopup = () => {
+  localStorage.setItem(dueReminderKey, "dismissed");
+  setShowDueReminderPopup(false);
+};
+
+const viewDueReminderTasks = () => {
+  setSelectedView("today");
+  setTodayTaskGroupMode("date");
+  setTodayTaskSortMode("date");
+  closeDueReminderPopup();
+
+  window.setTimeout(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, 50);
+};
+
+const openDueReminderTask = (task: any) => {
+  setSelectedTask(task);
+  setIsEditModalOpen(true);
+  closeDueReminderPopup();
+};
   
   const completedBoostTaskKey = completedToday
   .map((task) => task.id)
@@ -2414,6 +2461,15 @@ togglePinTask={togglePinTask}
       />
 
 <AnimatePresence>
+  {showDueReminderPopup && todayTasks.length > 0 && (
+    <DueTasksReminderPopup
+      tasks={todayTasks}
+      themeColor={themeColor}
+      onClose={closeDueReminderPopup}
+      onViewAll={viewDueReminderTasks}
+      onOpenTask={openDueReminderTask}
+    />
+  )}
 
 {isExtractModalOpen && (
   <ExtractTasksModal
@@ -3195,7 +3251,7 @@ emptyMessage,
           </h2>
 
           <p
-  className="mt-1 text-[12px] font-[600] leading-5 sm:text-xs"
+  className="mt-1 text-[12px] font-[700] leading-5 sm:text-xs"
   style={{
     color: themeColor,
   }}
@@ -3507,7 +3563,7 @@ emptyMessage,
                       setIsEditModalOpen(true);
                     }}
                     title={task.title}
-                    className="min-w-0 flex-1 truncate text-left text-[13px] font-[850] tracking-[-0.02em] transition hover:opacity-70"
+                    className="min-w-0 flex-1 whitespace-normal break-words text-left text-[13px] font-[850] leading-[17px] tracking-[-0.02em] transition hover:opacity-70"
                   >
                     {task.title}
                   </button>
@@ -3589,7 +3645,7 @@ emptyMessage,
                             setIsEditModalOpen(true);
                           }}
                           title={task.title}
-                          className="block min-w-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
+                          className="block min-w-0 cursor-pointer whitespace-normal break-words text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
                         >
                           {task.title}
                         </p>
@@ -6750,6 +6806,164 @@ function MobileBottomNav({
       </div>
       </nav>
   </>
+  );
+}
+
+function DueTasksReminderPopup({
+  tasks,
+  themeColor,
+  onClose,
+  onViewAll,
+  onOpenTask,
+}: any) {
+  const getPopupPriorityColor = (priority?: string) => {
+    if (priority === "High") return "#ef4444";
+    if (priority === "Medium" || priority === "Med") return "#f97316";
+    return "#10b981";
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-0 z-[194] flex items-center justify-center bg-black/25 p-4 backdrop-blur-[3px] sm:p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{
+          opacity: 0,
+          scale: 0.92,
+          y: 18,
+          filter: "blur(8px)",
+        }}
+        animate={{
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          filter: "blur(0px)",
+        }}
+        exit={{
+          opacity: 0,
+          scale: 0.94,
+          y: 12,
+          filter: "blur(6px)",
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 360,
+          damping: 32,
+          mass: 0.85,
+        }}
+        onClick={(event) => event.stopPropagation()}
+        className="relative w-full max-w-[520px] overflow-hidden rounded-[30px] border border-[#BBBFBF]/45 bg-white shadow-[0_30px_100px_rgba(17,24,39,0.18)]"
+      >
+        <div
+          className="absolute left-0 top-0 h-1.5 w-full"
+          style={{
+            background: `linear-gradient(90deg, ${themeColor}, ${themeColor}55, transparent)`,
+          }}
+        />
+
+        <div
+          className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full opacity-[0.12] blur-3xl"
+          style={{ backgroundColor: themeColor }}
+        />
+
+        <div className="relative p-5 sm:p-6">
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/[0.035] text-black/45 transition hover:scale-105 hover:text-black"
+          >
+            <X size={17} />
+          </button>
+
+          <div className="flex items-start gap-4 pr-10">
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
+              style={{
+                color: themeColor,
+                backgroundColor: `${themeColor}14`,
+                boxShadow: `0 16px 34px ${themeColor}18`,
+              }}
+            >
+              <Clock3 size={25} strokeWidth={2.4} />
+            </div>
+
+            <div className="min-w-0">
+              <h2 className="text-[22px] font-[900] leading-tight tracking-[-0.045em] text-[#111827]">
+                2 hours left in your day
+              </h2>
+
+              <p className="mt-1 text-sm font-[700] text-black/48">
+                Here are your tasks due today
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 max-h-[310px] overflow-y-auto rounded-[22px] border border-black/[0.06] bg-white">
+            {tasks.map((task: any) => {
+              const priorityColor = getPopupPriorityColor(task.priority);
+
+              return (
+                <button
+                  key={task.id}
+                  onClick={() => onOpenTask(task)}
+                  className="flex w-full items-center gap-3 border-b border-black/[0.055] px-4 py-3 text-left transition last:border-b-0 hover:bg-black/[0.018]"
+                >
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: priorityColor }}
+                  />
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-[850] leading-5 tracking-[-0.018em] text-[#111827]">
+                      {task.title}
+                    </p>
+
+                    <p className="mt-0.5 truncate text-[10.5px] font-[750] text-black/36">
+                      {task.category} ·{" "}
+                      {task.priority === "Medium" || task.priority === "Med"
+                        ? "Mid"
+                        : task.priority}
+                    </p>
+                  </div>
+
+                  <span
+                    className="shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-[900]"
+                    style={{
+                      color: themeColor,
+                      borderColor: `${themeColor}2B`,
+                      backgroundColor: `${themeColor}10`,
+                    }}
+                  >
+                    Today
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 flex items-center justify-between gap-4">
+            <p className="text-sm font-[750] text-black/50">
+              {tasks.length} task{tasks.length === 1 ? "" : "s"} due today
+            </p>
+
+            <button
+              onClick={onViewAll}
+              className="h-12 rounded-[18px] px-5 text-sm font-[900] text-white shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                backgroundColor: themeColor,
+                boxShadow: `0 18px 38px ${themeColor}30`,
+              }}
+            >
+              View all tasks
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
