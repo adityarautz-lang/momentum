@@ -1287,11 +1287,6 @@ useEffect(() => {
 
       if (!isUsefulClipboardText(normalizedText)) return;
 
-      if (!lastClipboardTextRef.current) {
-        lastClipboardTextRef.current = normalizedText;
-        return;
-      }
-
       if (normalizedText === lastClipboardTextRef.current) return;
 
       lastClipboardTextRef.current = normalizedText;
