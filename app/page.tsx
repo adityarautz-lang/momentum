@@ -809,6 +809,11 @@ const [priorityViewMode, setPriorityViewMode] =
 const [enableClipboardAssist, setEnableClipboardAssist] = useState(true);
 const [clipboardCandidate, setClipboardCandidate] = useState("");
 const [showClipboardPrompt, setShowClipboardPrompt] = useState(false);
+const [clipboardExtractLoading, setClipboardExtractLoading] = useState(false);
+const [clipboardExtractError, setClipboardExtractError] = useState("");
+const [clipboardExtractedTasks, setClipboardExtractedTasks] = useState<
+  ExtractedTaskSuggestion[]
+>([]);
   const [archiveToast, setArchiveToast] = useState("");
   const [firecrackers, setFirecrackers] = useState<Firecracker[]>([]);
   const [newTask, setNewTask] = useState("");
@@ -1290,8 +1295,68 @@ useEffect(() => {
       if (normalizedText === lastClipboardTextRef.current) return;
 
       lastClipboardTextRef.current = normalizedText;
-      setClipboardCandidate(prepareClipboardTextForExtraction(clipboardText));
+
+      const preparedText = prepareClipboardTextForExtraction(clipboardText);
+      
+      setClipboardCandidate(preparedText);
       setShowClipboardPrompt(true);
+      setClipboardExtractedTasks([]);
+      setClipboardExtractError("");
+      setClipboardExtractLoading(true);
+      
+      try {
+        const response = await fetch("/api/extract-tasks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: preparedText,
+            categories: categories.map((category) => category.title),
+            today: getTodayDate(),
+          }),
+        });
+      
+        const data = await response.json();
+      
+        if (!response.ok) {
+          throw new Error(data?.error || "Could not read copied text.");
+        }
+      
+        const normalizedTasks: ExtractedTaskSuggestion[] = (data.tasks || []).map(
+          (task: any) => ({
+            id: crypto.randomUUID(),
+            selected: true,
+            title: String(task.title || "").trim(),
+            priority: ["Low", "Medium", "High"].includes(task.priority)
+              ? task.priority
+              : "Medium",
+            suggestedDueDate: task.suggestedDueDate || null,
+            category:
+              categories.find((category) => category.title === task.category)
+                ?.title ||
+              categories[0]?.title ||
+              "Small Wins",
+            notes: String(task.notes || ""),
+            status: ["Active", "Waiting", "Someday"].includes(task.status)
+              ? task.status
+              : "Active",
+            reason: String(task.reason || ""),
+            confidence:
+              typeof task.confidence === "number" ? task.confidence : 0.7,
+            tags: normalizeTaskTags(task.tags),
+          })
+        );
+      
+        setClipboardExtractedTasks(normalizedTasks);
+      } catch (error) {
+        console.error(error);
+        setClipboardExtractError("Veira could not extract tasks from this text.");
+      } finally {
+        setClipboardExtractLoading(false);
+      }
+
+
     } catch (error) {
       // Clipboard reads can be blocked until the browser grants permission.
     } finally {
@@ -1933,26 +1998,15 @@ const modalSelect = darkMode
     }
   };
   
-  const dismissClipboardCandidate = () => {
-    setShowClipboardPrompt(false);
-    setClipboardCandidate("");
-  };
+ const dismissClipboardCandidate = () => {
+  setShowClipboardPrompt(false);
+  setClipboardCandidate("");
+  setClipboardExtractedTasks([]);
+  setClipboardExtractError("");
+  setClipboardExtractLoading(false);
+};
 
-  const extractClipboardCandidate = () => {
-    const sourceText = clipboardCandidate.trim();
 
-    if (!sourceText) {
-      dismissClipboardCandidate();
-      return;
-    }
-
-    setShowClipboardPrompt(false);
-    setIsExtractModalOpen(true);
-    setExtractInput(sourceText);
-    setExtractedTasks([]);
-    setExtractError("");
-    void extractTasksFromText(sourceText);
-  };
 
   const addClipboardCandidateAsTask = () => {
     const sourceText = clipboardCandidate.trim();
@@ -2014,6 +2068,74 @@ const modalSelect = darkMode
       setArchiveToast("");
     }, 2200);
 
+    dismissClipboardCandidate();
+    setSelectedView("today");
+    anchorTaskListSoon();
+  };
+
+  const toggleClipboardExtractedTask = (taskId: string) => {
+    setClipboardExtractedTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              selected: !task.selected,
+            }
+          : task
+      )
+    );
+  };
+  
+  const addSelectedClipboardExtractedTasks = () => {
+    const selectedTasks = clipboardExtractedTasks.filter((task) => task.selected);
+  
+    if (selectedTasks.length === 0) {
+      setClipboardExtractError("Select at least one task to add.");
+      return;
+    }
+  
+    setCategories((prev) =>
+      prev.map((category) => {
+        const tasksForCategory = selectedTasks
+          .filter((task) => task.category === category.title)
+          .map((task) => ({
+            id: crypto.randomUUID(),
+            title: task.title,
+            priority: task.priority,
+            dueDate: undefined,
+            suggestedDueDate: task.suggestedDueDate || undefined,
+            notes: task.notes,
+            status: task.status,
+            whyThisMatters: task.reason || "",
+            whySuggestions: task.reason ? [task.reason] : [],
+            selectedWhyIndex: 0,
+            aiReason: task.reason,
+            aiConfidence: task.confidence,
+            tags: normalizeTaskTags(task.tags),
+            subtasks: [],
+            completed: false,
+            createdAt: new Date().toISOString(),
+          }));
+  
+        if (tasksForCategory.length === 0) return category;
+  
+        return {
+          ...category,
+          tasks: [...tasksForCategory, ...category.tasks],
+        };
+      })
+    );
+  
+    setArchiveToast(
+      `${selectedTasks.length} task${
+        selectedTasks.length === 1 ? "" : "s"
+      } added from clipboard`
+    );
+  
+    setTimeout(() => {
+      setArchiveToast("");
+    }, 2200);
+  
     dismissClipboardCandidate();
     setSelectedView("today");
     anchorTaskListSoon();
@@ -2801,14 +2923,18 @@ togglePinTask={togglePinTask}
   )}
 
   {showClipboardPrompt && clipboardCandidate && (
-    <ClipboardAssistPrompt
-      text={clipboardCandidate}
-      themeColor={themeColor}
-      darkMode={darkMode}
-      onClose={dismissClipboardCandidate}
-      onExtract={extractClipboardCandidate}
-      onAddAsIs={addClipboardCandidateAsTask}
-    />
+   <ClipboardAssistPrompt
+   text={clipboardCandidate}
+   themeColor={themeColor}
+   darkMode={darkMode}
+   loading={clipboardExtractLoading}
+   error={clipboardExtractError}
+   extractedTasks={clipboardExtractedTasks}
+   onClose={dismissClipboardCandidate}
+   onAddAsIs={addClipboardCandidateAsTask}
+   onToggleTask={toggleClipboardExtractedTask}
+   onAddSelected={addSelectedClipboardExtractedTasks}
+ />
   )}
 
 {isExtractModalOpen && (
@@ -6045,7 +6171,7 @@ setEnableClipboardAssist,
 
           <SettingsRow
             title="Clipboard Assist"
-            description="When you return to Veira, check copied text and offer to extract tasks. Nothing is sent until you approve."
+            description="When you return to Veira, check copied text and automatically suggest tasks from it."
             darkMode={darkMode}
           >
             <ToggleSwitch
@@ -7178,52 +7304,36 @@ function ClipboardAssistPrompt({
   text,
   themeColor,
   darkMode,
+  loading,
+  error,
+  extractedTasks,
   onClose,
-  onExtract,
   onAddAsIs,
+  onToggleTask,
+  onAddSelected,
 }: any) {
   const preview = normalizeClipboardText(text);
   const clippedPreview =
-    preview.length > 260 ? `${preview.slice(0, 260)}...` : preview;
-  const wordCount = preview ? preview.split(/\s+/).length : 0;
+    preview.length > 220 ? `${preview.slice(0, 220)}...` : preview;
+
+  const selectedCount = extractedTasks.filter((task: any) => task.selected).length;
+  const hasTasks = extractedTasks.length > 0;
 
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        y: 22,
-        scale: 0.96,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-        scale: 1,
-      }}
-      exit={{
-        opacity: 0,
-        y: 18,
-        scale: 0.97,
-      }}
-      transition={{
-        type: "spring",
-        stiffness: 360,
-        damping: 32,
-        mass: 0.85,
-      }}
+      initial={{ opacity: 0, y: 22, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 18, scale: 0.97 }}
+      transition={{ type: "spring", stiffness: 360, damping: 32, mass: 0.85 }}
       className="pointer-events-none fixed inset-0 z-[193] flex items-center justify-center p-4 sm:p-6"
     >
       <div
-        className={`pointer-events-auto relative w-full max-w-[500px] overflow-hidden rounded-[28px] border p-4 shadow-[0_28px_90px_rgba(15,23,42,0.22)] backdrop-blur-2xl sm:p-5 ${
+        className={`pointer-events-auto relative w-full max-w-[560px] overflow-hidden rounded-[28px] border p-4 shadow-[0_28px_90px_rgba(15,23,42,0.22)] backdrop-blur-2xl sm:p-5 ${
           darkMode
             ? "border-white/[0.10] bg-[#171717]/96 text-white"
             : "border-[#BBBFBF]/45 bg-white/96 text-[#111827]"
         }`}
       >
-        <div
-          className="pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full opacity-[0.14] blur-3xl"
-          style={{ backgroundColor: themeColor }}
-        />
-
         <button
           onClick={onClose}
           className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-105 ${
@@ -7238,13 +7348,13 @@ function ClipboardAssistPrompt({
         <div className="relative pr-8">
           <div className="flex items-start gap-3">
             <div
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_14px_34px_rgba(0,0,0,0.18)]"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white"
               style={{ backgroundColor: themeColor }}
             >
               <Sparkles size={18} />
             </div>
 
-            <div className="min-w-0">
+            <div>
               <p
                 className="text-[10px] font-[900] uppercase tracking-[0.16em]"
                 style={{ color: themeColor }}
@@ -7253,72 +7363,123 @@ function ClipboardAssistPrompt({
               </p>
 
               <h3 className="mt-1 text-[18px] font-[900] leading-tight tracking-[-0.04em]">
-                Copied text detected
+                {loading
+                  ? "Reading copied text..."
+                  : hasTasks
+                  ? `Veira found ${extractedTasks.length} task${
+                      extractedTasks.length === 1 ? "" : "s"
+                    }`
+                  : "Do you want to add this as a task?"}
               </h3>
 
-              <p
-                className={`mt-1 text-xs font-[700] ${
-                  darkMode ? "text-white/42" : "text-black/42"
-                }`}
-              >
-                Want Veira to find action items from it?
-              </p>
+              <p className={`mt-1 text-xs font-[700] ${darkMode ? "text-white/42" : "text-black/42"}`}>
+  {loading
+    ? "Looking for possible action items..."
+    : hasTasks
+    ? "Review and add the useful ones."
+    : "No clear action items were found, but you can still save the copied text."}
+</p>
             </div>
           </div>
 
-          <div
-            className={`mt-4 max-h-[112px] overflow-hidden rounded-[18px] border px-3 py-2.5 text-[12px] font-[650] leading-5 ${
+          {loading && (
+            <div className={`mt-4 rounded-[18px] border px-4 py-4 text-sm font-[800] ${
               darkMode
-                ? "border-white/[0.08] bg-white/[0.045] text-white/54"
-                : "border-black/[0.06] bg-black/[0.018] text-black/54"
-            }`}
-          >
-            {clippedPreview}
-          </div>
+                ? "border-white/[0.08] bg-white/[0.045] text-white/55"
+                : "border-black/[0.06] bg-black/[0.018] text-black/55"
+            }`}>
+              Veira is extracting possible tasks...
+            </div>
+          )}
 
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <span
-              className={`text-[11px] font-[800] ${
-                darkMode ? "text-white/34" : "text-black/34"
+          {!loading && hasTasks && (
+            <div className="mt-4 max-h-[280px] space-y-2 overflow-y-auto">
+              {extractedTasks.map((task: any) => (
+                <button
+                  key={task.id}
+                  onClick={() => onToggleTask(task.id)}
+                  className={`flex w-full items-start gap-3 rounded-[18px] border p-3 text-left transition ${
+                    darkMode
+                      ? "border-white/[0.08] bg-white/[0.04]"
+                      : "border-black/[0.06] bg-black/[0.018]"
+                  }`}
+                >
+                  {task.selected ? (
+                    <CheckCircle2 size={18} style={{ color: themeColor }} />
+                  ) : (
+                    <Circle size={18} className={darkMode ? "text-white/30" : "text-black/30"} />
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-[900] leading-5">
+                      {task.title}
+                    </p>
+
+                    <p className={`mt-1 text-[10px] font-[800] ${
+                      darkMode ? "text-white/38" : "text-black/38"
+                    }`}>
+                      {task.category} ·{" "}
+                      {task.priority === "Medium" ? "Mid" : task.priority}
+                      {task.suggestedDueDate
+                        ? ` · ${formatDueDate(task.suggestedDueDate)}`
+                        : ""}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!loading && !hasTasks && (
+            <div
+              className={`mt-4 max-h-[112px] overflow-hidden rounded-[18px] border px-3 py-2.5 text-[12px] font-[650] leading-5 ${
+                darkMode
+                  ? "border-white/[0.08] bg-white/[0.045] text-white/54"
+                  : "border-black/[0.06] bg-black/[0.018] text-black/54"
               }`}
             >
-              {wordCount} words copied
-            </span>
-
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <button
-                onClick={onClose}
-                className={`h-10 rounded-[15px] px-3 text-xs font-[900] transition hover:scale-[1.02] ${
-                  darkMode
-                    ? "bg-white/[0.06] text-white/48 hover:text-white"
-                    : "bg-black/[0.04] text-black/46 hover:text-black"
-                }`}
-              >
-                Dismiss
-              </button>
-
-              <button
-                onClick={onAddAsIs}
-                className={`h-10 rounded-[15px] border px-3.5 text-xs font-[900] transition hover:scale-[1.02] ${
-                  darkMode
-                    ? "border-white/[0.10] bg-white/[0.04] text-white/62 hover:text-white"
-                    : "border-black/[0.07] bg-white text-black/58 hover:text-black"
-                }`}
-              >
-                Add as is
-              </button>
-
-              <button
-                onClick={onExtract}
-                className="h-10 rounded-[15px] px-4 text-xs font-[900] text-white shadow-[0_16px_34px_rgba(0,0,0,0.18)] transition hover:scale-[1.02]"
-                style={{
-                  backgroundColor: themeColor,
-                  boxShadow: `0 16px 34px ${themeColor}30`,
-                }}
-              >
-                Find tasks
-              </button>
+              {clippedPreview}
             </div>
+          )}
+
+          {error && (
+            <div className="mt-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-[800] text-red-500">
+              {error}
+            </div>
+          )}
+
+          <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+            <button
+              onClick={onClose}
+              className={`h-10 rounded-[15px] px-3 text-xs font-[900] ${
+                darkMode
+                  ? "bg-white/[0.06] text-white/48 hover:text-white"
+                  : "bg-black/[0.04] text-black/46 hover:text-black"
+              }`}
+            >
+              Dismiss
+            </button>
+
+            <button
+              onClick={onAddAsIs}
+              className={`h-10 rounded-[15px] border px-3.5 text-xs font-[900] ${
+                darkMode
+                  ? "border-white/[0.10] bg-white/[0.04] text-white/62 hover:text-white"
+                  : "border-black/[0.07] bg-white text-black/58 hover:text-black"
+              }`}
+            >
+              Add as is
+            </button>
+
+            {hasTasks && (
+              <button
+                onClick={onAddSelected}
+                className="h-10 rounded-[15px] px-4 text-xs font-[900] text-white"
+                style={{ backgroundColor: themeColor }}
+              >
+                Add selected ({selectedCount})
+              </button>
+            )}
           </div>
         </div>
       </div>
