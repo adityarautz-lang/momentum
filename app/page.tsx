@@ -3677,30 +3677,30 @@ const mobileGroupTabs = useMemo(() => {
   }
 
   if (mobileGroupMode === "date") {
-    const dateGroups = prioritizedTasks.reduce<Record<string, any>>(
-      (acc, task: any) => {
+    const dateGroups = prioritizedTasks.reduce(
+      (acc: Record<string, any>, task: any) => {
         const group = getMobileDateGroup(task);
-
+    
         if (!acc[group.key]) {
           acc[group.key] = {
             ...group,
             count: 0,
           };
         }
-
+    
         acc[group.key].count += 1;
         return acc;
       },
-      {}
+      {} as Record<string, any>
     );
 
     return Object.values(dateGroups).sort((a: any, b: any) => a.order - b.order);
   }
 
-  const categoryGroups = prioritizedTasks.reduce<Record<string, any>>(
-    (acc, task: any) => {
+  const categoryGroups = prioritizedTasks.reduce(
+    (acc: Record<string, any>, task: any) => {
       const category = task.category || "No Category";
-
+  
       if (!acc[category]) {
         const label =
           category === "Major Projects"
@@ -3710,7 +3710,7 @@ const mobileGroupTabs = useMemo(() => {
             : category === "Self Growth"
             ? "Growth"
             : category;
-
+  
         acc[category] = {
           key: `category:${category}`,
           label,
@@ -3719,11 +3719,11 @@ const mobileGroupTabs = useMemo(() => {
           order: Object.keys(acc).length,
         };
       }
-
+  
       acc[category].count += 1;
       return acc;
     },
-    {}
+    {} as Record<string, any>
   );
 
   return Object.values(categoryGroups).sort((a: any, b: any) => a.order - b.order);
