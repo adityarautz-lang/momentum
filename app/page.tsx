@@ -3825,30 +3825,72 @@ const filteredTasks = activeChip
     <div className="sm:hidden">
       <div className="mb-5">
   <div className="mb-4 flex items-center justify-between gap-4">
-    <div className="flex items-center gap-2.5">
-      <div
-        className="flex h-9 w-9 items-center justify-center rounded-[15px] text-[15px] font-[950] text-white shadow-[0_14px_30px_rgba(17,24,39,0.16)]"
-        style={{ backgroundColor: themeColor }}
-      >
-        V
-      </div>
+  <div className="flex items-center gap-3">
+  <div
+    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] shadow-[0_12px_28px_rgba(0,0,0,0.18)]"
+    style={{
+      backgroundColor: darkMode ? "#FFFFFF" : "#1F2937",
+      color: darkMode ? "#1F2937" : "#FFFFFF",
+    }}
+  >
+    <svg
+      width="27"
+      height="27"
+      viewBox="0 0 36 36"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M7.5 18.6L14.2 25.2L29 10.3"
+        stroke="currentColor"
+        strokeWidth="4.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
 
-      <div>
-        <p className="text-[20px] font-[950] leading-none tracking-[-0.06em]">
-          Veira
-        </p>
+      <path
+        d="M24.8 10.4H29V14.6"
+        stroke="currentColor"
+        strokeWidth="4.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.55"
+      />
 
-        <p
-          className={`mt-1 text-[9px] font-[850] uppercase tracking-[0.16em] ${
-            darkMode ? "text-white/32" : "text-black/32"
-          }`}
-        >
-          Focus. Prioritize. Move forward.
+      <path
+        d="M6.5 10.2H15.5"
+        stroke="currentColor"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        opacity="0.35"
+      />
 
+      <path
+        d="M4.8 14.2H10.8"
+        stroke="currentColor"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        opacity="0.22"
+      />
+    </svg>
+  </div>
 
-        </p>
-      </div>
-    </div>
+  <div className="min-w-0">
+    <p
+      className="text-[25px] font-[900] leading-none tracking-[-0.055em]"
+      style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
+    >
+      Veira
+    </p>
+
+    <p
+      className="mt-1.5 whitespace-nowrap text-[9px] font-[800] uppercase leading-none tracking-[0.04em]"
+      style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
+    >
+      Focus. Prioritize. Move forward.
+    </p>
+  </div>
+</div>
 
     <div
       className={`flex h-9 items-center gap-1.5 rounded-full border px-3 text-[11px] font-[850] ${
