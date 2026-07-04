@@ -2823,8 +2823,9 @@ togglePinTask={togglePinTask}
             selectWhySuggestion={selectWhySuggestion}
             taskListRef={taskListRef}
             anchorTaskListSoon={anchorTaskListSoon}
-            newlyAddedTaskIds={newlyAddedTaskIds}
-          />
+newlyAddedTaskIds={newlyAddedTaskIds}
+userFirstName={user?.firstName || ""}
+/>
             )}
 
             {selectedView === "priorities" && (
@@ -3122,11 +3123,19 @@ selectWhySuggestion,
 taskListRef,
 anchorTaskListSoon,
 newlyAddedTaskIds,
+userFirstName,
 }: any) {
   const [showMorningBrief, setShowMorningBrief] = useState(false);
   const [morningBrief, setMorningBrief] = useState({
     quote: "Small steps still move the day forward.",
   });
+
+  const hour = new Date().getHours();
+
+const greeting =
+  hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
+const greetingWithName = `${greeting}${userFirstName ? `, ${userFirstName}` : ""}`;
   
   useEffect(() => {
     const now = new Date();
@@ -3208,6 +3217,7 @@ newlyAddedTaskIds,
   archiveCompletedToday={archiveCompletedToday}
   restoreCompletedTask={restoreCompletedTask}
   anchorTaskListSoon={anchorTaskListSoon}
+userFirstName={userFirstName}
 />
 
       <div className="hidden sm:block">
@@ -3222,9 +3232,9 @@ newlyAddedTaskIds,
 />
 
 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <h1 className="text-[24px] font-[700] leading-tight tracking-[-0.05em]">
-          Today&apos;s Momentum
-        </h1>
+<h1 className="text-[24px] font-[700] leading-tight tracking-[-0.05em]">
+  {greetingWithName} 👋
+</h1>
 
         <span
           className={`rounded-full px-3 py-1 text-[11px] font-[700] ${
@@ -3278,7 +3288,7 @@ newlyAddedTaskIds,
   className="mt-1 text-[16px] font-[700] tracking-[-0.035em]"
   style={{ color: themeColor }}
 >
-  Good morning! {morningBrief.quote}
+{greetingWithName}! {morningBrief.quote}
 </p>
 
 <p
@@ -3579,6 +3589,7 @@ function MobileTodayAppView({
   archiveCompletedToday,
   restoreCompletedTask,
   anchorTaskListSoon = () => {},
+userFirstName = "",
 }: any) {
   const [mobileGroupMode, setMobileGroupMode] =
   useState<MobileGroupMode>("category");
@@ -3905,9 +3916,10 @@ const filteredTasks = activeChip
   </div>
 
   <div>
-    <p className="text-[18px] font-[900] tracking-[-0.04em]">
-      {greeting} 👋
-    </p>
+  <p className="text-[18px] font-[900] tracking-[-0.04em]">
+  {greeting}
+  {userFirstName ? `, ${userFirstName}` : ""} 👋
+</p>
 
     <p
       className={
