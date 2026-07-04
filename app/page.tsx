@@ -734,6 +734,7 @@ const hasFollowUpTag = (task: any) => {
 
 const MIN_CLIPBOARD_ASSIST_LENGTH = 35;
 const MAX_CLIPBOARD_ASSIST_LENGTH = 8000;
+const CLIPBOARD_HANDLED_KEY = "veira-last-handled-clipboard-text";
 
 const normalizeClipboardText = (text: string) => {
   return text.replace(/\s+/g, " ").trim();
@@ -1292,9 +1293,13 @@ useEffect(() => {
 
       if (!isUsefulClipboardText(normalizedText)) return;
 
-      if (normalizedText === lastClipboardTextRef.current) return;
+      const lastHandledClipboardText =
+  localStorage.getItem(CLIPBOARD_HANDLED_KEY) || lastClipboardTextRef.current;
 
-      lastClipboardTextRef.current = normalizedText;
+if (normalizedText === lastHandledClipboardText) return;
+
+lastClipboardTextRef.current = normalizedText;
+localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
 
       const preparedText = prepareClipboardTextForExtraction(clipboardText);
       
