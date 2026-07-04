@@ -3656,7 +3656,7 @@ const getMobileDateGroup = (task: any) => {
   };
 };
 
-const mobileGroupTabs = useMemo(() => {
+const mobileGroupTabs = useMemo((): any[] => {
   if (mobileGroupMode === "priority") {
     const priorityOrder = ["High", "Medium", "Low"];
 
