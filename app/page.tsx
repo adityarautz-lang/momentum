@@ -46,6 +46,9 @@ type TaskTag = "follow-up";
 
 type SortMode = "veira" | "date" | "priority";
 type GroupMode = "none" | "category" | "priority" | "date";
+type MobileGroupMode = "category" | "priority" | "date";
+
+const MOBILE_GROUP_MODE_KEY = "veira-mobile-group-mode";
 
 const DEFAULT_THEME_COLOR = "#1F2937";
 
@@ -913,6 +916,15 @@ const animateWindowScrollTo = (targetTop: number, duration = 1500) => {
 const getTaskListAnchorElement = () => {
   if (typeof document === "undefined") return null;
 
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+
+  if (isMobile) {
+    return (
+      document.getElementById("veira-mobile-task-list-anchor") ||
+      document.getElementById("veira-task-list-anchor")
+    );
+  }
+
   return taskListRef.current || document.getElementById("veira-task-list-anchor");
 };
 
@@ -923,7 +935,8 @@ const anchorTaskList = () => {
   if (!el) return false;
 
   const rect = el.getBoundingClientRect();
-  const idealTopOffset = window.innerWidth < 1024 ? 148 : 32;
+  const idealTopOffset =
+  window.innerWidth < 640 ? 18 : window.innerWidth < 1024 ? 148 : 32;
   const targetTop = Math.max(0, rect.top + window.scrollY - idealTopOffset);
 
   if (Math.abs(targetTop - window.scrollY) < 4) return true;
@@ -2616,9 +2629,13 @@ completedAt: updatedTask.completedAt,
     setSelectedCategory(initialCategories[0].title);
     setSelectedView("today");
     setTodayTaskSortMode("veira");
-setTodayTaskGroupMode("none");
-setThemeColor(DEFAULT_THEME_COLOR);
-setDarkMode(false);
+    setTodayTaskGroupMode("none");
+    setThemeColor(DEFAULT_THEME_COLOR);
+    setDarkMode(false);
+    
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(MOBILE_GROUP_MODE_KEY);
+    }
 
     setArchiveToast("Veira data reset");
 
@@ -2759,7 +2776,7 @@ setDarkMode(false);
   inboxCount={inboxTasks.length}
 />
 
-<div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-12 pt-[156px] sm:px-6 sm:pb-16 sm:pt-[156px] lg:pl-[284px] lg:pt-6 xl:px-10 xl:py-8 xl:pl-[300px]">
+<div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-28 pt-5 sm:px-6 sm:pb-28 sm:pt-6 lg:pl-[284px] lg:pb-16 lg:pt-6 xl:px-10 xl:py-8 xl:pl-[300px]">
 <div className="mx-auto w-full max-w-[1400px] overflow-x-hidden">
             {selectedView === "today" && (
             <TodayView
@@ -3024,6 +3041,15 @@ togglePinTask={togglePinTask}
 </AnimatePresence>
 
 <style jsx global>{`
+  .veira-mobile-category-tabs {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .veira-mobile-category-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
   @keyframes veiraNewTaskGlow {
     0% {
       background-color: ${themeColor}26;
@@ -3155,6 +3181,36 @@ newlyAddedTaskIds,
 
   return (
     <>
+      <MobileTodayAppView
+  darkMode={darkMode}
+  themeColor={themeColor}
+  strongerGlass={strongerGlass}
+  border={border}
+  allTasks={allTasks}
+  prioritizedTasks={prioritizedTasks}
+  completedToday={completedToday}
+  completionPercent={completionPercent}
+  dayTimeRemaining={dayTimeRemaining}
+  dayEndTime={dayEndTime}
+  setDayEndTime={setDayEndTime}
+  newTask={newTask}
+  setNewTask={setNewTask}
+  newTaskWhy={newTaskWhy}
+  setNewTaskWhy={setNewTaskWhy}
+  addTask={addTask}
+  setIsExtractModalOpen={setIsExtractModalOpen}
+  toggleTaskById={toggleTaskById}
+  deleteTask={deleteTask}
+  setSelectedTask={setSelectedTask}
+  setIsEditModalOpen={setIsEditModalOpen}
+  manualFocusTaskIds={manualFocusTaskIds}
+  setManualFocusTaskIds={setManualFocusTaskIds}
+  archiveCompletedToday={archiveCompletedToday}
+  restoreCompletedTask={restoreCompletedTask}
+  anchorTaskListSoon={anchorTaskListSoon}
+/>
+
+      <div className="hidden sm:block">
   <section
   className={`relative z-[120] mb-5 hidden overflow-visible rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-3 ${strongerGlass} ${border}`}
 >
@@ -3491,7 +3547,1012 @@ newlyAddedTaskIds={newlyAddedTaskIds}
   strongerGlass={strongerGlass}
   border={border}
 />
+      </div>
     </>
+  );
+}
+
+function MobileTodayAppView({
+  darkMode,
+  themeColor,
+  strongerGlass,
+  border,
+  allTasks,
+  prioritizedTasks,
+  completedToday,
+  completionPercent,
+  dayTimeRemaining,
+  dayEndTime,
+  setDayEndTime,
+  newTask,
+  setNewTask,
+  newTaskWhy,
+  setNewTaskWhy,
+  addTask,
+  setIsExtractModalOpen,
+  toggleTaskById,
+  deleteTask,
+  setSelectedTask,
+  setIsEditModalOpen,
+  manualFocusTaskIds,
+  setManualFocusTaskIds,
+  archiveCompletedToday,
+  restoreCompletedTask,
+  anchorTaskListSoon = () => {},
+}: any) {
+  const [mobileGroupMode, setMobileGroupMode] =
+  useState<MobileGroupMode>("category");
+  const [selectedChip, setSelectedChip] = useState("");
+  const [showAllMobileTasks, setShowAllMobileTasks] = useState(false);
+  const [isMobileTimePickerOpen, setIsMobileTimePickerOpen] = useState(false);
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const savedMobileGroupMode = window.localStorage.getItem(
+    MOBILE_GROUP_MODE_KEY
+  );
+
+  if (
+    savedMobileGroupMode === "category" ||
+    savedMobileGroupMode === "priority" ||
+    savedMobileGroupMode === "date"
+  ) {
+    setMobileGroupMode(savedMobileGroupMode);
+  }
+}, []);
+
+const changeMobileGroupMode = (nextMode: MobileGroupMode) => {
+  setMobileGroupMode(nextMode);
+  setSelectedChip("");
+  setShowAllMobileTasks(false);
+
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(MOBILE_GROUP_MODE_KEY, nextMode);
+  }
+
+  anchorTaskListSoon();
+};
+
+const getMobileDateGroup = (task: any) => {
+  const date = getTaskDate(task);
+
+  if (!date) {
+    return {
+      key: "date:no-date",
+      label: "No date",
+      order: 5,
+    };
+  }
+
+  if (isOverdue(date)) {
+    return {
+      key: "date:overdue",
+      label: "Overdue",
+      order: 1,
+    };
+  }
+
+  if (isToday(date)) {
+    return {
+      key: "date:today",
+      label: "Today",
+      order: 2,
+    };
+  }
+
+  if (isTomorrow(date)) {
+    return {
+      key: "date:tomorrow",
+      label: "Tomorrow",
+      order: 3,
+    };
+  }
+
+  return {
+    key: "date:later",
+    label: "Later",
+    order: 4,
+  };
+};
+
+const mobileGroupTabs = useMemo(() => {
+  if (mobileGroupMode === "priority") {
+    const priorityOrder = ["High", "Medium", "Low"];
+
+    return priorityOrder
+      .map((priority) => {
+        const count = prioritizedTasks.filter(
+          (task: any) => task.priority === priority
+        ).length;
+
+        return {
+          key: `priority:${priority}`,
+          label: priority === "Medium" ? "Mid" : priority,
+          count,
+          order: priorityOrder.indexOf(priority),
+        };
+      })
+      .filter((tab) => tab.count > 0);
+  }
+
+  if (mobileGroupMode === "date") {
+    const dateGroups = prioritizedTasks.reduce<Record<string, any>>(
+      (acc, task: any) => {
+        const group = getMobileDateGroup(task);
+
+        if (!acc[group.key]) {
+          acc[group.key] = {
+            ...group,
+            count: 0,
+          };
+        }
+
+        acc[group.key].count += 1;
+        return acc;
+      },
+      {}
+    );
+
+    return Object.values(dateGroups).sort((a: any, b: any) => a.order - b.order);
+  }
+
+  const categoryGroups = prioritizedTasks.reduce<Record<string, any>>(
+    (acc, task: any) => {
+      const category = task.category || "No Category";
+
+      if (!acc[category]) {
+        const label =
+          category === "Major Projects"
+            ? "Projects"
+            : category === "Small Wins"
+            ? "Wins"
+            : category === "Self Growth"
+            ? "Growth"
+            : category;
+
+        acc[category] = {
+          key: `category:${category}`,
+          label,
+          category,
+          count: 0,
+          order: Object.keys(acc).length,
+        };
+      }
+
+      acc[category].count += 1;
+      return acc;
+    },
+    {}
+  );
+
+  return Object.values(categoryGroups).sort((a: any, b: any) => a.order - b.order);
+}, [mobileGroupMode, prioritizedTasks]);
+
+const activeChip = selectedChip || mobileGroupTabs[0]?.key || "";
+
+useEffect(() => {
+  if (mobileGroupTabs.length === 0) {
+    if (selectedChip) setSelectedChip("");
+    return;
+  }
+
+  const selectedStillExists = mobileGroupTabs.some(
+    (tab: any) => tab.key === selectedChip
+  );
+
+  if (!selectedChip || !selectedStillExists) {
+    setSelectedChip(mobileGroupTabs[0].key);
+  }
+}, [mobileGroupTabs, selectedChip]);
+
+const filteredTasks = activeChip
+  ? prioritizedTasks.filter((task: any) => {
+      if (mobileGroupMode === "priority") {
+        return `priority:${task.priority}` === activeChip;
+      }
+
+      if (mobileGroupMode === "date") {
+        return getMobileDateGroup(task).key === activeChip;
+      }
+
+      return `category:${task.category || "No Category"}` === activeChip;
+    })
+  : prioritizedTasks;
+
+  const visibleTasks = showAllMobileTasks
+    ? filteredTasks
+    : filteredTasks.slice(0, 4);
+
+  const hiddenCount = Math.max(filteredTasks.length - 4, 0);
+
+  const focusTasks =
+    manualFocusTaskIds.length > 0
+      ? manualFocusTaskIds
+          .map((taskId: string) =>
+            prioritizedTasks.find((task: any) => task.id === taskId)
+          )
+          .filter(Boolean)
+      : prioritizedTasks.slice(0, 3);
+
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
+    const mobileEndTimeParts = (() => {
+      const [hours, minutes] = dayEndTime.split(":").map(Number);
+      const period = hours >= 12 ? "PM" : "AM";
+      const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+  
+      return {
+        hour: displayHour,
+        minute: String(minutes).padStart(2, "0"),
+        period,
+        label: `${displayHour}:${String(minutes).padStart(2, "0")} ${period}`,
+      };
+    })();
+  
+    const displayEndTime = mobileEndTimeParts.label;
+  
+    const mobileHourOptions = Array.from({ length: 12 }, (_, index) => index + 1);
+    const mobileMinuteOptions = Array.from({ length: 12 }, (_, index) =>
+      String(index * 5).padStart(2, "0")
+    );
+  
+    const updateMobileEndTime = (
+      nextHour: number,
+      nextMinute: string,
+      nextPeriod: "AM" | "PM"
+    ) => {
+      let hour24 = nextHour;
+  
+      if (nextPeriod === "AM" && nextHour === 12) hour24 = 0;
+      if (nextPeriod === "PM" && nextHour !== 12) hour24 = nextHour + 12;
+  
+      setDayEndTime(`${String(hour24).padStart(2, "0")}:${nextMinute}`);
+    };
+
+  const addTaskToFocus = (taskId: string) => {
+    setManualFocusTaskIds((prev: string[]) => {
+      if (prev.includes(taskId)) return prev;
+      if (prev.length >= 3) return prev;
+
+      return [...prev, taskId];
+    });
+  };
+
+  return (
+    <div className="sm:hidden">
+      <div className="mb-5">
+  <div className="mb-4 flex items-center justify-between gap-4">
+    <div className="flex items-center gap-2.5">
+      <div
+        className="flex h-9 w-9 items-center justify-center rounded-[15px] text-[15px] font-[950] text-white shadow-[0_14px_30px_rgba(17,24,39,0.16)]"
+        style={{ backgroundColor: themeColor }}
+      >
+        V
+      </div>
+
+      <div>
+        <p className="text-[20px] font-[950] leading-none tracking-[-0.06em]">
+          Veira
+        </p>
+
+        <p
+          className={`mt-1 text-[9px] font-[850] uppercase tracking-[0.16em] ${
+            darkMode ? "text-white/32" : "text-black/32"
+          }`}
+        >
+          Focus. Prioritize. Move forward.
+
+
+        </p>
+      </div>
+    </div>
+
+    <div
+      className={`flex h-9 items-center gap-1.5 rounded-full border px-3 text-[11px] font-[850] ${
+        darkMode
+          ? "border-white/[0.08] bg-white/[0.045] text-white/48"
+          : "border-black/[0.06] bg-white text-black/45"
+      }`}
+    >
+      <Sparkles size={13} style={{ color: themeColor }} />
+      Today
+    </div>
+  </div>
+
+  <div>
+    <p className="text-[18px] font-[900] tracking-[-0.04em]">
+      {greeting} 👋
+    </p>
+
+    <p
+      className={
+        darkMode
+          ? "mt-1 text-xs font-[700] text-white/42"
+          : "mt-1 text-xs font-[700] text-black/42"
+      }
+    >
+      Let&apos;s make today count.
+    </p>
+  </div>
+</div>
+
+    
+
+<section
+        className="relative mb-4 overflow-hidden rounded-[26px] px-4 py-3.5 text-white shadow-[0_18px_48px_rgba(17,24,39,0.16)]"
+        style={{
+          background: `linear-gradient(135deg, ${themeColor}, ${themeColor}CC)`,
+        }}
+      >
+        <div className="pointer-events-none absolute -right-10 -top-16 h-32 w-32 rounded-full bg-white/18 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-16 left-12 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
+
+        <div className="relative">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[24px] font-[950] leading-none tracking-[-0.065em]">
+                {dayTimeRemaining.shortLabel}
+              </p>
+
+              <button
+                onClick={() => setIsMobileTimePickerOpen((prev) => !prev)}
+                className="mt-1 inline-flex items-center gap-1.5 rounded-full text-[11px] font-[850] text-white/78 active:scale-[0.98]"
+              >
+                Ends {displayEndTime}
+                <ChevronDown
+                  size={13}
+                  className={`transition ${
+                    isMobileTimePickerOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+            </div>
+
+            <button
+              onClick={() => setIsMobileTimePickerOpen((prev) => !prev)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.18] transition active:scale-95"
+              title="Edit day end time"
+            >
+              <Clock3 size={17} />
+            </button>
+          </div>
+
+          {isMobileTimePickerOpen && (
+            <div className="mt-3 rounded-[20px] border border-white/[0.14] bg-white/[0.12] p-2.5 backdrop-blur-xl">
+              <div className="grid grid-cols-3 gap-2">
+                <select
+                  value={mobileEndTimeParts.hour}
+                  onChange={(e) =>
+                    updateMobileEndTime(
+                      Number(e.target.value),
+                      mobileEndTimeParts.minute,
+                      mobileEndTimeParts.period as "AM" | "PM"
+                    )
+                  }
+                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#111827] outline-none"
+                >
+                  {mobileHourOptions.map((hour) => (
+                    <option key={hour} value={hour}>
+                      {String(hour).padStart(2, "0")}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={mobileEndTimeParts.minute}
+                  onChange={(e) =>
+                    updateMobileEndTime(
+                      mobileEndTimeParts.hour,
+                      e.target.value,
+                      mobileEndTimeParts.period as "AM" | "PM"
+                    )
+                  }
+                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#111827] outline-none"
+                >
+                  {mobileMinuteOptions.map((minute) => (
+                    <option key={minute} value={minute}>
+                      {minute}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={mobileEndTimeParts.period}
+                  onChange={(e) =>
+                    updateMobileEndTime(
+                      mobileEndTimeParts.hour,
+                      mobileEndTimeParts.minute,
+                      e.target.value as "AM" | "PM"
+                    )
+                  }
+                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#111827] outline-none"
+                >
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+
+              <button
+                onClick={() => setIsMobileTimePickerOpen(false)}
+                className="mt-2 h-8 w-full rounded-[14px] bg-white/[0.18] text-[11px] font-[900] text-white"
+              >
+                Done
+              </button>
+            </div>
+          )}
+
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.22]">
+            <div
+              className="h-full rounded-full bg-white transition-all duration-500"
+              style={{ width: `${dayTimeRemaining.percentLeft}%` }}
+            />
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="flex h-[56px] flex-col items-center justify-center rounded-[18px] bg-white/[0.13] px-3 py-2 text-center">
+              <p className="text-[15px] font-[950] leading-none">
+                {allTasks.length}
+              </p>
+              <p className="mt-0.5 text-[9.5px] font-[850] text-white/70">
+                Tasks
+              </p>
+            </div>
+
+            <div className="flex h-[56px] flex-col items-center justify-center rounded-[18px] bg-white/[0.13] px-3 py-2 text-center">
+              <p className="text-[15px] font-[950] leading-none">
+                {completedToday.length}
+              </p>
+              <p className="mt-0.5 text-[9.5px] font-[850] text-white/70">
+                Done
+              </p>
+            </div>
+
+            <div className="flex h-[56px] flex-col items-center justify-center rounded-[18px] bg-white/[0.13] px-3 py-2 text-center">
+              <p className="text-[15px] font-[950] leading-none">
+                {completionPercent}%
+              </p>
+              <p className="mt-0.5 text-[9.5px] font-[850] text-white/70">
+                Progress
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="mobile-quick-capture"
+        className={`mb-4 rounded-[28px] border p-4 shadow-[0_18px_50px_rgba(17,24,39,0.06)] ${
+          darkMode
+            ? "border-white/[0.08] bg-[#171717]"
+            : "border-black/[0.06] bg-white"
+        }`}
+      >
+        <div className="mb-3 flex items-center gap-2">
+          <Send size={16} style={{ color: themeColor }} />
+
+          <div>
+            <h2 className="text-[17px] font-[900] tracking-[-0.04em]">
+              Quick Capture
+            </h2>
+
+            <p className={darkMode ? "text-[11px] font-[700] text-white/40" : "text-[11px] font-[700] text-black/40"}>
+              Veira will organize it for you
+            </p>
+          </div>
+        </div>
+
+        <div
+          className={`overflow-hidden rounded-[24px] border ${
+            darkMode
+              ? "border-white/[0.08] bg-white/[0.04]"
+              : "border-black/[0.06] bg-black/[0.018]"
+          }`}
+        >
+          <input
+            value={newTask}
+            onChange={(e) => setNewTask(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") addTask();
+            }}
+            placeholder="Capture anything..."
+            className={`h-12 w-full bg-transparent px-4 text-[13px] font-[800] outline-none ${
+              darkMode
+                ? "text-white placeholder:text-white/32"
+                : "text-black placeholder:text-black/32"
+            }`}
+          />
+
+          <div className={darkMode ? "h-px bg-white/[0.07]" : "h-px bg-black/[0.055]"} />
+
+          <div className="grid grid-cols-[minmax(0,1fr)_46px] items-center">
+            <input
+              value={newTaskWhy}
+              onChange={(e) => setNewTaskWhy(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addTask();
+              }}
+              placeholder="Optional context..."
+              className={`h-12 min-w-0 bg-transparent px-4 text-[13px] font-[800] outline-none ${
+                darkMode
+                  ? "text-white placeholder:text-white/32"
+                  : "text-black placeholder:text-black/32"
+              }`}
+            />
+
+            <button
+              onClick={addTask}
+              className="mr-1 flex h-10 w-10 items-center justify-center rounded-full text-white shadow-[0_14px_28px_rgba(17,24,39,0.16)]"
+              style={{ backgroundColor: themeColor }}
+            >
+              <Send size={15} />
+            </button>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setIsExtractModalOpen(true)}
+          className="mt-3 rounded-full border px-3 py-1.5 text-[11px] font-[900]"
+          style={{
+            color: themeColor,
+            borderColor: `${themeColor}30`,
+            backgroundColor: `${themeColor}10`,
+          }}
+        >
+          Extract from text ✨
+        </button>
+      </section>
+
+      <section
+  id="veira-mobile-task-list-anchor"
+  className={`mb-4 scroll-mt-5 overflow-hidden rounded-[28px] border p-4 shadow-[0_18px_50px_rgba(17,24,39,0.06)] ${
+    darkMode
+      ? "border-white/[0.08] bg-[#171717]"
+      : "border-black/[0.06] bg-white"
+  }`}
+>
+       <div className="mb-4 flex items-start justify-between gap-3">
+  <div className="min-w-0">
+    <h2 className="flex items-center gap-2 text-[20px] font-[900] leading-tight tracking-[-0.055em]">
+      Veira Prioritized for You
+      <Sparkles size={16} style={{ color: themeColor }} />
+    </h2>
+
+    <p
+      className={`mt-1.5 text-[13px] font-[750] leading-5 tracking-[-0.02em] ${
+        darkMode ? "text-white/45" : "text-black/48"
+      }`}
+    >
+      Top moves based on intent, urgency, and priority.
+    </p>
+  </div>
+</div>
+
+<div className="mb-3 flex items-center justify-between gap-3">
+  <span
+    className={`shrink-0 text-[10px] font-[850] uppercase tracking-[0.14em] ${
+      darkMode ? "text-white/32" : "text-black/32"
+    }`}
+  >
+    Group by
+  </span>
+
+  <div
+    className={`flex shrink-0 rounded-full border p-0.5 ${
+      darkMode
+        ? "border-white/[0.08] bg-white/[0.045]"
+        : "border-black/[0.06] bg-black/[0.025]"
+    }`}
+  >
+    {[
+      { label: "Category", value: "category" },
+      { label: "Priority", value: "priority" },
+      { label: "Due", value: "date" },
+    ].map((option) => {
+      const isActive = mobileGroupMode === option.value;
+
+      return (
+        <button
+          key={option.value}
+          onClick={() => {
+            changeMobileGroupMode(option.value as MobileGroupMode);
+          }}
+          className={`h-7 rounded-full px-3 text-[10px] font-[850] transition active:scale-[0.98] ${
+            isActive
+              ? "text-white"
+              : darkMode
+              ? "text-white/42"
+              : "text-black/45"
+          }`}
+          style={isActive ? { backgroundColor: themeColor } : undefined}
+        >
+          {option.label}
+        </button>
+      );
+    })}
+  </div>
+</div>
+
+<div className="veira-mobile-category-tabs -mx-1 mb-3 flex overflow-x-auto px-1 pb-0">
+  {mobileGroupTabs.map((chip: any) => {
+    const isActive = activeChip === chip.key;
+
+    return (
+      <button
+        key={chip.key}
+        onClick={() => {
+          setSelectedChip(chip.key);
+          setShowAllMobileTasks(false);
+          anchorTaskListSoon();
+        }}
+        className={`relative flex h-10 shrink-0 items-center gap-1.5 px-3 text-[12px] font-[850] tracking-[-0.025em] transition active:scale-[0.98] ${
+          isActive
+            ? darkMode
+              ? "text-white"
+              : "text-[#111827]"
+            : darkMode
+            ? "text-white/42"
+            : "text-black/45"
+        }`}
+      >
+        <span>{chip.label}</span>
+
+        <span
+          className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-[850] ${
+            isActive
+              ? "text-white"
+              : darkMode
+              ? "bg-white/[0.07] text-white/45"
+              : "bg-black/[0.045] text-black/45"
+          }`}
+          style={
+            isActive
+              ? {
+                  backgroundColor: themeColor,
+                }
+              : undefined
+          }
+        >
+          {chip.count}
+        </span>
+
+        <span
+          className={`absolute bottom-0 left-2 right-2 h-[3px] rounded-full transition ${
+            isActive ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ backgroundColor: themeColor }}
+        />
+      </button>
+    );
+  })}
+</div>
+
+        <div className="space-y-2">
+          {visibleTasks.length === 0 && (
+            <div
+              className={`rounded-[22px] border border-dashed p-6 text-center text-sm font-[700] ${
+                darkMode
+                  ? "border-white/[0.10] text-white/35"
+                  : "border-black/[0.08] text-black/35"
+              }`}
+            >
+              No tasks here yet.
+            </div>
+          )}
+
+          {visibleTasks.map((task: any, index: number) => {
+            const visibleDueDate = task.dueDate || task.suggestedDueDate;
+            const priorityColor =
+              task.priority === "High"
+                ? "#ef4444"
+                : task.priority === "Medium"
+                ? "#f97316"
+                : "#10b981";
+
+            return (
+              <motion.div
+                key={task.id}
+                layout="position"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`rounded-[22px] border p-3 ${
+                  darkMode
+                    ? "border-white/[0.08] bg-white/[0.04]"
+                    : "border-black/[0.055] bg-white shadow-[0_10px_28px_rgba(17,24,39,0.045)]"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <button
+                    onClick={(e) => toggleTaskById(task.id, e)}
+                    className="mt-1 shrink-0"
+                  >
+                    <Circle
+                      size={20}
+                      className={darkMode ? "text-white/30" : "text-black/30"}
+                    />
+                  </button>
+
+                  <div
+                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
+                    style={{
+                      backgroundColor: index < 3 ? themeColor : "#9ca3af",
+                    }}
+                  >
+                    {index + 1}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setIsEditModalOpen(true);
+                    }}
+                    className="min-w-0 flex-1 text-left"
+                  >
+               <p
+  className={`text-[15.5px] font-[700] leading-[21px] tracking-[-0.025em] ${
+    darkMode ? "text-white/90" : "text-[#111827]"
+  }`}
+>
+  {task.title}
+</p>
+
+<div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+  <span
+    className={
+      darkMode
+        ? "text-[12px] font-[600] text-white/45"
+        : "text-[12px] font-[600] text-slate-500"
+    }
+  >
+    {task.category}
+  </span>
+
+  <span
+    className="h-1.5 w-1.5 rounded-full"
+    style={{ backgroundColor: priorityColor }}
+  />
+
+  <span
+    className="text-[12px] font-[600]"
+    style={{ color: priorityColor }}
+  >
+    {task.priority === "Medium" ? "Mid" : task.priority}
+  </span>
+
+  {visibleDueDate && (
+    <span
+      className={
+        darkMode
+          ? "text-[12px] font-[600] text-white/45"
+          : "text-[12px] font-[600] text-slate-500"
+      }
+    >
+      · {formatDueDate(visibleDueDate)}
+    </span>
+  )}
+</div>
+
+                    {hasFollowUpTag(task) && (
+                      <div className="mt-2">
+                        <FollowUpTag darkMode={darkMode} />
+                      </div>
+                    )}
+                  </button>
+
+                  <div className="flex shrink-0 flex-col gap-2">
+  <button
+    onClick={() => addTaskToFocus(task.id)}
+    className={`flex h-8 w-8 items-center justify-center rounded-full transition active:scale-95 ${
+      manualFocusTaskIds.includes(task.id)
+        ? "text-white"
+        : darkMode
+        ? "bg-white/[0.06] text-white/45"
+        : "bg-black/[0.04] text-black/45"
+    }`}
+    style={
+      manualFocusTaskIds.includes(task.id)
+        ? { backgroundColor: themeColor }
+        : undefined
+    }
+    title="Add to focus"
+  >
+    <Eye size={15} />
+  </button>
+
+  <button
+    onClick={() => {
+      const confirmed = window.confirm("Delete this task?");
+      if (!confirmed) return;
+
+      deleteTask(task.id);
+    }}
+    className={`flex h-8 w-8 items-center justify-center rounded-full transition active:scale-95 ${
+      darkMode
+        ? "bg-white/[0.06] text-white/38 hover:text-red-300"
+        : "bg-black/[0.04] text-black/38 hover:text-red-500"
+    }`}
+    title="Delete task"
+  >
+    <Trash2 size={15} />
+  </button>
+</div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {hiddenCount > 0 && (
+          <button
+            onClick={() => setShowAllMobileTasks((prev) => !prev)}
+            className={`mt-3 h-11 w-full rounded-[18px] border text-xs font-[900] ${
+              darkMode
+                ? "border-white/[0.08] bg-white/[0.04] text-white/50"
+                : "border-black/[0.06] bg-black/[0.025] text-black/50"
+            }`}
+          >
+            {showAllMobileTasks ? "Show less" : `Show ${hiddenCount} more`}
+          </button>
+        )}
+      </section>
+
+      <section
+        id="mobile-focus-card"
+        className={`mb-4 rounded-[28px] border p-4 shadow-[0_18px_50px_rgba(17,24,39,0.06)] ${
+          darkMode
+            ? "border-white/[0.08] bg-[#171717]"
+            : "border-black/[0.06] bg-white"
+        }`}
+      >
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.045em]">
+              Focus Now
+              <Sparkles size={15} style={{ color: themeColor }} />
+            </h2>
+
+            <p className={darkMode ? "mt-1 text-xs font-[700] text-white/42" : "mt-1 text-xs font-[700] text-black/42"}>
+              Your strongest next moves.
+            </p>
+          </div>
+
+          <span
+            className="rounded-full px-3 py-1.5 text-[10px] font-[900]"
+            style={{
+              color: themeColor,
+              backgroundColor: `${themeColor}12`,
+            }}
+          >
+            AI Mode
+          </span>
+        </div>
+
+        <div className="space-y-2">
+          {focusTasks.length === 0 && (
+            <div
+              className={`rounded-[22px] border border-dashed px-4 py-8 text-center ${
+                darkMode
+                  ? "border-white/[0.10] text-white/35"
+                  : "border-black/[0.08] text-black/35"
+              }`}
+            >
+              <Target size={26} className="mx-auto mb-3 opacity-55" />
+              <p className="text-sm font-[900]">Build your focus stack.</p>
+              <p className="mt-1 text-xs font-[700] opacity-70">
+                Add tasks from the list above.
+              </p>
+            </div>
+          )}
+
+          {focusTasks.map((task: any, index: number) => (
+            <button
+              key={task.id}
+              onClick={() => {
+                setSelectedTask(task);
+                setIsEditModalOpen(true);
+              }}
+              className={`flex w-full items-center gap-3 rounded-[20px] border p-3 text-left ${
+                darkMode
+                  ? "border-white/[0.08] bg-white/[0.04]"
+                  : "border-black/[0.055] bg-black/[0.018]"
+              }`}
+            >
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
+                style={{ backgroundColor: themeColor }}
+              >
+                {index + 1}
+              </span>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-[900] tracking-[-0.02em]">
+                  {task.title}
+                </p>
+
+                <p className={darkMode ? "mt-1 text-[10px] font-[800] text-white/38" : "mt-1 text-[10px] font-[800] text-black/38"}>
+                  {task.category} ·{" "}
+                  {task.priority === "Medium" ? "Mid" : task.priority}
+                </p>
+              </div>
+
+              <Eye size={15} className={darkMode ? "text-white/35" : "text-black/35"} />
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="mb-2">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h2
+              className="text-[11px] font-[900] uppercase tracking-[0.18em]"
+              style={{ color: themeColor }}
+            >
+              Completed Today
+            </h2>
+
+            <span
+              className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-[900] text-white"
+              style={{ backgroundColor: themeColor }}
+            >
+              {completedToday.length}
+            </span>
+          </div>
+
+          <button
+            onClick={archiveCompletedToday}
+            className={`text-xs font-[900] ${
+              completedToday.length === 0
+                ? "pointer-events-none opacity-30"
+                : darkMode
+                ? "text-white/48"
+                : "text-black/42"
+            }`}
+          >
+            Archive All
+          </button>
+        </div>
+
+        <div
+          className={`overflow-hidden rounded-[24px] border ${
+            darkMode
+              ? "border-white/[0.08] bg-[#171717]"
+              : "border-black/[0.06] bg-white"
+          }`}
+        >
+          {completedToday.length === 0 && (
+            <div className={darkMode ? "p-5 text-sm font-[700] text-white/35" : "p-5 text-sm font-[700] text-black/35"}>
+              Nothing completed yet.
+            </div>
+          )}
+
+          {completedToday.map((task: any) => (
+            <div
+              key={task.id}
+              className={darkMode ? "flex items-center gap-3 border-b border-white/[0.07] px-4 py-3 last:border-b-0" : "flex items-center gap-3 border-b border-black/[0.055] px-4 py-3 last:border-b-0"}
+            >
+              <CheckCircle2 size={18} className="shrink-0 text-emerald-500" />
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-[850]">{task.title}</p>
+                <p className={darkMode ? "mt-0.5 text-[10px] font-[750] text-white/35" : "mt-0.5 text-[10px] font-[750] text-black/35"}>
+                  {task.category}
+                </p>
+              </div>
+
+              <button
+                onClick={() => restoreCompletedTask(task.id)}
+                className={darkMode ? "rounded-full bg-white/[0.06] px-3 py-1.5 text-[10px] font-[900] text-white/50" : "rounded-full bg-black/[0.04] px-3 py-1.5 text-[10px] font-[900] text-black/50"}
+              >
+                Restore
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -5345,7 +6406,7 @@ function FocusModePanel({
           <span
             className={`shrink-0 rounded-full border px-3 py-1.5 text-[10px] font-[900] ${
               darkMode
-                ? "border-white/[0.16] bg-white/[0.06] text-white/72"
+                ? "border-white/[0.16] bg-white/[0.06] text-white/75"
                 : "bg-black/[0.04] text-black/45"
             }`}
           >
@@ -7145,215 +8206,156 @@ function MobileBottomNav({
   darkMode,
   themeColor,
 }: any) {
-  const [hasScrolled, setHasScrolled] = useState(false);
+  const goToToday = () => {
+    setSelectedView("today");
+    window.setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 80);
+  };
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setHasScrolled(window.scrollY > 24);
-    };
+  const goToFocus = () => {
+    setSelectedView("today");
+    window.setTimeout(() => {
+      document
+        .getElementById("mobile-focus-card")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  };
 
-    handleScroll();
-
-    window.addEventListener("scroll", handleScroll, {
-      passive: true,
-    });
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const items = [
-    {
-      key: "today",
-      label: "Today",
-      icon: ListChecks,
-    },
-    {
-      key: "inbox",
-      label: "Inbox",
-      icon: Calendar,
-      count: inboxCount,
-    },
-    
-    {
-      key: "settings",
-      label: "Settings",
-      icon: Target,
-    },
-  ];
+  const goToCapture = () => {
+    setSelectedView("today");
+    window.setTimeout(() => {
+      document
+        .getElementById("mobile-quick-capture")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 120);
+  };
 
   return (
-    <>
-      <div
-        className={`fixed left-0 right-0 top-0 z-[170] flex items-center gap-3 border-b px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-2xl lg:hidden ${
-          darkMode
-            ? "border-white/[0.09] bg-[#0b1113]/94 text-white"
-            : "border-black/[0.08] bg-white/95 text-black"
-        }`}
-      >
-       <div
-  className="flex h-10 w-10 items-center justify-center rounded-[16px] shadow-[0_10px_24px_rgba(0,0,0,0.18)]"
-  style={{
-    backgroundColor: darkMode ? "#FFFFFF" : "#1F2937",
-    color: darkMode ? "#1F2937" : "#FFFFFF",
-  }}
->
-  <svg
-    width="25"
-    height="25"
-    viewBox="0 0 36 36"
-    fill="none"
-    aria-hidden="true"
-  >
-    <path
-      d="M7.5 18.6L14.2 25.2L29 10.3"
-      stroke="currentColor"
-      strokeWidth="4.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-
-    <path
-      d="M24.8 10.4H29V14.6"
-      stroke="currentColor"
-      strokeWidth="4.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      opacity="0.55"
-    />
-
-    <path
-      d="M6.5 10.2H15.5"
-      stroke="currentColor"
-      strokeWidth="2.8"
-      strokeLinecap="round"
-      opacity="0.35"
-    />
-
-    <path
-      d="M4.8 14.2H10.8"
-      stroke="currentColor"
-      strokeWidth="2.8"
-      strokeLinecap="round"
-      opacity="0.22"
-    />
-  </svg>
-</div>
-  
-        <div>
-          <h1 className="text-[25px] font-[900] leading-none tracking-[-0.06em]">
-            Veira
-          </h1>
-          <p
-            className={`text-[11px] font-[800] uppercase ${
-              darkMode ? "text-white/40" : "text-black/40"
-            }`}
-          >
-            Focus. Prioritize. Move forward.
-          </p>
-        </div>
-      </div>
-  
-      <nav
-          className={`fixed left-0 right-0 top-[67px] z-[160] grid grid-cols-5 place-items-center border-b px-2 py-1 backdrop-blur-2xl transition-all duration-300 lg:hidden ${
-        hasScrolled
-          ? darkMode
-            ? "border-white/[0.06] bg-[#0b1113]/72 shadow-[0_10px_34px_rgba(0,0,0,0.10)]"
-            : "border-white/25 bg-white/22 shadow-[0_10px_34px_rgba(17,24,39,0.045)]"
-          : darkMode
-          ? "border-white/[0.09] bg-[#0b1113]/92 shadow-[0_18px_60px_rgba(0,0,0,0.22)]"
-          : "border-black/[0.08] bg-white/95 shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
+    <nav
+      className={`fixed bottom-4 left-4 right-4 z-[180] grid h-[72px] grid-cols-5 items-center rounded-[28px] border px-2 shadow-[0_22px_70px_rgba(17,24,39,0.22)] backdrop-blur-2xl lg:hidden ${
+        darkMode
+          ? "border-white/[0.10] bg-[#0b1113]/92 text-white"
+          : "border-black/[0.07] bg-white/[0.92] text-black"
       }`}
     >
-      {items.map((item) => {
-        const Icon = item.icon;
-        const isActive = selectedView === item.key;
-  
-        return (
-          <button
-            key={item.key}
-            onClick={() => setSelectedView(item.key)}
-            className={`relative flex h-[54px] w-full max-w-[70px] flex-col items-center justify-center gap-0.5 rounded-[16px] text-[9px] font-[800] transition ${
-              isActive
-                ? "text-white"
-                : darkMode
-                ? "text-white/45"
-                : "text-black/45"
+      <button
+        onClick={goToToday}
+        className={`flex flex-col items-center justify-center gap-1 rounded-[20px] py-2 text-[10px] font-[900] ${
+          selectedView === "today"
+            ? "text-white"
+            : darkMode
+            ? "text-white/45"
+            : "text-black/45"
+        }`}
+        style={
+          selectedView === "today"
+            ? {
+                backgroundColor: themeColor,
+              }
+            : undefined
+        }
+      >
+        <ListChecks size={18} />
+        Today
+      </button>
+
+      <button
+        onClick={goToFocus}
+        className={`flex flex-col items-center justify-center gap-1 rounded-[20px] py-2 text-[10px] font-[900] ${
+          darkMode ? "text-white/45" : "text-black/45"
+        }`}
+      >
+        <Target size={18} />
+        Focus
+      </button>
+
+      <button
+        onClick={goToCapture}
+        className="mx-auto flex h-14 w-14 -translate-y-4 items-center justify-center rounded-full text-white shadow-[0_18px_44px_rgba(17,24,39,0.24)] transition active:scale-95"
+        style={{
+          backgroundColor: themeColor,
+        }}
+      >
+        <Plus size={24} />
+      </button>
+
+      <button
+        onClick={() => setSelectedView("inbox")}
+        className={`relative flex flex-col items-center justify-center gap-1 rounded-[20px] py-2 text-[10px] font-[900] ${
+          selectedView === "inbox"
+            ? "text-white"
+            : darkMode
+            ? "text-white/45"
+            : "text-black/45"
+        }`}
+        style={
+          selectedView === "inbox"
+            ? {
+                backgroundColor: themeColor,
+              }
+            : undefined
+        }
+      >
+        <Calendar size={18} />
+        Inbox
+
+        {inboxCount ? (
+          <span
+            className={`absolute right-3 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-[900] ${
+              selectedView === "inbox"
+                ? "bg-white text-black"
+                : "bg-red-500 text-white"
             }`}
-            style={
-              isActive
-                ? {
-                    backgroundColor: themeColor,
-                  }
-                : undefined
-            }
           >
-            <Icon size={16} />
-  
-            <span>{item.label}</span>
-  
-            {item.count ? (
-              <span
-                className={`absolute right-2 top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-[900] ${
-                  isActive ? "bg-white text-black" : "bg-red-500 text-white"
-                }`}
-              >
-                {item.count}
-              </span>
-            ) : null}
-          </button>
-        );
-      })}
-  
-  <div className="flex h-[54px] w-full max-w-[70px] flex-col items-center justify-center gap-0.5 rounded-[16px]">
-      <UserButton
-  afterSignOutUrl="/sign-in"
-  appearance={{
-    elements: {
-      userButtonAvatarBox: "h-6 w-6",
+            {inboxCount}
+          </span>
+        ) : null}
+      </button>
 
-      userButtonPopoverCard:
-      "w-[280px] rounded-[16px] border border-[#05AD98]/35 bg-[#171717] p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
-    
-    userButtonPopoverMain:
-      "bg-[#171717] text-white",
-    
-    userButtonPopoverActions:
-      "bg-[#171717]",
+      <div className="flex flex-col items-center justify-center gap-1 rounded-[20px] py-2">
+        <UserButton
+          afterSignOutUrl="/sign-in"
+          appearance={{
+            elements: {
+              userButtonAvatarBox: "h-7 w-7",
 
-      userButtonPopoverActionButton:
-        "h-10 rounded-[10px] px-3 text-white hover:bg-white/[0.08]",
+              userButtonPopoverCard:
+                "w-[280px] rounded-[16px] border border-[#05AD98]/35 bg-[#171717] p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
 
-      userButtonPopoverActionButtonText:
-        "text-[13px] font-[700] text-white",
+              userButtonPopoverMain: "bg-[#171717] text-white",
 
-      userButtonPopoverActionButtonIcon:
-        "text-white/60",
+              userButtonPopoverActions: "bg-[#171717]",
 
-      userButtonPopoverFooter:
-        "hidden",
+              userButtonPopoverActionButton:
+                "h-10 rounded-[10px] px-3 text-white hover:bg-white/[0.08]",
 
-      userPreviewMainIdentifier:
-        "text-sm font-[800] text-white",
+              userButtonPopoverActionButtonText:
+                "text-[13px] font-[700] text-white",
 
-      userPreviewSecondaryIdentifier:
-        "text-xs font-[600] text-white/55",
+              userButtonPopoverActionButtonIcon: "text-white/60",
 
-      userPreviewAvatarBox:
-        "h-8 w-8",
-    },
-  }}
-/>
-  
+              userButtonPopoverFooter: "hidden",
+
+              userPreviewMainIdentifier: "text-sm font-[800] text-white",
+
+              userPreviewSecondaryIdentifier:
+                "text-xs font-[600] text-white/55",
+
+              userPreviewAvatarBox: "h-8 w-8",
+            },
+          }}
+        />
+
         <span
-          className={`text-[10px] font-[800] ${
+          className={`text-[10px] font-[900] ${
             darkMode ? "text-white/45" : "text-black/45"
           }`}
         >
           Account
         </span>
       </div>
-      </nav>
-  </>
+    </nav>
   );
 }
 
@@ -8662,7 +9664,7 @@ function EditTaskModal({
 
                   <div className="flex shrink-0 items-center gap-4 text-[18px]">
                     <span
-                      className={`text-sm font-[800]] ${
+                      className={`text-sm font-[800] ${
                         darkMode ? "text-white/48" : "text-slate-500"
                       }`}
                     >
@@ -8830,7 +9832,7 @@ function EditTaskModal({
                     className={`mt-4 rounded-[20px] border px-4 py-3 ${
                       darkMode
                         ? "border-[#05AD98]/20 bg-[#05AD98]/10"
-                        : "border-[#05AD98]/20 bg-[#05AD98]/08"
+                        : "border-[#05AD98]/20 bg-[#05AD98]/[0.08]"
                     }`}
                   >
                     <div className="flex items-start gap-3">
