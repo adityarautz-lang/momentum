@@ -818,6 +818,7 @@ const [clipboardExtractedTasks, setClipboardExtractedTasks] = useState<
   const [archiveToast, setArchiveToast] = useState("");
   const [firecrackers, setFirecrackers] = useState<Firecracker[]>([]);
   const [newTask, setNewTask] = useState("");
+const [newlyAddedTaskIds, setNewlyAddedTaskIds] = useState<string[]>([]);
 const [newTaskWhy, setNewTaskWhy] = useState("");
 const [newCategory, setNewCategory] = useState("");
 const [selectedCategory, setSelectedCategory] = useState("");
@@ -1631,6 +1632,14 @@ const modalSelect = darkMode
     }, 1000);
   };
 
+  const markTaskAsNew = (taskId: string) => {
+    setNewlyAddedTaskIds((prev) => [...prev, taskId]);
+
+    window.setTimeout(() => {
+      setNewlyAddedTaskIds((prev) => prev.filter((id) => id !== taskId));
+    }, 2200);
+  };
+
 
   const improveTaskWithAI = async (
     taskId: string,
@@ -1846,6 +1855,7 @@ const modalSelect = darkMode
   
     setNewTask("");
     setNewTaskWhy("");
+    
     anchorTaskListSoon();
   
     try {
@@ -1875,9 +1885,11 @@ const modalSelect = darkMode
           }))
         );
       }
-
       if (enableAppSuggestions) {
-        void improveTaskWithAI(taskId, title, manualWhy);
+        await improveTaskWithAI(taskId, title, manualWhy);
+        markTaskAsNew(taskId);
+      } else {
+        markTaskAsNew(taskId);
       }
     } catch (error) {
       console.error(error);
@@ -2067,11 +2079,13 @@ const modalSelect = darkMode
       });
     });
 
+    markTaskAsNew(taskToAdd.id);
+
     setArchiveToast("Copied text added as task");
 
     setTimeout(() => {
       setArchiveToast("");
-    }, 2200);
+    }, 5000);
 
     dismissClipboardCandidate();
     setSelectedView("today");
@@ -2103,24 +2117,29 @@ const modalSelect = darkMode
       prev.map((category) => {
         const tasksForCategory = selectedTasks
           .filter((task) => task.category === category.title)
-          .map((task) => ({
-            id: crypto.randomUUID(),
-            title: task.title,
-            priority: task.priority,
-            dueDate: undefined,
-            suggestedDueDate: task.suggestedDueDate || undefined,
-            notes: task.notes,
-            status: task.status,
-            whyThisMatters: task.reason || "",
-            whySuggestions: task.reason ? [task.reason] : [],
-            selectedWhyIndex: 0,
-            aiReason: task.reason,
-            aiConfidence: task.confidence,
-            tags: normalizeTaskTags(task.tags),
-            subtasks: [],
-            completed: false,
-            createdAt: new Date().toISOString(),
-          }));
+          .map((task) => {
+            const newId = crypto.randomUUID();
+            markTaskAsNew(newId);
+
+            return {
+              id: newId,
+              title: task.title,
+              priority: task.priority,
+              dueDate: undefined,
+              suggestedDueDate: task.suggestedDueDate || undefined,
+              notes: task.notes,
+              status: task.status,
+              whyThisMatters: task.reason || "",
+              whySuggestions: task.reason ? [task.reason] : [],
+              selectedWhyIndex: 0,
+              aiReason: task.reason,
+              aiConfidence: task.confidence,
+              tags: normalizeTaskTags(task.tags),
+              subtasks: [],
+              completed: false,
+              createdAt: new Date().toISOString(),
+            };
+          });
   
         if (tasksForCategory.length === 0) return category;
   
@@ -2171,24 +2190,29 @@ const modalSelect = darkMode
       prev.map((category) => {
         const tasksForCategory = selectedTasks
           .filter((task) => task.category === category.title)
-          .map((task) => ({
-            id: crypto.randomUUID(),
-            title: task.title,
-            priority: task.priority,
-            dueDate: undefined,
-            suggestedDueDate: task.suggestedDueDate || undefined,
-            notes: task.notes,
-            status: task.status,
-            whyThisMatters: task.reason || "",
-            whySuggestions: task.reason ? [task.reason] : [],
-            selectedWhyIndex: 0,
-            aiReason: task.reason,
-            aiConfidence: task.confidence,
-            tags: normalizeTaskTags(task.tags),
-            subtasks: [],
-            completed: false,
-            createdAt: new Date().toISOString(),
-          }));
+          .map((task) => {
+            const newId = crypto.randomUUID();
+            markTaskAsNew(newId);
+
+            return {
+              id: newId,
+              title: task.title,
+              priority: task.priority,
+              dueDate: undefined,
+              suggestedDueDate: task.suggestedDueDate || undefined,
+              notes: task.notes,
+              status: task.status,
+              whyThisMatters: task.reason || "",
+              whySuggestions: task.reason ? [task.reason] : [],
+              selectedWhyIndex: 0,
+              aiReason: task.reason,
+              aiConfidence: task.confidence,
+              tags: normalizeTaskTags(task.tags),
+              subtasks: [],
+              completed: false,
+              createdAt: new Date().toISOString(),
+            };
+          });
   
         if (tasksForCategory.length === 0) {
           return category;
@@ -2782,6 +2806,7 @@ togglePinTask={togglePinTask}
             selectWhySuggestion={selectWhySuggestion}
             taskListRef={taskListRef}
             anchorTaskListSoon={anchorTaskListSoon}
+            newlyAddedTaskIds={newlyAddedTaskIds}
           />
             )}
 
@@ -2997,6 +3022,27 @@ togglePinTask={togglePinTask}
  />
   )}
 </AnimatePresence>
+
+<style jsx global>{`
+  @keyframes veiraNewTaskGlow {
+    0% {
+      background-color: ${themeColor}26;
+      box-shadow: 0 0 0 1px ${themeColor}55, 0 18px 45px ${themeColor}20;
+    }
+    42% {
+      background-color: ${themeColor}18;
+      box-shadow: 0 0 0 1px ${themeColor}35, 0 14px 34px ${themeColor}16;
+    }
+    72% {
+      background-color: ${themeColor}10;
+      box-shadow: 0 0 0 1px ${themeColor}22, 0 10px 26px ${themeColor}10;
+    }
+    100% {
+      background-color: transparent;
+      box-shadow: none;
+    }
+  }
+`}</style>
     </main>
   );
 }
@@ -3049,6 +3095,7 @@ togglePinTask,
 selectWhySuggestion,
 taskListRef,
 anchorTaskListSoon,
+newlyAddedTaskIds,
 }: any) {
   const [showMorningBrief, setShowMorningBrief] = useState(false);
   const [morningBrief, setMorningBrief] = useState({
@@ -3234,10 +3281,11 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
 
 
      
-      <section
-  className={`relative z-[10] mb-4 overflow-hidden rounded-[24px] border p-4 sm:mb-4 sm:rounded-[32px] sm:px-6 sm:py-4 ${    darkMode
-    ? "border-white/[0.09] bg-[#171717] shadow-[0_18px_54px_rgba(0,0,0,0.32)]"
-    : "border-[#BBBFBF]/35 bg-white/95 shadow-[0_14px_42px_rgba(17,24,39,0.045)]"
+<section
+  className={`relative z-[10] mb-4 overflow-hidden rounded-[26px] border px-4 py-4 sm:mb-4 sm:rounded-[34px] sm:px-6 sm:py-5 ${
+    darkMode
+      ? "border-white/[0.08] bg-[#171717] shadow-[0_18px_54px_rgba(0,0,0,0.30)]"
+      : "border-[#BBBFBF]/32 bg-white/95 shadow-[0_18px_54px_rgba(17,24,39,0.055)] backdrop-blur-2xl"
   }`}
 >
   <div
@@ -3273,10 +3321,10 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
     </div>
 
     <div
-  className={`flex min-h-12 overflow-hidden rounded-[18px] border sm:min-h-12 sm:rounded-[22px] ${
+  className={`flex min-h-[54px] overflow-hidden rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition-all duration-200 focus-within:shadow-[0_16px_40px_rgba(17,24,39,0.08)] ${
     darkMode
-    ? "border-white/[0.09] bg-[#1f1f21] focus-within:border-[#05AD98]/60"
-    : "border-[#BBBFBF]/45 bg-white focus-within:border-[#05AD98]/55"
+      ? "border-white/[0.09] bg-[#1f1f21] focus-within:border-[#05AD98]/60"
+      : "border-[#BBBFBF]/42 bg-white focus-within:border-[#05AD98]/55"
   }`}
 >
   <input
@@ -3286,18 +3334,18 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
       if (e.key === "Enter") addTask();
     }}
     placeholder="Capture anything..."
-    className={`h-12 min-w-0 flex-1 bg-transparent px-4 text-[13px] font-[700] tracking-[-0.02em] outline-none sm:h-12 sm:px-5 sm:text-sm ${
+    className={`h-[54px] min-w-0 flex-1 bg-transparent px-5 text-[13px] font-[750] tracking-[-0.02em] outline-none sm:px-6 sm:text-sm ${
       darkMode
         ? "text-white placeholder:text-white/35"
         : "text-black placeholder:text-black/35"
     }`}
   />
 
-  <div
-    className={`my-3 w-px shrink-0 ${
-      darkMode ? "bg-white/[0.08]" : "bg-black/[0.06]"
-    }`}
-  />
+<div
+  className={`my-4 w-px shrink-0 ${
+    darkMode ? "bg-white/[0.07]" : "bg-black/[0.055]"
+  }`}
+/>
 
   <input
     value={newTaskWhy}
@@ -3306,7 +3354,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
       if (e.key === "Enter") addTask();
     }}
     placeholder="Optional context..."
-    className={`h-12 min-w-0 flex-1 bg-transparent px-4 text-[13px] font-[700] tracking-[-0.02em] outline-none sm:h-12 sm:px-5 sm:text-sm ${
+    className={`h-[54px] min-w-0 flex-1 bg-transparent px-5 text-[13px] font-[750] tracking-[-0.02em] outline-none sm:px-6 sm:text-sm ${
       darkMode
         ? "text-white placeholder:text-white/35"
         : "text-black placeholder:text-black/35"
@@ -3315,10 +3363,10 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
 
 <button
   onClick={addTask}
-  className="m-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] text-white transition hover:-translate-y-0.5 active:scale-[0.98] sm:h-11 sm:w-11 sm:rounded-[18px]"
+  className="m-1.5 flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full text-white transition hover:-translate-y-0.5 hover:scale-[1.03] active:scale-[0.98]"
   style={{
     backgroundColor: themeColor,
-    boxShadow: `0 14px 30px ${themeColor}3D`,
+    boxShadow: `0 16px 34px ${themeColor}36`,
   }}
 >
   <Send size={16} />
@@ -3412,6 +3460,7 @@ togglePinTask={togglePinTask}
 selectWhySuggestion={selectWhySuggestion}
 taskListRef={taskListRef}
 anchorTaskListSoon={anchorTaskListSoon}
+newlyAddedTaskIds={newlyAddedTaskIds}
 />
   </div>
 
@@ -3473,6 +3522,7 @@ emptyMessage,
   selectWhySuggestion,
   taskListRef,
   anchorTaskListSoon = () => {},
+  newlyAddedTaskIds = [],
 }: any) {
   const [showAllTasks, setShowAllTasks] = useState(false);
   const [expandedWhyTaskId, setExpandedWhyTaskId] = useState<string | null>(null);
@@ -3889,6 +3939,8 @@ emptyMessage,
               : groupMode === "priority"
               ? "Priority"
               : "Due date";
+
+          const isNewlyAdded = newlyAddedTaskIds.includes(task.id);
           
           const taskPanelClass = isGrouped
             ? `relative hidden min-h-[78px] min-w-0 items-center gap-4 overflow-visible rounded-none border-0 px-1 py-3 transition-colors duration-150 sm:flex ${
@@ -3899,7 +3951,7 @@ emptyMessage,
                   : darkMode
                   ? "hover:bg-white/[0.025]"
                   : "hover:bg-black/[0.012]"
-              }`
+              } ${isNewlyAdded ? "animate-[veiraNewTaskGlow_5s_ease-out]" : ""}`
             : `relative hidden min-h-[72px] min-w-0 items-center gap-4 overflow-hidden rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${
                 task.dueDate && isOverdue(task.dueDate)
                   ? darkMode
@@ -3920,7 +3972,7 @@ emptyMessage,
                 darkMode
                   ? "hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
                   : "hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-              }`;
+              } ${isNewlyAdded ? "animate-[veiraNewTaskGlow_2.2s_ease-out]" : ""}`;
           
           return (
             <div key={task.id} className="contents">
