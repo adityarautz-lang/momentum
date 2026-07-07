@@ -3232,7 +3232,7 @@ userFirstName={userFirstName}
 />
 
 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-<h1 className="text-[24px] font-[700] leading-tight tracking-[-0.05em]">
+<h1 className="text-[24px] font-[500] leading-tight tracking-[-0.05em]">
   {greetingWithName} 👋
 </h1>
 
