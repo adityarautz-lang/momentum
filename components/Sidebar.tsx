@@ -157,7 +157,7 @@ export default function Sidebar({
 
         <div className="min-w-0">
           <h1
-            className="text-[30px] font-[900] leading-none tracking-[-0.055em]"
+            className="text-[30px] font-[600] leading-none tracking-[-0.055em]"
             style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
           >
             Veira
