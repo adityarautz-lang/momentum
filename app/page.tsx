@@ -3371,7 +3371,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
   <div className="relative">
   <div className="mb-2 flex items-start justify-between gap-3 sm:mb-3 sm:items-center">
       <div className="min-w-0">
-        <h2 className="flex items-center gap-2 text-[18px] font-[700] tracking-[-0.035em] sm:text-[22px]">
+        <h2 className="flex items-center gap-2 text-[18px] font-[500] tracking-[-0.035em] sm:text-[22px]">
           <Send size={16} style={{ color: themeColor }} />
           Quick Capture
         </h2>
