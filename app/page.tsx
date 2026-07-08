@@ -5443,11 +5443,11 @@ emptyMessage,
                                 </span>
 
                                 <span
-                                  className={`min-w-0 flex-1 overflow-hidden whitespace-normal break-words px-3 py-2 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [overflow-wrap:anywhere] ${textStyles.whyText} ${
-                                    darkMode
-                                      ? "text-white/48"
-                                      : "text-[#2C2D2C]/48"
-                                  }`}
+                                className={`min-w-0 flex-1 overflow-hidden whitespace-normal break-words px-3 py-1.5 text-[11px] font-[500] leading-[17px] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [overflow-wrap:anywhere] min-[1700px]:px-3 min-[1700px]:py-2 min-[1700px]:text-[12px] min-[1700px]:leading-5 ${
+                                  darkMode
+                                    ? "text-white/48"
+                                    : "text-[#2C2D2C]/48"
+                                }`}
                                 >
                                   {task.whyThisMatters}
                                 </span>
