@@ -5340,7 +5340,7 @@ emptyMessage,
                   }}
                   className={taskPanelClass}
                 >
-                  <div className="grid w-full min-w-0 grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_216px] xl:gap-3 min-[1700px]:grid-cols-[minmax(0,1fr)_224px] min-[1700px]:gap-4">
+                  <div className="grid w-full min-w-0 grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_236px] xl:gap-3 min-[1700px]:grid-cols-[minmax(0,1fr)_248px] min-[1700px]:gap-4">
                     <div className="flex min-w-0 items-start gap-4">
                       <button
                         onClick={(e) => toggleTaskById(task.id, e)}
@@ -5411,7 +5411,7 @@ emptyMessage,
                                   ? whyDropdownRef
                                   : null
                               }
-                              className="mt-2 w-full max-w-full min-[1700px]:w-[calc(100%+166px)] min-[1700px]:max-w-[calc(100%+166px)]"
+                              className="mt-2 w-full max-w-full xl:w-[calc(100%+116px)] xl:max-w-[calc(100%+116px)] min-[1700px]:w-[calc(100%+156px)] min-[1700px]:max-w-[calc(100%+156px)]"
                             >
                               <button
                                 onClick={() =>
@@ -5443,7 +5443,7 @@ emptyMessage,
                                 </span>
 
                                 <span
-                                  className={`min-w-0 flex-1 whitespace-normal break-words px-3 py-2 [overflow-wrap:anywhere] ${textStyles.whyText} ${
+                                  className={`min-w-0 flex-1 overflow-hidden whitespace-normal break-words px-3 py-2 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [overflow-wrap:anywhere] ${textStyles.whyText} ${
                                     darkMode
                                       ? "text-white/48"
                                       : "text-[#2C2D2C]/48"
@@ -5523,13 +5523,13 @@ emptyMessage,
   isGrouped ? "min-h-[72px]" : "min-h-[88px]"
 } flex-col items-start justify-start xl:items-end`}
 >
-<div className="flex flex-wrap items-center justify-start gap-2 xl:justify-end">
-<div className="flex shrink-0 items-start justify-start gap-3 xl:justify-end">
+<div className="flex flex-nowrap items-start justify-start gap-1.5 xl:justify-end">
+<div className="flex shrink-0 items-start justify-start gap-2 xl:justify-end">
   {visibleDueDate && (
-    <div className="flex h-10 w-[62px] items-start justify-start gap-1.5">
+    <div className="flex h-9 w-[52px] items-start justify-start gap-1">
       <Calendar
-        size={13}
-        className={`mt-[3px] shrink-0 ${
+        size={12}
+        className={`mt-[2px] shrink-0 ${
           darkMode
             ? "text-white/55"
             : "text-[#2C2D2C]/48"
@@ -5543,11 +5543,11 @@ emptyMessage,
             : "text-[#2C2D2C]/65"
         }`}
       >
-        <span className="text-[16px] font-[900] tracking-[-0.04em]">
+        <span className="text-[15px] font-[900] tracking-[-0.04em]">
           {visibleDueDateParts.day}
         </span>
 
-        <span className="mt-1 text-[13px] font-[800] tracking-[-0.03em]">
+        <span className="mt-0.5 text-[11px] font-[800] tracking-[-0.03em]">
           {visibleDueDateParts.month}
         </span>
       </span>
@@ -5555,7 +5555,7 @@ emptyMessage,
   )}
 
   <div
-    className={`flex h-10 w-[76px] items-start justify-start gap-1.5 pt-[4px] ${
+    className={`flex h-9 min-w-[50px] items-start justify-start gap-1 pt-[4px] ${
       task.priority === "High"
         ? "text-red-500"
         : task.priority === "Medium"
@@ -5563,11 +5563,11 @@ emptyMessage,
         : "text-emerald-500"
     }`}
   >
-    <span className="mt-[4px] text-[12px] leading-none">
+    <span className="mt-[4px] text-[11px] leading-none">
       ●
     </span>
 
-    <span className="text-[16px] font-[900] leading-none tracking-[-0.03em]">
+    <span className="text-[15px] font-[900] leading-none tracking-[-0.03em]">
       {task.priority === "Medium" ||
       task.priority === "Med"
         ? "Mid"
@@ -5583,7 +5583,7 @@ emptyMessage,
                               ? "Already in focus"
                               : "Add to focus"
                           }
-                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full opacity-100 transition hover:scale-110"
+                         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full opacity-100 transition hover:scale-110"
                           style={{
                             color: manualFocusTaskIds.includes(task.id)
                               ? themeColor
@@ -5603,7 +5603,7 @@ emptyMessage,
                         <button
                           onClick={() => togglePinTask(task.id)}
                           title={task.pinned ? "Pinned" : "Pin to top"}
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition hover:scale-110 ${
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition hover:scale-110 ${
                             task.pinned ? "opacity-100" : "opacity-55 hover:opacity-100"
                           }`}
                           style={{ color: task.pinned ? themeColor : undefined }}
@@ -5616,7 +5616,7 @@ emptyMessage,
 
                         <button
                           onClick={() => deleteTask(task.id)}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full opacity-45 transition hover:scale-110 hover:opacity-100 hover:text-red-500"
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full opacity-45 transition hover:scale-110 hover:opacity-100 hover:text-red-500"
                         >
                           <Trash2 size={16} />
                         </button>
