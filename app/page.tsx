@@ -2792,7 +2792,7 @@ createdAt: updatedTask.createdAt || new Date().toISOString(),
   inboxCount={inboxTasks.length}
 />
 
-<div className="min-w-0 flex-1 overflow-x-hidden px-3 pb-28 pt-5 sm:px-5 sm:pb-28 sm:pt-6 md:px-6 lg:pl-[268px] lg:pr-5 lg:pb-16 lg:pt-6 xl:pl-[284px] xl:pr-6 2xl:px-10 2xl:py-8 2xl:pl-[300px]">
+<div className="min-w-0 flex-1 overflow-x-hidden px-3 pb-28 pt-5 sm:px-5 sm:pb-28 sm:pt-6 md:px-6 lg:pl-[268px] lg:pr-5 lg:pb-16 lg:pt-6 xl:pl-[284px] xl:pr-6 min-[1700px]:px-10 min-[1700px]:py-8 min-[1700px]:pl-[300px]">
 <div className="mx-auto w-full max-w-[1380px] overflow-x-hidden">
             {selectedView === "today" && (
             <TodayView
