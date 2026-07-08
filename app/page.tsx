@@ -104,6 +104,19 @@ const inter = Inter({
   display: "swap",
 });
 
+const textStyles = {
+  pageTitle: "text-[22px] leading-[28px] font-[800]",
+  sectionTitle: "text-[18px] leading-[24px] font-[800]",
+  taskTitle: "text-[14px] leading-[18px] font-[700]",
+  body: "text-[13px] leading-[18px] font-[650]",
+  small: "text-[12px] leading-[16px] font-[600]",
+  meta: "text-[11px] leading-[14px] font-[700]",
+  badge: "text-[10px] leading-none font-[900] uppercase tracking-[0.14em]",
+  button: "text-[12px] leading-none font-[800]",
+  whyText: "text-[12px] leading-5 font-[500]",
+} as const;
+
+
 /* ------------------------------------------------ */
 /* Initial Data */
 /* ------------------------------------------------ */
@@ -776,7 +789,7 @@ const getClipboardTaskTitle = (text: string) => {
 function FollowUpTag({ darkMode }: { darkMode: boolean }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-[850] tracking-[-0.01em] ${
+      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 ${textStyles.badge} ${
         darkMode
           ? "border-amber-300/15 bg-amber-300/[0.08] text-amber-200/80"
           : "border-amber-500/15 bg-amber-500/[0.07] text-amber-700"
@@ -3233,7 +3246,7 @@ userFirstName={userFirstName}
 />
 
 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-<h1 className="text-[24px] font-[500] leading-tight tracking-[-0.05em]">
+<h1 className={`${textStyles.pageTitle} tracking-[-0.04em]`}>
   {greetingWithName} 👋
 </h1>
 
@@ -3261,7 +3274,7 @@ userFirstName={userFirstName}
       </div>
 
       <p
-        className={`mt-1.5 text-sm font-[500] ${
+        className={`mt-1.5 ${textStyles.small} ${
           darkMode ? "text-white/42" : "text-black/42"
         }`}
       >
@@ -3279,7 +3292,7 @@ userFirstName={userFirstName}
         }`}
       >
         {/* <p
-          className="text-[11px] font-[900] uppercase tracking-[0.16em]"
+          className={textStyles.badge}
           style={{ color: themeColor }}
         >
           Morning Brief
@@ -3325,14 +3338,14 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
       }`}
     >
       <p
-        className="text-[11px] font-[900] uppercase tracking-[0.16em]"
+        className={textStyles.badge}
         style={{ color: themeColor }}
       >
         AI Veira Boost
       </p>
 
       <p
-        className={`mt-1 max-w-[980px] text-[15px] font-[700] leading-6 tracking-[-0.025em] ${
+        className={`mt-1 max-w-[980px] ${textStyles.body} tracking-[-0.015em] ${
           darkMode ? "text-white/58" : "text-black/58"
         }`}
       >
@@ -3372,13 +3385,13 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
   <div className="relative">
   <div className="mb-2 flex items-start justify-between gap-3 sm:mb-3 sm:items-center">
       <div className="min-w-0">
-        <h2 className="flex items-center gap-2 text-[18px] font-[500] tracking-[-0.035em] sm:text-[22px]">
+        <h2 className={`flex items-center gap-2 ${textStyles.sectionTitle} tracking-[-0.03em]`}>
           <Send size={16} style={{ color: themeColor }} />
           Quick Capture
         </h2>
 
         <p
-            className={`mt-0.5 text-[11px] font-[700] sm:text-xs ${
+            className={`mt-0.5 ${textStyles.meta} ${
             darkMode ? "text-white/42" : "text-black/38"
           }`}
         >
@@ -3401,7 +3414,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
       if (e.key === "Enter") addTask();
     }}
     placeholder="Capture anything..."
-    className={`h-[54px] min-w-0 flex-1 bg-transparent px-5 text-[13px] font-[750] tracking-[-0.02em] outline-none sm:px-6 sm:text-sm ${
+    className={`h-[54px] min-w-0 flex-1 bg-transparent px-5 ${textStyles.body} tracking-[-0.015em] outline-none sm:px-6 ${
       darkMode
         ? "text-white placeholder:text-white/35"
         : "text-black placeholder:text-black/35"
@@ -3421,7 +3434,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
       if (e.key === "Enter") addTask();
     }}
     placeholder="Optional context..."
-    className={`h-[54px] min-w-0 flex-1 bg-transparent px-5 text-[13px] font-[750] tracking-[-0.02em] outline-none sm:px-6 sm:text-sm ${
+    className={`h-[54px] min-w-0 flex-1 bg-transparent px-5 ${textStyles.body} tracking-[-0.015em] outline-none sm:px-6 ${
       darkMode
         ? "text-white placeholder:text-white/35"
         : "text-black placeholder:text-black/35"
@@ -3450,7 +3463,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
           color: themeColor,
         } as React.CSSProperties}
 
-        className={`rounded-full border px-3 py-1.5 text-[11px] font-[700] transition hover:scale-[1.02] sm:text-xs ${
+        className={`rounded-full border px-3 py-1.5 ${textStyles.button} transition hover:scale-[1.02] ${
           darkMode
         ? "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
 : "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
@@ -4938,13 +4951,13 @@ emptyMessage,
 >
       <div className="mb-0 flex flex-col gap-2 sm:mb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="min-w-0">
-          <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.035em] sm:text-[16px] sm:font-[700] sm:tracking-normal">
+          <h2 className={`flex items-center gap-2 ${textStyles.sectionTitle} tracking-[-0.025em]`}>
             {title}
             <Sparkles size={16} style={{ color: themeColor }} />
           </h2>
 
           <p
-  className="mt-1 text-[12px] font-[700] leading-5 sm:text-xs"
+  className={`mt-1 ${textStyles.meta}`}
   style={{
     color: themeColor,
   }}
@@ -4957,7 +4970,7 @@ emptyMessage,
           <div className="flex w-full shrink-0 flex-col gap-1 sm:w-auto sm:items-end">
             <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
               <span
-                className={`shrink-0 text-[10px] font-[700] tracking-[0.12em] ${
+                className={`shrink-0 ${textStyles.badge} ${
                   darkMode ? "text-white/35" : "text-black/35"
                 }`}
               >
@@ -4987,7 +5000,7 @@ emptyMessage,
                         setShowAllTasks(false);
                         anchorTaskListSoon();
                       }}
-                      className={`h-7 shrink-0 rounded-[11px] px-2 text-[10px] font-[900] transition ${
+                      className={`h-7 shrink-0 rounded-[11px] px-2 ${textStyles.badge} transition ${
                         isActive
                           ? "text-white"
                           : darkMode
@@ -5007,7 +5020,7 @@ emptyMessage,
 
             <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
               <span
-                className={`shrink-0 text-[10px] font-[700] tracking-[0.12em] ${
+                className={`shrink-0 ${textStyles.badge} ${
                   darkMode ? "text-white/35" : "text-black/35"
                 }`}
               >
@@ -5036,7 +5049,7 @@ emptyMessage,
                         setShowAllTasks(false);
                         anchorTaskListSoon();
                       }}
-                      className={`h-7 rounded-[11px] px-2.5 text-[10px] font-[900] transition ${
+                      className={`h-7 rounded-[11px] px-2.5 ${textStyles.badge} transition ${
                         isActive
                           ? "text-white"
                           : darkMode
@@ -5342,13 +5355,13 @@ emptyMessage,
                             setIsEditModalOpen(true);
                           }}
                           title={task.title}
-                          className="block min-w-0 cursor-pointer whitespace-normal break-words text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70"
+                          className={`block min-w-0 cursor-pointer whitespace-normal break-words ${textStyles.taskTitle} tracking-[-0.01em] hover:opacity-70`}
                         >
                           {task.title}
                         </p>
 
                         <div
-                          className={`mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] font-[650] ${
+                          className={`mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 ${textStyles.meta} ${
                             darkMode ? "text-white/38" : "text-black/38"
                           }`}
                         >
@@ -5394,7 +5407,7 @@ emptyMessage,
                                 }`}
                               >
                                 <span
-                                  className="flex shrink-0 items-center justify-center gap-1.5 border-r px-3 text-[10px] font-[900] uppercase tracking-[0.13em]"
+                                  className={`flex shrink-0 items-center justify-center gap-1.5 border-r px-3 ${textStyles.badge}`}
                                   style={{
                                     color: darkMode
                                       ? "rgba(255,255,255,0.86)"
@@ -5409,7 +5422,7 @@ emptyMessage,
                                 </span>
 
                                 <span
-                                  className={`min-w-0 flex-1 whitespace-normal break-words px-3 py-2 text-[12px] leading-4 ${
+                                  className={`min-w-0 flex-1 whitespace-normal break-words px-3 py-2 ${textStyles.whyText} ${
                                     darkMode
                                       ? "text-white/48"
                                       : "text-black/48"
@@ -5455,7 +5468,7 @@ emptyMessage,
                                             );
                                             setExpandedWhyTaskId(null);
                                           }}
-                                          className={`flex w-full items-center justify-between gap-3 rounded-[14px] border px-3 py-2 text-left text-[11px] font-[700] transition ${
+                                          className={`flex w-full items-center justify-between gap-3 rounded-[14px] border px-3 py-2 text-left ${textStyles.small} transition ${
                                             isSelected
                                               ? "text-white"
                                               : darkMode
@@ -5665,14 +5678,14 @@ function CompletedTodaySection({
       <div className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
         <div className="flex items-center gap-3">
           <h2
-            className="text-[11px] font-[900] uppercase tracking-[0.16em] sm:text-[13px] sm:font-[700] sm:tracking-[0.14em]"
+            className={textStyles.badge}
             style={{ color: themeColor }}
           >
             Completed Today
           </h2>
 
           <div
-            className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-white"
+            className={`flex h-5 w-5 items-center justify-center rounded-full ${textStyles.badge} text-white`}
             style={{ backgroundColor: themeColor }}
           >
             {completedToday.length}
@@ -5681,7 +5694,7 @@ function CompletedTodaySection({
 
         <button
           onClick={archiveCompletedToday}
-          className={`flex h-9 items-center gap-2 rounded-[16px] px-3 text-xs font-[900] transition sm:h-10 sm:gap-3 sm:rounded-2xl sm:px-5 sm:text-sm sm:font-[700] ${
+          className={`flex h-9 items-center gap-2 rounded-[16px] px-3 ${textStyles.button} transition sm:h-10 sm:gap-3 sm:rounded-2xl sm:px-5 ${
             completedToday.length === 0 ? "pointer-events-none opacity-30" : ""
           } ${glass}`}
         >
@@ -5691,7 +5704,7 @@ function CompletedTodaySection({
 
       <div className={`overflow-hidden rounded-[24px] border sm:rounded-3xl ${strongerGlass} ${border}`}>
         {completedToday.length === 0 && (
-          <div className="p-6 text-sm opacity-40">Nothing completed yet.</div>
+          <div className={`p-6 ${textStyles.small} opacity-40`}>Nothing completed yet.</div>
         )}
 
         {completedToday.map((task: any) => (
@@ -5705,9 +5718,9 @@ function CompletedTodaySection({
               <CheckCircle2 size={18} className="shrink-0 text-green-500" />
 
               <div className="min-w-0">
-              <p className="truncate text-[13px] font-[700] sm:text-[14px] sm:font-[650]">{task.title}</p>
+              <p className={`truncate ${textStyles.taskTitle}`}>{task.title}</p>
 
-              <p className="truncate text-[10.5px] opacity-40 sm:text-[11px]">
+              <p className={`truncate ${textStyles.meta} opacity-40`}>
                   {task.category}
                   {task.dueDate ? ` • Due ${formatDueDate(task.dueDate)}` : ""}
                 </p>
@@ -5716,7 +5729,7 @@ function CompletedTodaySection({
 
             <button
               onClick={() => restoreCompletedTask(task.id)}
-              className={`h-8 shrink-0 rounded-[14px] px-3 text-[11px] font-[900] transition hover:scale-[1.02] sm:h-9 sm:rounded-xl sm:text-xs sm:font-[700] ${
+              className={`h-8 shrink-0 rounded-[14px] px-3 ${textStyles.button} transition hover:scale-[1.02] sm:h-9 sm:rounded-xl ${
                 darkMode
                   ? "bg-white/[0.06] text-white/55 hover:text-white"
                   : "bg-black/[0.04] text-black/55 hover:text-black"
@@ -6492,13 +6505,13 @@ function FocusModePanel({
       <div className="relative">
         <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5 sm:gap-4">
           <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-[18px] font-[800] tracking-[-0.035em] sm:text-[20px]">
+            <h2 className={`flex items-center gap-2 ${textStyles.sectionTitle} tracking-[-0.025em]`}>
               Focus Mode
               <Sparkles size={15} style={{ color: themeColor }} />
             </h2>
 
             <p
-              className={`mt-1.5 max-w-md text-[12px] leading-5 sm:mt-2 sm:text-sm sm:leading-6 ${
+              className={`mt-1.5 max-w-md ${textStyles.small} sm:mt-2 ${
                 darkMode ? "text-white/64" : "text-black/45"
               }`}
             >
@@ -6507,7 +6520,7 @@ function FocusModePanel({
           </div>
 
           <span
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-[10px] font-[900] ${
+            className={`shrink-0 rounded-full border px-3 py-1.5 ${textStyles.badge} ${
               darkMode
                 ? "border-white/[0.16] bg-white/[0.06] text-white/75"
                 : "bg-black/[0.04] text-black/45"
@@ -6543,14 +6556,14 @@ function FocusModePanel({
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <p
-                className="text-[11px] font-[900] uppercase tracking-[0.16em]"
+                className={textStyles.badge}
                 style={{ color: themeColor }}
               >
                 Focus Stack
               </p>
 
               <p
-                className={`mt-1 text-xs font-[700] ${
+                className={`mt-1 ${textStyles.meta} ${
                   darkMode ? "text-white/48" : "text-black/40"
                 }`}
               >
@@ -6564,7 +6577,7 @@ function FocusModePanel({
               {activeFocusTasks.length > 0 && (
                 <button
                   onClick={clearFocusStack}
-                  className={`rounded-[13px] border px-3 py-1.5 text-[10px] font-[900] transition hover:scale-[1.02] ${
+                  className={`rounded-[13px] border px-3 py-1.5 ${textStyles.badge} transition hover:scale-[1.02] ${
                     darkMode
                       ? "border-white/[0.07] bg-[#111111] text-white/58 hover:text-white"
                       : "bg-black/[0.04] text-black/45 hover:text-black"
@@ -6577,7 +6590,7 @@ function FocusModePanel({
               <button
                 onClick={computeFocusStack}
                 disabled={focusLoading || prioritizedTasks.length === 0}
-                className={`rounded-[13px] border px-3 py-1.5 text-[10px] font-[900] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 ${
+                className={`rounded-[13px] border px-3 py-1.5 ${textStyles.badge} transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 ${
                   darkMode
                     ? "border-white/[0.14] bg-[#111111] text-white/70 hover:border-[#05AD98]/50 hover:text-white"
                     : "bg-black/[0.04] text-black/45 hover:text-black"
@@ -6607,11 +6620,11 @@ function FocusModePanel({
               }`}
             >
               <div className="max-w-xs px-5">
-                <h3 className="text-[19px] font-[900] tracking-[-0.04em] text-current">
+                <h3 className={`${textStyles.sectionTitle} tracking-[-0.025em] text-current`}>
                   Build your focus stack.
                 </h3>
 
-                <p className="mt-2 text-sm font-[700] leading-6 opacity-80">
+                <p className={`mt-2 ${textStyles.small} opacity-80`}>
                   Drag tasks from the left list, or press Compute to let Veira
                   choose your top 3.
                 </p>
@@ -6667,13 +6680,13 @@ function FocusModePanel({
                             setIsEditModalOpen(true);
                           }}
                           title={task.title}
-                          className="truncate text-[15px] font-[900] tracking-[-0.025em] hover:opacity-70"
+                          className={`truncate ${textStyles.taskTitle} tracking-[-0.01em] hover:opacity-70`}
                         >
                           {task.title}
                         </p>
 
                         <p
-                          className={`mt-1 truncate text-[11px] font-[700] ${
+                          className={`mt-1 truncate ${textStyles.meta} ${
                             darkMode ? "text-white/48" : "text-black/38"
                           }`}
                         >
@@ -6707,7 +6720,7 @@ function FocusModePanel({
                           event.stopPropagation();
                           removeFocusTask(task.id);
                         }}
-                        className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-[900] opacity-70 transition hover:scale-[1.03] hover:opacity-100 ${
+                        className={`shrink-0 rounded-full px-2.5 py-1 ${textStyles.badge} opacity-70 transition hover:scale-[1.03] hover:opacity-100 ${
                           darkMode
                             ? "bg-white/[0.06] text-white/58 hover:text-white"
                             : "bg-black/[0.05] text-black/50"
@@ -6720,7 +6733,7 @@ function FocusModePanel({
                     {isCurrent && (
                       <div className="mt-4">
                         <p
-                          className={`text-[12px] leading-5 sm:text-sm sm:leading-6 ${
+                          className={`${textStyles.whyText} ${
                             darkMode ? "text-white/52" : "text-black/45"
                           }`}
                         >
@@ -6733,7 +6746,7 @@ function FocusModePanel({
                               event.stopPropagation();
                               toggleTaskById(task.id, event);
                             }}
-                            className="h-11 rounded-[17px] text-xs font-[900] text-white shadow-[0_16px_34px_rgba(0,0,0,0.22)] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl"
+                            className={`h-11 rounded-[17px] ${textStyles.button} text-white shadow-[0_16px_34px_rgba(0,0,0,0.22)] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl`}
                             style={{ backgroundColor: themeColor }}
                           >
                             Complete
@@ -6744,7 +6757,7 @@ function FocusModePanel({
                               event.stopPropagation();
                               moveNext();
                             }}
-                            className={`h-11 rounded-[18px] border text-sm font-[900] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl ${
+                            className={`h-11 rounded-[18px] border ${textStyles.button} transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl ${
                               darkMode
                                 ? "border-white/[0.12] bg-[#111111] text-white/82"
                                 : border
