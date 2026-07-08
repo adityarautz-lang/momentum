@@ -5340,7 +5340,7 @@ emptyMessage,
                   }}
                   className={taskPanelClass}
                 >
-                  <div className="grid w-full min-w-0 grid-cols-1 gap-3 min-[1700px]:grid-cols-[minmax(0,1fr)_224px] min-[1700px]:gap-4">
+                  <div className="grid w-full min-w-0 grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_216px] xl:gap-3 min-[1700px]:grid-cols-[minmax(0,1fr)_224px] min-[1700px]:gap-4">
                     <div className="flex min-w-0 items-start gap-4">
                       <button
                         onClick={(e) => toggleTaskById(task.id, e)}
@@ -5443,7 +5443,7 @@ emptyMessage,
                                 </span>
 
                                 <span
-                                  className={`min-w-0 flex-1 whitespace-normal break-words px-3 py-2 ${textStyles.whyText} ${
+                                  className={`min-w-0 flex-1 whitespace-normal break-words px-3 py-2 [overflow-wrap:anywhere] ${textStyles.whyText} ${
                                     darkMode
                                       ? "text-white/48"
                                       : "text-[#2C2D2C]/48"
@@ -5519,66 +5519,62 @@ emptyMessage,
                     </div>
 
                     <div
-  className={`relative flex ${
-    isGrouped ? "min-h-[72px]" : "min-h-[88px]"
-  } flex-col items-start justify-start min-[1700px]:items-end`}
+ className={`relative flex ${
+  isGrouped ? "min-h-[72px]" : "min-h-[88px]"
+} flex-col items-start justify-start xl:items-end`}
 >
-                      <div className="flex flex-wrap items-center justify-start gap-2 min-[1700px]:justify-end">
-                        <div className="grid w-[150px] shrink-0 grid-cols-[62px_76px] items-start gap-3">
-                          <div className="flex h-10 w-[62px] items-start justify-start gap-1.5">
-                            {visibleDueDate ? (
-                              <>
-                                <Calendar
-                                  size={13}
-                                  className={`mt-[3px] shrink-0 ${
-                                    darkMode
-                                      ? "text-white/55"
-                                      : "text-[#2C2D2C]/48"
-                                  }`}
-                                />
+<div className="flex flex-wrap items-center justify-start gap-2 xl:justify-end">
+<div className="flex shrink-0 items-start justify-start gap-3 xl:justify-end">
+  {visibleDueDate && (
+    <div className="flex h-10 w-[62px] items-start justify-start gap-1.5">
+      <Calendar
+        size={13}
+        className={`mt-[3px] shrink-0 ${
+          darkMode
+            ? "text-white/55"
+            : "text-[#2C2D2C]/48"
+        }`}
+      />
 
-                                <span
-                                  className={`flex min-w-0 flex-col text-left leading-none ${
-                                    darkMode
-                                      ? "text-white/70"
-                                      : "text-[#2C2D2C]/65"
-                                  }`}
-                                >
-                                  <span className="text-[16px] font-[900] tracking-[-0.04em]">
-                                    {visibleDueDateParts.day}
-                                  </span>
+      <span
+        className={`flex min-w-0 flex-col text-left leading-none ${
+          darkMode
+            ? "text-white/70"
+            : "text-[#2C2D2C]/65"
+        }`}
+      >
+        <span className="text-[16px] font-[900] tracking-[-0.04em]">
+          {visibleDueDateParts.day}
+        </span>
 
-                                  <span className="mt-1 text-[13px] font-[800] tracking-[-0.03em]">
-                                    {visibleDueDateParts.month}
-                                  </span>
-                                </span>
-                              </>
-                            ) : (
-                              <span className="block h-10 w-[62px]" />
-                            )}
-                          </div>
+        <span className="mt-1 text-[13px] font-[800] tracking-[-0.03em]">
+          {visibleDueDateParts.month}
+        </span>
+      </span>
+    </div>
+  )}
 
-                          <div
-                            className={`flex h-10 w-[76px] items-start justify-start gap-1.5 pt-[4px] ${
-                              task.priority === "High"
-                                ? "text-red-500"
-                                : task.priority === "Medium"
-                                ? "text-orange-500"
-                                : "text-emerald-500"
-                            }`}
-                          >
-                            <span className="mt-[4px] text-[12px] leading-none">
-                              ●
-                            </span>
+  <div
+    className={`flex h-10 w-[76px] items-start justify-start gap-1.5 pt-[4px] ${
+      task.priority === "High"
+        ? "text-red-500"
+        : task.priority === "Medium"
+        ? "text-orange-500"
+        : "text-emerald-500"
+    }`}
+  >
+    <span className="mt-[4px] text-[12px] leading-none">
+      ●
+    </span>
 
-                            <span className="text-[16px] font-[900] leading-none tracking-[-0.03em]">
-                              {task.priority === "Medium" ||
-                              task.priority === "Med"
-                                ? "Mid"
-                                : task.priority}
-                            </span>
-                          </div>
-                        </div>
+    <span className="text-[16px] font-[900] leading-none tracking-[-0.03em]">
+      {task.priority === "Medium" ||
+      task.priority === "Med"
+        ? "Mid"
+        : task.priority}
+    </span>
+  </div>
+</div>
 
                         <button
                           onClick={() => addTaskToFocus(task.id)}
@@ -5587,7 +5583,7 @@ emptyMessage,
                               ? "Already in focus"
                               : "Add to focus"
                           }
-                         className="flex h-8 w-8 items-center justify-center rounded-full opacity-100 transition hover:scale-110"
+                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full opacity-100 transition hover:scale-110"
                           style={{
                             color: manualFocusTaskIds.includes(task.id)
                               ? themeColor
@@ -5607,7 +5603,7 @@ emptyMessage,
                         <button
                           onClick={() => togglePinTask(task.id)}
                           title={task.pinned ? "Pinned" : "Pin to top"}
-                          className={`flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 ${
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition hover:scale-110 ${
                             task.pinned ? "opacity-100" : "opacity-55 hover:opacity-100"
                           }`}
                           style={{ color: task.pinned ? themeColor : undefined }}
@@ -5620,7 +5616,7 @@ emptyMessage,
 
                         <button
                           onClick={() => deleteTask(task.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full opacity-45 transition hover:scale-110 hover:opacity-100 hover:text-red-500"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full opacity-45 transition hover:scale-110 hover:opacity-100 hover:text-red-500"
                         >
                           <Trash2 size={16} />
                         </button>
