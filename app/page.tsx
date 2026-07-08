@@ -2792,8 +2792,8 @@ createdAt: updatedTask.createdAt || new Date().toISOString(),
   inboxCount={inboxTasks.length}
 />
 
-<div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-28 pt-5 sm:px-6 sm:pb-28 sm:pt-6 lg:pl-[284px] lg:pb-16 lg:pt-6 xl:px-10 xl:py-8 xl:pl-[300px]">
-<div className="mx-auto w-full max-w-[1400px] overflow-x-hidden">
+<div className="min-w-0 flex-1 overflow-x-hidden px-3 pb-28 pt-5 sm:px-5 sm:pb-28 sm:pt-6 md:px-6 lg:pl-[268px] lg:pr-5 lg:pb-16 lg:pt-6 xl:pl-[284px] xl:pr-6 2xl:px-10 2xl:py-8 2xl:pl-[300px]">
+<div className="mx-auto w-full max-w-[1380px] overflow-x-hidden">
             {selectedView === "today" && (
             <TodayView
             darkMode={darkMode}
@@ -3275,7 +3275,7 @@ userFirstName={userFirstName}
       style={{ backgroundColor: themeColor }}
     />
 
-    <div className="flex flex-col gap-4 pt-2 xl:flex-row xl:items-start">
+    <div className="flex flex-col gap-4 pt-2 2xl:flex-row 2xl:items-start">
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <div
           className={`relative flex h-[70px] w-[70px] shrink-0 flex-col items-center justify-center overflow-hidden rounded-[24px] border shadow-[0_16px_40px_rgba(17,24,39,0.08)] ${
@@ -3363,12 +3363,12 @@ userFirstName={userFirstName}
       </div>
 
       <div
-        className={`hidden min-h-14 w-px shrink-0 self-stretch xl:block ${
+        className={`hidden min-h-14 w-px shrink-0 self-stretch 2xl:block ${
           darkMode ? "bg-white/[0.08]" : "bg-black/[0.055]"
         }`}
       />
 
-      <div className="min-w-0 xl:w-[460px] xl:pt-1">
+      <div className="min-w-0 2xl:w-[460px] 2xl:pt-1">
         <div className="flex items-center gap-2">
           <Sparkles size={14} style={{ color: themeColor }} />
 
@@ -3394,12 +3394,12 @@ userFirstName={userFirstName}
       </div>
 
       <div
-        className={`hidden min-h-14 w-px shrink-0 self-stretch xl:block ${
+        className={`hidden min-h-14 w-px shrink-0 self-stretch 2xl:block ${
           darkMode ? "bg-white/[0.08]" : "bg-black/[0.055]"
         }`}
       />
 
-      <div className="shrink-0 xl:w-[250px] xl:pt-1">
+      <div className="shrink-0 2xl:w-[250px] 2xl:pt-1">
         <DayTimeLeftCard
           dayEndTime={dayEndTime}
           setDayEndTime={setDayEndTime}
@@ -3430,7 +3430,7 @@ userFirstName={userFirstName}
       style={{ backgroundColor: themeColor }}
     />
 
-    <div className="relative grid gap-3 xl:grid-cols-[180px_minmax(0,1fr)_46px_106px] xl:items-center">
+    <div className="relative grid gap-3 2xl:grid-cols-[180px_minmax(0,1fr)_46px_106px] 2xl:items-center">
       <div className="flex min-w-0 items-center gap-3">
         <div
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px]"
@@ -3531,7 +3531,7 @@ userFirstName={userFirstName}
   </section>
 
 
-<div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(360px,9fr)]">
+<div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,58%)_minmax(360px,1fr)] 2xl:grid-cols-[minmax(0,58%)_minmax(420px,1fr)]">
 
 <div className="order-1 xl:order-1">
   <TaskListPanel
@@ -5340,7 +5340,7 @@ emptyMessage,
                   }}
                   className={taskPanelClass}
                 >
-                  <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_250px] gap-4">
+                  <div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,58%)_minmax(360px,1fr)] 2xl:grid-cols-[minmax(0,58%)_minmax(420px,1fr)]">
                     <div className="flex min-w-0 items-start gap-4">
                       <button
                         onClick={(e) => toggleTaskById(task.id, e)}
@@ -5411,7 +5411,7 @@ emptyMessage,
                                   ? whyDropdownRef
                                   : null
                               }
-                              className="mt-2 w-full max-w-full sm:w-[calc(100%+166px)] sm:max-w-[calc(100%+166px)]"
+                              className="mt-2 w-full max-w-full 2xl:w-[calc(100%+166px)] 2xl:max-w-[calc(100%+166px)]"
                             >
                               <button
                                 onClick={() =>
@@ -5521,9 +5521,9 @@ emptyMessage,
                     <div
   className={`relative flex ${
     isGrouped ? "min-h-[72px]" : "min-h-[88px]"
-  } flex-col items-end justify-start`}
+  } flex-col items-start justify-start 2xl:items-end`}
 >
-                      <div className="flex items-center justify-end gap-2">
+<div className="flex flex-wrap items-center justify-start gap-2 2xl:justify-end">
                         <div className="grid w-[150px] shrink-0 grid-cols-[62px_76px] items-start gap-3">
                           <div className="flex h-10 w-[62px] items-start justify-start gap-1.5">
                             {visibleDueDate ? (
@@ -6634,7 +6634,7 @@ function FocusModePanel({
 
           {activeFocusTasks.length === 0 ? (
             <div
-              className={`flex min-h-[220px] items-center justify-center rounded-[22px] border border-dashed text-center ${
+              className={`flex min-h-[170px] items-center justify-center rounded-[22px] border border-dashed text-center 2xl:min-h-[220px] ${
                 darkMode
                   ? "border-white/[0.14] bg-[#111111] text-white/35"
                   : "border-black/[0.07] bg-black/[0.015] text-[#2C2D2C]/35"
@@ -6701,7 +6701,7 @@ function FocusModePanel({
                             setIsEditModalOpen(true);
                           }}
                           title={task.title}
-                          className={`truncate ${textStyles.taskTitle} tracking-[-0.01em] hover:opacity-70`}
+                          className={`whitespace-normal break-words ${textStyles.taskTitle} tracking-[-0.01em] hover:opacity-70 xl:truncate`}
                         >
                           {task.title}
                         </p>
@@ -7172,7 +7172,7 @@ function AirtablePriorityGroup({
       {tasks.map((task: any) => (
         <div
           key={task.id}
-          className={`group flex min-h-[64px] items-center gap-4 border-b px-6 py-3.5 last:border-b-0 ${
+          className={`group flex min-h-[64px] flex-col items-start gap-3 border-b px-5 py-3.5 last:border-b-0 sm:flex-row sm:items-center sm:gap-4 sm:px-6 ${
             task.completed ? "bg-black/[0.025] dark:bg-white/[0.035]" : ""
           } ${border}`}
         >
@@ -7227,7 +7227,7 @@ function AirtablePriorityGroup({
             </p>
           </div>
 
-          <div className="flex items-center gap-3 text-[12px] font-[700] sm:gap-5 sm:text-[13px] sm:font-[700]">
+          <div className="flex w-full flex-wrap items-center justify-start gap-3 text-[12px] font-[700] sm:w-auto sm:justify-end sm:gap-5 sm:text-[13px] sm:font-[700]">
             {task.dueDate && (
               <div className={`flex items-center gap-1.5 ${
                 darkMode ? "text-white/70" : "text-[#2C2D2C]/65"
@@ -7820,7 +7820,7 @@ function UpcomingCalendarView({
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-4">
       {calendarDays.map((day) => (
         <section
           key={day.title}
@@ -9425,7 +9425,7 @@ function EditTaskModal({
           mass: 0.8,
         }}
         onClick={(e) => e.stopPropagation()}
-        className={`max-h-[94vh] w-full max-w-[1280px] overflow-hidden rounded-[34px] border shadow-[0_35px_140px_rgba(0,0,0,0.38)] backdrop-blur-3xl ${strongerGlass} ${border}`}
+        className={`max-h-[94vh] w-full max-w-[1180px] overflow-hidden rounded-[34px] border shadow-[0_35px_140px_rgba(0,0,0,0.38)] backdrop-blur-3xl ${strongerGlass} ${border}`}
       >
         <div className="relative overflow-hidden">
           <div
@@ -9487,8 +9487,8 @@ function EditTaskModal({
             </div>
           </div>
 
-          <div className="relative max-h-[calc(94vh-132px)] overflow-y-auto px-6 pb-5 sm:px-8 sm:pb-6">
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <div className="relative max-h-[calc(94vh-132px)] overflow-y-auto px-4 pb-5 sm:px-6 sm:pb-6 xl:px-8">
+            <div className="grid grid-cols-1 gap-5 2xl:grid-cols-2">
               {/* Left column */}
               <section className={`rounded-[28px] border p-4 sm:p-5 ${panelClass}`}>
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
