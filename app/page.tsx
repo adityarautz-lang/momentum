@@ -1625,13 +1625,13 @@ useEffect(() => {
 
 const input = darkMode
     ? "bg-[#1f1f21] text-white placeholder:text-white/35 border border-[#05AD98]/18 focus:border-[#05AD98]/70"
-  : "bg-white text-[#111111] placeholder:text-[#878787] border border-[#BBBFBF]/45 focus:border-[#05AD98]/55";
+  : "bg-white text-[#2C2D2C] placeholder:text-[#878787] border border-[#BBBFBF]/45 focus:border-[#05AD98]/55";
 
   const border = darkMode ? "border-white/[0.055]" : "border-[#BBBFBF]/35";
 
 const modalSelect = darkMode
   ? "bg-[#1f1f21] text-white border border-white/[0.08]"
-  : "bg-white text-black border border-[#BBBFBF]/45";
+  : "bg-white text-[#2C2D2C] border border-[#BBBFBF]/45";
 
     const fontClass = inter.className;
 
@@ -2767,7 +2767,7 @@ createdAt: updatedTask.createdAt || new Date().toISOString(),
   className={`${fontClass} min-h-screen w-full overflow-x-hidden transition-colors duration-500 ${
     darkMode
 ? "bg-[#111111] text-white"
-: "bg-[#f6f8f8] text-[#111111]"
+: "bg-[#f6f8f8] text-[#2C2D2C]"
     }`}
   >
     {darkMode && (
@@ -3254,7 +3254,7 @@ userFirstName={userFirstName}
           className={`rounded-full px-3 py-1 text-[11px] font-[700] ${
             darkMode
               ? "bg-white/[0.06] text-white/50"
-              : "bg-black/[0.035] text-black/45"
+              : "bg-black/[0.035] text-[#2C2D2C]/45"
           }`}
         >
           {formatDateLong()}
@@ -3265,7 +3265,7 @@ userFirstName={userFirstName}
           className={`hidden h-7 items-center gap-1.5 rounded-full px-3 text-[11px] font-[700] transition hover:scale-[1.02] ${
             darkMode
               ? "bg-white/[0.06] text-white/55 hover:text-white"
-              : "bg-black/[0.035] text-black/50 hover:text-black"
+              : "bg-black/[0.035] text-[#2C2D2C]/50 hover:text-[#2C2D2C]"
           }`}
         >
           {darkMode ? <Sun size={13} /> : <Moon size={13} />}
@@ -3275,7 +3275,7 @@ userFirstName={userFirstName}
 
       <p
         className={`mt-1.5 ${textStyles.small} ${
-          darkMode ? "text-white/42" : "text-black/42"
+          darkMode ? "text-white/42" : "text-[#2C2D2C]/42"
         }`}
       >
         {allTasks.length} tasks · {completedToday.length} completed ·{" "}
@@ -3307,7 +3307,7 @@ userFirstName={userFirstName}
 
 <p
   className={`mt-2 text-sm font-[600] ${
-    darkMode ? "text-white/50" : "text-black/50"
+    darkMode ? "text-white/50" : "text-[#2C2D2C]/50"
   }`}
 >
 You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention today, including {highPriorityCount} high-priority item{highPriorityCount === 1 ? "" : "s"}. Your focus stack is ready.
@@ -3346,7 +3346,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
 
       <p
         className={`mt-1 max-w-[980px] ${textStyles.body} tracking-[-0.015em] ${
-          darkMode ? "text-white/58" : "text-black/58"
+          darkMode ? "text-white/58" : "text-[#2C2D2C]/58"
         }`}
       >
         {boostLoading
@@ -3392,7 +3392,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
 
         <p
             className={`mt-0.5 ${textStyles.meta} ${
-            darkMode ? "text-white/42" : "text-black/38"
+            darkMode ? "text-white/42" : "text-[#2C2D2C]/38"
           }`}
         >
           Veira will organize it for you
@@ -3417,7 +3417,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
     className={`h-[54px] min-w-0 flex-1 bg-transparent px-5 ${textStyles.body} tracking-[-0.015em] outline-none sm:px-6 ${
       darkMode
         ? "text-white placeholder:text-white/35"
-        : "text-black placeholder:text-black/35"
+        : "text-[#2C2D2C] placeholder:text-[#2C2D2C]/35"
     }`}
   />
 
@@ -3437,7 +3437,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
     className={`h-[54px] min-w-0 flex-1 bg-transparent px-5 ${textStyles.body} tracking-[-0.015em] outline-none sm:px-6 ${
       darkMode
         ? "text-white placeholder:text-white/35"
-        : "text-black placeholder:text-black/35"
+        : "text-[#2C2D2C] placeholder:text-[#2C2D2C]/35"
     }`}
   />
 
@@ -3499,7 +3499,7 @@ You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention to
           } ${
             darkMode
               ? "border-white/[0.08] bg-white/[0.045] text-white/48 hover:text-white"
-              : "border-black/[0.06] bg-white text-black/45 hover:text-black/70"
+              : "border-black/[0.06] bg-white text-[#2C2D2C]/45 hover:text-[#2C2D2C]/70"
           }`}
         >
           {example}
@@ -3903,14 +3903,14 @@ const filteredTasks = activeChip
   <div className="min-w-0">
     <p
       className="text-[25px] font-[900] leading-none tracking-[-0.055em]"
-      style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
+      style={{ color: darkMode ? "#FFFFFF" : "#2C2D2C" }}
     >
       Veira
     </p>
 
     <p
       className="mt-1.5 whitespace-nowrap text-[9px] font-[800] uppercase leading-none tracking-[0.04em]"
-      style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
+      style={{ color: darkMode ? "#FFFFFF" : "#2C2D2C" }}
     >
       Focus. Prioritize. Move forward.
     </p>
@@ -3921,7 +3921,7 @@ const filteredTasks = activeChip
       className={`flex h-9 items-center gap-1.5 rounded-full border px-3 text-[11px] font-[850] ${
         darkMode
           ? "border-white/[0.08] bg-white/[0.045] text-white/48"
-          : "border-black/[0.06] bg-white text-black/45"
+          : "border-black/[0.06] bg-white text-[#2C2D2C]/45"
       }`}
     >
       <Sparkles size={13} style={{ color: themeColor }} />
@@ -3939,7 +3939,7 @@ const filteredTasks = activeChip
       className={
         darkMode
           ? "mt-1 text-xs font-[700] text-white/42"
-          : "mt-1 text-xs font-[700] text-black/42"
+          : "mt-1 text-xs font-[700] text-[#2C2D2C]/42"
       }
     >
       Let&apos;s make today count.
@@ -4000,7 +4000,7 @@ const filteredTasks = activeChip
                       mobileEndTimeParts.period as "AM" | "PM"
                     )
                   }
-                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#111827] outline-none"
+                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#2C2D2C] outline-none"
                 >
                   {mobileHourOptions.map((hour) => (
                     <option key={hour} value={hour}>
@@ -4018,7 +4018,7 @@ const filteredTasks = activeChip
                       mobileEndTimeParts.period as "AM" | "PM"
                     )
                   }
-                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#111827] outline-none"
+                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#2C2D2C] outline-none"
                 >
                   {mobileMinuteOptions.map((minute) => (
                     <option key={minute} value={minute}>
@@ -4036,7 +4036,7 @@ const filteredTasks = activeChip
                       e.target.value as "AM" | "PM"
                     )
                   }
-                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#111827] outline-none"
+                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#2C2D2C] outline-none"
                 >
                   <option value="AM">AM</option>
                   <option value="PM">PM</option>
@@ -4106,7 +4106,7 @@ const filteredTasks = activeChip
               Quick Capture
             </h2>
 
-            <p className={darkMode ? "text-[11px] font-[700] text-white/40" : "text-[11px] font-[700] text-black/40"}>
+            <p className={darkMode ? "text-[11px] font-[700] text-white/40" : "text-[11px] font-[700] text-[#2C2D2C]/40"}>
               Veira will organize it for you
             </p>
           </div>
@@ -4129,7 +4129,7 @@ const filteredTasks = activeChip
             className={`h-12 w-full bg-transparent px-4 text-[13px] font-[800] outline-none ${
               darkMode
                 ? "text-white placeholder:text-white/32"
-                : "text-black placeholder:text-black/32"
+                : "text-[#2C2D2C] placeholder:text-[#2C2D2C]/32"
             }`}
           />
 
@@ -4146,7 +4146,7 @@ const filteredTasks = activeChip
               className={`h-12 min-w-0 bg-transparent px-4 text-[13px] font-[800] outline-none ${
                 darkMode
                   ? "text-white placeholder:text-white/32"
-                  : "text-black placeholder:text-black/32"
+                  : "text-[#2C2D2C] placeholder:text-[#2C2D2C]/32"
               }`}
             />
 
@@ -4190,7 +4190,7 @@ const filteredTasks = activeChip
 
     <p
       className={`mt-1.5 text-[13px] font-[750] leading-5 tracking-[-0.02em] ${
-        darkMode ? "text-white/45" : "text-black/48"
+        darkMode ? "text-white/45" : "text-[#2C2D2C]/48"
       }`}
     >
       Top moves based on intent, urgency, and priority.
@@ -4201,7 +4201,7 @@ const filteredTasks = activeChip
 <div className="mb-3 flex items-center justify-between gap-3">
   <span
     className={`shrink-0 text-[10px] font-[850] uppercase tracking-[0.14em] ${
-      darkMode ? "text-white/32" : "text-black/32"
+      darkMode ? "text-white/32" : "text-[#2C2D2C]/32"
     }`}
   >
     Group by
@@ -4232,7 +4232,7 @@ const filteredTasks = activeChip
               ? "text-white"
               : darkMode
               ? "text-white/42"
-              : "text-black/45"
+              : "text-[#2C2D2C]/45"
           }`}
           style={isActive ? { backgroundColor: themeColor } : undefined}
         >
@@ -4259,10 +4259,10 @@ const filteredTasks = activeChip
           isActive
             ? darkMode
               ? "text-white"
-              : "text-[#111827]"
+              : "text-[#2C2D2C]"
             : darkMode
             ? "text-white/42"
-            : "text-black/45"
+            : "text-[#2C2D2C]/45"
         }`}
       >
         <span>{chip.label}</span>
@@ -4273,7 +4273,7 @@ const filteredTasks = activeChip
               ? "text-white"
               : darkMode
               ? "bg-white/[0.07] text-white/45"
-              : "bg-black/[0.045] text-black/45"
+              : "bg-black/[0.045] text-[#2C2D2C]/45"
           }`}
           style={
             isActive
@@ -4303,7 +4303,7 @@ const filteredTasks = activeChip
               className={`rounded-[22px] border border-dashed p-6 text-center text-sm font-[700] ${
                 darkMode
                   ? "border-white/[0.10] text-white/35"
-                  : "border-black/[0.08] text-black/35"
+                  : "border-black/[0.08] text-[#2C2D2C]/35"
               }`}
             >
               No tasks here yet.
@@ -4338,7 +4338,7 @@ const filteredTasks = activeChip
                   >
                     <Circle
                       size={20}
-                      className={darkMode ? "text-white/30" : "text-black/30"}
+                      className={darkMode ? "text-white/30" : "text-[#2C2D2C]/30"}
                     />
                   </button>
 
@@ -4360,7 +4360,7 @@ const filteredTasks = activeChip
                   >
                <p
   className={`text-[15.5px] font-[700] leading-[21px] tracking-[-0.025em] ${
-    darkMode ? "text-white/90" : "text-[#111827]"
+    darkMode ? "text-white/90" : "text-[#2C2D2C]"
   }`}
 >
   {task.title}
@@ -4417,7 +4417,7 @@ const filteredTasks = activeChip
         ? "text-white"
         : darkMode
         ? "bg-white/[0.06] text-white/45"
-        : "bg-black/[0.04] text-black/45"
+        : "bg-black/[0.04] text-[#2C2D2C]/45"
     }`}
     style={
       manualFocusTaskIds.includes(task.id)
@@ -4439,7 +4439,7 @@ const filteredTasks = activeChip
     className={`flex h-8 w-8 items-center justify-center rounded-full transition active:scale-95 ${
       darkMode
         ? "bg-white/[0.06] text-white/38 hover:text-red-300"
-        : "bg-black/[0.04] text-black/38 hover:text-red-500"
+        : "bg-black/[0.04] text-[#2C2D2C]/38 hover:text-red-500"
     }`}
     title="Delete task"
   >
@@ -4458,7 +4458,7 @@ const filteredTasks = activeChip
             className={`mt-3 h-11 w-full rounded-[18px] border text-xs font-[900] ${
               darkMode
                 ? "border-white/[0.08] bg-white/[0.04] text-white/50"
-                : "border-black/[0.06] bg-black/[0.025] text-black/50"
+                : "border-black/[0.06] bg-black/[0.025] text-[#2C2D2C]/50"
             }`}
           >
             {showAllMobileTasks ? "Show less" : `Show ${hiddenCount} more`}
@@ -4481,7 +4481,7 @@ const filteredTasks = activeChip
               <Sparkles size={15} style={{ color: themeColor }} />
             </h2>
 
-            <p className={darkMode ? "mt-1 text-xs font-[700] text-white/42" : "mt-1 text-xs font-[700] text-black/42"}>
+            <p className={darkMode ? "mt-1 text-xs font-[700] text-white/42" : "mt-1 text-xs font-[700] text-[#2C2D2C]/42"}>
               Your strongest next moves.
             </p>
           </div>
@@ -4503,7 +4503,7 @@ const filteredTasks = activeChip
               className={`rounded-[22px] border border-dashed px-4 py-8 text-center ${
                 darkMode
                   ? "border-white/[0.10] text-white/35"
-                  : "border-black/[0.08] text-black/35"
+                  : "border-black/[0.08] text-[#2C2D2C]/35"
               }`}
             >
               <Target size={26} className="mx-auto mb-3 opacity-55" />
@@ -4539,13 +4539,13 @@ const filteredTasks = activeChip
                   {task.title}
                 </p>
 
-                <p className={darkMode ? "mt-1 text-[10px] font-[800] text-white/38" : "mt-1 text-[10px] font-[800] text-black/38"}>
+                <p className={darkMode ? "mt-1 text-[10px] font-[800] text-white/38" : "mt-1 text-[10px] font-[800] text-[#2C2D2C]/38"}>
                   {task.category} ·{" "}
                   {task.priority === "Medium" ? "Mid" : task.priority}
                 </p>
               </div>
 
-              <Eye size={15} className={darkMode ? "text-white/35" : "text-black/35"} />
+              <Eye size={15} className={darkMode ? "text-white/35" : "text-[#2C2D2C]/35"} />
             </button>
           ))}
         </div>
@@ -4576,7 +4576,7 @@ const filteredTasks = activeChip
                 ? "pointer-events-none opacity-30"
                 : darkMode
                 ? "text-white/48"
-                : "text-black/42"
+                : "text-[#2C2D2C]/42"
             }`}
           >
             Archive All
@@ -4591,7 +4591,7 @@ const filteredTasks = activeChip
           }`}
         >
           {completedToday.length === 0 && (
-            <div className={darkMode ? "p-5 text-sm font-[700] text-white/35" : "p-5 text-sm font-[700] text-black/35"}>
+            <div className={darkMode ? "p-5 text-sm font-[700] text-white/35" : "p-5 text-sm font-[700] text-[#2C2D2C]/35"}>
               Nothing completed yet.
             </div>
           )}
@@ -4605,14 +4605,14 @@ const filteredTasks = activeChip
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-[850]">{task.title}</p>
-                <p className={darkMode ? "mt-0.5 text-[10px] font-[750] text-white/35" : "mt-0.5 text-[10px] font-[750] text-black/35"}>
+                <p className={darkMode ? "mt-0.5 text-[10px] font-[750] text-white/35" : "mt-0.5 text-[10px] font-[750] text-[#2C2D2C]/35"}>
                   {task.category}
                 </p>
               </div>
 
               <button
                 onClick={() => restoreCompletedTask(task.id)}
-                className={darkMode ? "rounded-full bg-white/[0.06] px-3 py-1.5 text-[10px] font-[900] text-white/50" : "rounded-full bg-black/[0.04] px-3 py-1.5 text-[10px] font-[900] text-black/50"}
+                className={darkMode ? "rounded-full bg-white/[0.06] px-3 py-1.5 text-[10px] font-[900] text-white/50" : "rounded-full bg-black/[0.04] px-3 py-1.5 text-[10px] font-[900] text-[#2C2D2C]/50"}
               >
                 Restore
               </button>
@@ -4971,7 +4971,7 @@ emptyMessage,
             <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
               <span
                 className={`shrink-0 ${textStyles.badge} ${
-                  darkMode ? "text-white/35" : "text-black/35"
+                  darkMode ? "text-white/35" : "text-[#2C2D2C]/35"
                 }`}
               >
                 Group by
@@ -5005,7 +5005,7 @@ emptyMessage,
                           ? "text-white"
                           : darkMode
                           ? "text-white/45 hover:text-white"
-                          : "text-black/45 hover:text-black"
+                          : "text-[#2C2D2C]/45 hover:text-[#2C2D2C]"
                       }`}
                       style={
                         isActive ? { backgroundColor: themeColor } : undefined
@@ -5021,7 +5021,7 @@ emptyMessage,
             <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
               <span
                 className={`shrink-0 ${textStyles.badge} ${
-                  darkMode ? "text-white/35" : "text-black/35"
+                  darkMode ? "text-white/35" : "text-[#2C2D2C]/35"
                 }`}
               >
                 Sort by
@@ -5054,7 +5054,7 @@ emptyMessage,
                           ? "text-white"
                           : darkMode
                           ? "text-white/45 hover:text-white"
-                          : "text-black/45 hover:text-black"
+                          : "text-[#2C2D2C]/45 hover:text-[#2C2D2C]"
                       }`}
                       style={
                         isActive ? { backgroundColor: themeColor } : undefined
@@ -5076,7 +5076,7 @@ emptyMessage,
             className={`rounded-2xl border border-dashed p-8 text-center text-sm ${
               darkMode
                 ? "border-white/10 text-white/40"
-                : "border-black/10 text-black/40"
+                : "border-black/10 text-[#2C2D2C]/40"
             }`}
           >
             {emptyMessage}
@@ -5197,7 +5197,7 @@ emptyMessage,
         className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-[900] ${
           darkMode
             ? "bg-white/[0.07] text-white/45"
-            : "bg-black/[0.045] text-black/45"
+            : "bg-black/[0.045] text-[#2C2D2C]/45"
         }`}
       >
         {currentGroupCount}
@@ -5248,7 +5248,7 @@ emptyMessage,
                   >
                     <Circle
                       size={18}
-                      className={darkMode ? "text-white/28" : "text-black/28"}
+                      className={darkMode ? "text-white/28" : "text-[#2C2D2C]/28"}
                     />
                   </button>
 
@@ -5295,7 +5295,7 @@ emptyMessage,
                         ? "bg-[#05AD98]/15 text-[#05AD98]"
                         : darkMode
                         ? "bg-white/[0.06] text-white/45"
-                        : "bg-black/[0.04] text-black/45"
+                        : "bg-black/[0.04] text-[#2C2D2C]/45"
                     }`}
                   >
                     <Eye size={15} />
@@ -5328,7 +5328,7 @@ emptyMessage,
                         <Circle
                           size={19}
                           className={
-                            darkMode ? "text-white/25" : "text-black/25"
+                            darkMode ? "text-white/25" : "text-[#2C2D2C]/25"
                           }
                         />
                       </button>
@@ -5362,7 +5362,7 @@ emptyMessage,
 
                         <div
                           className={`mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 ${textStyles.meta} ${
-                            darkMode ? "text-white/38" : "text-black/38"
+                            darkMode ? "text-white/38" : "text-[#2C2D2C]/38"
                           }`}
                         >
                           <span className="truncate">
@@ -5425,7 +5425,7 @@ emptyMessage,
                                   className={`min-w-0 flex-1 whitespace-normal break-words px-3 py-2 ${textStyles.whyText} ${
                                     darkMode
                                       ? "text-white/48"
-                                      : "text-black/48"
+                                      : "text-[#2C2D2C]/48"
                                   }`}
                                 >
                                   {task.whyThisMatters}
@@ -5473,7 +5473,7 @@ emptyMessage,
                                               ? "text-white"
                                               : darkMode
                                               ? "border-white/[0.07] bg-[#111111] text-white/55 hover:text-white"
-                                              : "border-black/[0.06] bg-white text-black/55 hover:text-black"
+                                              : "border-black/[0.06] bg-white text-[#2C2D2C]/55 hover:text-[#2C2D2C]"
                                           }`}
                                           style={
                                             isSelected
@@ -5512,7 +5512,7 @@ emptyMessage,
                                   className={`mt-[3px] shrink-0 ${
                                     darkMode
                                       ? "text-white/55"
-                                      : "text-black/48"
+                                      : "text-[#2C2D2C]/48"
                                   }`}
                                 />
 
@@ -5520,7 +5520,7 @@ emptyMessage,
                                   className={`flex min-w-0 flex-col text-left leading-none ${
                                     darkMode
                                       ? "text-white/70"
-                                      : "text-black/65"
+                                      : "text-[#2C2D2C]/65"
                                   }`}
                                 >
                                   <span className="text-[16px] font-[900] tracking-[-0.04em]">
@@ -5652,7 +5652,7 @@ emptyMessage,
             className={`mt-3 flex h-10 w-full items-center justify-center rounded-[16px] border text-xs font-[900] transition hover:scale-[1.005] sm:mt-4 sm:h-12 sm:rounded-[20px] sm:text-sm ${border} ${
               darkMode
                 ? "bg-white/[0.035] text-white/55 hover:bg-white/[0.06] hover:text-white"
-                : "bg-black/[0.025] text-black/50 hover:bg-black/[0.04] hover:text-black"
+                : "bg-black/[0.025] text-[#2C2D2C]/50 hover:bg-black/[0.04] hover:text-[#2C2D2C]"
             }`}
           >
             {showAllTasks ? "Show less" : `Show ${hiddenTaskCount} more`}
@@ -5732,7 +5732,7 @@ function CompletedTodaySection({
               className={`h-8 shrink-0 rounded-[14px] px-3 ${textStyles.button} transition hover:scale-[1.02] sm:h-9 sm:rounded-xl ${
                 darkMode
                   ? "bg-white/[0.06] text-white/55 hover:text-white"
-                  : "bg-black/[0.04] text-black/55 hover:text-black"
+                  : "bg-black/[0.04] text-[#2C2D2C]/55 hover:text-[#2C2D2C]"
               }`}
             >
               Restore
@@ -5955,7 +5955,7 @@ function PageHeader({
 
         <p
           className={`mt-2 text-[13px] sm:text-sm ${
-            darkMode ? "text-white/45" : "text-black/45"
+            darkMode ? "text-white/45" : "text-[#2C2D2C]/45"
           }`}
         >
           {description}
@@ -6022,7 +6022,7 @@ function AssistantItem({ icon, title, description, color, darkMode }: any) {
         <p className="text-sm font-[700]">{title}</p>
         <p
           className={`mt-1 text-xs leading-5 ${
-            darkMode ? "text-white/42" : "text-black/42"
+            darkMode ? "text-white/42" : "text-[#2C2D2C]/42"
           }`}
         >
           {description}
@@ -6060,7 +6060,7 @@ function CompactMetric({
 
       <span
         className={`text-[11px] font-[700] ${
-          darkMode ? "text-white/38" : "text-black/38"
+          darkMode ? "text-white/38" : "text-[#2C2D2C]/38"
         }`}
       >
         {label}
@@ -6119,7 +6119,7 @@ function DayTimeLeftCard({
   const selectClass = `h-10 w-full appearance-none rounded-[14px] border px-3 text-sm font-[800] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${
     darkMode
       ? "border-white/[0.09] bg-[#1f1f21] text-white"
-      : "border-black/[0.08] bg-white text-black"
+      : "border-black/[0.08] bg-white text-[#2C2D2C]"
   }`;
 
   return (
@@ -6132,7 +6132,7 @@ function DayTimeLeftCard({
 
           <p
             className={`mt-1 text-[10px] font-[700] ${
-              darkMode ? "text-white/38" : "text-black/38"
+              darkMode ? "text-white/38" : "text-[#2C2D2C]/38"
             }`}
           >
             Ends {displayHour}:{displayMinute} {period}
@@ -6144,7 +6144,7 @@ function DayTimeLeftCard({
           className={`rounded-full px-3 py-1.5 text-[10px] font-[900] transition hover:scale-[1.02] ${
             darkMode
               ? "bg-white/[0.06] text-white/60 hover:text-white"
-              : "bg-black/[0.04] text-black/60 hover:text-black"
+              : "bg-black/[0.04] text-[#2C2D2C]/60 hover:text-[#2C2D2C]"
           }`}
         >
           Edit
@@ -6512,7 +6512,7 @@ function FocusModePanel({
 
             <p
               className={`mt-1.5 max-w-md ${textStyles.small} sm:mt-2 ${
-                darkMode ? "text-white/64" : "text-black/45"
+                darkMode ? "text-white/64" : "text-[#2C2D2C]/45"
               }`}
             >
               Drag up to 3 tasks here, or let Veira choose them.
@@ -6523,7 +6523,7 @@ function FocusModePanel({
             className={`shrink-0 rounded-full border px-3 py-1.5 ${textStyles.badge} ${
               darkMode
                 ? "border-white/[0.16] bg-white/[0.06] text-white/75"
-                : "bg-black/[0.04] text-black/45"
+                : "bg-black/[0.04] text-[#2C2D2C]/45"
             }`}
           >
             {isManualMode ? "Manual" : "AI Mode"}
@@ -6564,7 +6564,7 @@ function FocusModePanel({
 
               <p
                 className={`mt-1 ${textStyles.meta} ${
-                  darkMode ? "text-white/48" : "text-black/40"
+                  darkMode ? "text-white/48" : "text-[#2C2D2C]/40"
                 }`}
               >
                 {activeFocusTasks.length > 0
@@ -6580,7 +6580,7 @@ function FocusModePanel({
                   className={`rounded-[13px] border px-3 py-1.5 ${textStyles.badge} transition hover:scale-[1.02] ${
                     darkMode
                       ? "border-white/[0.07] bg-[#111111] text-white/58 hover:text-white"
-                      : "bg-black/[0.04] text-black/45 hover:text-black"
+                      : "bg-black/[0.04] text-[#2C2D2C]/45 hover:text-[#2C2D2C]"
                   }`}
                 >
                   Clear
@@ -6593,7 +6593,7 @@ function FocusModePanel({
                 className={`rounded-[13px] border px-3 py-1.5 ${textStyles.badge} transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 ${
                   darkMode
                     ? "border-white/[0.14] bg-[#111111] text-white/70 hover:border-[#05AD98]/50 hover:text-white"
-                    : "bg-black/[0.04] text-black/45 hover:text-black"
+                    : "bg-black/[0.04] text-[#2C2D2C]/45 hover:text-[#2C2D2C]"
                 }`}
               >
                 {focusLoading
@@ -6616,7 +6616,7 @@ function FocusModePanel({
               className={`flex min-h-[220px] items-center justify-center rounded-[22px] border border-dashed text-center ${
                 darkMode
                   ? "border-white/[0.14] bg-[#111111] text-white/35"
-                  : "border-black/[0.07] bg-black/[0.015] text-black/35"
+                  : "border-black/[0.07] bg-black/[0.015] text-[#2C2D2C]/35"
               }`}
             >
               <div className="max-w-xs px-5">
@@ -6687,7 +6687,7 @@ function FocusModePanel({
 
                         <p
                           className={`mt-1 truncate ${textStyles.meta} ${
-                            darkMode ? "text-white/48" : "text-black/38"
+                            darkMode ? "text-white/48" : "text-[#2C2D2C]/38"
                           }`}
                         >
                           {task.priority}
@@ -6702,7 +6702,7 @@ function FocusModePanel({
                           style={{
                             color: darkMode
                               ? "rgba(255,255,255,0.72)"
-                              : "#111111",
+                              : "#2C2D2C",
                             backgroundColor: darkMode
                               ? "rgba(255,255,255,0.06)"
                               : "#ffffff",
@@ -6723,7 +6723,7 @@ function FocusModePanel({
                         className={`shrink-0 rounded-full px-2.5 py-1 ${textStyles.badge} opacity-70 transition hover:scale-[1.03] hover:opacity-100 ${
                           darkMode
                             ? "bg-white/[0.06] text-white/58 hover:text-white"
-                            : "bg-black/[0.05] text-black/50"
+                            : "bg-black/[0.05] text-[#2C2D2C]/50"
                         }`}
                       >
                         Remove
@@ -6734,7 +6734,7 @@ function FocusModePanel({
                       <div className="mt-4">
                         <p
                           className={`${textStyles.whyText} ${
-                            darkMode ? "text-white/52" : "text-black/45"
+                            darkMode ? "text-white/52" : "text-[#2C2D2C]/45"
                           }`}
                         >
                           {getTaskReason(task.id)}
@@ -6777,7 +6777,7 @@ function FocusModePanel({
                   className={`flex h-[58px] items-center justify-center rounded-[18px] border border-dashed text-xs font-[900] ${
                     darkMode
                       ? "border-white/[0.12] bg-[#111111] text-white/28"
-                      : "border-black/[0.06] bg-black/[0.015] text-black/28"
+                      : "border-black/[0.06] bg-black/[0.015] text-[#2C2D2C]/28"
                   }`}
                 >
                   Drop task #{activeFocusTasks.length + 1}
@@ -6816,7 +6816,7 @@ function DateBadge({ task, visibleDueDate, darkMode }: any) {
       className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-[700] tracking-[-0.01em] ${
         darkMode
           ? "border-white/[0.08] bg-white/[0.04] text-white/35"
-          : "border-black/[0.06] bg-black/[0.025] text-black/35"
+          : "border-black/[0.06] bg-black/[0.025] text-[#2C2D2C]/35"
       }`}
     >
       No date
@@ -6889,7 +6889,7 @@ function PrioritiesView({
           </h2>
           <p
             className={`mt-2 text-sm ${
-              darkMode ? "text-white/45" : "text-black/45"
+              darkMode ? "text-white/45" : "text-[#2C2D2C]/45"
             }`}
           >
             Your active tasks grouped by importance.
@@ -6950,7 +6950,7 @@ function PriorityColumn({
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
             <h3 className="text-[15px] font-[700]">{title}</h3>
           </div>
-          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
+          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#2C2D2C]/40"}`}>
             {description}
           </p>
         </div>
@@ -6966,7 +6966,7 @@ function PriorityColumn({
             className={`rounded-2xl border border-dashed p-5 text-sm ${
               darkMode
                 ? "border-white/10 text-white/35"
-                : "border-black/10 text-black/35"
+                : "border-black/10 text-[#2C2D2C]/35"
             }`}
           >
             {emptyMessage}
@@ -7015,7 +7015,7 @@ function CompactTaskCard({
           onClick={(e) => toggleTaskById(task.id, e)}
           className="mt-0.5 opacity-70 transition hover:opacity-100"
         >
-          <Circle size={18} className={darkMode ? "text-white/25" : "text-black/25"} />
+          <Circle size={18} className={darkMode ? "text-white/25" : "text-[#2C2D2C]/25"} />
         </button>
 
         <div className="min-w-0 flex-1">
@@ -7029,7 +7029,7 @@ function CompactTaskCard({
             {task.title}
           </p>
 
-          <p className={`mt-1 text-[11px] ${darkMode ? "text-white/38" : "text-black/38"}`}>
+          <p className={`mt-1 text-[11px] ${darkMode ? "text-white/38" : "text-[#2C2D2C]/38"}`}>
             {task.category}
           </p>
 
@@ -7079,7 +7079,7 @@ function PriorityListGroup({
             <h3 className="text-[15px] font-[700]">{title}</h3>
           </div>
 
-          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
+          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#2C2D2C]/40"}`}>
             {description}
           </p>
         </div>
@@ -7136,13 +7136,13 @@ function AirtablePriorityGroup({
             <h3 className="text-[15px] font-[700] sm:text-[16px]">{title}</h3>
           </div>
 
-          <p className={`mt-1 text-[11px] sm:text-[12px] ${darkMode ? "text-white/45" : "text-black/45"}`}>
+          <p className={`mt-1 text-[11px] sm:text-[12px] ${darkMode ? "text-white/45" : "text-[#2C2D2C]/45"}`}>
             {description}
           </p>
         </div>
 
         <div className={`flex h-8 min-w-8 items-center justify-center rounded-full px-3 text-xs font-[700] ${
-          darkMode ? "bg-white/10 text-white/70" : "bg-black/[0.04] text-black/60"
+          darkMode ? "bg-white/10 text-white/70" : "bg-black/[0.04] text-[#2C2D2C]/60"
         }`}>
           {tasks.length}
         </div>
@@ -7176,10 +7176,10 @@ function AirtablePriorityGroup({
                 task.completed
                   ? darkMode
                     ? "text-white/55 line-through decoration-white/45"
-                    : "text-black/45 line-through decoration-black/45"
+                    : "text-[#2C2D2C]/45 line-through decoration-black/45"
                   : darkMode
                   ? "text-white"
-                  : "text-black"
+                  : "text-[#2C2D2C]"
               }`}
             >
               {task.title}
@@ -7196,10 +7196,10 @@ function AirtablePriorityGroup({
               task.completed
                 ? darkMode
                   ? "text-white/42"
-                  : "text-black/35"
+                  : "text-[#2C2D2C]/35"
                 : darkMode
                 ? "text-white/48"
-                : "text-black/40"
+                : "text-[#2C2D2C]/40"
             }`}
             >
               {task.category} • {task.priority}
@@ -7209,7 +7209,7 @@ function AirtablePriorityGroup({
           <div className="flex items-center gap-3 text-[12px] font-[700] sm:gap-5 sm:text-[13px] sm:font-[700]">
             {task.dueDate && (
               <div className={`flex items-center gap-1.5 ${
-                darkMode ? "text-white/70" : "text-black/65"
+                darkMode ? "text-white/70" : "text-[#2C2D2C]/65"
               }`}>
                 <Calendar size={14} />
                 <span>{formatDueDate(task.dueDate)}</span>
@@ -7481,7 +7481,7 @@ setEnableClipboardAssist,
                   ? "cursor-not-allowed opacity-30"
                   : darkMode
                   ? "bg-white/[0.06] text-white/60 hover:text-white"
-                  : "bg-black/[0.04] text-black/60 hover:text-black"
+                  : "bg-black/[0.04] text-[#2C2D2C]/60 hover:text-[#2C2D2C]"
               }`}
             >
               Clear archive
@@ -7521,7 +7521,7 @@ function SettingsCard({
       <div className="mb-5">
         <h3 className="text-[16px] font-[700]">{title}</h3>
 
-        <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
+        <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#2C2D2C]/40"}`}>
           {description}
         </p>
       </div>
@@ -7537,7 +7537,7 @@ function SettingsRow({ title, description, children, darkMode }: any) {
       <div className="min-w-0">
         <p className="text-sm font-[700]">{title}</p>
 
-        <p className={`mt-1 text-xs ${darkMode ? "text-white/38" : "text-black/38"}`}>
+        <p className={`mt-1 text-xs ${darkMode ? "text-white/38" : "text-[#2C2D2C]/38"}`}>
           {description}
         </p>
       </div>
@@ -7593,7 +7593,7 @@ function SegmentedControl({
                 ? "text-white"
                 : darkMode
                 ? "text-white/45 hover:text-white"
-                : "text-black/45 hover:text-black"
+                : "text-[#2C2D2C]/45 hover:text-[#2C2D2C]"
             }`}
             style={
               isActive
@@ -7670,7 +7670,7 @@ function UpcomingView({
             Upcoming
           </h2>
 
-          <p className={`mt-2 text-[13px] sm:text-sm ${darkMode ? "text-white/45" : "text-black/45"}`}>
+          <p className={`mt-2 text-[13px] sm:text-sm ${darkMode ? "text-white/45" : "text-[#2C2D2C]/45"}`}>
             Tasks grouped by manual due dates and Veira-suggested dates.
           </p>
         </div>
@@ -7690,7 +7690,7 @@ function UpcomingView({
                   ? "text-white"
                   : darkMode
                   ? "text-white/45 hover:text-white"
-                  : "text-black/45 hover:text-black"
+                  : "text-[#2C2D2C]/45 hover:text-[#2C2D2C]"
               }`}
               style={viewMode === "calendar" ? { backgroundColor: themeColor } : undefined}
             >
@@ -7704,7 +7704,7 @@ function UpcomingView({
                   ? "text-white"
                   : darkMode
                   ? "text-white/45 hover:text-white"
-                  : "text-black/45 hover:text-black"
+                  : "text-[#2C2D2C]/45 hover:text-[#2C2D2C]"
               }`}
               style={viewMode === "list" ? { backgroundColor: themeColor } : undefined}
             >
@@ -7818,7 +7818,7 @@ function UpcomingCalendarView({
                 <h3 className="text-[15px] font-[700]">{day.title}</h3>
               </div>
 
-              <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
+              <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#2C2D2C]/40"}`}>
                 {day.dateLabel}
               </p>
             </div>
@@ -7827,7 +7827,7 @@ function UpcomingCalendarView({
               className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
                 darkMode
                   ? "bg-white/[0.06] text-white/50"
-                  : "bg-black/[0.04] text-black/50"
+                  : "bg-black/[0.04] text-[#2C2D2C]/50"
               }`}
             >
               {day.tasks.length}
@@ -7840,7 +7840,7 @@ function UpcomingCalendarView({
                 className={`rounded-2xl border border-dashed p-4 text-sm ${
                   darkMode
                     ? "border-white/10 text-white/35"
-                    : "border-black/10 text-black/35"
+                    : "border-black/10 text-[#2C2D2C]/35"
                 }`}
               >
                 {day.emptyMessage}
@@ -7900,7 +7900,7 @@ function UpcomingCalendarTaskCard({
         >
           <Circle
             size={17}
-            className={darkMode ? "text-white/25" : "text-black/25"}
+            className={darkMode ? "text-white/25" : "text-[#2C2D2C]/25"}
           />
         </button>
 
@@ -7917,7 +7917,7 @@ function UpcomingCalendarTaskCard({
 
           <p
             className={`mt-1 text-[11px] ${
-              darkMode ? "text-white/38" : "text-black/38"
+              darkMode ? "text-white/38" : "text-[#2C2D2C]/38"
             }`}
           >
             {task.category}
@@ -7951,7 +7951,7 @@ function UpcomingCalendarTaskCard({
             className={`rounded-full px-2.5 py-1 text-[10px] font-[700] transition hover:scale-[1.03] ${
               darkMode
                 ? "bg-white/[0.06] text-white/55 hover:text-white"
-                : "bg-black/[0.04] text-black/55 hover:text-black"
+                : "bg-black/[0.04] text-[#2C2D2C]/55 hover:text-[#2C2D2C]"
             }`}
           >
             Accept
@@ -7986,7 +7986,7 @@ function UpcomingGroup({
             <h3 className="text-[15px] font-[700]">{title}</h3>
           </div>
 
-          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-black/40"}`}>
+          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#2C2D2C]/40"}`}>
             {description}
           </p>
         </div>
@@ -7995,7 +7995,7 @@ function UpcomingGroup({
           className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
             darkMode
               ? "bg-white/[0.06] text-white/50"
-              : "bg-black/[0.04] text-black/50"
+              : "bg-black/[0.04] text-[#2C2D2C]/50"
           }`}
         >
           {tasks.length}
@@ -8031,7 +8031,7 @@ function TaskRows({
   return (
     <div>
       {tasks.length === 0 && (
-        <div className={`p-5 text-sm ${darkMode ? "text-white/35" : "text-black/35"}`}>
+        <div className={`p-5 text-sm ${darkMode ? "text-white/35" : "text-[#2C2D2C]/35"}`}>
           {emptyMessage}
         </div>
       )}
@@ -8054,7 +8054,7 @@ function TaskRows({
                 onClick={(e) => toggleTaskById(task.id, e)}
                 className="mt-0.5 shrink-0 opacity-70 transition hover:opacity-100 sm:mt-0"
               >
-                <Circle size={18} className={darkMode ? "text-white/25" : "text-black/25"} />
+                <Circle size={18} className={darkMode ? "text-white/25" : "text-[#2C2D2C]/25"} />
               </button>
 
               <div className="min-w-0 flex-1">
@@ -8070,7 +8070,7 @@ function TaskRows({
 
                 <p
                   className={`mt-1 truncate text-[10.5px] font-[700] sm:mt-1.5 sm:text-[11px] sm:font-[650] ${
-                    darkMode ? "text-white/38" : "text-black/38"
+                    darkMode ? "text-white/38" : "text-[#2C2D2C]/38"
                   }`}
                 >
                   {task.category} · {task.priority}
@@ -8089,7 +8089,7 @@ function TaskRows({
                   className={`rounded-full px-3 py-1 text-[11px] font-[700] transition hover:scale-[1.03] ${
                     darkMode
                       ? "bg-white/[0.06] text-white/55 hover:text-white"
-                      : "bg-black/[0.04] text-black/55 hover:text-black"
+                      : "bg-black/[0.04] text-[#2C2D2C]/55 hover:text-[#2C2D2C]"
                   }`}
                 >
                   Accept
@@ -8141,7 +8141,7 @@ function InboxView({
 
           <p
             className={`mt-2 text-sm ${
-              darkMode ? "text-white/45" : "text-black/45"
+              darkMode ? "text-white/45" : "text-[#2C2D2C]/45"
             }`}
           >
             Captured tasks that still need a clear date or review.
@@ -8173,7 +8173,7 @@ function InboxView({
 
             <p
               className={`mt-1 text-xs ${
-                darkMode ? "text-white/40" : "text-black/40"
+                darkMode ? "text-white/40" : "text-[#2C2D2C]/40"
               }`}
             >
               These tasks do not have a manual or suggested date yet.
@@ -8184,7 +8184,7 @@ function InboxView({
             className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
               darkMode
                 ? "bg-white/[0.06] text-white/50"
-                : "bg-black/[0.04] text-black/50"
+                : "bg-black/[0.04] text-[#2C2D2C]/50"
             }`}
           >
             {inboxTasks.length}
@@ -8195,7 +8195,7 @@ function InboxView({
           {inboxTasks.length === 0 && (
             <div
               className={`p-8 text-sm ${
-                darkMode ? "text-white/35" : "text-black/35"
+                darkMode ? "text-white/35" : "text-[#2C2D2C]/35"
               }`}
             >
               Your inbox is clear. Every active task has either a date or a
@@ -8225,7 +8225,7 @@ function InboxView({
                 >
                   <Circle
                     size={18}
-                    className={darkMode ? "text-white/25" : "text-black/25"}
+                    className={darkMode ? "text-white/25" : "text-[#2C2D2C]/25"}
                   />
                 </button>
 
@@ -8242,7 +8242,7 @@ function InboxView({
 
                   <p
                     className={`mt-1 truncate text-[11px] ${
-                      darkMode ? "text-white/38" : "text-black/38"
+                      darkMode ? "text-white/38" : "text-[#2C2D2C]/38"
                     }`}
                   >
                     {task.category} · Needs date
@@ -8268,7 +8268,7 @@ function InboxView({
                       className={`h-9 rounded-xl px-3 text-xs font-[700] transition hover:scale-[1.02] ${
                         darkMode
                           ? "bg-white/[0.06] text-white/55 hover:text-white"
-                          : "bg-black/[0.04] text-black/55 hover:text-black"
+                          : "bg-black/[0.04] text-[#2C2D2C]/55 hover:text-[#2C2D2C]"
                       }`}
                     >
                       Today
@@ -8279,7 +8279,7 @@ function InboxView({
                       className={`h-9 rounded-xl px-3 text-xs font-[700] transition hover:scale-[1.02] ${
                         darkMode
                           ? "bg-white/[0.06] text-white/55 hover:text-white"
-                          : "bg-black/[0.04] text-black/55 hover:text-black"
+                          : "bg-black/[0.04] text-[#2C2D2C]/55 hover:text-[#2C2D2C]"
                       }`}
                     >
                       Tomorrow
@@ -8352,7 +8352,7 @@ function MobileBottomNav({
       className={`fixed bottom-4 left-4 right-4 z-[180] grid h-[72px] grid-cols-5 items-center rounded-[28px] border px-2 shadow-[0_22px_70px_rgba(17,24,39,0.22)] backdrop-blur-2xl lg:hidden ${
         darkMode
           ? "border-white/[0.10] bg-[#0b1113]/92 text-white"
-          : "border-black/[0.07] bg-white/[0.92] text-black"
+          : "border-black/[0.07] bg-white/[0.92] text-[#2C2D2C]"
       }`}
     >
       <button
@@ -8362,7 +8362,7 @@ function MobileBottomNav({
             ? "text-white"
             : darkMode
             ? "text-white/45"
-            : "text-black/45"
+            : "text-[#2C2D2C]/45"
         }`}
         style={
           selectedView === "today"
@@ -8379,7 +8379,7 @@ function MobileBottomNav({
       <button
         onClick={goToFocus}
         className={`flex flex-col items-center justify-center gap-1 rounded-[20px] py-2 text-[10px] font-[900] ${
-          darkMode ? "text-white/45" : "text-black/45"
+          darkMode ? "text-white/45" : "text-[#2C2D2C]/45"
         }`}
       >
         <Target size={18} />
@@ -8403,7 +8403,7 @@ function MobileBottomNav({
             ? "text-white"
             : darkMode
             ? "text-white/45"
-            : "text-black/45"
+            : "text-[#2C2D2C]/45"
         }`}
         style={
           selectedView === "inbox"
@@ -8420,7 +8420,7 @@ function MobileBottomNav({
           <span
             className={`absolute right-3 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-[900] ${
               selectedView === "inbox"
-                ? "bg-white text-black"
+                ? "bg-white text-[#2C2D2C]"
                 : "bg-red-500 text-white"
             }`}
           >
@@ -8465,7 +8465,7 @@ function MobileBottomNav({
 
         <span
           className={`text-[10px] font-[900] ${
-            darkMode ? "text-white/45" : "text-black/45"
+            darkMode ? "text-white/45" : "text-[#2C2D2C]/45"
           }`}
         >
           Account
@@ -8506,7 +8506,7 @@ function ClipboardAssistPrompt({
         className={`pointer-events-auto relative w-full max-w-[560px] overflow-hidden rounded-[28px] border p-4 shadow-[0_28px_90px_rgba(15,23,42,0.22)] backdrop-blur-2xl sm:p-5 ${
           darkMode
             ? "border-white/[0.10] bg-[#171717]/96 text-white"
-            : "border-[#BBBFBF]/45 bg-white/96 text-[#111827]"
+            : "border-[#BBBFBF]/45 bg-white/96 text-[#2C2D2C]"
         }`}
       >
         <button
@@ -8514,7 +8514,7 @@ function ClipboardAssistPrompt({
           className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-105 ${
             darkMode
               ? "bg-white/[0.06] text-white/45 hover:text-white"
-              : "bg-black/[0.035] text-black/42 hover:text-black"
+              : "bg-black/[0.035] text-[#2C2D2C]/42 hover:text-[#2C2D2C]"
           }`}
         >
           <X size={15} />
@@ -8547,7 +8547,7 @@ function ClipboardAssistPrompt({
                   : "Do you want to add this as a task?"}
               </h3>
 
-              <p className={`mt-1 text-xs font-[700] ${darkMode ? "text-white/42" : "text-black/42"}`}>
+              <p className={`mt-1 text-xs font-[700] ${darkMode ? "text-white/42" : "text-[#2C2D2C]/42"}`}>
   {loading
     ? "Looking for possible action items..."
     : hasTasks
@@ -8561,7 +8561,7 @@ function ClipboardAssistPrompt({
             <div className={`mt-4 rounded-[18px] border px-4 py-4 text-sm font-[800] ${
               darkMode
                 ? "border-white/[0.08] bg-white/[0.045] text-white/55"
-                : "border-black/[0.06] bg-black/[0.018] text-black/55"
+                : "border-black/[0.06] bg-black/[0.018] text-[#2C2D2C]/55"
             }`}>
               Veira is extracting possible tasks...
             </div>
@@ -8582,7 +8582,7 @@ function ClipboardAssistPrompt({
                   {task.selected ? (
                     <CheckCircle2 size={18} style={{ color: themeColor }} />
                   ) : (
-                    <Circle size={18} className={darkMode ? "text-white/30" : "text-black/30"} />
+                    <Circle size={18} className={darkMode ? "text-white/30" : "text-[#2C2D2C]/30"} />
                   )}
 
                   <div className="min-w-0 flex-1">
@@ -8591,7 +8591,7 @@ function ClipboardAssistPrompt({
                     </p>
 
                     <p className={`mt-1 text-[10px] font-[800] ${
-                      darkMode ? "text-white/38" : "text-black/38"
+                      darkMode ? "text-white/38" : "text-[#2C2D2C]/38"
                     }`}>
                       {task.category} ·{" "}
                       {task.priority === "Medium" ? "Mid" : task.priority}
@@ -8610,7 +8610,7 @@ function ClipboardAssistPrompt({
               className={`mt-4 max-h-[112px] overflow-hidden rounded-[18px] border px-3 py-2.5 text-[12px] font-[650] leading-5 ${
                 darkMode
                   ? "border-white/[0.08] bg-white/[0.045] text-white/54"
-                  : "border-black/[0.06] bg-black/[0.018] text-black/54"
+                  : "border-black/[0.06] bg-black/[0.018] text-[#2C2D2C]/54"
               }`}
             >
               {clippedPreview}
@@ -8629,7 +8629,7 @@ function ClipboardAssistPrompt({
               className={`h-10 rounded-[15px] px-3 text-xs font-[900] ${
                 darkMode
                   ? "bg-white/[0.06] text-white/48 hover:text-white"
-                  : "bg-black/[0.04] text-black/46 hover:text-black"
+                  : "bg-black/[0.04] text-[#2C2D2C]/46 hover:text-[#2C2D2C]"
               }`}
             >
               Dismiss
@@ -8640,7 +8640,7 @@ function ClipboardAssistPrompt({
               className={`h-10 rounded-[15px] border px-3.5 text-xs font-[900] ${
                 darkMode
                   ? "border-white/[0.10] bg-white/[0.04] text-white/62 hover:text-white"
-                  : "border-black/[0.07] bg-white text-black/58 hover:text-black"
+                  : "border-black/[0.07] bg-white text-[#2C2D2C]/58 hover:text-[#2C2D2C]"
               }`}
             >
               Add as is
@@ -8727,7 +8727,7 @@ function DueTasksReminderPopup({
         <div className="relative p-5 sm:p-6">
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/[0.035] text-black/45 transition hover:scale-105 hover:text-black"
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/[0.035] text-[#2C2D2C]/45 transition hover:scale-105 hover:text-[#2C2D2C]"
           >
             <X size={17} />
           </button>
@@ -8745,11 +8745,11 @@ function DueTasksReminderPopup({
             </div>
 
             <div className="min-w-0">
-              <h2 className="text-[22px] font-[900] leading-tight tracking-[-0.045em] text-[#111827]">
+              <h2 className="text-[22px] font-[900] leading-tight tracking-[-0.045em] text-[#2C2D2C]">
                 2 hours left in your day
               </h2>
 
-              <p className="mt-1 text-sm font-[700] text-black/48">
+              <p className="mt-1 text-sm font-[700] text-[#2C2D2C]/48">
                 Here are your tasks due today
               </p>
             </div>
@@ -8771,11 +8771,11 @@ function DueTasksReminderPopup({
                   />
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-[850] leading-5 tracking-[-0.018em] text-[#111827]">
+                    <p className="truncate text-[13px] font-[850] leading-5 tracking-[-0.018em] text-[#2C2D2C]">
                       {task.title}
                     </p>
 
-                    <p className="mt-0.5 truncate text-[10.5px] font-[750] text-black/36">
+                    <p className="mt-0.5 truncate text-[10.5px] font-[750] text-[#2C2D2C]/36">
                       {task.category} ·{" "}
                       {task.priority === "Medium" || task.priority === "Med"
                         ? "Mid"
@@ -8799,7 +8799,7 @@ function DueTasksReminderPopup({
           </div>
 
           <div className="mt-5 flex items-center justify-between gap-4">
-            <p className="text-sm font-[750] text-black/50">
+            <p className="text-sm font-[750] text-[#2C2D2C]/50">
               {tasks.length} task{tasks.length === 1 ? "" : "s"} due today
             </p>
 
@@ -8934,7 +8934,7 @@ function ExtractTasksModal({
                   onChange={(event) => setExtractInput(event.target.value)}
                   className={`min-h-[170px] w-full resize-none rounded-[26px] px-4 py-4 text-sm leading-6 outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${darkMode
                     ? "bg-white/[0.07] text-white placeholder:text-white/35 border border-white/[0.06]"
-                    : "bg-white text-black placeholder:text-black/35 border border-black/[0.08]"
+                    : "bg-white text-[#2C2D2C] placeholder:text-[#2C2D2C]/35 border border-black/[0.08]"
                   }`}
                   placeholder="Paste an email, Slack message, meeting note, or paragraph..."
                 />
@@ -9000,7 +9000,7 @@ function ExtractTasksModal({
                               <Circle
                                 size={20}
                                 className={
-                                  darkMode ? "text-white/30" : "text-black/30"
+                                  darkMode ? "text-white/30" : "text-[#2C2D2C]/30"
                                 }
                               />
                             )}
@@ -9031,7 +9031,7 @@ function ExtractTasksModal({
                                 className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
                                   darkMode
                                     ? "bg-white/[0.06] text-white/45"
-                                    : "bg-black/[0.04] text-black/45"
+                                    : "bg-black/[0.04] text-[#2C2D2C]/45"
                                 }`}
                               >
                                 {task.category}
@@ -9041,7 +9041,7 @@ function ExtractTasksModal({
                                 className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
                                   darkMode
                                     ? "bg-white/[0.06] text-white/45"
-                                    : "bg-black/[0.04] text-black/45"
+                                    : "bg-black/[0.04] text-[#2C2D2C]/45"
                                 }`}
                               >
                                 {Math.round(task.confidence * 100)}%
@@ -9055,7 +9055,7 @@ function ExtractTasksModal({
                                 className={`mt-3 text-sm leading-6 ${
                                   darkMode
                                     ? "text-white/45"
-                                    : "text-black/45"
+                                    : "text-[#2C2D2C]/45"
                                 }`}
                               >
                                 {task.notes}
@@ -9067,7 +9067,7 @@ function ExtractTasksModal({
                                 className={`mt-2 text-xs leading-5 ${
                                   darkMode
                                     ? "text-white/35"
-                                    : "text-black/35"
+                                    : "text-[#2C2D2C]/35"
                                 }`}
                               >
                                 {task.reason}
@@ -9133,7 +9133,7 @@ function SuggestionsReviewModal({
 
               <p
                 className={`mt-2 max-w-xl text-sm leading-6 ${
-                  darkMode ? "text-white/45" : "text-black/45"
+                  darkMode ? "text-white/45" : "text-[#2C2D2C]/45"
                 }`}
               >
                 Veira found tasks that look time-sensitive. Review the
@@ -9185,7 +9185,7 @@ function SuggestionsReviewModal({
 
               <p
                 className={`mx-auto mt-2 max-w-sm text-sm leading-6 ${
-                  darkMode ? "text-white/40" : "text-black/40"
+                  darkMode ? "text-white/40" : "text-[#2C2D2C]/40"
                 }`}
               >
                 Veira will show suggestions here when a task sounds like it
@@ -9224,7 +9224,7 @@ function SuggestionsReviewModal({
                           className={`rounded-full px-2.5 py-1 text-[10px] font-[700] ${
                             darkMode
                               ? "bg-white/[0.06] text-white/40"
-                              : "bg-black/[0.04] text-black/40"
+                              : "bg-black/[0.04] text-[#2C2D2C]/40"
                           }`}
                         >
                           {task.category}
@@ -9233,7 +9233,7 @@ function SuggestionsReviewModal({
 
                       <p
                         className={`mt-3 text-sm leading-6 ${
-                          darkMode ? "text-white/45" : "text-black/45"
+                          darkMode ? "text-white/45" : "text-[#2C2D2C]/45"
                         }`}
                       >
                         {task.aiReason ||
@@ -9359,7 +9359,7 @@ function EditTaskModal({
 
   const fieldClass = darkMode
     ? "border-white/[0.08] bg-[#1f1f21] text-white placeholder:text-white/32"
-    : "border-slate-200 bg-white text-[#111827] placeholder:text-slate-400";
+    : "border-slate-200 bg-white text-[#2C2D2C] placeholder:text-slate-400";
 
   const panelClass = darkMode
     ? "border-white/[0.08] bg-white/[0.035]"
@@ -9532,7 +9532,7 @@ function EditTaskModal({
                                 ? "text-white shadow-[0_16px_34px_rgba(0,0,0,0.18)]"
                                 : darkMode
                                 ? "text-white/42 hover:text-white"
-                                : "text-slate-500 hover:text-slate-900"
+                                : "text-slate-500 hover:text-[#2C2D2C]"
                             }`}
                             style={
                               isActive
@@ -9578,7 +9578,7 @@ function EditTaskModal({
                                 ? "text-white shadow-[0_16px_34px_rgba(0,0,0,0.18)]"
                                 : darkMode
                                 ? "text-white/42 hover:text-white"
-                                : "text-slate-500 hover:text-slate-900"
+                                : "text-slate-500 hover:text-[#2C2D2C]"
                             }`}
                             style={
                               isActive
@@ -9803,7 +9803,7 @@ function EditTaskModal({
                         className={`flex h-[40px] w-[40px] items-center justify-center rounded-full text-[12px] font-[900] ${
                           darkMode
                             ? "bg-[#171717] text-white"
-                            : "bg-white text-slate-950"
+                            : "bg-white text-[#2C2D2C]"
                         }`}
                       >
                         {stepProgress.percent}%
@@ -9902,7 +9902,7 @@ function EditTaskModal({
         : "text-slate-400 line-through decoration-slate-300"
       : darkMode
       ? "text-white/78"
-      : "text-slate-950"
+      : "text-[#2C2D2C]"
   }`}
 >
   {step.title}
