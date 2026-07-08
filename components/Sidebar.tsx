@@ -103,7 +103,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.30)] lg:flex ${border} ${sidebarBg} ${text}`}
+      className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.30)] min-[1360px]:flex ${border} ${sidebarBg} ${text}`}
     >
       <div className="mb-7 flex items-center gap-3">
         <div

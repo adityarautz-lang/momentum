@@ -2792,8 +2792,8 @@ createdAt: updatedTask.createdAt || new Date().toISOString(),
   inboxCount={inboxTasks.length}
 />
 
-<div className="min-w-0 flex-1 overflow-x-hidden px-3 pb-28 pt-5 sm:px-5 sm:pb-28 sm:pt-6 md:px-6 lg:pl-[268px] lg:pr-5 lg:pb-16 lg:pt-6 xl:pl-[284px] xl:pr-6 min-[1700px]:px-10 min-[1700px]:py-8 min-[1700px]:pl-[300px]">
-<div className="mx-auto w-full max-w-[1380px] overflow-x-hidden">
+<div className="min-w-0 flex-1 overflow-x-hidden px-3 pb-28 pt-5 sm:px-5 sm:pb-28 sm:pt-6 md:px-6 min-[1360px]:pl-[268px] min-[1360px]:pr-5 min-[1360px]:pb-16 min-[1360px]:pt-6 min-[1600px]:pl-[284px] min-[1700px]:pl-[300px] min-[1700px]:pr-10 min-[1700px]:pb-8 min-[1700px]:pt-8">
+<div className="mx-auto w-full min-w-0 max-w-[1380px] overflow-x-hidden">
             {selectedView === "today" && (
             <TodayView
             darkMode={darkMode}
@@ -3275,7 +3275,7 @@ userFirstName={userFirstName}
       style={{ backgroundColor: themeColor }}
     />
 
-    <div className="flex flex-col gap-4 pt-2 min-[1400px]:flex-row min-[1400px]:items-start">
+    <div className="flex flex-col gap-4 pt-2 xl:flex-row xl:items-start">
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <div
           className={`relative flex h-[70px] w-[70px] shrink-0 flex-col items-center justify-center overflow-hidden rounded-[24px] border shadow-[0_16px_40px_rgba(17,24,39,0.08)] ${
@@ -3363,12 +3363,12 @@ userFirstName={userFirstName}
       </div>
 
       <div
-        className={`hidden min-h-14 w-px shrink-0 self-stretch min-[1400px]:block ${
+        className={`hidden min-h-14 w-px shrink-0 self-stretch xl:block ${
           darkMode ? "bg-white/[0.08]" : "bg-black/[0.055]"
         }`}
       />
 
-      <div className="min-w-0 min-[1400px]:w-[360px] min-[1400px]:pt-1 2xl:w-[460px]">
+      <div className="min-w-0 xl:w-[360px] xl:pt-1 min-[1700px]:w-[460px]">
         <div className="flex items-center gap-2">
           <Sparkles size={14} style={{ color: themeColor }} />
 
@@ -3394,12 +3394,12 @@ userFirstName={userFirstName}
       </div>
 
       <div
-        className={`hidden min-h-14 w-px shrink-0 self-stretch min-[1400px]:block ${
+        className={`hidden min-h-14 w-px shrink-0 self-stretch xl:block ${
           darkMode ? "bg-white/[0.08]" : "bg-black/[0.055]"
         }`}
       />
 
-      <div className="shrink-0 min-[1400px]:w-[210px] min-[1400px]:pt-1 2xl:w-[250px]">
+      <div className="shrink-0 xl:w-[210px] xl:pt-1 min-[1700px]:w-[250px]">
         <DayTimeLeftCard
           dayEndTime={dayEndTime}
           setDayEndTime={setDayEndTime}
@@ -3430,7 +3430,7 @@ userFirstName={userFirstName}
       style={{ backgroundColor: themeColor }}
     />
 
-    <div className="relative grid gap-3 2xl:grid-cols-[180px_minmax(0,1fr)_46px_106px] 2xl:items-center">
+    <div className="relative grid gap-3 xl:grid-cols-[180px_minmax(0,1fr)_46px_106px] xl:items-center">
       <div className="flex min-w-0 items-center gap-3">
         <div
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px]"
@@ -3531,7 +3531,7 @@ userFirstName={userFirstName}
   </section>
 
 
-<div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(380px,9fr)]">
+<div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(620px,11fr)_minmax(360px,9fr)] min-[1700px]:grid-cols-[minmax(0,11fr)_minmax(420px,9fr)]">
 
 <div className="order-1 min-w-0 xl:order-1">
   <TaskListPanel
@@ -8370,7 +8370,7 @@ function MobileBottomNav({
 
   return (
     <nav
-      className={`fixed bottom-4 left-4 right-4 z-[180] grid h-[72px] grid-cols-5 items-center rounded-[28px] border px-2 shadow-[0_22px_70px_rgba(17,24,39,0.22)] backdrop-blur-2xl lg:hidden ${
+      className={`fixed bottom-4 left-4 right-4 z-[180] grid h-[72px] grid-cols-5 items-center rounded-[28px] border px-2 shadow-[0_22px_70px_rgba(17,24,39,0.22)] backdrop-blur-2xl min-[1360px]:hidden ${
         darkMode
           ? "border-white/[0.10] bg-[#0b1113]/92 text-white"
           : "border-black/[0.07] bg-white/[0.92] text-[#2C2D2C]"
