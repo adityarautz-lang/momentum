@@ -9805,7 +9805,7 @@ function EditTaskModal({
                     {stepProgress.subtasks.map((step) => (
                       <div
                         key={step.id}
-                        className={`group/step grid min-h-[52px] grid-cols-[30px_minmax(0,1fr)_64px_30px] items-center gap-2.5 border-b px-3 last:border-b-0 ${
+                        className={`group/step grid min-h-[52px] grid-cols-[30px_minmax(0,1fr)_64px_30px] items-center gap-2.5 border-b px-3 py-1.5 last:border-b-0 ${
                           darkMode
                             ? "border-white/[0.07]"
                             : "border-slate-200"
@@ -9833,18 +9833,18 @@ function EditTaskModal({
                         </button>
 
                         <p
-                          className={`min-w-0 truncate text-[12px] font-[500] ${
-                            step.completed
-                              ? darkMode
-                                ? "text-white/38 line-through decoration-white/25"
-                                : "text-slate-400 line-through decoration-slate-300"
-                              : darkMode
-                              ? "text-white/78"
-                              : "text-slate-950"
-                          }`}
-                        >
-                          {step.title}
-                        </p>
+  className={`min-w-0 whitespace-normal break-words py-2 text-[12px] font-[500] leading-5 [overflow-wrap:anywhere] ${
+    step.completed
+      ? darkMode
+        ? "text-white/38 line-through decoration-white/25"
+        : "text-slate-400 line-through decoration-slate-300"
+      : darkMode
+      ? "text-white/78"
+      : "text-slate-950"
+  }`}
+>
+  {step.title}
+</p>
 
                         {step.completed ? (
                           <span
