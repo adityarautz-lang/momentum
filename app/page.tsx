@@ -31,6 +31,8 @@ ListChecks,
   Sparkles,
 Star,
 Sun,
+Sunrise,
+Sunset,
 Target,
   Trash2,
   TrendingUp,
@@ -3150,6 +3152,36 @@ const greeting =
   hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
 const greetingWithName = `${greeting}${userFirstName ? `, ${userFirstName}` : ""}`;
+
+  const timeOfDayMeta =
+    hour < 12
+      ? {
+          label: "Morning",
+          shortLabel: "AM",
+          Icon: Sunrise,
+          gradient: darkMode
+            ? `linear-gradient(135deg, ${themeColor}2E, rgba(251,191,36,0.18))`
+            : `linear-gradient(135deg, ${themeColor}18, rgba(251,191,36,0.18))`,
+        }
+      : hour < 17
+      ? {
+          label: "Afternoon",
+          shortLabel: "PM",
+          Icon: Sun,
+          gradient: darkMode
+            ? `linear-gradient(135deg, ${themeColor}30, rgba(14,165,233,0.16))`
+            : `linear-gradient(135deg, ${themeColor}16, rgba(14,165,233,0.14))`,
+        }
+      : {
+          label: "Evening",
+          shortLabel: "EVE",
+          Icon: Sunset,
+          gradient: darkMode
+            ? `linear-gradient(135deg, ${themeColor}34, rgba(124,58,237,0.18))`
+            : `linear-gradient(135deg, ${themeColor}18, rgba(124,58,237,0.12))`,
+        };
+
+  const TimeOfDayIcon = timeOfDayMeta.Icon;
   
   useEffect(() => {
     const now = new Date();
@@ -3236,278 +3268,267 @@ userFirstName={userFirstName}
 
       <div className="hidden sm:block">
   <section
-  className={`relative z-[120] mb-5 hidden overflow-visible rounded-[30px] border px-5 py-4 sm:block sm:rounded-[34px] sm:px-6 sm:py-3 ${strongerGlass} ${border}`}
->
-<div className="relative pr-[300px]">
-    <div className="min-w-0 flex-1">
+    className={`relative z-[120] mb-3 hidden overflow-visible rounded-[28px] border px-4 py-3 sm:block ${strongerGlass} ${border}`}
+  >
     <div
-  className="mb-3 h-1.5 w-[220px] rounded-full"
-  style={{ backgroundColor: themeColor }}
-/>
+      className="pointer-events-none absolute left-5 top-0 h-1 w-[220px] rounded-full"
+      style={{ backgroundColor: themeColor }}
+    />
 
-<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-<h1 className={`${textStyles.pageTitle} tracking-[-0.04em]`}>
-  {greetingWithName} 👋
-</h1>
-
-        <span
-          className={`rounded-full px-3 py-1 text-[11px] font-[700] ${
+    <div className="flex flex-col gap-4 pt-2 xl:flex-row xl:items-start">
+      <div className="flex min-w-0 flex-1 items-center gap-4">
+        <div
+          className={`relative flex h-[70px] w-[70px] shrink-0 flex-col items-center justify-center overflow-hidden rounded-[24px] border shadow-[0_16px_40px_rgba(17,24,39,0.08)] ${
             darkMode
-              ? "bg-white/[0.06] text-white/50"
-              : "bg-black/[0.035] text-[#2C2D2C]/45"
+              ? "border-white/[0.08] bg-white/[0.04]"
+              : "border-black/[0.055] bg-white/75"
           }`}
+          style={{
+            background: timeOfDayMeta.gradient,
+          }}
+          aria-label={`${timeOfDayMeta.label} view`}
+          title={timeOfDayMeta.label}
         >
-          {formatDateLong()}
-        </span>
+          <div
+            className="pointer-events-none absolute -right-4 -top-4 h-10 w-10 rounded-full opacity-30 blur-xl"
+            style={{ backgroundColor: themeColor }}
+          />
 
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className={`hidden h-7 items-center gap-1.5 rounded-full px-3 text-[11px] font-[700] transition hover:scale-[1.02] ${
-            darkMode
-              ? "bg-white/[0.06] text-white/55 hover:text-white"
-              : "bg-black/[0.035] text-[#2C2D2C]/50 hover:text-[#2C2D2C]"
-          }`}
-        >
-          {darkMode ? <Sun size={13} /> : <Moon size={13} />}
-          {darkMode ? "Light" : "Dark"}
-        </button>
+          <TimeOfDayIcon
+            size={28}
+            strokeWidth={2.3}
+            className="relative"
+            style={{ color: themeColor }}
+          />
+
+          <span
+            className={`relative mt-1 text-[9px] font-[950] uppercase tracking-[0.14em] ${
+              darkMode ? "text-white/48" : "text-[#2C2D2C]/42"
+            }`}
+          >
+            {timeOfDayMeta.shortLabel}
+          </span>
+        </div>
+
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <h1 className={`${textStyles.pageTitle} tracking-[-0.04em]`}>
+              {greetingWithName} 👋
+            </h1>
+
+            <span
+              className={`rounded-full px-3 py-1 text-[11px] font-[800] ${
+                darkMode
+                  ? "bg-white/[0.06] text-white/50"
+                  : "bg-black/[0.035] text-[#2C2D2C]/45"
+              }`}
+            >
+              {formatDateLong()}
+            </span>
+
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`hidden h-7 items-center gap-1.5 rounded-full px-3 text-[11px] font-[800] transition hover:scale-[1.02] ${
+                darkMode
+                  ? "bg-white/[0.06] text-white/55 hover:text-white"
+                  : "bg-black/[0.035] text-[#2C2D2C]/50 hover:text-[#2C2D2C]"
+              }`}
+            >
+              {darkMode ? <Sun size={13} /> : <Moon size={13} />}
+              {darkMode ? "Light" : "Dark"}
+            </button>
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <CompactMetric
+              label="tasks"
+              value={allTasks.length}
+              color={themeColor}
+              darkMode={darkMode}
+            />
+            <CompactMetric
+              label="completed"
+              value={completedToday.length}
+              color="#10b981"
+              darkMode={darkMode}
+            />
+            <CompactMetric
+              label="progress"
+              value={`${completionPercent}%`}
+              color={themeColor}
+              darkMode={darkMode}
+            />
+          </div>
+        </div>
       </div>
 
-      <p
-        className={`mt-1.5 ${textStyles.small} ${
-          darkMode ? "text-white/42" : "text-[#2C2D2C]/42"
+      <div
+        className={`hidden min-h-14 w-px shrink-0 self-stretch xl:block ${
+          darkMode ? "bg-white/[0.08]" : "bg-black/[0.055]"
         }`}
-      >
-        {allTasks.length} tasks · {completedToday.length} completed ·{" "}
-        {completionPercent}% progress
-      </p>
+      />
 
-     
-      {showMorningBrief && (
-<div
-  className={`mt-4 rounded-[22px] border px-4 py-3 ${
-          darkMode
-            ? "border-white/[0.07] bg-white/[0.035]"
-            : "border-black/[0.045] bg-black/[0.018]"
-        }`}
-      >
-        {/* <p
-          className={textStyles.badge}
-          style={{ color: themeColor }}
-        >
-          Morning Brief
-        </p> */}
+      <div className="min-w-0 xl:w-[460px] xl:pt-1">
+        <div className="flex items-center gap-2">
+          <Sparkles size={14} style={{ color: themeColor }} />
 
-<p
-  className="mt-1 text-[16px] font-[700] tracking-[-0.035em]"
-  style={{ color: themeColor }}
->
-{greetingWithName}! {morningBrief.quote}
-</p>
-
-<p
-  className={`mt-2 text-sm font-[600] ${
-    darkMode ? "text-white/50" : "text-[#2C2D2C]/50"
-  }`}
->
-You have {dueSoonCount} task{dueSoonCount === 1 ? "" : "s"} needing attention today, including {highPriorityCount} high-priority item{highPriorityCount === 1 ? "" : "s"}. Your focus stack is ready.
-</p>
-      </div>
-      )}
-    </div>
-
-
-
-    <div className="absolute right-0 top-0 z-[400]">
-  <DayTimeLeftCard
-    dayEndTime={dayEndTime}
-    setDayEndTime={setDayEndTime}
-    dayTimeRemaining={dayTimeRemaining}
-    darkMode={darkMode}
-    themeColor={themeColor}
-  />
-</div>
-  </div>
-
-  {completedToday.length > 0 && (
-    <div
-      className={`mt-4 rounded-[22px] border px-4 py-3 ${
-        darkMode
-          ? "border-white/[0.07] bg-white/[0.035]"
-          : "border-black/[0.045] bg-black/[0.018]"
-      }`}
-    >
-      <p
-        className={textStyles.badge}
-        style={{ color: themeColor }}
-      >
-        AI Veira Boost
-      </p>
-
-      <p
-        className={`mt-1 max-w-[980px] ${textStyles.body} tracking-[-0.015em] ${
-          darkMode ? "text-white/58" : "text-[#2C2D2C]/58"
-        }`}
-      >
-        {boostLoading
-          ? "Reading your wins..."
-          : boostMessage ||
-            "Your completed tasks are turning into visible progress."}
-      </p>
-    </div>
-  )}
-</section>
-
-
-
-     
-<section
-  className={`relative z-[10] mb-4 overflow-hidden rounded-[26px] border px-4 py-4 sm:mb-4 sm:rounded-[34px] sm:px-6 sm:py-5 ${
-    darkMode
-      ? "border-white/[0.08] bg-[#171717] shadow-[0_18px_54px_rgba(0,0,0,0.30)]"
-      : "border-[#BBBFBF]/32 bg-white/95 shadow-[0_18px_54px_rgba(17,24,39,0.055)] backdrop-blur-2xl"
-  }`}
->
-  <div
-    className="pointer-events-none absolute left-0 top-0 h-1 w-full"
-    style={{
-      background: `linear-gradient(90deg, ${themeColor}, transparent)`,
-    }}
-  />
-
-  <div
-    className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full opacity-[0.14] blur-3xl"
-    style={{
-      backgroundColor: themeColor,
-    }}
-  />
-
-  <div className="relative">
-  <div className="mb-2 flex items-start justify-between gap-3 sm:mb-3 sm:items-center">
-      <div className="min-w-0">
-        <h2 className={`flex items-center gap-2 ${textStyles.sectionTitle} tracking-[-0.03em]`}>
-          <Send size={16} style={{ color: themeColor }} />
-          Quick Capture
-        </h2>
+          <p className={textStyles.badge} style={{ color: themeColor }}>
+            AI Veira Insight
+          </p>
+        </div>
 
         <p
-            className={`mt-0.5 ${textStyles.meta} ${
-            darkMode ? "text-white/42" : "text-[#2C2D2C]/38"
+          className={`mt-1 max-w-[620px] whitespace-normal break-words text-[12px] font-[500] leading-[17px] tracking-[-0.015em] ${
+            darkMode ? "text-white/62" : "text-[#2C2D2C]/62"
           }`}
         >
-          Veira will organize it for you
+          {boostLoading
+            ? "Reading your wins..."
+            : completedToday.length > 0
+            ? boostMessage ||
+              "Your completed tasks are turning into visible progress."
+            : showMorningBrief
+            ? morningBrief.quote
+            : "Capture one important task. Veira will prioritize the rest."}
         </p>
       </div>
+
+      <div
+        className={`hidden min-h-14 w-px shrink-0 self-stretch xl:block ${
+          darkMode ? "bg-white/[0.08]" : "bg-black/[0.055]"
+        }`}
+      />
+
+      <div className="shrink-0 xl:w-[250px] xl:pt-1">
+        <DayTimeLeftCard
+          dayEndTime={dayEndTime}
+          setDayEndTime={setDayEndTime}
+          dayTimeRemaining={dayTimeRemaining}
+          darkMode={darkMode}
+          themeColor={themeColor}
+        />
+      </div>
     </div>
+  </section>
+
+  <section
+    className={`relative z-[10] mb-5 hidden overflow-hidden rounded-[24px] border px-3 py-3 sm:block ${
+      darkMode
+        ? "border-white/[0.08] bg-[#171717] shadow-[0_18px_54px_rgba(0,0,0,0.30)]"
+        : "border-[#BBBFBF]/32 bg-white/95 shadow-[0_18px_54px_rgba(17,24,39,0.055)] backdrop-blur-2xl"
+    }`}
+  >
+    <div
+      className="pointer-events-none absolute left-0 top-0 h-1 w-full"
+      style={{
+        background: `linear-gradient(90deg, ${themeColor}, ${themeColor}40, transparent)`,
+      }}
+    />
 
     <div
-  className={`flex min-h-[54px] overflow-hidden rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition-all duration-200 focus-within:shadow-[0_16px_40px_rgba(17,24,39,0.08)] ${
-    darkMode
-      ? "border-white/[0.09] bg-[#1f1f21] focus-within:border-[#05AD98]/60"
-      : "border-[#BBBFBF]/42 bg-white focus-within:border-[#05AD98]/55"
-  }`}
->
-  <input
-    value={newTask}
-    onChange={(e) => setNewTask(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") addTask();
-    }}
-    placeholder="Capture anything..."
-    className={`h-[54px] min-w-0 flex-1 bg-transparent px-5 ${textStyles.body} tracking-[-0.015em] outline-none sm:px-6 ${
-      darkMode
-        ? "text-white placeholder:text-white/35"
-        : "text-[#2C2D2C] placeholder:text-[#2C2D2C]/35"
-    }`}
-  />
+      className="pointer-events-none absolute -right-16 -top-20 h-40 w-40 rounded-full opacity-[0.10] blur-3xl"
+      style={{ backgroundColor: themeColor }}
+    />
 
-<div
-  className={`my-4 w-px shrink-0 ${
-    darkMode ? "bg-white/[0.07]" : "bg-black/[0.055]"
-  }`}
-/>
+    <div className="relative grid gap-3 xl:grid-cols-[180px_minmax(0,1fr)_46px_106px] xl:items-center">
+      <div className="flex min-w-0 items-center gap-3">
+        <div
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px]"
+          style={{
+            color: themeColor,
+            backgroundColor: `${themeColor}12`,
+          }}
+        >
+          <Send size={17} />
+        </div>
 
-  <input
-    value={newTaskWhy}
-    onChange={(e) => setNewTaskWhy(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") addTask();
-    }}
-    placeholder="Optional context..."
-    className={`h-[54px] min-w-0 flex-1 bg-transparent px-5 ${textStyles.body} tracking-[-0.015em] outline-none sm:px-6 ${
-      darkMode
-        ? "text-white placeholder:text-white/35"
-        : "text-[#2C2D2C] placeholder:text-[#2C2D2C]/35"
-    }`}
-  />
+        <div className="min-w-0">
+          <h2
+            className={`truncate text-[16px] font-[900] leading-tight tracking-[-0.035em]`}
+          >
+            Quick Capture
+          </h2>
 
-<button
-  onClick={addTask}
-  className="m-1.5 flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full text-white transition hover:-translate-y-0.5 hover:scale-[1.03] active:scale-[0.98]"
-  style={{
-    backgroundColor: themeColor,
-    boxShadow: `0 16px 34px ${themeColor}36`,
-  }}
->
-  <Send size={16} />
-</button>
-</div>
+          <p
+            className={`mt-0.5 truncate ${textStyles.meta} ${
+              darkMode ? "text-white/42" : "text-[#2C2D2C]/38"
+            }`}
+          >
+            What's on your mind?
+          </p>
+        </div>
+      </div>
 
-    <div className="mt-3 flex flex-wrap items-center gap-2">
-      <button
-        onClick={() => setIsExtractModalOpen(true)}
-
-        style={{
-          "--theme-border": `${themeColor}40`,
-          "--theme-soft": `${themeColor}18`,
-          color: themeColor,
-        } as React.CSSProperties}
-
-        className={`rounded-full border px-3 py-1.5 ${textStyles.button} transition hover:scale-[1.02] ${
+      <div
+        className={`grid min-h-[48px] overflow-hidden rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition-all duration-200 focus-within:shadow-[0_14px_36px_rgba(17,24,39,0.08)] md:grid-cols-[minmax(0,1fr)_1px_minmax(0,0.9fr)] ${
           darkMode
-        ? "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
-: "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
+            ? "border-white/[0.09] bg-[#1f1f21] focus-within:border-[#05AD98]/60"
+            : "border-[#BBBFBF]/42 bg-white focus-within:border-[#05AD98]/55"
         }`}
       >
-        Extract from text
+        <input
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") addTask();
+          }}
+          placeholder="Capture anything..."
+          className={`h-12 min-w-0 bg-transparent px-5 ${textStyles.body} tracking-[-0.015em] outline-none ${
+            darkMode
+              ? "text-white placeholder:text-white/35"
+              : "text-[#2C2D2C] placeholder:text-[#2C2D2C]/35"
+          }`}
+        />
+
+        <div
+          className={`hidden md:block ${
+            darkMode ? "bg-white/[0.07]" : "bg-black/[0.055]"
+          }`}
+        />
+
+        <input
+          value={newTaskWhy}
+          onChange={(e) => setNewTaskWhy(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") addTask();
+          }}
+          placeholder="Optional context..."
+          className={`h-12 min-w-0 bg-transparent px-5 ${textStyles.body} tracking-[-0.015em] outline-none ${
+            darkMode
+              ? "text-white placeholder:text-white/35"
+              : "text-[#2C2D2C] placeholder:text-[#2C2D2C]/35"
+          }`}
+        />
+      </div>
+
+      <button
+        onClick={addTask}
+        className="flex h-11 w-11 items-center justify-center rounded-full text-white transition hover:-translate-y-0.5 hover:scale-[1.03] active:scale-[0.98]"
+        style={{
+          backgroundColor: themeColor,
+          boxShadow: `0 16px 34px ${themeColor}36`,
+        }}
+      >
+        <Send size={16} />
       </button>
 
-      {/* {[
-        "Submit insurance claim next week",
-        "Buy birthday gift for mom",
-        "Book dentist appointment",
-      ].map((example, index) => (
-        <button
-          key={example}
-          onClick={() => {
-            setNewTask(example);
-          
-            if (example === "Submit insurance claim next week") {
-              setNewTaskWhy("Avoid delay in claim approval.");
-            }
-          
-            if (example === "Buy birthday gift for mom") {
-              setNewTaskWhy("Make sure it arrives before her birthday.");
-            }
-          
-            if (example === "Book dentist appointment") {
-              setNewTaskWhy("Prevent the issue from getting worse.");
-            }
-          }}
-          className={`rounded-full border px-3 py-1.5 text-[11px] font-[700] transition hover:scale-[1.02] sm:text-xs ${
-            index > 0 ? "hidden sm:inline-flex" : "inline-flex"
-          } ${
-            darkMode
-              ? "border-white/[0.08] bg-white/[0.045] text-white/48 hover:text-white"
-              : "border-black/[0.06] bg-white text-[#2C2D2C]/45 hover:text-[#2C2D2C]/70"
-          }`}
-        >
-          {example}
-        </button>
-      ))} */}
+      <button
+        onClick={() => setIsExtractModalOpen(true)}
+        style={{
+          "--theme-border": `${themeColor}40`,
+          "--theme-soft": `${themeColor}12`,
+          color: themeColor,
+        } as React.CSSProperties}
+        className={`h-11 rounded-full border px-4 ${textStyles.button} transition hover:scale-[1.02] ${
+          darkMode
+            ? "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
+            : "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
+        }`}
+      >
+        Extract
+      </button>
     </div>
-  </div>
-</section>
+  </section>
 
 
 <div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(360px,9fr)]">
