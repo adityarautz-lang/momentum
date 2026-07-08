@@ -3275,7 +3275,7 @@ userFirstName={userFirstName}
       style={{ backgroundColor: themeColor }}
     />
 
-    <div className="flex flex-col gap-4 pt-2 2xl:flex-row 2xl:items-start">
+    <div className="flex flex-col gap-4 pt-2 min-[1400px]:flex-row min-[1400px]:items-start">
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <div
           className={`relative flex h-[70px] w-[70px] shrink-0 flex-col items-center justify-center overflow-hidden rounded-[24px] border shadow-[0_16px_40px_rgba(17,24,39,0.08)] ${
@@ -3363,12 +3363,12 @@ userFirstName={userFirstName}
       </div>
 
       <div
-        className={`hidden min-h-14 w-px shrink-0 self-stretch 2xl:block ${
+        className={`hidden min-h-14 w-px shrink-0 self-stretch min-[1400px]:block ${
           darkMode ? "bg-white/[0.08]" : "bg-black/[0.055]"
         }`}
       />
 
-      <div className="min-w-0 2xl:w-[460px] 2xl:pt-1">
+      <div className="min-w-0 min-[1400px]:w-[360px] min-[1400px]:pt-1 2xl:w-[460px]">
         <div className="flex items-center gap-2">
           <Sparkles size={14} style={{ color: themeColor }} />
 
@@ -3394,12 +3394,12 @@ userFirstName={userFirstName}
       </div>
 
       <div
-        className={`hidden min-h-14 w-px shrink-0 self-stretch 2xl:block ${
+        className={`hidden min-h-14 w-px shrink-0 self-stretch min-[1400px]:block ${
           darkMode ? "bg-white/[0.08]" : "bg-black/[0.055]"
         }`}
       />
 
-      <div className="shrink-0 2xl:w-[250px] 2xl:pt-1">
+      <div className="shrink-0 min-[1400px]:w-[210px] min-[1400px]:pt-1 2xl:w-[250px]">
         <DayTimeLeftCard
           dayEndTime={dayEndTime}
           setDayEndTime={setDayEndTime}
@@ -3531,9 +3531,9 @@ userFirstName={userFirstName}
   </section>
 
 
-<div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,58%)_minmax(360px,1fr)] 2xl:grid-cols-[minmax(0,58%)_minmax(420px,1fr)]">
+<div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(380px,9fr)]">
 
-<div className="order-1 xl:order-1">
+<div className="order-1 min-w-0 xl:order-1">
   <TaskListPanel
   title="Veira Prioritized for You"
   description="Veira lines up your tasks based on intent, urgency, & priority"
@@ -3565,7 +3565,7 @@ newlyAddedTaskIds={newlyAddedTaskIds}
 />
   </div>
 
-  <div className="order-2 xl:order-2">
+  <div className="order-2 min-w-0 xl:order-2">
   <FocusModePanel
   prioritizedTasks={prioritizedTasks}
   completedToday={completedToday}
@@ -4970,7 +4970,7 @@ emptyMessage,
   ref={taskListRef}
   className={`scroll-mt-[148px] min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:px-6 sm:py-5 lg:scroll-mt-8 ${className} ${border}`}
 >
-      <div className="mb-0 flex flex-col gap-2 sm:mb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+      <div className="mb-3 flex flex-col gap-3 sm:mb-3 min-[1700px]:mb-0 min-[1700px]:flex-row min-[1700px]:items-start min-[1700px]:justify-between min-[1700px]:gap-3">
         <div className="min-w-0">
           <h2 className={`flex items-center gap-2 ${textStyles.sectionTitle} tracking-[-0.025em]`}>
             {title}
@@ -4988,8 +4988,8 @@ emptyMessage,
         </div>
 
         {ranked && (
-          <div className="flex w-full shrink-0 flex-col gap-1 sm:w-auto sm:items-end">
-            <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+          <div className="flex w-full shrink-0 flex-col gap-1 min-[1700px]:w-auto min-[1700px]:items-end">
+            <div className="flex w-full items-center justify-between gap-2 min-[1700px]:w-auto min-[1700px]:justify-end">
               <span
                 className={`shrink-0 ${textStyles.badge} ${
                   darkMode ? "text-white/35" : "text-[#2C2D2C]/35"
@@ -5039,7 +5039,7 @@ emptyMessage,
               </div>
             </div>
 
-            <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+            <div className="flex w-full items-center justify-between gap-2 min-[1700px]:w-auto min-[1700px]:justify-end">
               <span
                 className={`shrink-0 ${textStyles.badge} ${
                   darkMode ? "text-white/35" : "text-[#2C2D2C]/35"
@@ -5340,7 +5340,7 @@ emptyMessage,
                   }}
                   className={taskPanelClass}
                 >
-                  <div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(0,58%)_minmax(360px,1fr)] 2xl:grid-cols-[minmax(0,58%)_minmax(420px,1fr)]">
+                  <div className="grid w-full min-w-0 grid-cols-1 gap-3 min-[1700px]:grid-cols-[minmax(0,1fr)_224px] min-[1700px]:gap-4">
                     <div className="flex min-w-0 items-start gap-4">
                       <button
                         onClick={(e) => toggleTaskById(task.id, e)}
@@ -5411,7 +5411,7 @@ emptyMessage,
                                   ? whyDropdownRef
                                   : null
                               }
-                              className="mt-2 w-full max-w-full 2xl:w-[calc(100%+166px)] 2xl:max-w-[calc(100%+166px)]"
+                              className="mt-2 w-full max-w-full min-[1700px]:w-[calc(100%+166px)] min-[1700px]:max-w-[calc(100%+166px)]"
                             >
                               <button
                                 onClick={() =>
@@ -5521,9 +5521,9 @@ emptyMessage,
                     <div
   className={`relative flex ${
     isGrouped ? "min-h-[72px]" : "min-h-[88px]"
-  } flex-col items-start justify-start 2xl:items-end`}
+  } flex-col items-start justify-start min-[1700px]:items-end`}
 >
-<div className="flex flex-wrap items-center justify-start gap-2 2xl:justify-end">
+                      <div className="flex flex-wrap items-center justify-start gap-2 min-[1700px]:justify-end">
                         <div className="grid w-[150px] shrink-0 grid-cols-[62px_76px] items-start gap-3">
                           <div className="flex h-10 w-[62px] items-start justify-start gap-1.5">
                             {visibleDueDate ? (
@@ -6144,7 +6144,7 @@ function DayTimeLeftCard({
   }`;
 
   return (
-    <div ref={pickerRef} className="relative z-[500] w-[250px]">
+    <div ref={pickerRef} className="relative z-[500] w-full max-w-[250px]">
       <div className="flex items-center justify-end gap-3">
         <div className="text-right">
           <p className="text-[15px] font-[600] leading-none tracking-[-0.035em]">
