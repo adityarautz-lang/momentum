@@ -3536,7 +3536,7 @@ userFirstName={userFirstName}
 <div className="order-1 min-w-0 xl:order-1">
   <TaskListPanel
   title="Veira Prioritized for You"
-  description="Veira lines up your tasks based on intent, urgency, & priority"
+  description="Your priorities, perfectly lined up!"
   tasks={prioritizedTasks}
 sortMode={taskSortMode}
 setSortMode={setTaskSortMode}
