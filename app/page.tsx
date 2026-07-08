@@ -2549,7 +2549,8 @@ const priority: Priority = updatedTask.priority || inferPriority(title);
                 selectedWhyIndex: updatedTask.selectedWhyIndex || 0,
                 completed: Boolean(updatedTask.completed),
 completedAt: updatedTask.completedAt,
-                createdAt: updatedTask.createdAt || new Date().toISOString(),
+pinned: Boolean(updatedTask.pinned),
+createdAt: updatedTask.createdAt || new Date().toISOString(),
               },
               ...category.tasks,
             ],
@@ -4653,39 +4654,80 @@ emptyMessage,
 
   const sortedTasks = useMemo(() => {
     const nextTasks = [...tasks];
-
+  
+    const comparePinned = (a: any, b: any) => {
+      const aPinned = Boolean(a.pinned);
+      const bPinned = Boolean(b.pinned);
+  
+      if (aPinned !== bPinned) {
+        return aPinned ? -1 : 1;
+      }
+  
+      return 0;
+    };
+  
+    const compareOverdue = (a: any, b: any) => {
+      const aOverdue = Boolean(a.dueDate && isOverdue(a.dueDate));
+      const bOverdue = Boolean(b.dueDate && isOverdue(b.dueDate));
+  
+      if (aOverdue !== bOverdue) {
+        return aOverdue ? -1 : 1;
+      }
+  
+      return 0;
+    };
+  
+    const compareDates = (a: any, b: any) => {
+      const dateA = getTaskDate(a);
+      const dateB = getTaskDate(b);
+  
+      if (!dateA && !dateB) return (b.score || 0) - (a.score || 0);
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+  
+      const dateDiff = dateA.localeCompare(dateB);
+  
+      if (dateDiff !== 0) return dateDiff;
+  
+      return (b.score || 0) - (a.score || 0);
+    };
+  
     if (sortMode === "date") {
       return nextTasks.sort((a, b) => {
-        const dateA = getTaskDate(a);
-        const dateB = getTaskDate(b);
-
-        if (!dateA && !dateB) return b.score - a.score;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        return dateA.localeCompare(dateB);
+        const pinnedDiff = comparePinned(a, b);
+        if (pinnedDiff !== 0) return pinnedDiff;
+  
+        return compareDates(a, b);
       });
     }
-
+  
     if (sortMode === "priority") {
       return nextTasks.sort((a, b) => {
+        const pinnedDiff = comparePinned(a, b);
+        if (pinnedDiff !== 0) return pinnedDiff;
+  
         const priorityDiff =
           (priorityRank[b.priority] || 0) - (priorityRank[a.priority] || 0);
-
+  
         if (priorityDiff !== 0) return priorityDiff;
-
-        const dateA = getTaskDate(a);
-        const dateB = getTaskDate(b);
-
-        if (!dateA && !dateB) return b.score - a.score;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        return dateA.localeCompare(dateB);
+  
+        return compareDates(a, b);
       });
     }
-
-    return nextTasks;
+  
+    return nextTasks.sort((a, b) => {
+      const pinnedDiff = comparePinned(a, b);
+      if (pinnedDiff !== 0) return pinnedDiff;
+  
+      const overdueDiff = compareOverdue(a, b);
+      if (overdueDiff !== 0) return overdueDiff;
+  
+      if ((b.score || 0) !== (a.score || 0)) {
+        return (b.score || 0) - (a.score || 0);
+      }
+  
+      return compareDates(a, b);
+    });
   }, [tasks, sortMode]);
 
   const categoryGroupOrder: Record<string, number> = {};
@@ -4821,13 +4863,20 @@ emptyMessage,
             index,
           }))
           .sort((a, b) => {
+            const aPinned = Boolean(a.task.pinned);
+            const bPinned = Boolean(b.task.pinned);
+          
+            if (aPinned !== bPinned) {
+              return aPinned ? -1 : 1;
+            }
+          
             const groupA = getTaskGroupMeta(a.task);
             const groupB = getTaskGroupMeta(b.task);
-
+          
             if (groupA.order !== groupB.order) {
               return groupA.order - groupB.order;
             }
-
+          
             return a.index - b.index;
           })
           .map(({ task }) => task);
