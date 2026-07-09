@@ -42,6 +42,7 @@ ChevronRight,
 Check,
 X,
 PencilLine,
+Clipboard,
 } from "lucide-react";
 
 
@@ -775,6 +776,10 @@ const prepareClipboardTextForExtraction = (text: string) => {
   return text.trim().slice(0, MAX_CLIPBOARD_ASSIST_LENGTH);
 };
 
+const isFirefoxBrowser = () => {
+  if (typeof navigator === "undefined") return false;
+  return navigator.userAgent.toLowerCase().includes("firefox");
+};
 const getClipboardTaskTitle = (text: string) => {
   const normalizedText = normalizeClipboardText(text);
   const firstUsefulLine = text
@@ -829,6 +834,8 @@ const [priorityViewMode, setPriorityViewMode] =
 const [enableClipboardAssist, setEnableClipboardAssist] = useState(true);
 const [clipboardCandidate, setClipboardCandidate] = useState("");
 const [showClipboardPrompt, setShowClipboardPrompt] = useState(false);
+const [showFirefoxPasteModal, setShowFirefoxPasteModal] = useState(false);
+const [firefoxPasteText, setFirefoxPasteText] = useState("");
 const [clipboardExtractLoading, setClipboardExtractLoading] = useState(false);
 const [clipboardExtractError, setClipboardExtractError] = useState("");
 const [clipboardExtractedTasks, setClipboardExtractedTasks] = useState<
@@ -1303,6 +1310,34 @@ useEffect(() => {
   if (!isLoaded) return;
   if (!enableClipboardAssist) return;
   if (typeof window === "undefined") return;
+
+  const isFirefox = isFirefoxBrowser();
+
+  if (isFirefox) {
+    const showFirefoxModal = () => {
+      if (document.visibilityState !== "visible") return;
+      if (
+        isExtractModalOpen ||
+        isEditModalOpen ||
+        showClipboardPrompt ||
+        showFirefoxPasteModal
+      ) return;
+      
+      setShowFirefoxPasteModal(true);
+    };
+
+    const baselineTimer = window.setTimeout(showFirefoxModal, 900);
+
+    window.addEventListener("focus", showFirefoxModal);
+    document.addEventListener("visibilitychange", showFirefoxModal);
+
+    return () => {
+      window.clearTimeout(baselineTimer);
+      window.removeEventListener("focus", showFirefoxModal);
+      document.removeEventListener("visibilitychange", showFirefoxModal);
+    };
+  }
+
   if (!navigator.clipboard?.readText) return;
 
   let isMounted = true;
@@ -1324,21 +1359,21 @@ useEffect(() => {
       if (!isUsefulClipboardText(normalizedText)) return;
 
       const lastHandledClipboardText =
-  localStorage.getItem(CLIPBOARD_HANDLED_KEY) || lastClipboardTextRef.current;
+        localStorage.getItem(CLIPBOARD_HANDLED_KEY) || lastClipboardTextRef.current;
 
-if (normalizedText === lastHandledClipboardText) return;
+      if (normalizedText === lastHandledClipboardText) return;
 
-lastClipboardTextRef.current = normalizedText;
-localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
+      lastClipboardTextRef.current = normalizedText;
+      localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
 
       const preparedText = prepareClipboardTextForExtraction(clipboardText);
-      
+
       setClipboardCandidate(preparedText);
       setShowClipboardPrompt(true);
       setClipboardExtractedTasks([]);
       setClipboardExtractError("");
       setClipboardExtractLoading(true);
-      
+
       try {
         const response = await fetch("/api/extract-tasks", {
           method: "POST",
@@ -1351,13 +1386,13 @@ localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
             today: getTodayDate(),
           }),
         });
-      
+
         const data = await response.json();
-      
+
         if (!response.ok) {
           throw new Error(data?.error || "Could not read copied text.");
         }
-      
+
         const normalizedTasks: ExtractedTaskSuggestion[] = (data.tasks || []).map(
           (task: any) => ({
             id: crypto.randomUUID(),
@@ -1382,7 +1417,7 @@ localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
             tags: normalizeTaskTags(task.tags),
           })
         );
-      
+
         setClipboardExtractedTasks(normalizedTasks);
       } catch (error) {
         console.error(error);
@@ -1390,8 +1425,6 @@ localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
       } finally {
         setClipboardExtractLoading(false);
       }
-
-
     } catch (error) {
       // Clipboard reads can be blocked until the browser grants permission.
     } finally {
@@ -1428,6 +1461,8 @@ localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
   isExtractModalOpen,
   isEditModalOpen,
   showClipboardPrompt,
+  showFirefoxPasteModal,
+  categories,
 ]);
 
 useEffect(() => {
@@ -2044,6 +2079,75 @@ const modalSelect = darkMode
     }
   };
   
+  const handleFirefoxPasteSubmit = async () => {
+    const sourceText = firefoxPasteText.trim();
+  
+    if (!sourceText) return;
+  
+    setShowFirefoxPasteModal(false);
+    setFirefoxPasteText("");
+  
+    const normalizedText = normalizeClipboardText(sourceText);
+    lastClipboardTextRef.current = normalizedText;
+    localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
+  
+    setClipboardCandidate(prepareClipboardTextForExtraction(sourceText));
+    setShowClipboardPrompt(true);
+    setClipboardExtractedTasks([]);
+    setClipboardExtractError("");
+    setClipboardExtractLoading(true);
+  
+    try {
+      const response = await fetch("/api/extract-tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: prepareClipboardTextForExtraction(sourceText),
+          categories: categories.map((category) => category.title),
+          today: getTodayDate(),
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data?.error || "Could not read pasted text.");
+      }
+  
+      const normalizedTasks: ExtractedTaskSuggestion[] = (data.tasks || []).map(
+        (task: any) => ({
+          id: crypto.randomUUID(),
+          selected: true,
+          title: String(task.title || "").trim(),
+          priority: ["Low", "Medium", "High"].includes(task.priority)
+            ? task.priority
+            : "Medium",
+          suggestedDueDate: task.suggestedDueDate || null,
+          category:
+            categories.find((category) => category.title === task.category)?.title ||
+            categories[0]?.title ||
+            "Small Wins",
+          notes: String(task.notes || ""),
+          status: ["Active", "Waiting", "Someday"].includes(task.status)
+            ? task.status
+            : "Active",
+          reason: String(task.reason || ""),
+          confidence: typeof task.confidence === "number" ? task.confidence : 0.7,
+          tags: normalizeTaskTags(task.tags),
+        })
+      );
+  
+      setClipboardExtractedTasks(normalizedTasks);
+    } catch (error) {
+      console.error(error);
+      setClipboardExtractError("Veira could not extract tasks from this pasted text.");
+    } finally {
+      setClipboardExtractLoading(false);
+    }
+  };
+
  const dismissClipboardCandidate = () => {
   setShowClipboardPrompt(false);
   setClipboardCandidate("");
@@ -2977,6 +3081,19 @@ userFirstName={user?.firstName || ""}
       />
 
 <AnimatePresence>
+{showFirefoxPasteModal && (
+  <FirefoxPasteModal
+    text={firefoxPasteText}
+    setText={setFirefoxPasteText}
+    themeColor={themeColor}
+    darkMode={darkMode}
+    onClose={() => {
+      setShowFirefoxPasteModal(false);
+      setFirefoxPasteText("");
+    }}
+    onSubmit={handleFirefoxPasteSubmit}
+  />
+)}
   {showDueReminderPopup && todayTasks.length > 0 && (
     <DueTasksReminderPopup
       tasks={todayTasks}
@@ -8494,6 +8611,125 @@ function MobileBottomNav({
         </span>
       </div>
     </nav>
+  );
+}
+
+
+function FirefoxPasteModal({
+  text,
+  setText,
+  themeColor,
+  darkMode,
+  onClose,
+  onSubmit,
+}: any) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[196] flex items-center justify-center bg-black/35 p-4 backdrop-blur-md sm:p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 18 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 12 }}
+        transition={{ type: "spring", stiffness: 420, damping: 34 }}
+        onClick={(event) => event.stopPropagation()}
+        className={`relative w-full max-w-[540px] overflow-hidden rounded-[32px] border p-5 shadow-[0_32px_110px_rgba(15,23,42,0.28)] sm:p-6 ${
+          darkMode
+            ? "border-white/[0.10] bg-[#171717] text-white"
+            : "border-[#BBBFBF]/45 bg-white text-[#2C2D2C]"
+        }`}
+      >
+        <button
+          onClick={onClose}
+          className={`absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full transition hover:scale-105 ${
+            darkMode
+              ? "bg-white/[0.06] text-white/45 hover:text-white"
+              : "bg-black/[0.035] text-[#2C2D2C]/42 hover:text-[#2C2D2C]"
+          }`}
+        >
+          <X size={16} />
+        </button>
+
+        <div className="text-center">
+          <div
+            className="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px]"
+            style={{
+              color: themeColor,
+              backgroundColor: `${themeColor}14`,
+            }}
+          >
+            <Clipboard size={30} />
+          </div>
+
+          <h2 className="mt-5 text-[22px] font-[900] leading-tight tracking-[-0.045em]">
+            Paste copied text into Veira
+          </h2>
+
+          <p
+            className={`mx-auto mt-2 max-w-sm text-sm font-[650] leading-6 ${
+              darkMode ? "text-white/48" : "text-[#2C2D2C]/48"
+            }`}
+          >
+            Firefox protects clipboard access, so press{" "}
+            <span className="font-[900]">Cmd/Ctrl + V</span> below.
+          </p>
+        </div>
+
+        <textarea
+          autoFocus
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          onPaste={(event) => {
+            const pastedText = event.clipboardData.getData("text");
+            if (pastedText) {
+              window.setTimeout(() => {
+                setText(pastedText);
+              }, 0);
+            }
+          }}
+          placeholder="Paste copied text here..."
+          className={`mt-5 min-h-[130px] w-full resize-none rounded-[24px] border px-4 py-4 text-sm font-[650] leading-6 outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${
+            darkMode
+              ? "border-white/[0.08] bg-white/[0.045] text-white placeholder:text-white/32"
+              : "border-black/[0.07] bg-black/[0.018] text-[#2C2D2C] placeholder:text-[#2C2D2C]/35"
+          }`}
+        />
+
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_0.62fr]">
+          <button
+            onClick={onSubmit}
+            disabled={!text.trim()}
+            className="h-12 rounded-[18px] text-sm font-[900] text-white shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-40"
+            style={{ backgroundColor: themeColor }}
+          >
+            Paste and extract tasks
+          </button>
+
+          <button
+            onClick={onClose}
+            className={`h-12 rounded-[18px] border text-sm font-[900] transition hover:scale-[1.01] ${
+              darkMode
+                ? "border-white/[0.10] bg-white/[0.04] text-white/55 hover:text-white"
+                : "border-black/[0.07] bg-white text-[#2C2D2C]/52 hover:text-[#2C2D2C]"
+            }`}
+          >
+            Dismiss
+          </button>
+        </div>
+
+        <p
+          className={`mt-4 text-center text-[11px] font-[700] ${
+            darkMode ? "text-white/34" : "text-[#2C2D2C]/34"
+          }`}
+        >
+          Your pasted content stays private and is only used to create tasks.
+        </p>
+      </motion.div>
+    </motion.div>
   );
 }
 
