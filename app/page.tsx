@@ -5404,117 +5404,121 @@ emptyMessage,
                         </div>
 
                         {Array.isArray(task.whySuggestions) &&
-                          task.whySuggestions.length > 0 && (
-                            <div
-                              ref={
-                                expandedWhyTaskId === task.id
-                                  ? whyDropdownRef
-                                  : null
-                              }
-                              className="mt-2 w-full max-w-full xl:w-[calc(100%+116px)] xl:max-w-[calc(100%+116px)] min-[1700px]:w-[calc(100%+156px)] min-[1700px]:max-w-[calc(100%+156px)]"
-                            >
-                              <button
-                                onClick={() =>
-                                  setExpandedWhyTaskId(
-                                    expandedWhyTaskId === task.id
-                                      ? null
-                                      : task.id
-                                  )
-                                }
-                                className={`flex w-full max-w-full items-stretch gap-0 overflow-hidden rounded-[18px] border text-left transition ${
-                                  darkMode
-                                    ? "border-white/[0.07] bg-white/[0.035] hover:bg-white/[0.055]"
-                                    : "border-black/[0.05] bg-black/[0.018] hover:bg-black/[0.03]"
-                                }`}
-                              >
-                                <span
-                                  className={`flex shrink-0 items-center justify-center gap-1.5 border-r px-3 ${textStyles.badge}`}
-                                  style={{
-                                    color: darkMode
-                                      ? "rgba(255,255,255,0.86)"
-                                      : themeColor,
-                                    borderColor: darkMode
-                                      ? "rgba(255,255,255,0.08)"
-                                      : "rgba(0,0,0,0.06)",
-                                  }}
-                                >
-                                  <Sparkles size={12} />
-                                  Why
-                                </span>
+  task.whySuggestions.length > 0 &&
+  task.whyThisMatters && (
+    <div
+      ref={
+        expandedWhyTaskId === task.id
+          ? whyDropdownRef
+          : null
+      }
+      className="mt-1.5 w-full max-w-full xl:w-[calc(100%+116px)] xl:max-w-[calc(100%+116px)] min-[1700px]:w-[calc(100%+156px)] min-[1700px]:max-w-[calc(100%+156px)]"
+    >
+      <button
+        type="button"
+        onClick={() =>
+          setExpandedWhyTaskId(
+            expandedWhyTaskId === task.id
+              ? null
+              : task.id
+          )
+        }
+        title={task.whyThisMatters}
+        className={`flex w-full min-w-0 items-center gap-1.5 rounded-[10px] py-0.5 text-left transition hover:opacity-80 ${
+          darkMode ? "text-white/48" : "text-[#2C2D2C]/46"
+        }`}
+      >
+        <Sparkles
+          size={11}
+          className="shrink-0 opacity-70"
+          style={{ color: themeColor }}
+        />
 
-                                <span
-                                className={`min-w-0 flex-1 overflow-hidden whitespace-normal break-words px-3 py-1.5 text-[9px] font-[500] leading-[17px] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [overflow-wrap:anywhere] min-[1700px]:px-3 min-[1700px]:py-2 min-[1700px]:text-[12px] min-[1700px]:leading-5 ${
-                                  darkMode
-                                    ? "text-white/48"
-                                    : "text-[#2C2D2C]/48"
-                                }`}
-                                >
-                                  {task.whyThisMatters}
-                                </span>
+        <span
+          className={`shrink-0 text-[10px] font-[900] uppercase tracking-[0.12em] ${
+            darkMode ? "text-white/45" : "text-[#2C2D2C]/42"
+          }`}
+        >
+          Why:
+        </span>
 
-                                <span
-                                  className={`flex shrink-0 items-center justify-center border-l px-3 transition ${
-                                    expandedWhyTaskId === task.id
-                                      ? "rotate-180"
-                                      : ""
-                                  }`}
-                                  style={{
-                                    borderColor: darkMode
-                                      ? "rgba(255,255,255,0.08)"
-                                      : "rgba(0,0,0,0.06)",
-                                  }}
-                                >
-                                  <ChevronDown size={13} className="opacity-45" />
-                                </span>
-                              </button>
+        <span className="min-w-0 flex-1 truncate text-[11px] font-[500] leading-[17px] tracking-[-0.01em]">
+          {task.whyThisMatters}
+        </span>
 
-                              {expandedWhyTaskId === task.id && (
-                                <div className="mt-2 w-full max-w-full space-y-1.5">
-                                  {task.whySuggestions.map(
-                                    (
-                                      suggestion: string,
-                                      suggestionIndex: number
-                                    ) => {
-                                      const isSelected =
-                                        task.whyThisMatters === suggestion;
+        <ChevronDown
+          size={12}
+          className={`shrink-0 opacity-35 transition ${
+            expandedWhyTaskId === task.id ? "rotate-180" : ""
+          }`}
+        />
+      </button>
 
-                                      return (
-                                        <button
-                                          key={suggestion}
-                                          onClick={() => {
-                                            selectWhySuggestion(
-                                              task.id,
-                                              suggestion,
-                                              suggestionIndex
-                                            );
-                                            setExpandedWhyTaskId(null);
-                                          }}
-                                          className={`flex w-full items-center justify-between gap-3 rounded-[14px] border px-3 py-2 text-left ${textStyles.small} transition ${
-                                            isSelected
-                                              ? "text-white"
-                                              : darkMode
-                                              ? "border-white/[0.07] bg-[#111111] text-white/55 hover:text-white"
-                                              : "border-black/[0.06] bg-white text-[#2C2D2C]/55 hover:text-[#2C2D2C]"
-                                          }`}
-                                          style={
-                                            isSelected
-                                              ? {
-                                                  backgroundColor: themeColor,
-                                                  borderColor: themeColor,
-                                                }
-                                              : undefined
-                                          }
-                                        >
-                                          <span>{suggestion}</span>
-                                          {isSelected && <Check size={13} />}
-                                        </button>
-                                      );
-                                    }
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
+      {expandedWhyTaskId === task.id && (
+        <div
+          className={`mt-2 w-full max-w-full rounded-[16px] border p-2 shadow-[0_14px_32px_rgba(15,23,42,0.06)] ${
+            darkMode
+              ? "border-white/[0.08] bg-[#111111]"
+              : "border-black/[0.06] bg-white"
+          }`}
+        >
+          <div
+            className={`mb-2 flex items-center gap-1.5 px-1 text-[10px] font-[900] uppercase tracking-[0.13em] ${
+              darkMode ? "text-white/38" : "text-[#2C2D2C]/36"
+            }`}
+          >
+            <Sparkles size={11} style={{ color: themeColor }} />
+            Choose why this matters
+          </div>
+
+          <div className="space-y-1.5">
+            {task.whySuggestions.map(
+              (
+                suggestion: string,
+                suggestionIndex: number
+              ) => {
+                const isSelected =
+                  task.whyThisMatters === suggestion;
+
+                return (
+                  <button
+                    key={`${task.id}-${suggestionIndex}-${suggestion}`}
+                    type="button"
+                    onClick={() => {
+                      selectWhySuggestion(
+                        task.id,
+                        suggestion,
+                        suggestionIndex
+                      );
+                      setExpandedWhyTaskId(null);
+                    }}
+                    className={`flex w-full items-center justify-between gap-3 rounded-[12px] border px-3 py-2 text-left text-[11px] font-[650] leading-4 transition ${
+                      isSelected
+                        ? "text-white"
+                        : darkMode
+                        ? "border-white/[0.07] bg-[#111111] text-white/55 hover:bg-white/[0.04] hover:text-white"
+                        : "border-black/[0.055] bg-white text-[#2C2D2C]/55 hover:bg-black/[0.018] hover:text-[#2C2D2C]"
+                    }`}
+                    style={
+                      isSelected
+                        ? {
+                            backgroundColor: themeColor,
+                            borderColor: themeColor,
+                          }
+                        : undefined
+                    }
+                  >
+                    <span className="min-w-0">{suggestion}</span>
+                    {isSelected && <Check size={13} className="shrink-0" />}
+                  </button>
+                );
+              }
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )}
                       </div>
                     </div>
 
