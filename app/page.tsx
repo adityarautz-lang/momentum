@@ -1514,7 +1514,7 @@ useEffect(() => {
   if (completedBoostTaskKey === lastBoostTaskKey) return;
 
   if (dailyBoostCount >= 3) {
-    const cappedMessage = `You’ve completed ${completedToday.length} tasks today. That is strong progress — and momentum is already visible.`;
+    const cappedMessage = `${completedToday.length} tasks done today. Strong progress — keep the momentum visible.`;
 
     setBoostMessage(cappedMessage);
     setLastBoostTaskKey(completedBoostTaskKey);
@@ -1556,7 +1556,7 @@ useEffect(() => {
       }
 
       const nextBoostMessage =
-        data.boost || "Nice work — you made visible progress today.";
+        data.boost || "Nice work — visible progress is building.";
 
       const nextBoostCount = dailyBoostCount + 1;
 
@@ -1578,11 +1578,9 @@ useEffect(() => {
     } catch (error) {
       console.error(error);
 
-      const fallbackMessage = `Nice work — you’ve completed ${
-        completedTaskTitles.length
-      } task${
-        completedTaskTitles.length === 1 ? "" : "s"
-      } today. Keep building momentum.`;
+      const fallbackMessage = `Nice work — ${completedTaskTitles.length} task${
+  completedTaskTitles.length === 1 ? "" : "s"
+} done today. Keep building momentum.`
 
       setBoostMessage(fallbackMessage);
       setLastBoostTaskKey(completedBoostTaskKey);
