@@ -41,6 +41,7 @@ ChevronDown,
 ChevronRight,
 Check,
 X,
+PencilLine,
 } from "lucide-react";
 
 
@@ -9328,6 +9329,42 @@ function EditTaskModal({
 
   const [newStepTitle, setNewStepTitle] = useState("");
 
+  const [editingStepId, setEditingStepId] = useState<string | null>(null);
+const [editingStepTitle, setEditingStepTitle] = useState("");
+
+const startEditingStep = (step: Subtask) => {
+  setEditingStepId(step.id);
+  setEditingStepTitle(step.title);
+};
+
+const cancelEditingStep = () => {
+  setEditingStepId(null);
+  setEditingStepTitle("");
+};
+
+const saveEditedStep = () => {
+  const title = editingStepTitle.trim();
+
+  if (!title || !editingStepId) {
+    cancelEditingStep();
+    return;
+  }
+
+  setSelectedTask({
+    ...selectedTask,
+    subtasks: getTaskSubtasks(selectedTask).map((step) =>
+      step.id === editingStepId
+        ? {
+            ...step,
+            title,
+          }
+        : step
+    ),
+  });
+
+  cancelEditingStep();
+};
+
   const stepProgress = getSubtaskProgress(selectedTask);
 
   const addStepToSelectedTask = () => {
@@ -9863,7 +9900,7 @@ function EditTaskModal({
 
                   <button
                     onClick={addStepToSelectedTask}
-                    className="flex h-12 items-center justify-center gap-2 rounded-[20px] text-[10px] text-sm font-[700] text-white shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition hover:scale-[1.02]"
+                   className="flex h-12 items-center justify-center gap-2 rounded-[20px] text-sm font-[700] text-white shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition hover:scale-[1.02]"
                     style={{ backgroundColor: themeColor }}
                   >
                     <Plus size={15} />
@@ -9888,7 +9925,7 @@ function EditTaskModal({
                     {stepProgress.subtasks.map((step) => (
                       <div
                         key={step.id}
-                        className={`group/step grid min-h-[52px] grid-cols-[30px_minmax(0,1fr)_64px_30px] items-center gap-2.5 border-b px-3 py-1.5 last:border-b-0 ${
+                        className={`group/step grid min-h-[52px] grid-cols-[30px_minmax(0,1fr)_24px_30px_30px] items-center gap-1.5 gap-2.5 border-b px-3 py-1.5 last:border-b-0 ${
                           darkMode
                             ? "border-white/[0.07]"
                             : "border-slate-200"
@@ -9915,19 +9952,35 @@ function EditTaskModal({
                           )}
                         </button>
 
-                        <p
-  className={`min-w-0 whitespace-normal break-words py-2 text-[12px] font-[500] leading-5 [overflow-wrap:anywhere] ${
-    step.completed
-      ? darkMode
-        ? "text-white/38 line-through decoration-white/25"
-        : "text-slate-400 line-through decoration-slate-300"
-      : darkMode
-      ? "text-white/78"
-      : "text-[#2C2D2C]"
-  }`}
->
-  {step.title}
-</p>
+                        {editingStepId === step.id ? (
+  <input
+    autoFocus
+    value={editingStepTitle}
+    onChange={(e) => setEditingStepTitle(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") saveEditedStep();
+      if (e.key === "Escape") cancelEditingStep();
+    }}
+    onBlur={saveEditedStep}
+    className={`h-9 min-w-0 rounded-[14px] border px-3 text-[12px] font-[650] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${fieldClass}`}
+  />
+) : (
+  <button
+    type="button"
+    onClick={() => startEditingStep(step)}
+    className={`min-w-0 whitespace-normal break-words py-2 text-left text-[12px] font-[500] leading-5 [overflow-wrap:anywhere] hover:opacity-70 ${
+      step.completed
+        ? darkMode
+          ? "text-white/38 line-through decoration-white/25"
+          : "text-slate-400 line-through decoration-slate-300"
+        : darkMode
+        ? "text-white/78"
+        : "text-[#2C2D2C]"
+    }`}
+  >
+    {step.title}
+  </button>
+)}
 
                         {step.completed ? (
                           <span
@@ -9949,6 +10002,18 @@ function EditTaskModal({
                           </span>
                         )}
 
+
+<button
+  onClick={() => startEditingStep(step)}
+  className={`flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 ${
+    darkMode
+      ? "text-white/35 hover:bg-white/[0.06] hover:text-white"
+      : "text-slate-400 hover:bg-slate-100 hover:text-[#2C2D2C]"
+  }`}
+  title="Edit subtask"
+>
+  <PencilLine size={16} />
+</button>
                         <button
                           onClick={() => deleteSelectedStep(step.id)}
                           className={`flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 hover:text-red-500 ${
