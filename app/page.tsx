@@ -1314,27 +1314,35 @@ useEffect(() => {
   const isFirefox = isFirefoxBrowser();
 
   if (isFirefox) {
-    const showFirefoxModal = () => {
+    const handleFirefoxPaste = (event: ClipboardEvent) => {
       if (document.visibilityState !== "visible") return;
       if (
         isExtractModalOpen ||
         isEditModalOpen ||
         showClipboardPrompt ||
         showFirefoxPasteModal
-      ) return;
-      
+      ) {
+        return;
+      }
+  
+      const pastedText = event.clipboardData?.getData("text") || "";
+      const normalizedText = normalizeClipboardText(pastedText);
+  
+      if (!isUsefulClipboardText(normalizedText)) return;
+  
+      const lastHandledClipboardText =
+        localStorage.getItem(CLIPBOARD_HANDLED_KEY) || lastClipboardTextRef.current;
+  
+      if (normalizedText === lastHandledClipboardText) return;
+  
+      setFirefoxPasteText(pastedText);
       setShowFirefoxPasteModal(true);
     };
-
-    const baselineTimer = window.setTimeout(showFirefoxModal, 900);
-
-    window.addEventListener("focus", showFirefoxModal);
-    document.addEventListener("visibilitychange", showFirefoxModal);
-
+  
+    window.addEventListener("paste", handleFirefoxPaste);
+  
     return () => {
-      window.clearTimeout(baselineTimer);
-      window.removeEventListener("focus", showFirefoxModal);
-      document.removeEventListener("visibilitychange", showFirefoxModal);
+      window.removeEventListener("paste", handleFirefoxPaste);
     };
   }
 
