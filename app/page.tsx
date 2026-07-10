@@ -5214,7 +5214,7 @@ emptyMessage,
       </span>
 
       <span
-        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-[900] ${
+        className={`shrink-0 rounded-full px-2 py-0.5 text-[8px] font-[900] ${
           darkMode
             ? "bg-white/[0.07] text-white/45"
             : "bg-black/[0.045] text-[#2C2D2C]/45"
