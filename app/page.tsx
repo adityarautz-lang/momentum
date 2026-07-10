@@ -110,7 +110,7 @@ const inter = Inter({
 const textStyles = {
   pageTitle: "text-[22px] leading-[28px] font-[800]",
   sectionTitle: "text-[18px] leading-[24px] font-[800]",
-  taskTitle: "text-[14px] leading-[18px] font-[700]",
+  taskTitle: "text-[12px] leading-[18px] font-[700]",
   body: "text-[13px] leading-[18px] font-[650]",
   small: "text-[12px] leading-[16px] font-[600]",
   meta: "text-[11px] leading-[14px] font-[700]",
@@ -5369,20 +5369,23 @@ emptyMessage,
                       )}
 
                       <div className="min-w-0 flex-1">
-                        <p
-                          onClick={() => {
-                            setSelectedTask(task);
-                            setIsEditModalOpen(true);
-                          }}
-                          title={task.title}
-                          className={`block min-w-0 cursor-pointer whitespace-normal break-words ${textStyles.taskTitle} tracking-[-0.01em] hover:opacity-70`}
-                        >
-                          {task.title}
-                        </p>
+                      <p
+  onClick={() => {
+    setSelectedTask(task);
+    setIsEditModalOpen(true);
+  }}
+  title={task.title}
+  className={`block min-w-0 cursor-pointer whitespace-normal break-words ${textStyles.taskTitle} tracking-[-0.01em] hover:opacity-70`}
+  style={{
+    color: darkMode ? "#FFFFFF" : "#2C2D2C",
+  }}
+>
+  {task.title}
+</p>
 
                         <div
                           className={`mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 ${textStyles.meta} ${
-                            darkMode ? "text-white/38" : "text-[#2C2D2C]/38"
+                            darkMode ? "text-white/42" : "text-[#8A8A8A]"
                           }`}
                         >
                           <span className="truncate">
@@ -5424,7 +5427,7 @@ emptyMessage,
         }
         title={task.whyThisMatters}
         className={`flex w-full min-w-0 items-center gap-1.5 rounded-[10px] py-0.5 text-left transition hover:opacity-80 ${
-          darkMode ? "text-white/48" : "text-[#2C2D2C]/46"
+          darkMode ? "text-white/48" : "text-[#8A8A8A]"
         }`}
       >
         <Sparkles
