@@ -1,30 +1,45 @@
 "use client";
 
+import { useState, type ComponentType } from "react";
 import {
   Archive,
-  Calendar,
+  Bell,
   CalendarDays,
   Inbox,
+  Menu,
   Moon,
   Settings,
-  Sparkles,
-  Star,
   Sun,
   Tag,
+  X,
 } from "lucide-react";
-
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { UserButton, useUser } from "@clerk/nextjs";
 
 const mainNavItems = [
-  { key: "today", label: "Today", icon: CalendarDays },
-  { key: "inbox", label: "Inbox", icon: Inbox },
-  { key: "upcoming", label: "Upcoming", icon: Calendar },
+  {
+    key: "today",
+    label: "Today",
+    icon: CalendarDays,
+  },
+  {
+    key: "inbox",
+    label: "Inbox",
+    icon: Inbox,
+  },
 ];
 
 const libraryNavItems = [
-  { key: "categories", label: "Categories", icon: Tag },
-  { key: "archive", label: "Archive", icon: Archive },
+  {
+    key: "categories",
+    label: "Categories",
+    icon: Tag,
+  },
+  {
+    key: "archive",
+    label: "Archive",
+    icon: Archive,
+  },
 ];
 
 type SidebarProps = {
@@ -34,56 +49,41 @@ type SidebarProps = {
   setSelectedView: (value: string) => void;
   themeColor: string;
   inboxCount?: number;
+  pendingSuggestionCount?: number;
+  onOpenSuggestedDates: () => void;
 };
 
-function VeiraLogo({ darkMode }: { darkMode: boolean }) {
-  return (
-    <svg
-      width="118"
-      viewBox="0 0 360 180"
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ shapeRendering: "geometricPrecision" }}
-      aria-label="Veira logo"
-    >
-      <defs>
-        <linearGradient id="veiraGradient" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#22C1A1" />
-          <stop offset="100%" stopColor="#0D8F7A" />
-        </linearGradient>
-      </defs>
+type SidebarItem = {
+  key: string;
+  label: string;
+  icon: ComponentType<{
+    size?: number;
+    strokeWidth?: number;
+    className?: string;
+  }>;
+  count?: number;
+};
 
-      <g fill="url(#veiraGradient)" transform="translate(0, -6)">
-        <path d="M98 20 L155 78 Q167 90 180 78 L238 20 L268 20 L188 125 Q174 143 154 143 Q135 143 120 125 L65 58 Z" />
-        <rect x="237" y="48" width="11" height="45" rx="5" transform="rotate(40 242 70)" />
-        <rect x="264" y="26" width="11" height="32" rx="5" transform="rotate(40 269 42)" />
-        <rect x="286" y="8" width="11" height="22" rx="5" transform="rotate(40 291 19)" />
-      </g>
-
-      <text
-        x="180"
-        y="165"
-        textAnchor="middle"
-        fontFamily="Arial, Helvetica, sans-serif"
-        fontSize="42"
-        fontWeight="800"
-        letterSpacing="14"
-        fill={darkMode ? "#FFFFFF" : "#111827"}
-      >
-        VEIRA
-      </text>
-    </svg>
-  );
-}
+type SidebarContentProps = {
+  darkMode: boolean;
+  displayName: string;
+  secondaryIdentity: string;
+  inboxCount: number;
+  selectedView: string;
+  onSelect: (view: string) => void;
+};
 
 export default function Sidebar({
   darkMode,
   setDarkMode,
   selectedView,
   setSelectedView,
-  themeColor,
   inboxCount = 0,
+  pendingSuggestionCount = 0,
+  onOpenSuggestedDates,
 }: SidebarProps) {
   const { user, isLoaded } = useUser();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const displayName =
     isLoaded && user
@@ -93,217 +93,322 @@ export default function Sidebar({
         "Account"
       : "Account";
 
-  const sidebarBg = darkMode ? "bg-[#050505]" : "bg-white/95 backdrop-blur-2xl";
-  const border = darkMode ? "border-white/[0.055]" : "border-[#BBBFBF]/35";
-  const text = darkMode ? "text-white" : "text-[#111111]";
-  const mutedText = darkMode ? "text-white/45" : "text-[#878787]";
-  const softSurface = darkMode ? "bg-[#0b0b0b]" : "bg-white";
-  const softBorder = darkMode ? "border-white/[0.055]" : "border-[#BBBFBF]/35";
-  const hoverSurface = darkMode ? "hover:bg-[#0d0d0d]" : "hover:bg-[#f6f8f8]";
+  const secondaryIdentity =
+    isLoaded && user
+      ? user.primaryEmailAddress?.emailAddress || "View profile"
+      : "View profile";
+
+  const surfaceClass = darkMode
+    ? "border-white/[0.09] bg-[#111317] text-white"
+    : "border-[#E3E4E8] bg-white text-[#15171C]";
+
+  const iconButtonClass = darkMode
+    ? "border-white/[0.08] bg-white/[0.035] text-white/62 hover:bg-white/[0.07] hover:text-white"
+    : "border-black/[0.06] bg-white text-[#4F535E] hover:bg-black/[0.025] hover:text-[#15171C]";
+
+  const selectView = (view: string) => {
+    setSelectedView(view);
+    setIsDrawerOpen(false);
+  };
+
+  const sidebarContentProps: SidebarContentProps = {
+    darkMode,
+    displayName,
+    secondaryIdentity,
+    inboxCount,
+    selectedView,
+    onSelect: selectView,
+  };
 
   return (
-    <aside
-      className={`fixed left-0 top-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r px-4 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.30)] min-[1360px]:flex ${border} ${sidebarBg} ${text}`}
-    >
-      <div className="mb-7 flex items-center gap-3">
-        <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[17px] text-[20px] font-[900] shadow-[0_12px_28px_rgba(0,0,0,0.18)]"
-          style={{
-            backgroundColor: darkMode ? "#FFFFFF" : "#1F2937",
-            color: darkMode ? "#1F2937" : "#FFFFFF",
-          }}
-        >
-          <svg
-            width="30"
-            height="30"
-            viewBox="0 0 36 36"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M7.5 18.6L14.2 25.2L29 10.3"
-              stroke="currentColor"
-              strokeWidth="4.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-
-            <path
-              d="M24.8 10.4H29V14.6"
-              stroke="currentColor"
-              strokeWidth="4.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity="0.55"
-            />
-
-            <path
-              d="M6.5 10.2H15.5"
-              stroke="currentColor"
-              strokeWidth="2.8"
-              strokeLinecap="round"
-              opacity="0.35"
-            />
-
-            <path
-              d="M4.8 14.2H10.8"
-              stroke="currentColor"
-              strokeWidth="2.8"
-              strokeLinecap="round"
-              opacity="0.22"
-            />
-          </svg>
-        </div>
-
-        <div className="min-w-0">
-          <h1
-            className="text-[30px] font-[600] leading-none tracking-[-0.055em]"
-            style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
-          >
-            Veira
-          </h1>
-
-          <p
-            className="mt-1.5 whitespace-nowrap text-[9px] font-[700] uppercase leading-none tracking-[0.04em]"
-            style={{ color: darkMode ? "#FFFFFF" : "#1F2937" }}
-          >
-            Focus. Prioritize. Move forward.
-          </p>
-        </div>
-      </div>
-
-      <div
-        className={`mb-6 rounded-[20px] border p-3 shadow-[0_12px_30px_rgba(0,0,0,0.08)] ${softBorder} ${softSurface}`}
+    <>
+      {/* Fixed top bar */}
+      <header
+        className={`fixed inset-x-0 top-0 z-[150] hidden h-[68px] items-center justify-between border-b px-5 shadow-[0_1px_0_rgba(15,23,42,0.02)] sm:flex lg:px-6 ${surfaceClass}`}
       >
-        <div className="mb-2 flex items-center gap-2">
-          <Sparkles size={14} style={{ color: themeColor }} />
+        <div className="flex min-w-0 items-center gap-4">
+          {/* Only shown below laptop width */}
+          <button
+            type="button"
+            onClick={() =>
+              setIsDrawerOpen((previous) => !previous)
+            }
+            aria-label={
+              isDrawerOpen
+                ? "Close navigation"
+                : "Open navigation"
+            }
+            aria-expanded={isDrawerOpen}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border transition lg:hidden ${iconButtonClass}`}
+          >
+            {isDrawerOpen ? (
+              <X size={18} strokeWidth={1.8} />
+            ) : (
+              <Menu size={19} strokeWidth={1.8} />
+            )}
+          </button>
 
-          <p className={`text-xs font-[800] ${text}`}>AI planning enabled</p>
+          <button
+            type="button"
+            onClick={() => selectView("today")}
+            aria-label="Open Today"
+            className="min-w-0 text-left"
+          >
+            <span className="block truncate text-[20px] font-[720] leading-none tracking-[-0.045em]">
+              Momentuhm.app
+            </span>
+          </button>
         </div>
 
-        <p className={`text-[11px] leading-relaxed ${mutedText}`}>
-          Veira can prioritize and suggest dates from your task titles.
-        </p>
-      </div>
+        <div className="flex items-center gap-2.5">
+  <button
+    type="button"
+    onClick={onOpenSuggestedDates}
+    aria-label={
+      pendingSuggestionCount > 0
+        ? `Review ${pendingSuggestionCount} pending date suggestion${
+            pendingSuggestionCount === 1 ? "" : "s"
+          }`
+        : "Review suggested dates"
+    }
+    title={
+      pendingSuggestionCount > 0
+        ? `${pendingSuggestionCount} suggested date${
+            pendingSuggestionCount === 1 ? "" : "s"
+          } pending`
+        : "No pending suggested dates"
+    }
+    className={`relative flex h-9 w-9 items-center justify-center rounded-[9px] border transition ${iconButtonClass}`}
+  >
+    <Bell size={17} strokeWidth={1.7} />
 
-      <nav className="relative z-10 min-h-0 flex-1 overflow-y-auto pr-1">
-        <SidebarSectionLabel label="Plan" mutedText={mutedText} />
+    {pendingSuggestionCount > 0 && (
+      <span
+        aria-hidden="true"
+        className={`absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 px-1 text-[9px] font-[800] leading-none ${
+          darkMode
+            ? "border-[#111317] bg-white text-[#111317]"
+            : "border-white bg-[#181818] text-white"
+        }`}
+      >
+        {pendingSuggestionCount > 99
+          ? "99+"
+          : pendingSuggestionCount}
+      </span>
+    )}
+  </button>
 
-        <div className="mb-6 space-y-1.5">
+          <button
+            type="button"
+            onClick={() => setDarkMode(!darkMode)}
+            aria-label={
+              darkMode
+                ? "Switch to light mode"
+                : "Switch to dark mode"
+            }
+            title={darkMode ? "Light mode" : "Dark mode"}
+            className={`flex h-9 w-9 items-center justify-center rounded-[9px] border transition ${iconButtonClass}`}
+          >
+            {darkMode ? (
+              <Sun size={17} strokeWidth={1.7} />
+            ) : (
+              <Moon size={17} strokeWidth={1.7} />
+            )}
+          </button>
+
+          <div className="ml-1 flex h-9 w-9 items-center justify-center">
+            <UserButton
+              afterSignOutUrl="/sign-in"
+              appearance={{
+                elements: {
+                  userButtonAvatarBox: "h-9 w-9",
+                },
+              }}
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* Permanent laptop and desktop sidebar */}
+      <aside
+        className={`fixed bottom-0 left-0 top-[68px] z-[140] hidden w-[252px] flex-col border-r px-5 py-6 shadow-[8px_0_30px_rgba(15,23,42,0.025)] lg:flex ${surfaceClass}`}
+      >
+        <SidebarContent {...sidebarContentProps} />
+      </aside>
+
+      {/* Tablet drawer only */}
+      <AnimatePresence>
+        {isDrawerOpen && (
+          <div className="lg:hidden">
+            <motion.button
+              type="button"
+              aria-label="Close navigation"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16 }}
+              onClick={() => setIsDrawerOpen(false)}
+              className="fixed inset-0 z-[140] hidden bg-black/18 backdrop-blur-[2px] sm:block"
+            />
+
+            <motion.aside
+              initial={{ x: -274 }}
+              animate={{ x: 0 }}
+              exit={{ x: -274 }}
+              transition={{
+                type: "spring",
+                stiffness: 310,
+                damping: 31,
+                mass: 0.9,
+              }}
+              className={`fixed bottom-0 left-0 top-[68px] z-[145] hidden w-[252px] flex-col border-r px-5 py-6 shadow-[18px_0_60px_rgba(15,23,42,0.10)] sm:flex lg:hidden ${surfaceClass}`}
+            >
+              <SidebarContent {...sidebarContentProps} />
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+function SidebarContent({
+  darkMode,
+  displayName,
+  secondaryIdentity,
+  inboxCount,
+  selectedView,
+  onSelect,
+}: SidebarContentProps) {
+  return (
+    <>
+      <nav className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <SidebarSectionLabel
+          label="Plan"
+          darkMode={darkMode}
+        />
+
+        <div className="mb-9 space-y-1">
           {mainNavItems.map((item) => (
             <SidebarNavButton
               key={item.key}
               item={{
                 ...item,
-                count: item.key === "inbox" ? inboxCount : undefined,
+                count:
+                  item.key === "inbox"
+                    ? inboxCount
+                    : undefined,
               }}
-              selectedView={selectedView}
-              setSelectedView={setSelectedView}
-              hoverSurface={hoverSurface}
-              themeColor={themeColor}
               darkMode={darkMode}
+              selectedView={selectedView}
+              onSelect={onSelect}
             />
           ))}
         </div>
 
-        <SidebarSectionLabel label="Library" mutedText={mutedText} />
+        <SidebarSectionLabel
+          label="Library"
+          darkMode={darkMode}
+        />
 
-        <div className="mb-6 space-y-1.5">
+        <div className="mb-9 space-y-1">
           {libraryNavItems.map((item) => (
             <SidebarNavButton
               key={item.key}
               item={item}
-              selectedView={selectedView}
-              setSelectedView={setSelectedView}
-              hoverSurface={hoverSurface}
-              themeColor={themeColor}
               darkMode={darkMode}
+              selectedView={selectedView}
+              onSelect={onSelect}
             />
           ))}
         </div>
 
-        <SidebarSectionLabel label="System" mutedText={mutedText} />
+        <SidebarSectionLabel
+          label="System"
+          darkMode={darkMode}
+        />
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <SidebarNavButton
-            item={{ key: "settings", label: "Settings", icon: Settings }}
-            selectedView={selectedView}
-            setSelectedView={setSelectedView}
-            hoverSurface={hoverSurface}
-            themeColor={themeColor}
+            item={{
+              key: "settings",
+              label: "Settings",
+              icon: Settings,
+            }}
             darkMode={darkMode}
+            selectedView={selectedView}
+            onSelect={onSelect}
           />
-
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setDarkMode(!darkMode)}
-            className={`hidden h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[750] transition ${
-              darkMode
-                ? "text-white/68 hover:text-white"
-                : "text-black/62 hover:text-black"
-            } ${hoverSurface}`}
-          >
-            <div className="flex items-center gap-3">
-              {darkMode ? <Sun size={17} /> : <Moon size={17} />}
-              <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
-            </div>
-
-            <div
-              className={`flex h-6 w-11 items-center rounded-full p-1 transition ${
-                darkMode
-                  ? "border border-white/[0.09] bg-white/[0.06]"
-                  : "border border-[#BBBFBF]/45 bg-[#BBBFBF]/30"
-              }`}
-            >
-              <div
-                className="h-4 w-4 rounded-full shadow-[0_8px_18px_rgba(0,0,0,0.20)] transition-transform"
-                style={{
-                  backgroundColor: themeColor,
-                  transform: darkMode ? "translateX(20px)" : "translateX(0px)",
-                }}
-              />
-            </div>
-          </motion.button>
         </div>
       </nav>
 
-      <div className={`relative z-10 mt-4 shrink-0 border-t ${border} pt-4`}>
+      {/* Account */}
+      <div
+        className={`mt-5 shrink-0 border-t pt-5 ${
+          darkMode
+            ? "border-white/[0.08]"
+            : "border-black/[0.055]"
+        }`}
+      >
         <div
-          className={`flex w-full items-center gap-3 rounded-[20px] border p-2 text-left transition ${
+          className={`flex items-center gap-3 rounded-[12px] px-2 py-2 transition ${
             darkMode
-              ? "border-white/[0.09] bg-[#11191b] hover:bg-[#121a1c]"
-              : "border-[#BBBFBF]/35 bg-white hover:bg-[#f6f8f8]"
+              ? "hover:bg-white/[0.05]"
+              : "hover:bg-black/[0.025]"
           }`}
         >
-          <div className="flex h-9 w-9 items-center justify-center">
-            <UserButton afterSignOutUrl="/sign-in" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center">
+            <UserButton
+              afterSignOutUrl="/sign-in"
+              appearance={{
+                elements: {
+                  userButtonAvatarBox: "h-9 w-9",
+                },
+              }}
+            />
           </div>
 
-          <div className="min-w-0">
-            <p className={`truncate text-sm font-[800] ${text}`}>
+          <div className="min-w-0 flex-1">
+            <p
+              className={`truncate text-[13px] font-[760] ${
+                darkMode
+                  ? "text-white"
+                  : "text-[#15171C]"
+              }`}
+            >
               {displayName}
             </p>
-            <p className={`text-[11px] font-medium ${mutedText}`}>
-              Profile & sign out
+
+            <p
+              className={`mt-0.5 truncate text-[11px] font-[500] ${
+                darkMode
+                  ? "text-white/38"
+                  : "text-black/38"
+              }`}
+            >
+              {secondaryIdentity}
             </p>
           </div>
         </div>
       </div>
-    </aside>
+    </>
   );
 }
 
 function SidebarSectionLabel({
   label,
-  mutedText,
+  darkMode,
 }: {
   label: string;
-  mutedText: string;
+  darkMode: boolean;
 }) {
   return (
     <p
-      className={`mb-2 px-1 text-[11px] font-[800] uppercase tracking-[0.18em] ${mutedText}`}
+      className={`mb-3 px-3 text-[10px] font-[800] uppercase tracking-[0.19em] ${
+        darkMode
+          ? "text-white/30"
+          : "text-black/32"
+      }`}
     >
       {label}
     </p>
@@ -312,48 +417,69 @@ function SidebarSectionLabel({
 
 function SidebarNavButton({
   item,
-  selectedView,
-  setSelectedView,
-  hoverSurface,
-  themeColor,
   darkMode,
-}: any) {
+  selectedView,
+  onSelect,
+}: {
+  item: SidebarItem;
+  darkMode: boolean;
+  selectedView: string;
+  onSelect: (view: string) => void;
+}) {
   const Icon = item.icon;
   const isActive = selectedView === item.key;
 
   return (
     <motion.button
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={() => setSelectedView(item.key)}
-      style={
+      type="button"
+      whileHover={{ x: 2 }}
+      whileTap={{ scale: 0.985 }}
+      onClick={() => onSelect(item.key)}
+      aria-current={isActive ? "page" : undefined}
+      className={`relative flex h-11 w-full items-center justify-between rounded-[10px] px-3 text-[13px] transition ${
         isActive
-          ? ({
-              "--theme-color": themeColor,
-              "--theme-border": `${themeColor}45`,
-              "--theme-soft": `${themeColor}14`,
-            } as React.CSSProperties)
-          : undefined
-      }
-      className={`flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-[750] transition ${
-        isActive
-          ? "border border-[color:var(--theme-border)] bg-[color:var(--theme-soft)] text-[color:var(--theme-color)] shadow-[0_14px_34px_rgba(0,0,0,0.16)]"
-          : `${
-              darkMode
-                ? "text-white/62 hover:text-white"
-                : "text-black/58 hover:text-black"
-            } ${hoverSurface}`
+          ? darkMode
+            ? "bg-white/[0.08] font-[760] text-white"
+            : "bg-black/[0.035] font-[760] text-black"
+          : darkMode
+          ? "font-[600] text-white/56 hover:bg-white/[0.05] hover:text-white"
+          : "font-[600] text-black/58 hover:bg-black/[0.025] hover:text-black"
       }`}
     >
+      {isActive && (
+        <span
+          aria-hidden="true"
+          className={`absolute bottom-2 left-0 top-2 w-[3px] rounded-full ${
+            darkMode ? "bg-white" : "bg-black"
+          }`}
+        />
+      )}
+
       <div className="flex items-center gap-3">
-        <Icon size={17} />
+        <Icon
+          size={17}
+          strokeWidth={isActive ? 2.1 : 1.75}
+          className={
+            isActive
+              ? darkMode
+                ? "text-white"
+                : "text-black"
+              : darkMode
+              ? "text-white/50"
+              : "text-black/50"
+          }
+        />
+
         <span>{item.label}</span>
       </div>
 
       {item.count ? (
         <span
-          className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-[900] text-white shadow-[0_10px_20px_rgba(0,0,0,0.18)]"
-          style={{ backgroundColor: themeColor }}
+          className={`flex h-6 min-w-6 items-center justify-center rounded-full border px-2 text-[10px] font-[800] ${
+            darkMode
+              ? "border-white/[0.08] bg-white/[0.06] text-white/58"
+              : "border-black/[0.06] bg-white text-black/58"
+          }`}
         >
           {item.count}
         </span>

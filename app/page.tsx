@@ -6,6 +6,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";
 
 import Sidebar from "@/components/Sidebar";
+import SettingsView from "@/components/SettingsView";
 import Toast from "@/components/Toast";
 import FirecrackerLayer from "@/components/Firecracker";
 
@@ -42,16 +43,20 @@ ChevronRight,
 Check,
 X,
 PencilLine,
+RotateCcw,
+MoreVertical,
+Play,
+Settings2,
 } from "lucide-react";
 
 
 type TaskTag = "follow-up";
 
-type SortMode = "veira" | "date" | "priority";
+type SortMode = "date" | "priority";
 type GroupMode = "none" | "category" | "priority" | "date";
 type MobileGroupMode = "category" | "priority" | "date";
 
-const MOBILE_GROUP_MODE_KEY = "veira-mobile-group-mode";
+const MOBILE_GROUP_MODE_KEY = "Momentuhm-mobile-group-mode";
 
 const DEFAULT_THEME_COLOR = "#1F2937";
 
@@ -231,13 +236,77 @@ const formatDateLong = () => {
   });
 };
 
+const formatSingleLineInsight = (message: string) => {
+  const cleaned = String(message || "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleaned) return "";
+
+  const firstSentence =
+    cleaned.match(/^.*?[.!?](?:\s|$)/)?.[0]?.trim() || cleaned;
+
+  const words = firstSentence.split(/\s+/);
+
+  if (words.length <= 18) {
+    return firstSentence;
+  }
+
+  return `${words.slice(0, 18).join(" ").replace(/[,:;–—-]+$/, "")}…`;
+};
+
+const getAccessibleTextColor = (hexColor: string) => {
+  const normalized = hexColor.replace("#", "").trim();
+
+  if (!/^[0-9a-f]{6}$/i.test(normalized)) {
+    return "#FFFFFF";
+  }
+
+  const channels = [0, 2, 4].map(
+    (index) =>
+      parseInt(normalized.slice(index, index + 2), 16) / 255
+  );
+
+  const linearChannels = channels.map((channel) =>
+    channel <= 0.04045
+      ? channel / 12.92
+      : Math.pow((channel + 0.055) / 1.055, 2.4)
+  );
+
+  const luminance =
+    0.2126 * linearChannels[0] +
+    0.7152 * linearChannels[1] +
+    0.0722 * linearChannels[2];
+
+  const whiteContrast = 1.05 / (luminance + 0.05);
+  const darkContrast = (luminance + 0.05) / 0.05;
+
+  return whiteContrast >= darkContrast
+    ? "#FFFFFF"
+    : "#111111";
+};
 
 
-const getTimeRemainingInDay = (dayEndTime: string) => {
-  const now = new Date();
-  const [hours, minutes] = dayEndTime.split(":").map(Number);
+const normalizeDayEndTime = (value: unknown) => {
+  const candidate =
+    typeof value === "string" ? value.trim() : "";
 
-  const endTime = new Date();
+  return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(candidate)
+    ? candidate
+    : "18:00";
+};
+
+const getTimeRemainingInDay = (
+  dayEndTime: string,
+  now: Date
+) => {
+  const normalizedEndTime = normalizeDayEndTime(dayEndTime);
+
+  const [hours, minutes] = normalizedEndTime
+    .split(":")
+    .map(Number);
+
+  const endTime = new Date(now);
   endTime.setHours(hours, minutes, 0, 0);
 
   const difference = endTime.getTime() - now.getTime();
@@ -252,19 +321,29 @@ const getTimeRemainingInDay = (dayEndTime: string) => {
     };
   }
 
-  const totalMinutes = Math.floor(difference / 1000 / 60);
+  const totalMinutes = Math.ceil(
+    difference / (1000 * 60)
+  );
+
   const hoursLeft = Math.floor(totalMinutes / 60);
   const minutesLeft = totalMinutes % 60;
 
-  const startOfDay = new Date();
+  const startOfDay = new Date(now);
   startOfDay.setHours(0, 0, 0, 0);
 
-  const totalDayDuration = endTime.getTime() - startOfDay.getTime();
-  const elapsed = now.getTime() - startOfDay.getTime();
+  const totalDayDuration = Math.max(
+    1,
+    endTime.getTime() - startOfDay.getTime()
+  );
 
   const percentLeft = Math.max(
     0,
-    Math.min(100, Math.round(100 - (elapsed / totalDayDuration) * 100))
+    Math.min(
+      100,
+      Math.round(
+        (difference / totalDayDuration) * 100
+      )
+    )
   );
 
   return {
@@ -561,7 +640,7 @@ const getAppSuggestionReason = (title: string, priority: Priority) => {
       "form",
     ])
   ) {
-    return "This looks like an admin or official task, so Veira suggests handling it soon.";
+    return "This looks like an admin or official task, so Momentuhm suggests handling it soon.";
   }
 
   if (
@@ -579,7 +658,7 @@ const getAppSuggestionReason = (title: string, priority: Priority) => {
       "insurance",
     ])
   ) {
-    return "This sounds time-sensitive or submission-based, so Veira moved it higher.";
+    return "This sounds time-sensitive or submission-based, so Momentuhm moved it higher.";
   }
 
   if (
@@ -595,7 +674,7 @@ const getAppSuggestionReason = (title: string, priority: Priority) => {
       "call",
     ])
   ) {
-    return "This may depend on another person or available slots, so Veira suggests doing it early.";
+    return "This may depend on another person or available slots, so Momentuhm suggests doing it early.";
   }
 
   if (
@@ -610,7 +689,7 @@ const getAppSuggestionReason = (title: string, priority: Priority) => {
       "ask",
     ])
   ) {
-    return "This involves communication with someone else, so Veira suggests not leaving it open too long.";
+    return "This involves communication with someone else, so Momentuhm suggests not leaving it open too long.";
   }
 
   if (
@@ -625,18 +704,18 @@ const getAppSuggestionReason = (title: string, priority: Priority) => {
       "medicine",
     ])
   ) {
-    return "This looks like an errand or purchase, so Veira suggests scheduling it soon.";
+    return "This looks like an errand or purchase, so Momentuhm suggests scheduling it soon.";
   }
 
   if (priority === "High") {
-    return "This was classified as high priority, so Veira kept it near the top.";
+    return "This was classified as high priority, so Momentuhm kept it near the top.";
   }
 
   if (priority === "Medium") {
     return "This looks useful but not immediately critical.";
   }
 
-  return "This looks less urgent, so Veira placed it lower for now.";
+  return "This looks less urgent, so Momentuhm placed it lower for now.";
 };
 
 const scoreTask = (task: any) => {
@@ -721,16 +800,8 @@ const scoreTask = (task: any) => {
 
   return score;
 };
-const getPriorityClass = (priority: Priority) => {
-  if (priority === "High") {
-    return "border border-red-500/15 bg-red-500/[0.08] text-red-500 dark:border-red-300/15 dark:bg-red-400/[0.10] dark:text-red-200";
-  }
-
-  if (priority === "Medium") {
-    return "border border-amber-500/15 bg-amber-500/[0.08] text-amber-600 dark:border-amber-300/15 dark:bg-amber-300/[0.09] dark:text-amber-200";
-  }
-
-  return "border border-emerald-500/15 bg-emerald-500/[0.08] text-emerald-600 dark:border-emerald-300/15 dark:bg-emerald-300/[0.09] dark:text-emerald-200";
+const getPriorityClass = (_priority: Priority) => {
+  return "border border-[#E7E7E3] bg-[#F7F7F5] text-[#666661] dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-white/55";
 };
 
 const getPriorityRowClass = (priority: Priority, darkMode: boolean) => {
@@ -753,7 +824,13 @@ const hasFollowUpTag = (task: any) => {
 
 const MIN_CLIPBOARD_ASSIST_LENGTH = 35;
 const MAX_CLIPBOARD_ASSIST_LENGTH = 8000;
-const CLIPBOARD_HANDLED_KEY = "veira-last-handled-clipboard-text";
+const CLIPBOARD_HANDLED_KEY = "Momentuhm-last-handled-clipboard-text";
+
+/**
+ * Temporary testing flag.
+ * false prevents clipboard reads and automatic AI extraction requests.
+ */
+const CLIPBOARD_ASSIST_ENABLED_FOR_TESTING = true;
 
 const normalizeClipboardText = (text: string) => {
   return text.replace(/\s+/g, " ").trim();
@@ -817,7 +894,8 @@ export default function Home() {
   const [themeColor, setThemeColor] = useState(DEFAULT_THEME_COLOR);
   const [darkMode, setDarkMode] = useState(false);
 const [selectedView, setSelectedView] = useState("today");
-const [todayTaskSortMode, setTodayTaskSortMode] = useState<SortMode>("veira");
+const [todayTaskSortMode, setTodayTaskSortMode] =
+  useState<SortMode>("date");
 const [todayTaskGroupMode, setTodayTaskGroupMode] = useState<GroupMode>("none");
 const [priorityViewMode, setPriorityViewMode] =
   useState<"cards" | "list">("list");
@@ -860,7 +938,7 @@ const [suggestingTaskIds, setSuggestingTaskIds] = useState<string[]>([]);
 const [boostMessage, setBoostMessage] = useState("");
 const [boostLoading, setBoostLoading] = useState(false);
 const [lastBoostTaskKey, setLastBoostTaskKey] = useState("");
-const [dailyBoostCount, setDailyBoostCount] = useState(0);
+
 const [dayEndTime, setDayEndTime] = useState("18:00");
 const [userRole, setUserRole] = useState("");
 const [currentTime, setCurrentTime] = useState(new Date());
@@ -871,7 +949,9 @@ const lastClipboardTextRef = useRef("");
 const clipboardCheckInFlightRef = useRef(false);
 const anchorScrollAnimationRef = useRef<number | null>(null);
 const anchorRequestIdRef = useRef(0);
+const completedAnchorRequestIdRef = useRef(0);
 const anchorPreviousScrollBehaviorRef = useRef<string | null>(null);
+
 
 const easeAnchorScroll = (progress: number) => {
   return -(Math.cos(Math.PI * progress) - 1) / 2;
@@ -936,12 +1016,12 @@ const getTaskListAnchorElement = () => {
 
   if (isMobile) {
     return (
-      document.getElementById("veira-mobile-task-list-anchor") ||
-      document.getElementById("veira-task-list-anchor")
+      document.getElementById("Momentuhm-mobile-task-list-anchor") ||
+      document.getElementById("Momentuhm-task-list-anchor")
     );
   }
 
-  return taskListRef.current || document.getElementById("veira-task-list-anchor");
+  return taskListRef.current || document.getElementById("Momentuhm-task-list-anchor");
 };
 
 const anchorTaskList = () => {
@@ -984,20 +1064,114 @@ const anchorTaskListSoon = () => {
   });
 };
 
+const getCompletedSectionAnchorElement = () => {
+  if (typeof document === "undefined") return null;
+
+  const isMobile =
+    typeof window !== "undefined" && window.innerWidth < 640;
+
+  return document.getElementById(
+    isMobile
+      ? "Momentuhm-mobile-completed-anchor"
+      : "Momentuhm-desktop-completed-anchor"
+  );
+};
+
+const anchorCompletedSectionSoon = () => {
+  if (typeof window === "undefined") return;
+
+  /*
+   * The completed section only exists inside the Today view.
+   */
+  setSelectedView("today");
+
+  const requestId = completedAnchorRequestIdRef.current + 1;
+  completedAnchorRequestIdRef.current = requestId;
+
+  [160, 360, 700, 1100].forEach((delay) => {
+    window.setTimeout(() => {
+      if (completedAnchorRequestIdRef.current !== requestId) return;
+
+      /*
+       * Ensure the Tasks workspace is open before looking for
+       * the completed-section element.
+       */
+      window.dispatchEvent(new Event("momentuhm:open-tasks"));
+
+      window.requestAnimationFrame(() => {
+        if (completedAnchorRequestIdRef.current !== requestId) return;
+
+        const element = getCompletedSectionAnchorElement();
+
+        if (!element) return;
+
+        const topOffset =
+          window.innerWidth < 640
+            ? 18
+            : window.innerWidth < 1024
+            ? 148
+            : 32;
+
+        const rect = element.getBoundingClientRect();
+
+        const targetTop = Math.max(
+          0,
+          rect.top + window.scrollY - topOffset
+        );
+
+        animateWindowScrollTo(targetTop, 1200);
+
+        completedAnchorRequestIdRef.current = requestId + 1;
+      });
+    }, delay);
+  });
+};
+
   const todayDate = getTodayDate();
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
+    const refreshCurrentTime = () => {
       setCurrentTime(new Date());
-    }, 30000);
-
-    return () => window.clearInterval(timer);
+    };
+  
+    refreshCurrentTime();
+  
+    const timer = window.setInterval(
+      refreshCurrentTime,
+      30000
+    );
+  
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshCurrentTime();
+      }
+    };
+  
+    window.addEventListener("focus", refreshCurrentTime);
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+  
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener(
+        "focus",
+        refreshCurrentTime
+      );
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+    };
   }, []);
-
+  
   const dayTimeRemaining = useMemo(() => {
-    currentTime;
-    return getTimeRemainingInDay(dayEndTime);
-  }, [currentTime, dayEndTime]);
+    return getTimeRemainingInDay(
+      dayEndTime,
+      currentTime
+    );
+  }, [dayEndTime, currentTime]);
 
   /* ------------------------------------------------ */
   /* Load State */
@@ -1024,11 +1198,11 @@ const anchorTaskListSoon = () => {
         setDarkMode(parsed.darkMode ?? false);
 setThemeColor(parsed.themeColor || DEFAULT_THEME_COLOR);
 
-        setTodayTaskSortMode(
-          ["veira", "date", "priority"].includes(parsed.todayTaskSortMode)
-            ? (parsed.todayTaskSortMode as SortMode)
-            : "veira"
-        );
+setTodayTaskSortMode(
+  ["date", "priority"].includes(parsed.todayTaskSortMode)
+    ? (parsed.todayTaskSortMode as SortMode)
+    : "date"
+);
 
         setTodayTaskGroupMode(
           ["none", "category", "priority", "date"].includes(
@@ -1045,7 +1219,9 @@ setThemeColor(parsed.themeColor || DEFAULT_THEME_COLOR);
         setEnableClipboardAssist(parsed.enableClipboardAssist ?? true);
         setArchive(parsed.archive || []);
         setCompletedToday(parsed.completedToday || []);
-        setDayEndTime(parsed.dayEndTime || "18:00");
+        setDayEndTime(
+          normalizeDayEndTime(parsed.dayEndTime)
+        );
         setUserRole(parsed.userRole || "");
         setManualFocusTaskIds(parsed.manualFocusTaskIds || []);
   
@@ -1084,7 +1260,7 @@ setThemeColor(parsed.themeColor || DEFAULT_THEME_COLOR);
         !hasAnyUserData &&
         themeColor === DEFAULT_THEME_COLOR &&
         darkMode === false &&
-        todayTaskSortMode === "veira" &&
+        todayTaskSortMode === "date" &&
         todayTaskGroupMode === "none" &&
         enableAppSuggestions === true &&
         enableAutoPriority === true &&
@@ -1255,7 +1431,7 @@ const completionPercent =
   (task) => !task.dueDate && task.suggestedDueDate
 );
 
-const dueReminderKey = `veira-due-reminder-${todayDate}-${dayEndTime}`;
+const dueReminderKey = `Momentuhm-due-reminder-${todayDate}-${dayEndTime}`;
 
 useEffect(() => {
   if (!isLoaded) return;
@@ -1300,6 +1476,7 @@ const openDueReminderTask = (task: any) => {
 /* ------------------------------------------------ */
 
 useEffect(() => {
+  if (!CLIPBOARD_ASSIST_ENABLED_FOR_TESTING) return;
   if (!isLoaded) return;
   if (!enableClipboardAssist) return;
   if (typeof window === "undefined") return;
@@ -1386,7 +1563,7 @@ localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
         setClipboardExtractedTasks(normalizedTasks);
       } catch (error) {
         console.error(error);
-        setClipboardExtractError("Veira could not extract tasks from this text.");
+        setClipboardExtractError("Momentuhm could not extract tasks from this text.");
       } finally {
         setClipboardExtractLoading(false);
       }
@@ -1437,178 +1614,125 @@ useEffect(() => {
   setShowClipboardPrompt(false);
 }, [enableClipboardAssist]);
 
-  const completedBoostTaskKey = completedToday
-  .map((task) => task.id)
-  .sort()
-  .join("-");
+const completedBoostTaskKey = completedToday
+.map((task) => task.id)
+.sort()
+.join("-");
 
 const boostCacheDate = getTodayDate();
-const boostCacheKey = `momentum-boost-${boostCacheDate}`;
-const boostCountKey = `momentum-boost-count-${boostCacheDate}`;
 
+/*
+* Using v2 prevents the previous long cached paragraph
+* from being loaded again.
+*/
+const boostCacheKey = `momentum-boost-v2-${boostCacheDate}`;
 
 /* ------------------------------------------------ */
-/* Load Veira Boost Cache */
+/* Load Momentuhm Boost Cache */
 /* ------------------------------------------------ */
 
 useEffect(() => {
-  if (!isLoaded) return;
+if (!isLoaded) return;
 
-  const cachedBoost = localStorage.getItem(boostCacheKey);
-  const cachedCount = localStorage.getItem(boostCountKey);
+const cachedBoost = localStorage.getItem(boostCacheKey);
 
-  if (cachedBoost) {
-    try {
-      const parsed = JSON.parse(cachedBoost);
+if (!cachedBoost) return;
 
-      if (parsed?.message && parsed?.taskKey) {
-        setBoostMessage(parsed.message);
-        setLastBoostTaskKey(parsed.taskKey);
-      }
-    } catch (error) {
-      console.error("Failed to load cached boost:", error);
+try {
+  const parsed = JSON.parse(cachedBoost);
+
+  if (!parsed?.message || !parsed?.taskKey) return;
+
+  setBoostMessage(formatSingleLineInsight(parsed.message));
+  setLastBoostTaskKey(parsed.taskKey);
+} catch (error) {
+  console.error("Failed to load cached boost:", error);
+  localStorage.removeItem(boostCacheKey);
+}
+}, [isLoaded, boostCacheKey]);
+
+/* ------------------------------------------------ */
+/* Automatic Momentuhm Boost */
+/* ------------------------------------------------ */
+
+useEffect(() => {
+if (!isLoaded) return;
+if (selectedView !== "today") return;
+
+if (completedToday.length === 0) {
+  setBoostMessage("");
+  setLastBoostTaskKey("");
+  setBoostLoading(false);
+  localStorage.removeItem(boostCacheKey);
+  return;
+}
+
+/*
+ * Do not call the AI again unless the completed-task
+ * collection has changed.
+ */
+if (completedBoostTaskKey === lastBoostTaskKey) return;
+
+const timeout = window.setTimeout(async () => {
+  const completedTaskTitles = completedToday.map((task) => task.title);
+
+  try {
+    setBoostLoading(true);
+
+    const response = await fetch("/api/boost", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        completedTasks: completedTaskTitles,
+        instruction:
+          "Return exactly one encouraging sentence with a maximum of 18 words. Do not list tasks or use headings.",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.message || "Failed to generate boost.");
     }
-  }
 
-  setDailyBoostCount(Number(cachedCount || 0));
-}, [isLoaded, boostCacheKey, boostCountKey]);
+    const nextBoostMessage = formatSingleLineInsight(data?.boost || "");
 
-/* ------------------------------------------------ */
-/* Automatic Veira Boost */
-/* ------------------------------------------------ */
+    if (!nextBoostMessage) {
+      throw new Error("The AI returned an empty progress insight.");
+    }
 
-useEffect(() => {
-  if (!isLoaded) return;
-  if (selectedView !== "today") return;
-
-  if (completedToday.length === 0) {
-    setBoostMessage("");
-    setLastBoostTaskKey("");
-    setBoostLoading(false);
-
-    localStorage.removeItem(boostCacheKey);
-    return;
-  }
-
-  if (completedToday.length === 1) {
-    const firstWinMessage =
-      "Nice — first win logged. Momentum is starting to build.";
-
-    setBoostMessage(firstWinMessage);
+    setBoostMessage(nextBoostMessage);
     setLastBoostTaskKey(completedBoostTaskKey);
-    setBoostLoading(false);
 
     localStorage.setItem(
       boostCacheKey,
       JSON.stringify({
-        message: firstWinMessage,
+        message: nextBoostMessage,
         taskKey: completedBoostTaskKey,
         generatedAt: new Date().toISOString(),
-        source: "local",
+        source: "ai",
       })
     );
+  } catch (error) {
+    console.error("Failed to generate AI progress insight:", error);
 
-    return;
-  }
-
-  if (completedBoostTaskKey === lastBoostTaskKey) return;
-
-  if (dailyBoostCount >= 3) {
-    const cappedMessage = `${completedToday.length} tasks done today. Strong progress — keep the momentum visible.`;
-
-    setBoostMessage(cappedMessage);
+    setBoostMessage("AI progress insight is temporarily unavailable.");
     setLastBoostTaskKey(completedBoostTaskKey);
+  } finally {
     setBoostLoading(false);
-
-    localStorage.setItem(
-      boostCacheKey,
-      JSON.stringify({
-        message: cappedMessage,
-        taskKey: completedBoostTaskKey,
-        generatedAt: new Date().toISOString(),
-        source: "local-cap",
-      })
-    );
-
-    return;
   }
+}, 1200);
 
-  const timeout = setTimeout(async () => {
-    const completedTaskTitles = completedToday.map((task) => task.title);
-
-    try {
-      setBoostLoading(true);
-
-      const response = await fetch("/api/boost", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          completedTasks: completedTaskTitles,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to generate boost.");
-      }
-
-      const nextBoostMessage =
-        data.boost || "Nice work — visible progress is building.";
-
-      const nextBoostCount = dailyBoostCount + 1;
-
-      setBoostMessage(nextBoostMessage);
-      setLastBoostTaskKey(completedBoostTaskKey);
-      setDailyBoostCount(nextBoostCount);
-
-      localStorage.setItem(
-        boostCacheKey,
-        JSON.stringify({
-          message: nextBoostMessage,
-          taskKey: completedBoostTaskKey,
-          generatedAt: new Date().toISOString(),
-          source: "ai",
-        })
-      );
-
-      localStorage.setItem(boostCountKey, String(nextBoostCount));
-    } catch (error) {
-      console.error(error);
-
-      const fallbackMessage = `Nice work — ${completedTaskTitles.length} task${
-  completedTaskTitles.length === 1 ? "" : "s"
-} done today. Keep building momentum.`
-
-      setBoostMessage(fallbackMessage);
-      setLastBoostTaskKey(completedBoostTaskKey);
-
-      localStorage.setItem(
-        boostCacheKey,
-        JSON.stringify({
-          message: fallbackMessage,
-          taskKey: completedBoostTaskKey,
-          generatedAt: new Date().toISOString(),
-          source: "fallback",
-        })
-      );
-    } finally {
-      setBoostLoading(false);
-    }
-  }, 3000);
-
-  return () => clearTimeout(timeout);
+return () => window.clearTimeout(timeout);
 }, [
-  isLoaded,
-  selectedView,
-  completedBoostTaskKey,
-  completedToday,
-  lastBoostTaskKey,
-  dailyBoostCount,
-  boostCacheKey,
-  boostCountKey,
+isLoaded,
+selectedView,
+completedBoostTaskKey,
+completedToday,
+lastBoostTaskKey,
+boostCacheKey,
 ]);
 
 
@@ -1617,22 +1741,24 @@ useEffect(() => {
   /* ------------------------------------------------ */
 
   const glass = darkMode
-  ? "bg-[#171717] border border-[#05AD98]/16"
-  : "bg-white/82 backdrop-blur-2xl";
+    ? "bg-[#181818] border border-white/[0.08]"
+    : "bg-white border border-[#E7E7E3]";
 
   const strongerGlass = darkMode
-  ? "bg-[#171717] border-white/[0.055] shadow-[0_24px_80px_rgba(0,0,0,0.32)]"
-  : "bg-white/95 border-[#BBBFBF]/35 shadow-[0_12px_36px_rgba(17,24,39,0.045)] backdrop-blur-2xl";
+    ? "bg-[#181818] border border-white/[0.08]"
+    : "bg-white border border-[#E7E7E3] shadow-[0_1px_2px_rgba(0,0,0,0.025)]";
 
-const input = darkMode
-    ? "bg-[#1f1f21] text-white placeholder:text-white/35 border border-[#05AD98]/18 focus:border-[#05AD98]/70"
-  : "bg-white text-[#000000] placeholder:text-[#878787] border border-[#BBBFBF]/45 focus:border-[#05AD98]/55";
-
-  const border = darkMode ? "border-white/[0.055]" : "border-[#BBBFBF]/35";
-
-const modalSelect = darkMode
-  ? "bg-[#1f1f21] text-white border border-white/[0.08]"
-  : "bg-white text-[#000000] border border-[#BBBFBF]/45";
+    const input = darkMode
+    ? "bg-[#202020] text-white placeholder:text-white/[0.55] border border-white/[0.35] focus:border-white/[0.70]"
+    : "bg-white text-[#181818] placeholder:text-[#6F6F6A] border border-[#868681] focus:border-[#181818]";
+  
+  const border = darkMode
+    ? "border-white/[0.12]"
+    : "border-[#D4D4CF]";
+  
+  const modalSelect = darkMode
+    ? "bg-[#202020] text-white border border-white/[0.35]"
+    : "bg-white text-[#181818] border border-[#868681]";
 
     const fontClass = inter.className;
 
@@ -1716,7 +1842,7 @@ const modalSelect = darkMode
               aiReason:
                 suggestion.reason ||
                 task.aiReason ||
-                "Veira reviewed this task with your reason in mind.",
+                "Momentuhm reviewed this task with your reason in mind.",
               aiConfidence:
                 typeof suggestion.confidence === "number"
                   ? suggestion.confidence
@@ -1765,7 +1891,7 @@ const modalSelect = darkMode
               aiReason:
                 suggestion.reason ||
                 taskToMove.aiReason ||
-                "Veira reviewed this task.",
+                "Momentuhm reviewed this task.",
               aiConfidence:
                 typeof suggestion.confidence === "number"
                   ? suggestion.confidence
@@ -1846,7 +1972,7 @@ const modalSelect = darkMode
       : undefined;
   
     const taskId = crypto.randomUUID();
-    const initialWhy = manualWhy || "Veira is finding why this matters...";
+    const initialWhy = manualWhy || "Momentuhm is finding why this matters...";
   
     const taskToAdd = {
       id: taskId,
@@ -1951,7 +2077,12 @@ const modalSelect = darkMode
 
 
   const extractTasksFromText = async (sourceTextOverride?: string) => {
-    const sourceText = (sourceTextOverride ?? extractInput).trim();
+    const rawSourceText =
+      typeof sourceTextOverride === "string"
+        ? sourceTextOverride
+        : extractInput;
+  
+    const sourceText = rawSourceText.trim();
 
     if (!sourceText) {
       setExtractError("Paste some text first.");
@@ -1985,7 +2116,7 @@ const modalSelect = darkMode
         console.error("Extract API returned non-JSON response:", responseText);
   
         throw new Error(
-          "Veira could not connect to the AI service. Please try again."
+          "Momentuhm could not connect to the AI service. Please try again."
         );
       }
   
@@ -1993,7 +2124,7 @@ const modalSelect = darkMode
         throw new Error(
           data?.error ||
             data?.message ||
-            "Veira could not extract tasks right now."
+            "Momentuhm could not extract tasks right now."
         );
       }
   
@@ -2323,8 +2454,8 @@ anchorTaskListSoon();
       },
       ...prev.filter((task) => task.id !== taskId),
     ]);
-
-    anchorTaskListSoon();
+    
+    anchorCompletedSectionSoon();
   };
 
   /* ------------------------------------------------ */
@@ -2436,7 +2567,7 @@ anchorTaskListSoon();
   
     setIsEditModalOpen(false);
     setSelectedTask(null);
-    anchorTaskListSoon();
+    anchorCompletedSectionSoon();
   };
 
   /* ------------------------------------------------ */
@@ -2485,7 +2616,7 @@ anchorTaskListSoon();
             ...task,
             dueDate: task.suggestedDueDate,
             suggestedDueDate: undefined,
-            aiReason: "You accepted Veira's app-suggested date.",
+            aiReason: "You accepted Momentuhm's app-suggested date.",
             aiConfidence: 1,
           };
         }),
@@ -2506,7 +2637,7 @@ anchorTaskListSoon();
             ...task,
             dueDate: task.suggestedDueDate,
             suggestedDueDate: undefined,
-            aiReason: "You accepted Veira's app-suggested date.",
+            aiReason: "You accepted Momentuhm's app-suggested date.",
             aiConfidence: 1,
           };
         }),
@@ -2632,7 +2763,7 @@ createdAt: updatedTask.createdAt || new Date().toISOString(),
 
   const resetAppData = () => {
     const confirmed = window.confirm(
-      "Reset all Veira data? This will delete active tasks, completed tasks, and archived items."
+      "Reset all Momentuhm data? This will delete active tasks, completed tasks, and archived items."
     );
 
     if (!confirmed) return;
@@ -2643,7 +2774,7 @@ createdAt: updatedTask.createdAt || new Date().toISOString(),
     setManualFocusTaskIds([]);
     setSelectedCategory(initialCategories[0].title);
     setSelectedView("today");
-    setTodayTaskSortMode("veira");
+    setTodayTaskSortMode("date");
     setTodayTaskGroupMode("none");
     setThemeColor(DEFAULT_THEME_COLOR);
     setDarkMode(false);
@@ -2652,7 +2783,7 @@ createdAt: updatedTask.createdAt || new Date().toISOString(),
       window.localStorage.removeItem(MOBILE_GROUP_MODE_KEY);
     }
 
-    setArchiveToast("Veira data reset");
+    setArchiveToast("Momentuhm data reset");
 
     setTimeout(() => {
       setArchiveToast("");
@@ -2765,12 +2896,18 @@ createdAt: updatedTask.createdAt || new Date().toISOString(),
 
   return (
     <main
+  style={
+    {
+      "--focus-inner": darkMode ? "#111111" : "#F7F7F5",
+      "--focus-outer": darkMode ? "#FFFFFF" : "#181818",
+    } as React.CSSProperties
+  }
   className={`${fontClass} min-h-screen w-full overflow-x-hidden transition-colors duration-500 ${
     darkMode
-? "bg-[#111111] text-white"
-: "bg-[#f6f8f8] text-[#000000]"
-    }`}
-  >
+      ? "bg-[#111111] text-white"
+      : "bg-[#F7F7F5] text-[#181818]"
+  }`}
+>
     {darkMode && (
   <>
    <div className="pointer-events-none fixed inset-0 z-0 bg-[#111111]" />
@@ -2781,18 +2918,22 @@ createdAt: updatedTask.createdAt || new Date().toISOString(),
 <FirecrackerLayer firecrackers={firecrackers} themeColor={themeColor} />
 <Toast message={archiveToast} darkMode={darkMode} />
 
-<div className="relative z-10 flex min-h-screen w-full overflow-x-hidden">
-      <Sidebar
+<Sidebar
   darkMode={darkMode}
   setDarkMode={setDarkMode}
   selectedView={selectedView}
   setSelectedView={setSelectedView}
   themeColor={themeColor}
   inboxCount={inboxTasks.length}
+  pendingSuggestionCount={suggestionReviewTasks.length}
+  onOpenSuggestedDates={() =>
+    setIsSuggestionsModalOpen(true)
+  }
 />
 
-<div className="min-w-0 flex-1 overflow-x-hidden px-3 pb-28 pt-5 sm:px-5 sm:pb-28 sm:pt-6 md:px-6 min-[1360px]:pl-[268px] min-[1360px]:pr-5 min-[1360px]:pb-16 min-[1360px]:pt-6 min-[1600px]:pl-[284px] min-[1700px]:pl-[300px] min-[1700px]:pr-10 min-[1700px]:pb-8 min-[1700px]:pt-8">
-<div className="mx-auto w-full min-w-0 max-w-[1380px] overflow-x-hidden">
+<div className="relative z-10 min-h-screen w-full overflow-x-hidden">
+  <div className="w-full min-w-0 overflow-x-hidden px-3 pb-28 pt-5 sm:px-5 sm:pb-28 sm:pt-[96px] md:px-6 lg:pl-[276px] lg:pr-6 2xl:pb-16 2xl:pr-8">
+    <div className="w-full min-w-0 overflow-x-hidden">
             {selectedView === "today" && (
             <TodayView
             darkMode={darkMode}
@@ -2829,6 +2970,7 @@ addTask={addTask}
             setIsEditModalOpen={setIsEditModalOpen}
             setIsSuggestionsModalOpen={setIsSuggestionsModalOpen}
             setIsExtractModalOpen={setIsExtractModalOpen}
+            setExtractInput={setExtractInput}
             archiveCompletedToday={archiveCompletedToday}
             restoreCompletedTask={restoreCompletedTask}
             suggestingTaskIds={suggestingTaskIds}
@@ -2934,32 +3076,25 @@ userFirstName={user?.firstName || ""}
               />
             )}
 
-            {selectedView === "settings" && (
-             <SettingsView
-             darkMode={darkMode}
-             setDarkMode={setDarkMode}
-             border={border}
-             className={strongerGlass}
-             themeColor={themeColor}
-             setThemeColor={setThemeColor}
-             userRole={userRole}
-             setUserRole={setUserRole}
-             input={input}
-             enableAppSuggestions={enableAppSuggestions}
-                setEnableAppSuggestions={setEnableAppSuggestions}
-                enableAutoPriority={enableAutoPriority}
-                setEnableAutoPriority={setEnableAutoPriority}
-                enableClipboardAssist={enableClipboardAssist}
-                setEnableClipboardAssist={setEnableClipboardAssist}
-                upcomingViewMode={upcomingViewMode}
-                setUpcomingViewMode={setUpcomingViewMode}
-                priorityViewMode={priorityViewMode}
-                setPriorityViewMode={setPriorityViewMode}
-                archiveCount={archive.length}
-                clearArchive={clearArchive}
-                resetAppData={resetAppData}
-              />
-            )}
+{selectedView === "settings" && (
+  <SettingsView
+    darkMode={darkMode}
+    userRole={userRole}
+    setUserRole={setUserRole}
+    enableAppSuggestions={enableAppSuggestions}
+    setEnableAppSuggestions={setEnableAppSuggestions}
+    enableAutoPriority={enableAutoPriority}
+    setEnableAutoPriority={setEnableAutoPriority}
+    enableClipboardAssist={enableClipboardAssist}
+    setEnableClipboardAssist={setEnableClipboardAssist}
+    archiveCount={archive.length}
+    clearArchive={clearArchive}
+    resetAppData={resetAppData}
+    border={border}
+    className={strongerGlass}
+    input={input}
+  />
+)}
 
            
           </div>
@@ -2985,8 +3120,10 @@ userFirstName={user?.firstName || ""}
     />
   )}
 
-  {showClipboardPrompt && clipboardCandidate && (
-   <ClipboardAssistPrompt
+{CLIPBOARD_ASSIST_ENABLED_FOR_TESTING &&
+  showClipboardPrompt &&
+  clipboardCandidate && (
+    <ClipboardAssistPrompt
    text={clipboardCandidate}
    themeColor={themeColor}
    darkMode={darkMode}
@@ -3052,39 +3189,90 @@ userFirstName={user?.firstName || ""}
    glass={glass}
    strongerGlass={strongerGlass}
    border={border}
+   manualFocusTaskIds={manualFocusTaskIds}
+   setManualFocusTaskIds={setManualFocusTaskIds}
  />
   )}
 </AnimatePresence>
 
+
 <style jsx global>{`
-  .veira-mobile-category-tabs {
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  @supports not (scrollbar-gutter: stable) {
+    body {
+      overflow-y: scroll;
+    }
+  }
+
+  .Momentuhm-mobile-category-tabs {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 
-  .veira-mobile-category-tabs::-webkit-scrollbar {
+  .Momentuhm-mobile-category-tabs::-webkit-scrollbar {
     display: none;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:not([tabindex="-1"]):focus-visible {
+    outline: 2px solid var(--focus-outer) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 2px var(--focus-inner) !important;
+  }
+
+  .task-capture-input:focus,
+.task-capture-input:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto !important;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   @keyframes veiraNewTaskGlow {
     0% {
-      background-color: ${themeColor}26;
-      box-shadow: 0 0 0 1px ${themeColor}55, 0 18px 45px ${themeColor}20;
+      background-color: rgba(24, 24, 24, 0.08);
+      box-shadow: 0 0 0 1px rgba(24, 24, 24, 0.16);
     }
+
     42% {
-      background-color: ${themeColor}18;
-      box-shadow: 0 0 0 1px ${themeColor}35, 0 14px 34px ${themeColor}16;
+      background-color: rgba(24, 24, 24, 0.05);
+      box-shadow: 0 0 0 1px rgba(24, 24, 24, 0.1);
     }
+
     72% {
-      background-color: ${themeColor}10;
-      box-shadow: 0 0 0 1px ${themeColor}22, 0 10px 26px ${themeColor}10;
+      background-color: rgba(24, 24, 24, 0.025);
+      box-shadow: 0 0 0 1px rgba(24, 24, 24, 0.05);
     }
+
     100% {
       background-color: transparent;
       box-shadow: none;
     }
   }
 `}</style>
+
+
     </main>
   );
 }
@@ -3102,11 +3290,11 @@ function TodayView({
   border,
   allTasks,
   prioritizedTasks,
-taskSortMode,
-setTaskSortMode,
-taskGroupMode,
-setTaskGroupMode,
-highPriorityCount,
+  taskSortMode,
+  setTaskSortMode,
+  taskGroupMode,
+  setTaskGroupMode,
+  highPriorityCount,
   dueSoonCount,
   completionPercent,
   suggestedDateCount,
@@ -3117,10 +3305,10 @@ highPriorityCount,
   setDayEndTime,
   dayTimeRemaining,
   newTask,
-setNewTask,
-newTaskWhy,
-setNewTaskWhy,
-addTask,
+  setNewTask,
+  newTaskWhy,
+  setNewTaskWhy,
+  addTask,
   toggleTaskById,
   deleteTask,
   acceptSuggestedDateById,
@@ -3128,68 +3316,73 @@ addTask,
   setIsEditModalOpen,
   setIsSuggestionsModalOpen,
   setIsExtractModalOpen,
+  setExtractInput,
   archiveCompletedToday,
   restoreCompletedTask,
   suggestingTaskIds,
-manualFocusTaskIds,
-setManualFocusTaskIds,
-togglePinTask,
-selectWhySuggestion,
-taskListRef,
-anchorTaskListSoon,
-newlyAddedTaskIds,
-userFirstName,
+  manualFocusTaskIds,
+  setManualFocusTaskIds,
+  togglePinTask,
+  selectWhySuggestion,
+  taskListRef,
+  anchorTaskListSoon,
+  newlyAddedTaskIds,
+  userFirstName,
 }: any) {
   const [showMorningBrief, setShowMorningBrief] = useState(false);
+  const taskInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const focusTimer = window.setTimeout(() => {
+      taskInputRef.current?.focus();
+    }, 120);
+
+    return () => window.clearTimeout(focusTimer);
+  }, []);
+
+  const submitNewTask = () => {
+    if (!newTask.trim()) {
+      taskInputRef.current?.focus();
+      return;
+    }
+
+    void addTask();
+
+    window.requestAnimationFrame(() => {
+      taskInputRef.current?.focus();
+    });
+  };
+
+  const handleTaskInputPaste = (
+    event: React.ClipboardEvent<HTMLInputElement>
+  ) => {
+    const pastedText = event.clipboardData.getData("text").trim();
+    const shouldExtract = pastedText.includes("\n") || pastedText.length >= 120;
+
+    if (!shouldExtract) return;
+
+    event.preventDefault();
+    setExtractInput(pastedText);
+    setIsExtractModalOpen(true);
+  };
+
   const [morningBrief, setMorningBrief] = useState({
     quote: "Small steps still move the day forward.",
   });
 
   const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greetingWithName = `${greeting}${userFirstName ? `, ${userFirstName}.` : "."}`;
 
-const greeting =
-  hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-
-const greetingWithName = `${greeting}${userFirstName ? `, ${userFirstName}` : ""}`;
-
-  const timeOfDayMeta =
-    hour < 12
-      ? {
-          label: "Morning",
-          shortLabel: "AM",
-          Icon: Sunrise,
-          gradient: darkMode
-            ? `linear-gradient(135deg, ${themeColor}2E, rgba(251,191,36,0.18))`
-            : `linear-gradient(135deg, ${themeColor}18, rgba(251,191,36,0.18))`,
-        }
-      : hour < 17
-      ? {
-          label: "Afternoon",
-          shortLabel: "PM",
-          Icon: Sun,
-          gradient: darkMode
-            ? `linear-gradient(135deg, ${themeColor}30, rgba(14,165,233,0.16))`
-            : `linear-gradient(135deg, ${themeColor}16, rgba(14,165,233,0.14))`,
-        }
-      : {
-          label: "Evening",
-          shortLabel: "EVE",
-          Icon: Sunset,
-          gradient: darkMode
-            ? `linear-gradient(135deg, ${themeColor}34, rgba(124,58,237,0.18))`
-            : `linear-gradient(135deg, ${themeColor}18, rgba(124,58,237,0.12))`,
-        };
-
-  const TimeOfDayIcon = timeOfDayMeta.Icon;
-  
   useEffect(() => {
     const now = new Date();
-    const morningBriefKey = `veira-morning-brief-${getTodayDate()}`;
-  
+    const morningBriefKey = `Momentuhm-morning-brief-${getTodayDate()}`;
+
     if (now.getHours() < 7 || now.getHours() >= 10) return;
-  
+
     const cachedBrief = localStorage.getItem(morningBriefKey);
-  
+
     if (cachedBrief) {
       try {
         setMorningBrief(JSON.parse(cachedBrief));
@@ -3199,7 +3392,7 @@ const greetingWithName = `${greeting}${userFirstName ? `, ${userFirstName}` : ""
         localStorage.removeItem(morningBriefKey);
       }
     }
-  
+
     const loadMorningBrief = async () => {
       try {
         const response = await fetch("/api/morning-brief", {
@@ -3214,14 +3407,12 @@ const greetingWithName = `${greeting}${userFirstName ? `, ${userFirstName}` : ""
             activeTaskCount: prioritizedTasks.length,
           }),
         });
-  
+
         const data = await response.json();
-  
         const nextBrief = {
-          quote:
-            data.quote || "Small steps still move the day forward.",
+          quote: data.quote || "Small steps still move the day forward.",
         };
-  
+
         setMorningBrief(nextBrief);
         setShowMorningBrief(true);
         localStorage.setItem(morningBriefKey, JSON.stringify(nextBrief));
@@ -3229,368 +3420,307 @@ const greetingWithName = `${greeting}${userFirstName ? `, ${userFirstName}` : ""
         setShowMorningBrief(true);
       }
     };
-  
+
     void loadMorningBrief();
-  }, [dueSoonCount, highPriorityCount, completedToday.length, prioritizedTasks.length]);
+  }, [
+    dueSoonCount,
+    highPriorityCount,
+    completedToday.length,
+    prioritizedTasks.length,
+  ]);
+
+  const dashboardBorder = darkMode
+    ? "border-white/[0.10]"
+    : "border-[#DDDDE3]";
+
+  const dashboardSurface = darkMode
+    ? "bg-[#14171B]"
+    : "bg-white";
+
+  const mutedText = darkMode
+    ? "text-white/52"
+    : "text-[#6B6F7B]";
+
+  const insightText = boostLoading
+    ? "Creating today’s insight..."
+    : completedToday.length > 0
+    ? boostMessage || "You’re building momentum. Keep it going."
+    : showMorningBrief
+    ? formatSingleLineInsight(morningBrief.quote)
+    : "You’re building momentum. Keep it going.";
 
   return (
     <>
       <MobileTodayAppView
-  darkMode={darkMode}
-  themeColor={themeColor}
-  strongerGlass={strongerGlass}
-  border={border}
-  allTasks={allTasks}
-  prioritizedTasks={prioritizedTasks}
-  completedToday={completedToday}
-  completionPercent={completionPercent}
-  dayTimeRemaining={dayTimeRemaining}
-  dayEndTime={dayEndTime}
-  setDayEndTime={setDayEndTime}
-  newTask={newTask}
-  setNewTask={setNewTask}
-  newTaskWhy={newTaskWhy}
-  setNewTaskWhy={setNewTaskWhy}
-  addTask={addTask}
-  setIsExtractModalOpen={setIsExtractModalOpen}
-  toggleTaskById={toggleTaskById}
-  deleteTask={deleteTask}
-  setSelectedTask={setSelectedTask}
-  setIsEditModalOpen={setIsEditModalOpen}
-  manualFocusTaskIds={manualFocusTaskIds}
-  setManualFocusTaskIds={setManualFocusTaskIds}
-  archiveCompletedToday={archiveCompletedToday}
-  restoreCompletedTask={restoreCompletedTask}
-  anchorTaskListSoon={anchorTaskListSoon}
-userFirstName={userFirstName}
-/>
+        darkMode={darkMode}
+        themeColor={themeColor}
+        strongerGlass={strongerGlass}
+        border={border}
+        allTasks={allTasks}
+        prioritizedTasks={prioritizedTasks}
+        completedToday={completedToday}
+        completionPercent={completionPercent}
+        dayTimeRemaining={dayTimeRemaining}
+        dayEndTime={dayEndTime}
+        setDayEndTime={setDayEndTime}
+        newTask={newTask}
+        setNewTask={setNewTask}
+        newTaskWhy={newTaskWhy}
+        setNewTaskWhy={setNewTaskWhy}
+        addTask={addTask}
+        setIsExtractModalOpen={setIsExtractModalOpen}
+        toggleTaskById={toggleTaskById}
+        deleteTask={deleteTask}
+        setSelectedTask={setSelectedTask}
+        setIsEditModalOpen={setIsEditModalOpen}
+        manualFocusTaskIds={manualFocusTaskIds}
+        setManualFocusTaskIds={setManualFocusTaskIds}
+        archiveCompletedToday={archiveCompletedToday}
+        restoreCompletedTask={restoreCompletedTask}
+        anchorTaskListSoon={anchorTaskListSoon}
+        userFirstName={userFirstName}
+      />
 
       <div className="hidden sm:block">
-  <section
-    className={`relative z-[120] mb-3 hidden overflow-visible rounded-[28px] border px-4 py-3 sm:block ${strongerGlass} ${border}`}
-  >
-    <div
-      className="pointer-events-none absolute left-5 top-0 h-1 w-[220px] rounded-full"
-      style={{ backgroundColor: themeColor }}
-    />
-
-    <div className="flex flex-col gap-4 pt-2 xl:flex-row xl:items-start">
-      <div className="flex min-w-0 flex-1 items-center gap-4">
-        <div
-          className={`relative flex h-[70px] w-[70px] shrink-0 flex-col items-center justify-center overflow-hidden rounded-[24px] border shadow-[0_16px_40px_rgba(17,24,39,0.08)] ${
-            darkMode
-              ? "border-white/[0.08] bg-white/[0.04]"
-              : "border-black/[0.055] bg-white/75"
-          }`}
-          style={{
-            background: timeOfDayMeta.gradient,
-          }}
-          aria-label={`${timeOfDayMeta.label} view`}
-          title={timeOfDayMeta.label}
-        >
-          <div
-            className="pointer-events-none absolute -right-4 -top-4 h-10 w-10 rounded-full opacity-30 blur-xl"
-            style={{ backgroundColor: themeColor }}
-          />
-
-          <TimeOfDayIcon
-            size={28}
-            strokeWidth={2.3}
-            className="relative"
-            style={{ color: themeColor }}
-          />
-
-          <span
-            className={`relative mt-1 text-[9px] font-[950] uppercase tracking-[0.14em] ${
-              darkMode ? "text-white/48" : "text-[#000000]/42"
-            }`}
-          >
-            {timeOfDayMeta.shortLabel}
-          </span>
-        </div>
-
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <h1 className={`${textStyles.pageTitle} tracking-[-0.04em]`}>
-              {greetingWithName} 👋
-            </h1>
-
-            <span
-              className={`rounded-full px-3 py-1 text-[11px] font-[800] ${
-                darkMode
-                  ? "bg-white/[0.06] text-white/50"
-                  : "bg-black/[0.035] text-[#000000]/45"
-              }`}
+        <div className="mx-auto w-full max-w-[1500px]">
+          <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
+            {/* Left: daily planning */}
+            <section
+              aria-label="Daily planning workspace"
+              className={`min-w-0 rounded-[14px] border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02)] xl:p-6 ${dashboardBorder} ${dashboardSurface}`}
             >
-              {formatDateLong()}
-            </span>
+              <header className="mb-5">
+                <div className="grid min-w-0 gap-5 min-[1180px]:grid-cols-[minmax(0,1fr)_300px] min-[1180px]:items-center">
+                  <div className="flex min-w-0 items-start gap-4">
+                    <div
+                      className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                        darkMode ? "bg-violet-400/10 text-violet-300" : "bg-violet-50 text-violet-600"
+                      }`}
+                    >
+                      <Sparkles size={22} strokeWidth={1.8} />
+                    </div>
 
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`hidden h-7 items-center gap-1.5 rounded-full px-3 text-[11px] font-[800] transition hover:scale-[1.02] ${
-                darkMode
-                  ? "bg-white/[0.06] text-white/55 hover:text-white"
-                  : "bg-black/[0.035] text-[#000000]/50 hover:text-[#000000]"
-              }`}
-            >
-              {darkMode ? <Sun size={13} /> : <Moon size={13} />}
-              {darkMode ? "Light" : "Dark"}
-            </button>
+                    <div className="min-w-0">
+                      <h1
+                        className={`text-[24px] font-[760] leading-tight tracking-[-0.045em] xl:text-[24px] ${
+                          darkMode ? "text-white" : "text-[#15171C]"
+                        }`}
+                      >
+                        {greetingWithName}
+                      </h1>
+
+                      <p
+                        title={insightText}
+                        className={`mt-1.5 line-clamp-2 text-[13px] font-[500] leading-5 ${mutedText}`}
+                      >
+                        {insightText}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      {
+                        label: "Tasks",
+                        value: allTasks.length,
+                        valueClass: darkMode ? "text-blue-300" : "text-blue-600",
+                      },
+                      {
+                        label: "Completed",
+                        value: completedToday.length,
+                        valueClass: darkMode ? "text-emerald-300" : "text-emerald-600",
+                      },
+                      {
+                        label: "Progress",
+                        value: `${completionPercent}%`,
+                        valueClass: darkMode ? "text-violet-300" : "text-violet-600",
+                      },
+                    ].map((metric) => (
+                      <div
+                        key={metric.label}
+                        className={`flex min-h-[78px] min-w-0 flex-col items-center justify-center rounded-[11px] border px-2 text-center ${dashboardBorder}`}
+                      >
+                        <p
+                          className={`text-[25px] font-[720] leading-none tracking-[-0.055em] ${metric.valueClass}`}
+                        >
+                          {metric.value}
+                        </p>
+                        <p
+                          className={`mt-2 text-[10px] font-[700] uppercase tracking-[0.06em] ${mutedText}`}
+                        >
+                          {metric.label}
+                        </p>
+                      </div>
+                    ))}
+                                   </div>
+                </div>
+
+                {/* Time remaining in the working day */}
+                <div
+                  className={`mt-4 border-t pt-3 ${dashboardBorder}`}
+                >
+                  <DayTimeLeftCard
+                    dayEndTime={dayEndTime}
+                    setDayEndTime={setDayEndTime}
+                    dayTimeRemaining={dayTimeRemaining}
+                    darkMode={darkMode}
+                    themeColor={
+                      darkMode ? "#FFFFFF" : "#181818"
+                    }
+                  />
+                </div>
+              </header>
+
+              {/* Add task */}
+              <section className="relative mb-5">
+                <div
+                  role="group"
+                  aria-label="Create a new task"
+                  onClick={() => taskInputRef.current?.focus()}
+                  className={`flex min-h-[58px] w-full cursor-text items-center gap-2 rounded-[11px] border px-3.5 transition focus-within:ring-2 focus-within:ring-violet-500/10 ${
+                    darkMode
+                      ? "border-white/[0.10] bg-white/[0.025] focus-within:border-white/[0.22]"
+                      : "border-[#DDDDE3] bg-white focus-within:border-[#BFC0C8]"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (newTask.trim()) {
+                        void submitNewTask();
+                      } else {
+                        taskInputRef.current?.focus();
+                      }
+                    }}
+                    aria-label={newTask.trim() ? "Add task" : "Focus task input"}
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition ${
+                      darkMode
+                        ? "border-white/[0.10] bg-white/[0.04] text-white/70 hover:bg-white/[0.08]"
+                        : "border-[#DDDDE3] bg-[#F5F6F8] text-[#4F5562] hover:bg-[#ECEEF2]"
+                    }`}
+                  >
+                    <Plus size={19} strokeWidth={1.7} />
+                  </button>
+
+                  <input
+                    ref={taskInputRef}
+                    autoFocus
+                    value={newTask}
+                    onChange={(event) => setNewTask(event.target.value)}
+                    onPaste={handleTaskInputPaste}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void submitNewTask();
+                      }
+                    }}
+                    placeholder="Add a task. Momentuhm will organize it for you."
+                    aria-label="Add a new task"
+                    className={`task-capture-input h-[56px] min-w-0 flex-1 border-0 bg-transparent px-0 text-[14px] font-[500] outline-none ring-0 ${
+                      darkMode
+                        ? "text-white placeholder:text-white/38 caret-white"
+                        : "text-[#252933] placeholder:text-[#747986] caret-[#252933]"
+                    }`}
+                  />
+
+                  <div
+                    className="flex shrink-0 items-center gap-1"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setIsSuggestionsModalOpen(true)}
+                      aria-label="Review suggested dates"
+                      title="Review suggested dates"
+                      className={`flex h-9 w-9 items-center justify-center rounded-[8px] transition ${
+                        darkMode
+                          ? "text-white/48 hover:bg-white/[0.06] hover:text-white"
+                          : "text-[#626875] hover:bg-[#F2F3F6] hover:text-[#252933]"
+                      }`}
+                    >
+                      <Calendar size={17} strokeWidth={1.7} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsExtractModalOpen(true)}
+                      aria-label="Extract tasks from text"
+                      title="Extract tasks from text"
+                      className={`flex h-9 w-9 items-center justify-center rounded-[8px] transition ${
+                        darkMode
+                          ? "text-white/48 hover:bg-white/[0.06] hover:text-white"
+                          : "text-[#626875] hover:bg-[#F2F3F6] hover:text-[#252933]"
+                      }`}
+                    >
+                      <Sparkles size={17} strokeWidth={1.7} />
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <TaskListPanel
+                title="Today"
+                description="Your active tasks"
+                tasks={prioritizedTasks}
+                sortMode={taskSortMode}
+                setSortMode={setTaskSortMode}
+                groupMode={taskGroupMode}
+                setGroupMode={setTaskGroupMode}
+                darkMode={darkMode}
+                border={border}
+                className={strongerGlass}
+                themeColor="#181818"
+                toggleTaskById={toggleTaskById}
+                suggestingTaskIds={suggestingTaskIds}
+                deleteTask={deleteTask}
+                acceptSuggestedDateById={acceptSuggestedDateById}
+                setSelectedTask={setSelectedTask}
+                setIsEditModalOpen={setIsEditModalOpen}
+                emptyMessage="Add a task. Momentuhm will organize it for you."
+                ranked
+                draggableTasks
+                manualFocusTaskIds={manualFocusTaskIds}
+                setManualFocusTaskIds={setManualFocusTaskIds}
+                togglePinTask={togglePinTask}
+                selectWhySuggestion={selectWhySuggestion}
+                taskListRef={taskListRef}
+                anchorTaskListSoon={anchorTaskListSoon}
+                newlyAddedTaskIds={newlyAddedTaskIds}
+                onFocusCapture={() => taskInputRef.current?.focus()}
+              />
+
+              <CompletedTodaySection
+                sectionId="Momentuhm-desktop-completed-anchor"
+                completedToday={completedToday}
+                restoreCompletedTask={restoreCompletedTask}
+                archiveCompletedToday={archiveCompletedToday}
+                darkMode={darkMode}
+                border={border}
+              />
+            </section>
+
+            {/* Right: focus execution */}
+            <aside
+  aria-label="Focus workspace"
+  className={`min-w-0 self-start rounded-[14px] border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02)] xl:p-6 ${dashboardBorder} ${dashboardSurface}`}
+>
+              <FocusModePanel
+                prioritizedTasks={prioritizedTasks}
+                completedToday={completedToday}
+                darkMode={darkMode}
+                border={border}
+                strongerGlass={strongerGlass}
+                themeColor="#181818"
+                toggleTaskById={toggleTaskById}
+                setSelectedTask={setSelectedTask}
+                setIsEditModalOpen={setIsEditModalOpen}
+                manualFocusTaskIds={manualFocusTaskIds}
+                setManualFocusTaskIds={setManualFocusTaskIds}
+              />
+            </aside>
           </div>
-
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <CompactMetric
-              label="tasks"
-              value={allTasks.length}
-              color={themeColor}
-              darkMode={darkMode}
-            />
-            <CompactMetric
-              label="completed"
-              value={completedToday.length}
-              color="#10b981"
-              darkMode={darkMode}
-            />
-            <CompactMetric
-              label="progress"
-              value={`${completionPercent}%`}
-              color={themeColor}
-              darkMode={darkMode}
-            />
-          </div>
         </div>
-      </div>
-
-      <div
-        className={`hidden min-h-14 w-px shrink-0 self-stretch xl:block ${
-          darkMode ? "bg-white/[0.08]" : "bg-black/[0.055]"
-        }`}
-      />
-
-      <div className="min-w-0 xl:w-[360px] xl:pt-1 min-[1700px]:w-[460px]">
-        <div className="flex items-center gap-2">
-          <Sparkles size={14} style={{ color: themeColor }} />
-
-          <p className={textStyles.badge} style={{ color: themeColor }}>
-            AI Veira Insight
-          </p>
-        </div>
-
-        <p
-          className={`mt-1 max-w-[620px] whitespace-normal break-words text-[12px] font-[500] leading-[17px] tracking-[-0.015em] ${
-            darkMode ? "text-white/62" : "text-[#000000]/62"
-          }`}
-        >
-          {boostLoading
-            ? "Reading your wins..."
-            : completedToday.length > 0
-            ? boostMessage ||
-              "Your completed tasks are turning into visible progress."
-            : showMorningBrief
-            ? morningBrief.quote
-            : "Capture one important task. Veira will prioritize the rest."}
-        </p>
-      </div>
-
-      <div
-        className={`hidden min-h-14 w-px shrink-0 self-stretch xl:block ${
-          darkMode ? "bg-white/[0.08]" : "bg-black/[0.055]"
-        }`}
-      />
-
-      <div className="shrink-0 xl:w-[210px] xl:pt-1 min-[1700px]:w-[250px]">
-        <DayTimeLeftCard
-          dayEndTime={dayEndTime}
-          setDayEndTime={setDayEndTime}
-          dayTimeRemaining={dayTimeRemaining}
-          darkMode={darkMode}
-          themeColor={themeColor}
-        />
-      </div>
-    </div>
-  </section>
-
-  <section
-    className={`relative z-[10] mb-5 hidden overflow-hidden rounded-[24px] border px-3 py-3 sm:block ${
-      darkMode
-        ? "border-white/[0.08] bg-[#171717] shadow-[0_18px_54px_rgba(0,0,0,0.30)]"
-        : "border-[#BBBFBF]/32 bg-white/95 shadow-[0_18px_54px_rgba(17,24,39,0.055)] backdrop-blur-2xl"
-    }`}
-  >
-    <div
-      className="pointer-events-none absolute left-0 top-0 h-1 w-full"
-      style={{
-        background: `linear-gradient(90deg, ${themeColor}, ${themeColor}40, transparent)`,
-      }}
-    />
-
-    <div
-      className="pointer-events-none absolute -right-16 -top-20 h-40 w-40 rounded-full opacity-[0.10] blur-3xl"
-      style={{ backgroundColor: themeColor }}
-    />
-
-    <div className="relative grid gap-3 xl:grid-cols-[180px_minmax(0,1fr)_46px_106px] xl:items-center">
-      <div className="flex min-w-0 items-center gap-3">
-        <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px]"
-          style={{
-            color: themeColor,
-            backgroundColor: `${themeColor}12`,
-          }}
-        >
-          <Send size={17} />
-        </div>
-
-        <div className="min-w-0">
-          <h2
-            className={`truncate text-[16px] font-[900] leading-tight tracking-[-0.035em]`}
-          >
-            Quick Capture
-          </h2>
-
-          <p
-            className={`mt-0.5 truncate ${textStyles.meta} ${
-              darkMode ? "text-white/42" : "text-[#000000]/38"
-            }`}
-          >
-            What's on your mind?
-          </p>
-        </div>
-      </div>
-
-      <div
-        className={`grid min-h-[48px] overflow-hidden rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition-all duration-200 focus-within:shadow-[0_14px_36px_rgba(17,24,39,0.08)] md:grid-cols-[minmax(0,1fr)_1px_minmax(0,0.9fr)] ${
-          darkMode
-            ? "border-white/[0.09] bg-[#1f1f21] focus-within:border-[#05AD98]/60"
-            : "border-[#BBBFBF]/42 bg-white focus-within:border-[#05AD98]/55"
-        }`}
-      >
-        <input
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") addTask();
-          }}
-          placeholder="Capture anything..."
-          className={`h-12 min-w-0 bg-transparent px-5 ${textStyles.body} tracking-[-0.015em] outline-none ${
-            darkMode
-              ? "text-white placeholder:text-white/35"
-              : "text-[#000000] placeholder:text-[#000000]/35"
-          }`}
-        />
-
-        <div
-          className={`hidden md:block ${
-            darkMode ? "bg-white/[0.07]" : "bg-black/[0.055]"
-          }`}
-        />
-
-        <input
-          value={newTaskWhy}
-          onChange={(e) => setNewTaskWhy(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") addTask();
-          }}
-          placeholder="Optional context..."
-          className={`h-12 min-w-0 bg-transparent px-5 ${textStyles.body} tracking-[-0.015em] outline-none ${
-            darkMode
-              ? "text-white placeholder:text-white/35"
-              : "text-[#000000] placeholder:text-[#000000]/35"
-          }`}
-        />
-      </div>
-
-      <button
-        onClick={addTask}
-        className="flex h-11 w-11 items-center justify-center rounded-full text-white transition hover:-translate-y-0.5 hover:scale-[1.03] active:scale-[0.98]"
-        style={{
-          backgroundColor: themeColor,
-          boxShadow: `0 16px 34px ${themeColor}36`,
-        }}
-      >
-        <Send size={16} />
-      </button>
-
-      <button
-        onClick={() => setIsExtractModalOpen(true)}
-        style={{
-          "--theme-border": `${themeColor}40`,
-          "--theme-soft": `${themeColor}12`,
-          color: themeColor,
-        } as React.CSSProperties}
-        className={`h-11 rounded-full border px-4 ${textStyles.button} transition hover:scale-[1.02] ${
-          darkMode
-            ? "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
-            : "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
-        }`}
-      >
-        Extract
-      </button>
-    </div>
-  </section>
-
-
-<div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(620px,11fr)_minmax(360px,9fr)] min-[1700px]:grid-cols-[minmax(0,11fr)_minmax(420px,9fr)]">
-
-<div className="order-1 min-w-0 xl:order-1">
-  <TaskListPanel
-  title="Veira Prioritized for You"
-  description="Your priorities, perfectly lined up!"
-  tasks={prioritizedTasks}
-sortMode={taskSortMode}
-setSortMode={setTaskSortMode}
-groupMode={taskGroupMode}
-setGroupMode={setTaskGroupMode}
-darkMode={darkMode}
-  border={border}
-  className={strongerGlass}
-  themeColor={themeColor}
-  toggleTaskById={toggleTaskById}
-  suggestingTaskIds={suggestingTaskIds}
-  deleteTask={deleteTask}
-  acceptSuggestedDateById={acceptSuggestedDateById}
-  setSelectedTask={setSelectedTask}
-  setIsEditModalOpen={setIsEditModalOpen}
-  emptyMessage="Add a task below. Veira will organize it for you."
-  ranked
-  draggableTasks
-  manualFocusTaskIds={manualFocusTaskIds}
-  setManualFocusTaskIds={setManualFocusTaskIds}
-togglePinTask={togglePinTask}
-selectWhySuggestion={selectWhySuggestion}
-taskListRef={taskListRef}
-anchorTaskListSoon={anchorTaskListSoon}
-newlyAddedTaskIds={newlyAddedTaskIds}
-/>
-  </div>
-
-  <div className="order-2 min-w-0 xl:order-2">
-  <FocusModePanel
-  prioritizedTasks={prioritizedTasks}
-  completedToday={completedToday}
-  darkMode={darkMode}
-  border={border}
-  strongerGlass={strongerGlass}
-  themeColor={themeColor}
-  toggleTaskById={toggleTaskById}
-  setSelectedTask={setSelectedTask}
-  setIsEditModalOpen={setIsEditModalOpen}
-  manualFocusTaskIds={manualFocusTaskIds}
-  setManualFocusTaskIds={setManualFocusTaskIds}
-  />
-  </div>
-</div>
-
-      <CompletedTodaySection
-  completedToday={completedToday}
-  restoreCompletedTask={restoreCompletedTask}
-  archiveCompletedToday={archiveCompletedToday}
-  themeColor={themeColor}
-  darkMode={darkMode}
-  glass={glass}
-  strongerGlass={strongerGlass}
-  border={border}
-/>
       </div>
     </>
   );
@@ -3630,6 +3760,48 @@ userFirstName = "",
   const [selectedChip, setSelectedChip] = useState("");
   const [showAllMobileTasks, setShowAllMobileTasks] = useState(false);
   const [isMobileTimePickerOpen, setIsMobileTimePickerOpen] = useState(false);
+  const [mobileWorkspaceMode, setMobileWorkspaceMode] =
+    useState<"tasks" | "focus">("tasks");
+
+    useEffect(() => {
+      if (typeof window === "undefined") return;
+    
+      const openTasksWorkspace = () => {
+        setMobileWorkspaceMode("tasks");
+      };
+    
+      window.addEventListener(
+        "momentuhm:open-tasks",
+        openTasksWorkspace
+      );
+    
+      return () => {
+        window.removeEventListener(
+          "momentuhm:open-tasks",
+          openTasksWorkspace
+        );
+      };
+    }, []);
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const openFocusWorkspace = () => {
+    setMobileWorkspaceMode("focus");
+
+    window.setTimeout(() => {
+      document
+        .getElementById("Momentuhm-mobile-workspace-anchor")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  };
+
+  window.addEventListener("momentuhm:open-focus", openFocusWorkspace);
+
+  return () => {
+    window.removeEventListener("momentuhm:open-focus", openFocusWorkspace);
+  };
+}, []);
 
 useEffect(() => {
   if (typeof window === "undefined") return;
@@ -3925,7 +4097,7 @@ const filteredTasks = activeChip
       className="text-[25px] font-[900] leading-none tracking-[-0.055em]"
       style={{ color: darkMode ? "#FFFFFF" : "#000000" }}
     >
-      Veira
+      Momentuhm
     </p>
 
     <p
@@ -3941,7 +4113,7 @@ const filteredTasks = activeChip
       className={`flex h-9 items-center gap-1.5 rounded-full border px-3 text-[11px] font-[850] ${
         darkMode
           ? "border-white/[0.08] bg-white/[0.045] text-white/48"
-          : "border-black/[0.06] bg-white text-[#000000]/45"
+          : "border-black/[0.06] bg-white text-[#666661]/45"
       }`}
     >
       <Sparkles size={13} style={{ color: themeColor }} />
@@ -3959,7 +4131,7 @@ const filteredTasks = activeChip
       className={
         darkMode
           ? "mt-1 text-xs font-[700] text-white/42"
-          : "mt-1 text-xs font-[700] text-[#000000]/42"
+          : "mt-1 text-xs font-[700] text-[#666661]/42"
       }
     >
       Let&apos;s make today count.
@@ -4020,7 +4192,7 @@ const filteredTasks = activeChip
                       mobileEndTimeParts.period as "AM" | "PM"
                     )
                   }
-                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#000000] outline-none"
+                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#666661] outline-none"
                 >
                   {mobileHourOptions.map((hour) => (
                     <option key={hour} value={hour}>
@@ -4038,7 +4210,7 @@ const filteredTasks = activeChip
                       mobileEndTimeParts.period as "AM" | "PM"
                     )
                   }
-                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#000000] outline-none"
+                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#666661] outline-none"
                 >
                   {mobileMinuteOptions.map((minute) => (
                     <option key={minute} value={minute}>
@@ -4056,7 +4228,7 @@ const filteredTasks = activeChip
                       e.target.value as "AM" | "PM"
                     )
                   }
-                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#000000] outline-none"
+                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#666661] outline-none"
                 >
                   <option value="AM">AM</option>
                   <option value="PM">PM</option>
@@ -4126,8 +4298,8 @@ const filteredTasks = activeChip
               Quick Capture
             </h2>
 
-            <p className={darkMode ? "text-[11px] font-[700] text-white/40" : "text-[11px] font-[700] text-[#000000]/40"}>
-              Veira will organize it for you
+            <p className={darkMode ? "text-[11px] font-[700] text-white/40" : "text-[11px] font-[700] text-[#666661]/40"}>
+              Momentuhm will organize it for you
             </p>
           </div>
         </div>
@@ -4149,7 +4321,7 @@ const filteredTasks = activeChip
             className={`h-12 w-full bg-transparent px-4 text-[13px] font-[800] outline-none ${
               darkMode
                 ? "text-white placeholder:text-white/32"
-                : "text-[#000000] placeholder:text-[#000000]/32"
+                : "text-[#666661] placeholder:text-[#666661]/32"
             }`}
           />
 
@@ -4166,7 +4338,7 @@ const filteredTasks = activeChip
               className={`h-12 min-w-0 bg-transparent px-4 text-[13px] font-[800] outline-none ${
                 darkMode
                   ? "text-white placeholder:text-white/32"
-                  : "text-[#000000] placeholder:text-[#000000]/32"
+                  : "text-[#666661] placeholder:text-[#666661]/32"
               }`}
             />
 
@@ -4194,7 +4366,69 @@ const filteredTasks = activeChip
       </section>
 
       <section
-  id="veira-mobile-task-list-anchor"
+        id="Momentuhm-mobile-workspace-anchor"
+        className={`mb-4 flex items-center justify-between border-b pb-3 ${
+          darkMode ? "border-white/[0.08]" : "border-black/[0.07]"
+        }`}
+      >
+        <div>
+          <p
+            className={`text-[10px] font-[850] uppercase tracking-[0.14em] ${
+              darkMode ? "text-white/32" : "text-[#666661]/32"
+            }`}
+          >
+            Workspace
+          </p>
+          <p
+            className={`mt-1 text-[12px] font-[650] ${
+              darkMode ? "text-white/55" : "text-[#666661]/45"
+            }`}
+          >
+            {mobileWorkspaceMode === "tasks"
+              ? "Plan and organize your day."
+              : "Work through what matters now."}
+          </p>
+        </div>
+
+        <div
+          className={`flex rounded-[12px] border p-1 ${
+            darkMode
+              ? "border-white/[0.08] bg-white/[0.04]"
+              : "border-black/[0.06] bg-black/[0.025]"
+          }`}
+        >
+          {[
+            { label: "Tasks", value: "tasks" },
+            { label: "Focus", value: "focus" },
+          ].map((option) => {
+            const isActive = mobileWorkspaceMode === option.value;
+
+            return (
+              <button
+                key={option.value}
+                onClick={() =>
+                  setMobileWorkspaceMode(option.value as "tasks" | "focus")
+                }
+                className={`h-8 rounded-[9px] px-3 text-[11px] font-[850] transition ${
+                  isActive
+                    ? darkMode
+                      ? "bg-white text-black"
+                      : "bg-white text-[#181818] shadow-[0_1px_4px_rgba(0,0,0,0.08)]"
+                    : darkMode
+                    ? "text-white/42"
+                    : "text-[#666661]/42"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {mobileWorkspaceMode === "tasks" && (
+      <section
+  id="Momentuhm-mobile-task-list-anchor"
   className={`mb-4 scroll-mt-5 overflow-hidden rounded-[28px] border p-4 shadow-[0_18px_50px_rgba(17,24,39,0.06)] ${
     darkMode
       ? "border-white/[0.08] bg-[#171717]"
@@ -4204,13 +4438,13 @@ const filteredTasks = activeChip
        <div className="mb-4 flex items-start justify-between gap-3">
   <div className="min-w-0">
     <h2 className="flex items-center gap-2 text-[20px] font-[900] leading-tight tracking-[-0.055em]">
-      Veira Prioritized for You
+      Momentuhm prioritized for You
       <Sparkles size={16} style={{ color: themeColor }} />
     </h2>
 
     <p
       className={`mt-1.5 text-[13px] font-[750] leading-5 tracking-[-0.02em] ${
-        darkMode ? "text-white/45" : "text-[#000000]/48"
+        darkMode ? "text-white/55" : "text-[#666661]/48"
       }`}
     >
       Top moves based on intent, urgency, and priority.
@@ -4221,7 +4455,7 @@ const filteredTasks = activeChip
 <div className="mb-3 flex items-center justify-between gap-3">
   <span
     className={`shrink-0 text-[10px] font-[850] uppercase tracking-[0.14em] ${
-      darkMode ? "text-white/32" : "text-[#000000]/32"
+      darkMode ? "text-white/32" : "text-[#666661]/32"
     }`}
   >
     Group by
@@ -4252,7 +4486,7 @@ const filteredTasks = activeChip
               ? "text-white"
               : darkMode
               ? "text-white/42"
-              : "text-[#000000]/45"
+              : "text-[#666661]/45"
           }`}
           style={isActive ? { backgroundColor: themeColor } : undefined}
         >
@@ -4263,7 +4497,7 @@ const filteredTasks = activeChip
   </div>
 </div>
 
-<div className="veira-mobile-category-tabs -mx-1 mb-3 flex overflow-x-auto px-1 pb-0">
+<div className="Momentuhm-mobile-category-tabs -mx-1 mb-3 flex overflow-x-auto px-1 pb-0">
   {mobileGroupTabs.map((chip: any) => {
     const isActive = activeChip === chip.key;
 
@@ -4279,10 +4513,10 @@ const filteredTasks = activeChip
           isActive
             ? darkMode
               ? "text-white"
-              : "text-[#000000]"
+              : "text-[#666661]"
             : darkMode
             ? "text-white/42"
-            : "text-[#000000]/45"
+            : "text-[#666661]/45"
         }`}
       >
         <span>{chip.label}</span>
@@ -4292,8 +4526,8 @@ const filteredTasks = activeChip
             isActive
               ? "text-white"
               : darkMode
-              ? "bg-white/[0.07] text-white/45"
-              : "bg-black/[0.045] text-[#000000]/45"
+              ? "bg-white/[0.07] text-white/55"
+              : "bg-black/[0.045] text-[#666661]/45"
           }`}
           style={
             isActive
@@ -4323,14 +4557,14 @@ const filteredTasks = activeChip
               className={`rounded-[22px] border border-dashed p-6 text-center text-sm font-[700] ${
                 darkMode
                   ? "border-white/[0.10] text-white/35"
-                  : "border-black/[0.08] text-[#000000]/35"
+                  : "border-black/[0.08] text-[#666661]/35"
               }`}
             >
               No tasks here yet.
             </div>
           )}
 
-          {visibleTasks.map((task: any, index: number) => {
+{visibleTasks.map((task: any) => {
             const visibleDueDate = task.dueDate || task.suggestedDueDate;
             const priorityColor =
               task.priority === "High"
@@ -4358,18 +4592,11 @@ const filteredTasks = activeChip
                   >
                     <Circle
                       size={20}
-                      className={darkMode ? "text-white/30" : "text-[#000000]/30"}
+                      className={darkMode ? "text-white/30" : "text-[#666661]/30"}
                     />
                   </button>
 
-                  <div
-                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
-                    style={{
-                      backgroundColor: index < 3 ? themeColor : "#9ca3af",
-                    }}
-                  >
-                    {index + 1}
-                  </div>
+                 
 
                   <button
                     onClick={() => {
@@ -4380,7 +4607,7 @@ const filteredTasks = activeChip
                   >
                <p
   className={`text-[15.5px] font-[700] leading-[21px] tracking-[-0.025em] ${
-    darkMode ? "text-white/90" : "text-[#000000]"
+    darkMode ? "text-white/90" : "text-[#666661]"
   }`}
 >
   {task.title}
@@ -4390,7 +4617,7 @@ const filteredTasks = activeChip
   <span
     className={
       darkMode
-        ? "text-[12px] font-[600] text-white/45"
+        ? "text-[12px] font-[600] text-white/55"
         : "text-[12px] font-[600] text-slate-500"
     }
   >
@@ -4413,7 +4640,7 @@ const filteredTasks = activeChip
     <span
       className={
         darkMode
-          ? "text-[12px] font-[600] text-white/45"
+          ? "text-[12px] font-[600] text-white/55"
           : "text-[12px] font-[600] text-slate-500"
       }
     >
@@ -4436,8 +4663,8 @@ const filteredTasks = activeChip
       manualFocusTaskIds.includes(task.id)
         ? "text-white"
         : darkMode
-        ? "bg-white/[0.06] text-white/45"
-        : "bg-black/[0.04] text-[#000000]/45"
+        ? "bg-white/[0.06] text-white/55"
+        : "bg-black/[0.04] text-[#666661]/45"
     }`}
     style={
       manualFocusTaskIds.includes(task.id)
@@ -4459,7 +4686,7 @@ const filteredTasks = activeChip
     className={`flex h-8 w-8 items-center justify-center rounded-full transition active:scale-95 ${
       darkMode
         ? "bg-white/[0.06] text-white/38 hover:text-red-300"
-        : "bg-black/[0.04] text-[#000000]/38 hover:text-red-500"
+        : "bg-black/[0.04] text-[#666661]/38 hover:text-red-500"
     }`}
     title="Delete task"
   >
@@ -4478,14 +4705,16 @@ const filteredTasks = activeChip
             className={`mt-3 h-11 w-full rounded-[18px] border text-xs font-[900] ${
               darkMode
                 ? "border-white/[0.08] bg-white/[0.04] text-white/50"
-                : "border-black/[0.06] bg-black/[0.025] text-[#000000]/50"
+                : "border-black/[0.06] bg-black/[0.025] text-[#666661]/50"
             }`}
           >
             {showAllMobileTasks ? "Show less" : `Show ${hiddenCount} more`}
           </button>
         )}
       </section>
+      )}
 
+      {mobileWorkspaceMode === "focus" && (
       <section
         id="mobile-focus-card"
         className={`mb-4 rounded-[28px] border p-4 shadow-[0_18px_50px_rgba(17,24,39,0.06)] ${
@@ -4501,7 +4730,7 @@ const filteredTasks = activeChip
               <Sparkles size={15} style={{ color: themeColor }} />
             </h2>
 
-            <p className={darkMode ? "mt-1 text-xs font-[700] text-white/42" : "mt-1 text-xs font-[700] text-[#000000]/42"}>
+            <p className={darkMode ? "mt-1 text-xs font-[700] text-white/42" : "mt-1 text-xs font-[700] text-[#666661]/42"}>
               Your strongest next moves.
             </p>
           </div>
@@ -4523,7 +4752,7 @@ const filteredTasks = activeChip
               className={`rounded-[22px] border border-dashed px-4 py-8 text-center ${
                 darkMode
                   ? "border-white/[0.10] text-white/35"
-                  : "border-black/[0.08] text-[#000000]/35"
+                  : "border-black/[0.08] text-[#666661]/35"
               }`}
             >
               <Target size={26} className="mx-auto mb-3 opacity-55" />
@@ -4548,7 +4777,7 @@ const filteredTasks = activeChip
               }`}
             >
               <span
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-[800] text-white"
                 style={{ backgroundColor: themeColor }}
               >
                 {index + 1}
@@ -4559,104 +4788,45 @@ const filteredTasks = activeChip
                   {task.title}
                 </p>
 
-                <p className={darkMode ? "mt-1 text-[10px] font-[800] text-white/38" : "mt-1 text-[10px] font-[800] text-[#000000]/38"}>
+                <p className={darkMode ? "mt-1 text-[10px] font-[800] text-white/38" : "mt-1 text-[10px] font-[800] text-[#666661]/38"}>
                   {task.category} ·{" "}
                   {task.priority === "Medium" ? "Mid" : task.priority}
                 </p>
               </div>
 
-              <Eye size={15} className={darkMode ? "text-white/35" : "text-[#000000]/35"} />
+              <Eye size={15} className={darkMode ? "text-white/35" : "text-[#666661]/35"} />
             </button>
           ))}
         </div>
       </section>
+      )}
 
-      <section className="mb-2">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <h2
-              className="text-[11px] font-[900] uppercase tracking-[0.18em]"
-              style={{ color: themeColor }}
-            >
-              Completed Today
-            </h2>
-
-            <span
-              className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-[900] text-white"
-              style={{ backgroundColor: themeColor }}
-            >
-              {completedToday.length}
-            </span>
-          </div>
-
-          <button
-            onClick={archiveCompletedToday}
-            className={`text-xs font-[900] ${
-              completedToday.length === 0
-                ? "pointer-events-none opacity-30"
-                : darkMode
-                ? "text-white/48"
-                : "text-[#000000]/42"
-            }`}
-          >
-            Archive All
-          </button>
-        </div>
-
-        <div
-          className={`overflow-hidden rounded-[24px] border ${
-            darkMode
-              ? "border-white/[0.08] bg-[#171717]"
-              : "border-black/[0.06] bg-white"
-          }`}
-        >
-          {completedToday.length === 0 && (
-            <div className={darkMode ? "p-5 text-sm font-[700] text-white/35" : "p-5 text-sm font-[700] text-[#000000]/35"}>
-              Nothing completed yet.
-            </div>
-          )}
-
-          {completedToday.map((task: any) => (
-            <div
-              key={task.id}
-              className={darkMode ? "flex items-center gap-3 border-b border-white/[0.07] px-4 py-3 last:border-b-0" : "flex items-center gap-3 border-b border-black/[0.055] px-4 py-3 last:border-b-0"}
-            >
-              <CheckCircle2 size={18} className="shrink-0 text-emerald-500" />
-
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-[850]">{task.title}</p>
-                <p className={darkMode ? "mt-0.5 text-[10px] font-[750] text-white/35" : "mt-0.5 text-[10px] font-[750] text-[#000000]/35"}>
-                  {task.category}
-                </p>
-              </div>
-
-              <button
-                onClick={() => restoreCompletedTask(task.id)}
-                className={darkMode ? "rounded-full bg-white/[0.06] px-3 py-1.5 text-[10px] font-[900] text-white/50" : "rounded-full bg-black/[0.04] px-3 py-1.5 text-[10px] font-[900] text-[#000000]/50"}
-              >
-                Restore
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
+{mobileWorkspaceMode === "tasks" && (
+  <CompletedTodaySection
+  sectionId="Momentuhm-mobile-completed-anchor"
+  completedToday={completedToday}
+  restoreCompletedTask={restoreCompletedTask}
+  archiveCompletedToday={archiveCompletedToday}
+  darkMode={darkMode}
+  border={border}
+/>
+)}
     </div>
   );
 }
+
 
 function TaskListPanel({
   title,
   description,
   tasks,
-sortMode = "veira",
-setSortMode = () => {},
-groupMode = "none",
-setGroupMode = () => {},
-emptyMessage,
+  sortMode = "date",
+  setSortMode = () => {},
+  groupMode = "none",
+  setGroupMode = () => {},
+  emptyMessage,
   darkMode,
   border,
-  className,
-  themeColor,
   toggleTaskById,
   suggestingTaskIds = [],
   deleteTask,
@@ -4672,102 +4842,80 @@ emptyMessage,
   taskListRef,
   anchorTaskListSoon = () => {},
   newlyAddedTaskIds = [],
+  onFocusCapture = () => {},
 }: any) {
   const [showAllTasks, setShowAllTasks] = useState(false);
-  const [expandedWhyTaskId, setExpandedWhyTaskId] = useState<string | null>(null);
-  const whyDropdownRef = useRef<HTMLDivElement | null>(null);
-  
-  const defaultVisibleTaskCount = 6;
+  const defaultVisibleTaskCount = 15;
+
+  const tableGridClass =
+    "grid w-full grid-cols-[36px_minmax(0,1fr)_72px_76px_88px_30px] items-stretch";
+
+  const cardBorder = darkMode
+    ? "border-white/[0.10]"
+    : "border-[#DDDDE3]";
+
+  const rowBorder = darkMode
+    ? "border-white/[0.08]"
+    : "border-[#E8E9ED]";
+
+  const mutedText = darkMode
+    ? "text-white/48"
+    : "text-[#6B6F7B]";
 
   const priorityRank: Record<string, number> = {
     High: 3,
     Medium: 2,
+    Med: 2,
     Low: 1,
   };
 
   const sortedTasks = useMemo(() => {
     const nextTasks = [...tasks];
-  
+
     const comparePinned = (a: any, b: any) => {
       const aPinned = Boolean(a.pinned);
       const bPinned = Boolean(b.pinned);
-  
-      if (aPinned !== bPinned) {
-        return aPinned ? -1 : 1;
-      }
-  
-      return 0;
+      if (aPinned === bPinned) return 0;
+      return aPinned ? -1 : 1;
     };
-  
-    const compareOverdue = (a: any, b: any) => {
-      const aOverdue = Boolean(a.dueDate && isOverdue(a.dueDate));
-      const bOverdue = Boolean(b.dueDate && isOverdue(b.dueDate));
-  
-      if (aOverdue !== bOverdue) {
-        return aOverdue ? -1 : 1;
-      }
-  
-      return 0;
-    };
-  
+
     const compareDates = (a: any, b: any) => {
       const dateA = getTaskDate(a);
       const dateB = getTaskDate(b);
-  
+
       if (!dateA && !dateB) return (b.score || 0) - (a.score || 0);
       if (!dateA) return 1;
       if (!dateB) return -1;
-  
-      const dateDiff = dateA.localeCompare(dateB);
-  
-      if (dateDiff !== 0) return dateDiff;
-  
-      return (b.score || 0) - (a.score || 0);
+
+      const dateDifference = dateA.localeCompare(dateB);
+      return dateDifference !== 0
+        ? dateDifference
+        : (b.score || 0) - (a.score || 0);
     };
-  
-    if (sortMode === "date") {
-      return nextTasks.sort((a, b) => {
-        const pinnedDiff = comparePinned(a, b);
-        if (pinnedDiff !== 0) return pinnedDiff;
-  
-        return compareDates(a, b);
-      });
-    }
-  
+
     if (sortMode === "priority") {
       return nextTasks.sort((a, b) => {
-        const pinnedDiff = comparePinned(a, b);
-        if (pinnedDiff !== 0) return pinnedDiff;
-  
-        const priorityDiff =
+        const pinnedDifference = comparePinned(a, b);
+        if (pinnedDifference !== 0) return pinnedDifference;
+
+        const priorityDifference =
           (priorityRank[b.priority] || 0) - (priorityRank[a.priority] || 0);
-  
-        if (priorityDiff !== 0) return priorityDiff;
-  
+
+        if (priorityDifference !== 0) return priorityDifference;
         return compareDates(a, b);
       });
     }
-  
+
     return nextTasks.sort((a, b) => {
-      const pinnedDiff = comparePinned(a, b);
-      if (pinnedDiff !== 0) return pinnedDiff;
-  
-      const overdueDiff = compareOverdue(a, b);
-      if (overdueDiff !== 0) return overdueDiff;
-  
-      if ((b.score || 0) !== (a.score || 0)) {
-        return (b.score || 0) - (a.score || 0);
-      }
-  
-      return compareDates(a, b);
+      const pinnedDifference = comparePinned(a, b);
+      return pinnedDifference !== 0 ? pinnedDifference : compareDates(a, b);
     });
   }, [tasks, sortMode]);
 
   const categoryGroupOrder: Record<string, number> = {};
 
   sortedTasks.forEach((task: any) => {
-    const categoryTitle = task.category || "No Category";
-
+    const categoryTitle = task.category || "No category";
     if (categoryGroupOrder[categoryTitle] === undefined) {
       categoryGroupOrder[categoryTitle] = Object.keys(categoryGroupOrder).length;
     }
@@ -4775,153 +4923,63 @@ emptyMessage,
 
   const getTaskGroupMeta = (task: any) => {
     if (groupMode === "category") {
-      const categoryTitle = task.category || "No Category";
-
+      const categoryTitle = task.category || "No category";
       return {
         key: `category:${categoryTitle}`,
         title: categoryTitle,
-        description: "Category",
         order: categoryGroupOrder[categoryTitle] ?? 999,
-        dotColor: themeColor,
       };
     }
 
     if (groupMode === "priority") {
-      const normalizedPriority =
-        task.priority === "Med" ? "Medium" : task.priority || "Low";
-
-      const priorityMeta: Record<
-        string,
-        {
-          key: string;
-          title: string;
-          description: string;
-          order: number;
-          dotColor: string;
-        }
-      > = {
-        High: {
-          key: "priority:high",
-          title: "High",
-          description: "Highest attention",
-          order: 0,
-          dotColor: "#ef4444",
-        },
-        Medium: {
-          key: "priority:medium",
-          title: "Mid",
-          description: "Useful, but less urgent",
-          order: 1,
-          dotColor: "#f97316",
-        },
-        Low: {
-          key: "priority:low",
-          title: "Low",
-          description: "Keep visible",
-          order: 2,
-          dotColor: "#10b981",
-        },
+      const normalizedPriority = task.priority === "Med" ? "Medium" : task.priority || "Low";
+      const order = normalizedPriority === "High" ? 0 : normalizedPriority === "Medium" ? 1 : 2;
+      return {
+        key: `priority:${normalizedPriority}`,
+        title: normalizedPriority === "Medium" ? "Mid" : normalizedPriority,
+        order,
       };
-
-      return priorityMeta[normalizedPriority] || priorityMeta.Low;
     }
 
     if (groupMode === "date") {
       const date = getTaskDate(task);
-
-      if (!date) {
-        return {
-          key: "date:no-date",
-          title: "No date",
-          description: "Needs scheduling",
-          order: 9999999999999,
-          dotColor: "#71717a",
-        };
-      }
-
-      if (isOverdue(date)) {
-        return {
-          key: "date:overdue",
-          title: "Overdue",
-          description: "Past due",
-          order: 0,
-          dotColor: "#ef4444",
-        };
-      }
-
-      if (isToday(date)) {
-        return {
-          key: "date:today",
-          title: "Today",
-          description: formatDueDate(date),
-          order: 1,
-          dotColor: themeColor,
-        };
-      }
-
-      if (isTomorrow(date)) {
-        return {
-          key: "date:tomorrow",
-          title: "Tomorrow",
-          description: formatDueDate(date),
-          order: 2,
-          dotColor: "#f59e0b",
-        };
-      }
-
+      if (!date) return { key: "date:no-date", title: "No date", order: 9999999999999 };
+      if (isOverdue(date)) return { key: "date:overdue", title: "Overdue", order: 0 };
+      if (isToday(date)) return { key: "date:today", title: "Today", order: 1 };
+      if (isTomorrow(date)) return { key: "date:tomorrow", title: "Tomorrow", order: 2 };
       return {
         key: `date:${date}`,
         title: formatDueDate(date),
-        description: "Scheduled date",
         order: 3 + new Date(`${date}T00:00:00`).getTime(),
-        dotColor: "#3b82f6",
       };
     }
 
-    return {
-      key: "none",
-      title: "",
-      description: "",
-      order: 0,
-      dotColor: themeColor,
-    };
+    return { key: "none", title: "", order: 0 };
   };
 
   const displayTasks =
     groupMode === "none"
       ? sortedTasks
       : sortedTasks
-          .map((task: any, index: number) => ({
-            task,
-            index,
-          }))
+          .map((task: any, originalIndex: number) => ({ task, originalIndex }))
           .sort((a, b) => {
-            const aPinned = Boolean(a.task.pinned);
-            const bPinned = Boolean(b.task.pinned);
-          
-            if (aPinned !== bPinned) {
-              return aPinned ? -1 : 1;
-            }
-          
             const groupA = getTaskGroupMeta(a.task);
             const groupB = getTaskGroupMeta(b.task);
-          
-            if (groupA.order !== groupB.order) {
-              return groupA.order - groupB.order;
+
+            if (groupA.order !== groupB.order) return groupA.order - groupB.order;
+            if (Boolean(a.task.pinned) !== Boolean(b.task.pinned)) {
+              return a.task.pinned ? -1 : 1;
             }
-          
-            return a.index - b.index;
+            return a.originalIndex - b.originalIndex;
           })
           .map(({ task }) => task);
 
   const groupCounts = displayTasks.reduce<Record<string, number>>(
-    (acc, task: any) => {
-      if (groupMode === "none") return acc;
-
+    (counts, task: any) => {
+      if (groupMode === "none") return counts;
       const groupKey = getTaskGroupMeta(task).key;
-      acc[groupKey] = (acc[groupKey] || 0) + 1;
-
-      return acc;
+      counts[groupKey] = (counts[groupKey] || 0) + 1;
+      return counts;
     },
     {}
   );
@@ -4935,900 +4993,1215 @@ emptyMessage,
     0
   );
 
+  const openTask = (task: any) => {
+    setSelectedTask(task);
+    setIsEditModalOpen(true);
+  };
+
   const addTaskToFocus = (taskId: string) => {
     if (!setManualFocusTaskIds) return;
 
-    setManualFocusTaskIds((prev: string[]) => {
-      if (prev.includes(taskId)) return prev;
-      if (prev.length >= 3) return prev;
-
-      return [...prev, taskId];
+    setManualFocusTaskIds((previous: string[]) => {
+      if (previous.includes(taskId) || previous.length >= 3) return previous;
+      return [...previous, taskId];
     });
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        whyDropdownRef.current &&
-        !whyDropdownRef.current.contains(event.target as Node)
-      ) {
-        setExpandedWhyTaskId(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   return (
     <section
-  id="veira-task-list-anchor"
-  ref={taskListRef}
-  className={`scroll-mt-[148px] min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:px-6 sm:py-5 lg:scroll-mt-8 ${className} ${border}`}
->
-      <div className="mb-3 flex flex-col gap-3 sm:mb-3 min-[1700px]:mb-0 min-[1700px]:flex-row min-[1700px]:items-start min-[1700px]:justify-between min-[1700px]:gap-3">
+      id="Momentuhm-task-list-anchor"
+      ref={taskListRef}
+      aria-label={description || title}
+      className={`w-full min-w-0 scroll-mt-[148px] overflow-hidden rounded-[12px] border lg:scroll-mt-8 ${cardBorder}`}
+    >
+      <div
+        className={`flex min-h-[72px] flex-col gap-3 border-b px-4 py-3.5 xl:flex-row xl:items-center xl:justify-between ${rowBorder}`}
+      >
         <div className="min-w-0">
-          <h2 className={`flex items-center gap-2 ${textStyles.sectionTitle} tracking-[-0.025em]`}>
+          <h2
+            className={`text-[20px] font-[760] leading-none tracking-[-0.04em] ${
+              darkMode ? "text-white" : "text-[#17191F]"
+            }`}
+          >
             {title}
-            <Sparkles size={16} style={{ color: themeColor }} />
           </h2>
-
-          <p
-  className={`mt-1 ${textStyles.meta}`}
-  style={{
-    color: themeColor,
-  }}
->
-  {description}
-</p>
+          <p className={`mt-1.5 text-[12px] font-[500] ${mutedText}`}>
+            {description}
+          </p>
         </div>
 
         {ranked && (
-          <div className="flex w-full shrink-0 flex-col gap-1 min-[1700px]:w-auto min-[1700px]:items-end">
-            <div className="flex w-full items-center justify-between gap-2 min-[1700px]:w-auto min-[1700px]:justify-end">
-              <span
-                className={`shrink-0 ${textStyles.badge} ${
-                  darkMode ? "text-white/35" : "text-[#000000]/35"
-                }`}
-              >
-                Group by
-              </span>
-
-              <div
-                className={`flex max-w-full overflow-x-auto rounded-[14px] border p-0.5 ${
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="relative">
+              <span className="sr-only">Sort tasks</span>
+              <select
+                value={sortMode}
+                onChange={(event) => {
+                  setSortMode(event.target.value as SortMode);
+                  setShowAllTasks(false);
+                  anchorTaskListSoon();
+                }}
+                className={`h-9 appearance-none rounded-[8px] border bg-transparent pl-3 pr-8 text-[11px] font-[650] outline-none ${
                   darkMode
-                    ? "border-white/[0.08] bg-white/[0.04]"
-                    : "border-black/[0.06] bg-black/[0.025]"
+                    ? "border-white/[0.10] text-white/72"
+                    : "border-[#DDDDE3] text-[#484D59]"
                 }`}
               >
-                {[
-                  { label: "None", value: "none" },
-                  { label: "Category", value: "category" },
-                  { label: "Priority", value: "priority" },
-                  { label: "Due date", value: "date" },
-                ].map((option) => {
-                  const isActive = groupMode === option.value;
+                <option value="date">Sort: Date</option>
+                <option value="priority">Sort: Priority</option>
+              </select>
+              <ChevronDown
+                size={13}
+                className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 ${mutedText}`}
+              />
+            </label>
 
-                  return (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setGroupMode(option.value as GroupMode);
-                        setShowAllTasks(false);
-                        anchorTaskListSoon();
-                      }}
-                      className={`h-7 shrink-0 rounded-[11px] px-2 text-[9px] leading-none font-[900] uppercase tracking-[0.14em] transition ${
-                        isActive
-                          ? "text-white"
-                          : darkMode
-                          ? "text-white/45 hover:text-white"
-                          : "text-[#000000]/45 hover:text-[#000000]"
-                      }`}
-                      style={
-                        isActive ? { backgroundColor: themeColor } : undefined
-                      }
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex w-full items-center justify-between gap-2 min-[1700px]:w-auto min-[1700px]:justify-end">
-              <span
-                className={`shrink-0 ${textStyles.badge} ${
-                  darkMode ? "text-white/35" : "text-[#000000]/35"
-                }`}
-              >
-                Sort by
-              </span>
-
-              <div
-                className={`flex rounded-[14px] border p-0.5 ${
+            <label className="relative">
+              <span className="sr-only">Group tasks</span>
+              <select
+                value={groupMode}
+                onChange={(event) => {
+                  setGroupMode(event.target.value as GroupMode);
+                  setShowAllTasks(false);
+                  anchorTaskListSoon();
+                }}
+                className={`h-9 appearance-none rounded-[8px] border bg-transparent pl-3 pr-8 text-[11px] font-[650] outline-none ${
                   darkMode
-                    ? "border-white/[0.08] bg-white/[0.04]"
-                    : "border-black/[0.06] bg-black/[0.025]"
+                    ? "border-white/[0.10] text-white/72"
+                    : "border-[#DDDDE3] text-[#484D59]"
                 }`}
               >
-                {[
-                  { label: "Veira", value: "veira" },
-                  { label: "Date", value: "date" },
-                  { label: "Priority", value: "priority" },
-                ].map((option) => {
-                  const isActive = sortMode === option.value;
+                <option value="none">Group: None</option>
+                <option value="category">Group: Category</option>
+                <option value="priority">Group: Priority</option>
+                <option value="date">Group: Due</option>
+              </select>
+              <ChevronDown
+                size={13}
+                className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 ${mutedText}`}
+              />
+            </label>
 
-                  return (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setSortMode(option.value as SortMode);
-                        setShowAllTasks(false);
-                        anchorTaskListSoon();
-                      }}
-                      className={`h-7 rounded-[11px] px-2.5 text-[9px] leading-none font-[900] uppercase tracking-[0.14em] transition ${
-                        isActive
-                          ? "text-white"
-                          : darkMode
-                          ? "text-white/45 hover:text-white"
-                          : "text-[#000000]/45 hover:text-[#000000]"
-                      }`}
-                      style={
-                        isActive ? { backgroundColor: themeColor } : undefined
-                      }
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <button
+              type="button"
+              aria-label="Task list options"
+              className={`flex h-9 w-9 items-center justify-center rounded-[8px] border transition ${
+                darkMode
+                  ? "border-white/[0.10] text-white/48 hover:bg-white/[0.06] hover:text-white"
+                  : "border-[#DDDDE3] text-[#676D79] hover:bg-[#F4F5F7] hover:text-[#252933]"
+              }`}
+            >
+              <MoreVertical size={16} strokeWidth={1.8} />
+            </button>
           </div>
         )}
       </div>
 
-      <div className={groupMode === "none" ? "space-y-0 sm:space-y-3" : "space-y-0"}>
-        {tasks.length === 0 && (
+      {tasks.length === 0 ? (
+        <div className={`px-5 py-14 text-center text-[13px] font-[500] ${mutedText}`}>
+          {emptyMessage}
+        </div>
+      ) : (
+        <div className="min-w-0 overflow-x-hidden">
           <div
-            className={`rounded-2xl border border-dashed p-8 text-center text-sm ${
-              darkMode
-                ? "border-white/10 text-white/40"
-                : "border-black/10 text-[#000000]/40"
+            className={`${tableGridClass} min-h-[40px] border-b ${rowBorder} ${
+              darkMode ? "bg-white/[0.018]" : "bg-[#FAFAFB]"
             }`}
           >
-            {emptyMessage}
-          </div>
-        )}
+        
 
-        {visibleTasks.map((task: any, index: number) => {
-          const isSuggesting = suggestingTaskIds.includes(task.id);
-          const visibleDueDate = task.dueDate || task.suggestedDueDate;
-          const visibleDueDateParts = formatDueDateParts(visibleDueDate);
-          
-          const rankIndex = sortedTasks.findIndex(
-            (candidate: any) => candidate.id === task.id
-          );
-          
-          const rankDisplay = rankIndex >= 0 ? rankIndex + 1 : index + 1;
-          
-          const groupMeta = getTaskGroupMeta(task);
-          const previousTask = index > 0 ? visibleTasks[index - 1] : null;
-          const previousGroupKey = previousTask
-            ? getTaskGroupMeta(previousTask).key
-            : "";
-          
-          const shouldShowGroupHeader =
-            groupMode !== "none" && groupMeta.key !== previousGroupKey;
-          
-          const isGrouped = groupMode !== "none";
-          
-          const groupAccent =
-            groupMode === "priority" ? groupMeta.dotColor : themeColor;
-          
-          const currentGroupCount = groupCounts[groupMeta.key] || 0;
-          
-          const groupLabel =
-            groupMode === "category"
-              ? "Category"
-              : groupMode === "priority"
-              ? "Priority"
-              : "Due date";
+        <div className="flex items-center justify-center">
+  <span
+    aria-hidden="true"
+    className={`h-4 w-4 rounded-[4px] border ${
+      darkMode
+        ? "border-white/45"
+        : "border-[#9297A1]"
+    }`}
+  />
+</div>
 
-          const isNewlyAdded = newlyAddedTaskIds.includes(task.id);
-          
-          const taskPanelClass = isGrouped
-            ? `relative hidden min-h-[78px] min-w-0 items-center gap-4 overflow-visible rounded-none border-0 px-1 py-3 transition-colors duration-150 sm:flex ${
-                draggableTasks ? "cursor-grab active:cursor-grabbing" : ""
-              } ${
-                manualFocusTaskIds.includes(task.id)
-                  ? "rounded-[18px] border border-[color:var(--theme-color)] bg-[color:var(--theme-soft)] px-3"
-                  : darkMode
-                  ? "hover:bg-white/[0.025]"
-                  : "hover:bg-black/[0.012]"
-              } ${isNewlyAdded ? "animate-[veiraNewTaskGlow_5s_ease-out]" : ""}`
-            : `relative hidden min-h-[72px] min-w-0 items-center gap-4 overflow-hidden rounded-[22px] border p-4 transition-all duration-200 hover:-translate-y-0.5 sm:flex ${
-                task.dueDate && isOverdue(task.dueDate)
-                  ? darkMode
-                    ? "border-red-400/35 shadow-[0_14px_35px_rgba(239,68,68,0.10)]"
-                    : "border-red-400/35 bg-red-50/25 shadow-[0_14px_35px_rgba(239,68,68,0.08)]"
-                  : ""
-              } ${draggableTasks ? "cursor-grab active:cursor-grabbing" : ""} ${
-                manualFocusTaskIds.includes(task.id)
-                  ? "border-[color:var(--theme-color)] bg-[color:var(--theme-soft)]"
-                  : `${
-                      darkMode ? "border-white/[0.07]" : border
-                    } ${
-                      darkMode
-                        ? "bg-[#1a1a1a] hover:bg-[#222222]"
-                        : "bg-white hover:bg-[#f6f8f8]"
-                    }`
-              } ${
-                darkMode
-                  ? "hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
-                  : "hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-              } ${isNewlyAdded ? "animate-[veiraNewTaskGlow_2.2s_ease-out]" : ""}`;
-          
-          return (
-            <div key={task.id} className="contents">
-           
-           {shouldShowGroupHeader && (
-  <motion.div
-    layout="position"
-    initial={{ opacity: 0, y: -8 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{
-      duration: 0.45,
-      ease: [0.16, 1, 0.3, 1],
-      layout: {
-        duration: 1.05,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    }}
-    className={index === 0 ? "pt-0" : "pt-3"}
-  >
-    {index === 0 && (
-      <div className="mb-1.5 px-1">
-        <span
-          className="inline-flex rounded-[8px] px-2.5 py-1 text-[9px] font-[900] uppercase tracking-[0.16em]"
-          style={{
-            color: themeColor,
-            backgroundColor: `${themeColor}${darkMode ? "16" : "12"}`,
-          }}
-        >
-          {groupLabel}
-        </span>
-      </div>
-    )}
-
-    <div className="mb-1.5 flex items-center gap-2 px-1">
-      <span
-        className="h-[3px] w-4 shrink-0 rounded-full"
-        style={{ backgroundColor: groupAccent }}
-      />
-
-      <span className="truncate text-[13px] font-[900] leading-none tracking-[-0.025em]">
-        {groupMeta.title}
-      </span>
-
-      <span
-        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-[900] ${
-          darkMode
-            ? "bg-white/[0.07] text-white/45"
-            : "bg-black/[0.045] text-[#000000]/45"
-        }`}
-      >
-        {currentGroupCount}
-      </span>
-    </div>
-
-    <div
-      className="h-px w-full"
-      style={{
-        background: darkMode
-          ? `linear-gradient(90deg, ${groupAccent}70, rgba(255,255,255,0.055), transparent)`
-          : `linear-gradient(90deg, ${groupAccent}60, rgba(0,0,0,0.055), transparent)`,
-      }}
-    />
-  </motion.div>
-)}
-
-             <motion.div
-  layout="position"
-  initial={{ opacity: 0, y: -10, scale: 0.985 }}
-  animate={{ opacity: 1, y: 0, scale: 1 }}
-  transition={{
-    opacity: { duration: 0.26 },
-    y: {
-      duration: 0.62,
-      ease: [0.16, 1, 0.3, 1],
-    },
-    scale: {
-      duration: 0.62,
-      ease: [0.16, 1, 0.3, 1],
-    },
-    layout: {
-      duration: 1.15,
-      ease: [0.16, 1, 0.3, 1],
-    },
-  }}
-  className={`group/task overflow-hidden will-change-transform sm:overflow-visible ${
-                  isGrouped
-                    ? `border-b last:border-b-0 ${border}`
-                    : `border-b last:border-b-0 sm:border-b-0 ${border}`
-                }`}
+            <div className={`flex items-center px-2 text-[10px] font-[700] ${mutedText}`}>
+              Task
+            </div>
+            {['Due', 'Priority', 'Status'].map((heading) => (
+              <div
+                key={heading}
+                className={`flex items-center justify-center border-l px-1 text-center text-[10px] font-[700] ${rowBorder} ${mutedText}`}
               >
-                {/* Mobile compact row */}
-                <div className="flex min-h-[44px] items-center gap-3 px-1 py-2 sm:hidden">
-                  <button
-                    onClick={(e) => toggleTaskById(task.id, e)}
-                    className="shrink-0 opacity-70 transition hover:opacity-100"
-                  >
-                    <Circle
-                      size={18}
-                      className={darkMode ? "text-white/28" : "text-[#000000]/28"}
-                    />
-                  </button>
+                {heading}
+              </div>
+            ))}
+            <div className={`border-l ${rowBorder}`} />
+          </div>
 
-                  {ranked && (
-                    <span
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-[900] text-white"
-                      style={{
-                        backgroundColor: isGrouped
-  ? "#878787"
-  : rankDisplay <= 3
-  ? themeColor
-  : "#878787",
-                      }}
-                    >
-                      {rankDisplay}
-                    </span>
-                  )}
+          {visibleTasks.map((task: any, index: number) => {
+            const visibleDueDate = task.dueDate || task.suggestedDueDate;
+            const groupMeta = getTaskGroupMeta(task);
+            const previousTask = index > 0 ? visibleTasks[index - 1] : null;
+            const previousGroupKey = previousTask
+              ? getTaskGroupMeta(previousTask).key
+              : "";
+            const shouldShowGroupHeader =
+              groupMode !== "none" && groupMeta.key !== previousGroupKey;
+            const isTaskOverdue = Boolean(task.dueDate && isOverdue(task.dueDate));
+            const isFocused = manualFocusTaskIds.includes(task.id);
+            const isNewlyAdded = newlyAddedTaskIds.includes(task.id);
+            const priorityLabel =
+              task.priority === "Medium" || task.priority === "Med"
+                ? "Medium"
+                : task.priority;
+            const statusLabel = isFocused
+              ? "In progress"
+              : isTaskOverdue
+              ? "Overdue"
+              : task.status === "Active"
+              ? "Not started"
+              : task.status || "Not started";
 
-                  <button
-                    onClick={() => {
-                      setSelectedTask(task);
-                      setIsEditModalOpen(true);
-                    }}
-                    title={task.title}
-                    className="min-w-0 flex-1 whitespace-normal break-words text-left text-[13px] font-[850] leading-[17px] tracking-[-0.02em] transition hover:opacity-70"
-                  >
-                    {task.title}
-                  </button>
+            const dueLabel = !visibleDueDate
+              ? "—"
+              : isToday(visibleDueDate)
+              ? "Today"
+              : isTomorrow(visibleDueDate)
+              ? "Tomorrow"
+              : formatDueDate(visibleDueDate);
 
-                  {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
+            const dueClass = isTaskOverdue
+              ? "text-red-500"
+              : isToday(visibleDueDate)
+              ? "text-red-500"
+              : isTomorrow(visibleDueDate)
+              ? "text-orange-500"
+              : mutedText;
 
-                  {isSuggesting && (
-                    <Sparkles
-                      size={13}
-                      className="shrink-0 animate-pulse"
-                      style={{ color: themeColor }}
-                    />
-                  )}
+            const priorityPill =
+              task.priority === "High"
+                ? darkMode
+                  ? "border-red-400/20 bg-red-400/10 text-red-300"
+                  : "border-red-200 bg-red-50 text-red-600"
+                : task.priority === "Medium" || task.priority === "Med"
+                ? darkMode
+                  ? "border-orange-400/20 bg-orange-400/10 text-orange-300"
+                  : "border-orange-200 bg-orange-50 text-orange-600"
+                : darkMode
+                ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                : "border-emerald-200 bg-emerald-50 text-emerald-600";
 
-                  <button
-                    onClick={() => addTaskToFocus(task.id)}
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition active:scale-95 ${
-                      manualFocusTaskIds.includes(task.id)
-                        ? "bg-[#05AD98]/15 text-[#05AD98]"
-                        : darkMode
-                        ? "bg-white/[0.06] text-white/45"
-                        : "bg-black/[0.04] text-[#000000]/45"
+            const statusPill = isFocused
+              ? darkMode
+                ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                : "border-emerald-200 bg-emerald-50 text-emerald-600"
+              : isTaskOverdue
+              ? darkMode
+                ? "border-red-400/20 bg-red-400/10 text-red-300"
+                : "border-red-200 bg-red-50 text-red-600"
+              : darkMode
+              ? "border-white/[0.10] bg-white/[0.04] text-white/58"
+              : "border-[#DDDDE3] bg-[#F6F7F9] text-[#5F6572]";
+
+            return (
+              <div key={task.id} className="contents">
+                {shouldShowGroupHeader && (
+                  <div
+                    className={`col-span-6 flex min-h-[34px] items-center gap-2 border-b px-3 text-[11px] font-[700] ${rowBorder} ${
+                      darkMode ? "bg-white/[0.035] text-white/62" : "bg-[#F4F5F7] text-[#565C68]"
                     }`}
                   >
-                    <Eye size={15} />
-                  </button>
-                </div>
+                    <span>{groupMeta.title}</span>
+                    <span className="opacity-45">{groupCounts[groupMeta.key] || 0}</span>
+                  </div>
+                )}
 
-                {/* Desktop/tablet full row */}
-                <div
+                <motion.div
+                  layout="position"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   draggable={draggableTasks}
-                  style={
-                    {
-                      "--theme-color": `${themeColor}55`,
-                      "--theme-soft": `${themeColor}18`,
-                    } as React.CSSProperties
-                  }
                   onDragStart={(event) => {
                     if (!draggableTasks) return;
-
                     event.dataTransfer.setData("text/plain", task.id);
                     event.dataTransfer.effectAllowed = "copy";
                   }}
-                  className={taskPanelClass}
+                  className={`group/task ${tableGridClass} min-h-[62px] border-b transition last:border-b-0 ${rowBorder} ${
+                    darkMode ? "hover:bg-white/[0.025]" : "hover:bg-[#FBFBFC]"
+                  } ${isNewlyAdded ? "animate-[veiraNewTaskGlow_2.2s_ease-out]" : ""}`}
                 >
-                  <div className="grid w-full min-w-0 grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_236px] xl:gap-3 min-[1700px]:grid-cols-[minmax(0,1fr)_248px] min-[1700px]:gap-4">
-                    <div className="flex min-w-0 items-start gap-4">
-                      <button
-                        onClick={(e) => toggleTaskById(task.id, e)}
-                        className="shrink-0 opacity-70 transition hover:opacity-100"
-                      >
-                        <Circle
-                          size={19}
-                          className={
-                            darkMode ? "text-white/25" : "text-[#000000]/25"
-                          }
-                        />
-                      </button>
+                <div className="flex items-start justify-center pt-3">
+  <button
+    type="button"
+    onClick={(event) => toggleTaskById(task.id, event)}
+    aria-label={`Complete ${task.title}`}
+    className="group/check flex h-5 w-5 items-center justify-center"
+  >
+    <span
+      aria-hidden="true"
+      className={`h-4 w-4 rounded-[4px] border transition ${
+        darkMode
+          ? "border-white/45 group-hover/check:border-white"
+          : "border-[#9297A1] group-hover/check:border-[#252933]"
+      }`}
+    />
+  </button>
+</div>
 
-                      {ranked && (
-                        <div
-                          className="mt-[2px] flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-[700] text-white"
-                          style={{
-                            backgroundColor: isGrouped
-                              ? "#878787"
-                              : rankDisplay <= 3
-                              ? themeColor
-                              : "#878787",
-                          }}
-                        >
-                          {rankDisplay}
-                        </div>
-                      )}
+                  <div className="flex min-w-0 flex-col justify-start px-2 py-3">
+  <button
+    type="button"
+    onClick={() => openTask(task)}
+    title={task.title}
+    className={`block w-full truncate text-left text-[13px] font-[650] leading-5 tracking-[-0.015em] transition hover:opacity-70 ${
+      darkMode ? "text-white/90" : "text-[#20232B]"
+    }`}
+  >
+    {task.title}
+  </button>
 
-                      <div className="min-w-0 flex-1">
-                      <p
-  onClick={() => {
-    setSelectedTask(task);
-    setIsEditModalOpen(true);
-  }}
-  title={task.title}
-  className={`block min-w-0 cursor-pointer whitespace-normal break-words ${textStyles.taskTitle} tracking-[-0.01em] hover:opacity-70`}
-  style={{
-    color: darkMode ? "#FFFFFF" : "#000000",
-  }}
->
-  {task.title}
-</p>
-
-                        <div
-                         className={`mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 ${textStyles.meta} ${
-                          darkMode ? "text-white/38" : "text-[#000000]/38"
-                        }`}
-                        >
-                          <span className="truncate">
-                            {task.category}
-                            {task.whyThisMatters ? "" : ""}
-                            {isSuggesting ? " · Veira thinking..." : ""}
-                          </span>
-
-                          {hasFollowUpTag(task) && (
-                            <span
-                              className="inline-flex shrink-0 items-center gap-0.5 rounded-full font-[850]"
-                              style={{ color: themeColor }}
-                            >
-                              <ChevronRight size={12} />
-                              Follow-up
-                            </span>
-                          )}
-                        </div>
-
-                        {Array.isArray(task.whySuggestions) &&
-  task.whySuggestions.length > 0 &&
-  task.whyThisMatters && (
+  {groupMode !== "category" && (
     <div
-      ref={
-        expandedWhyTaskId === task.id
-          ? whyDropdownRef
-          : null
-      }
-      className="mt-1.5 w-full max-w-full xl:w-[calc(100%+116px)] xl:max-w-[calc(100%+116px)] min-[1700px]:w-[calc(100%+156px)] min-[1700px]:max-w-[calc(100%+156px)]"
+      className={`mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-[500] ${mutedText}`}
     >
-      <button
-        type="button"
-        onClick={() =>
-          setExpandedWhyTaskId(
-            expandedWhyTaskId === task.id
-              ? null
-              : task.id
-          )
-        }
-        title={task.whyThisMatters}
-        className={`flex w-full min-w-0 items-center gap-1.5 rounded-[10px] py-0.5 text-left transition hover:opacity-80 ${
-          darkMode ? "text-white/48" : "text-[#000000]/46"
-        }`}
-      >
+      <span className="truncate">
+        {task.category || "No category"}
+      </span>
+
+      {task.pinned && (
+        <>
+          <span aria-hidden="true">•</span>
+          <span>Pinned</span>
+        </>
+      )}
+
+      {suggestingTaskIds.includes(task.id) && (
         <Sparkles
-          size={11}
-          className="shrink-0 opacity-70"
-          style={{ color: themeColor }}
+          size={9}
+          className="shrink-0 animate-pulse"
         />
+      )}
+    </div>
+  )}
 
-        <span
-          className={`shrink-0 text-[10px] font-[900] uppercase tracking-[0.12em] ${
-            darkMode ? "text-white/45" : "text-[#000000]/42"
-          }`}
-        >
-          Why:
-        </span>
+  {groupMode === "category" &&
+    (task.pinned || suggestingTaskIds.includes(task.id)) && (
+      <div
+        className={`mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-[500] ${mutedText}`}
+      >
+        {task.pinned && <span>Pinned</span>}
 
-        <span className="min-w-0 flex-1 truncate text-[11px] font-[500] leading-[17px] tracking-[-0.01em]">
-          {task.whyThisMatters}
-        </span>
+        {suggestingTaskIds.includes(task.id) && (
+          <Sparkles
+            size={9}
+            className="shrink-0 animate-pulse"
+          />
+        )}
+      </div>
+    )}
+</div>
 
-        <ChevronDown
-          size={12}
-          className={`shrink-0 opacity-35 transition ${
-            expandedWhyTaskId === task.id ? "rotate-180" : ""
-          }`}
-        />
-      </button>
+                  <div className={`flex items-center justify-center border-l px-1 text-center text-[10.5px] font-[600] ${rowBorder} ${dueClass}`}>
+                    {dueLabel}
+                  </div>
 
-      {expandedWhyTaskId === task.id && (
-        <div
-          className={`mt-2 w-full max-w-full rounded-[16px] border p-2 shadow-[0_14px_32px_rgba(15,23,42,0.06)] ${
-            darkMode
-              ? "border-white/[0.08] bg-[#111111]"
-              : "border-black/[0.06] bg-white"
-          }`}
-        >
-          <div
-            className={`mb-2 flex items-center gap-1.5 px-1 text-[10px] font-[900] uppercase tracking-[0.13em] ${
-              darkMode ? "text-white/38" : "text-[#000000]/36"
-            }`}
-          >
-            <Sparkles size={11} style={{ color: themeColor }} />
-            Choose why this matters
-          </div>
+                  <div className={`flex items-center justify-center border-l px-1 ${rowBorder}`}>
+                    <span className={`rounded-[6px] border px-2 py-1 text-[10px] font-[650] ${priorityPill}`}>
+                      {priorityLabel}
+                    </span>
+                  </div>
 
-          <div className="space-y-1.5">
-            {task.whySuggestions.map(
-              (
-                suggestion: string,
-                suggestionIndex: number
-              ) => {
-                const isSelected =
-                  task.whyThisMatters === suggestion;
+                  <div className={`flex items-center justify-center border-l px-1 ${rowBorder}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isFocused) {
+                          openTask(task);
+                        } else {
+                          addTaskToFocus(task.id);
+                        }
+                      }}
+                      title={isFocused ? "Open focused task" : "Add to focus"}
+                      className={`max-w-full truncate rounded-[6px] border px-2 py-1 text-[10px] font-[650] ${statusPill}`}
+                    >
+                      {statusLabel}
+                    </button>
+                  </div>
 
-                return (
-                  <button
-                    key={`${task.id}-${suggestionIndex}-${suggestion}`}
-                    type="button"
-                    onClick={() => {
-                      selectWhySuggestion(
-                        task.id,
-                        suggestion,
-                        suggestionIndex
-                      );
-                      setExpandedWhyTaskId(null);
-                    }}
-                    className={`flex w-full items-center justify-between gap-3 rounded-[12px] border px-3 py-2 text-left text-[11px] font-[650] leading-4 transition ${
-                      isSelected
-                        ? "text-white"
-                        : darkMode
-                        ? "border-white/[0.07] bg-[#111111] text-white/55 hover:bg-white/[0.04] hover:text-white"
-                        : "border-black/[0.055] bg-white text-[#000000]/55 hover:bg-black/[0.018] hover:text-[#000000]"
-                    }`}
-                    style={
-                      isSelected
-                        ? {
-                            backgroundColor: themeColor,
-                            borderColor: themeColor,
-                          }
-                        : undefined
-                    }
-                  >
-                    <span className="min-w-0">{suggestion}</span>
-                    {isSelected && <Check size={13} className="shrink-0" />}
-                  </button>
-                );
-              }
+                  <div className={`flex items-center justify-center border-l ${rowBorder}`}>
+                    <button
+                      type="button"
+                      onClick={() => openTask(task)}
+                      aria-label={`Open ${task.title}`}
+                      title="Open task"
+                      className={`flex h-8 w-7 items-center justify-center transition ${
+                        darkMode ? "text-white/38 hover:text-white" : "text-[#747986] hover:text-[#252933]"
+                      }`}
+                    >
+                      <MoreVertical size={15} strokeWidth={1.8} />
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            );
+          })}
+
+          <div className={`flex min-h-[42px] items-center border-t px-3 ${rowBorder}`}>
+            <button
+              type="button"
+              onClick={onFocusCapture}
+              className={`inline-flex items-center gap-2 text-[12px] font-[550] transition ${
+                darkMode ? "text-white/45 hover:text-white" : "text-[#686E7A] hover:text-[#252933]"
+              }`}
+            >
+              <Plus size={14} strokeWidth={1.7} />
+              Add task
+            </button>
+
+            {hiddenTaskCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowAllTasks((previous) => !previous)}
+                className={`ml-auto inline-flex items-center gap-1.5 text-[11px] font-[600] ${mutedText}`}
+              >
+                {showAllTasks ? "Show less" : `Show ${hiddenTaskCount} more`}
+                <ChevronDown
+                  size={12}
+                  className={`transition ${showAllTasks ? "rotate-180" : ""}`}
+                />
+              </button>
             )}
           </div>
         </div>
       )}
-    </div>
-  )}
-                      </div>
-                    </div>
-
-                    <div
- className={`relative flex ${
-  isGrouped ? "min-h-[72px]" : "min-h-[88px]"
-} flex-col items-start justify-start xl:items-end`}
->
-<div className="flex flex-nowrap items-start justify-start gap-1.5 xl:justify-end">
-<div className="flex shrink-0 items-start justify-start gap-2 xl:justify-end">
-  {visibleDueDate && (
-    <div className="flex h-9 w-[52px] items-start justify-start gap-1">
-      <Calendar
-        size={12}
-        className={`mt-[2px] shrink-0 ${
-          darkMode
-            ? "text-white/55"
-            : "text-[#000000]/48"
-        }`}
-      />
-
-      <span
-        className={`flex min-w-0 flex-col text-left leading-none ${
-          darkMode
-            ? "text-white/70"
-            : "text-[#000000]/65"
-        }`}
-      >
-        <span className="text-[15px] font-[900] tracking-[-0.04em]">
-          {visibleDueDateParts.day}
-        </span>
-
-        <span className="mt-0.5 text-[11px] font-[800] tracking-[-0.03em]">
-          {visibleDueDateParts.month}
-        </span>
-      </span>
-    </div>
-  )}
-
-  <div
-    className={`flex h-9 min-w-[50px] items-start justify-start gap-1 pt-[4px] ${
-      task.priority === "High"
-        ? "text-red-500"
-        : task.priority === "Medium"
-        ? "text-orange-500"
-        : "text-emerald-500"
-    }`}
-  >
-    <span className="mt-[4px] text-[11px] leading-none">
-      ●
-    </span>
-
-    <span className="text-[15px] font-[900] leading-none tracking-[-0.03em]">
-      {task.priority === "Medium" ||
-      task.priority === "Med"
-        ? "Mid"
-        : task.priority}
-    </span>
-  </div>
-</div>
-
-                        <div className="flex w-[92px] shrink-0 items-center justify-end gap-1 opacity-0 pointer-events-none transition-opacity duration-200 group-hover/task:opacity-100 group-hover/task:pointer-events-auto group-focus-within/task:opacity-100 group-focus-within/task:pointer-events-auto">
-                          <button
-                            onClick={() => addTaskToFocus(task.id)}
-                            title={
-                              manualFocusTaskIds.includes(task.id)
-                                ? "Already in focus"
-                                : "Add to focus"
-                            }
-                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition hover:scale-110"
-                            style={{
-                              color: manualFocusTaskIds.includes(task.id)
-                                ? themeColor
-                                : darkMode
-                                ? "rgba(255,255,255,0.45)"
-                                : "rgba(0,0,0,0.45)",
-                              backgroundColor: manualFocusTaskIds.includes(task.id)
-                                ? `${themeColor}18`
-                                : darkMode
-                                ? "rgba(255,255,255,0.055)"
-                                : "rgba(0,0,0,0.04)",
-                            }}
-                          >
-                            <Eye size={15} />
-                          </button>
-
-                          <button
-                            onClick={() => togglePinTask(task.id)}
-                            title={task.pinned ? "Pinned" : "Pin to top"}
-                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition hover:scale-110 ${
-                              task.pinned
-                                ? "opacity-100"
-                                : "opacity-55 hover:opacity-100"
-                            }`}
-                            style={{
-                              color: task.pinned ? themeColor : undefined,
-                            }}
-                          >
-                            <Star
-                              size={16}
-                              fill={task.pinned ? themeColor : "none"}
-                            />
-                          </button>
-
-                          <button
-                            onClick={() => deleteTask(task.id)}
-                            title="Delete task"
-                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full opacity-45 transition hover:scale-110 hover:opacity-100 hover:text-red-500"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {task.dueDate && isOverdue(task.dueDate) && (
-                        <div className="pointer-events-none absolute bottom-0 right-0">
-                          <div className="relative">
-                            <span
-                              className={`absolute -top-[13px] right-1 text-[9px] font-[900] leading-none tracking-[0.02em] ${
-                                darkMode ? "text-red-300/80" : "text-red-600/75"
-                              }`}
-                            >
-                              {getOverdueDays(task.dueDate)}d
-                            </span>
-
-                            <span
-                              className={`relative inline-flex items-center rounded-[7px] border-2 px-3 py-1.5 text-[11px] font-[900] uppercase tracking-[0.14em] shadow-[0_8px_22px_rgba(185,28,28,0.14)] ${
-                                darkMode
-                                  ? "border-red-300/70 bg-red-500/[0.06] text-red-300"
-                                  : "border-red-600/70 bg-white/50 text-red-600"
-                              }`}
-                            >
-                              OVERDUE
-
-                              <span className="pointer-events-none absolute inset-[3px] rounded-[4px] border border-red-500/25" />
-
-                              <span className="pointer-events-none absolute left-1.5 top-1 h-0.5 w-2 rounded-full bg-red-500/45" />
-                              <span className="pointer-events-none absolute bottom-1.5 left-3 h-0.5 w-3 rounded-full bg-red-500/35" />
-                              <span className="pointer-events-none absolute right-2 top-2 h-0.5 w-2.5 rounded-full bg-red-500/35" />
-                              <span className="pointer-events-none absolute bottom-1 right-3 h-0.5 w-2 rounded-full bg-red-500/30" />
-
-                              <span className="pointer-events-none absolute left-2 top-1/2 h-1 w-1 rounded-full bg-red-500/30" />
-                              <span className="pointer-events-none absolute right-4 top-1/2 h-1 w-1 rounded-full bg-red-500/25" />
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          );
-        })}
-
-        {hiddenTaskCount > 0 && (
-          <button
-            onClick={() => setShowAllTasks((prev) => !prev)}
-            className={`mt-3 flex h-10 w-full items-center justify-center rounded-[16px] border text-xs font-[900] transition hover:scale-[1.005] sm:mt-4 sm:h-12 sm:rounded-[20px] sm:text-sm ${border} ${
-              darkMode
-                ? "bg-white/[0.035] text-white/55 hover:bg-white/[0.06] hover:text-white"
-                : "bg-black/[0.025] text-[#000000]/50 hover:bg-black/[0.04] hover:text-[#000000]"
-            }`}
-          >
-            {showAllTasks ? "Show less" : `Show ${hiddenTaskCount} more`}
-          </button>
-        )}
-      </div>
     </section>
   );
 }
 
 function CompletedTodaySection({
+  sectionId,
   completedToday,
   restoreCompletedTask,
   archiveCompletedToday,
-  themeColor,
   darkMode,
-  glass,
-  strongerGlass,
   border,
 }: any) {
-  return (
-    <div className="mt-6 sm:mt-8">
-      <div className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
-        <div className="flex items-center gap-3">
-          <h2
-            className={textStyles.badge}
-            style={{ color: themeColor }}
-          >
-            Completed Today
-          </h2>
+  const [showAllCompleted, setShowAllCompleted] = useState(false);
+  const defaultVisibleCount = 3;
 
-          <div
-            className={`flex h-5 w-5 items-center justify-center rounded-full ${textStyles.badge} text-white`}
-            style={{ backgroundColor: themeColor }}
-          >
-            {completedToday.length}
+  const visibleCompletedTasks = showAllCompleted
+    ? completedToday
+    : completedToday.slice(0, defaultVisibleCount);
+
+  const hiddenCompletedCount = Math.max(
+    completedToday.length - defaultVisibleCount,
+    0
+  );
+
+  const formatCompletedTime = (completedAt?: string) => {
+    if (!completedAt) return "";
+    const date = new Date(completedAt);
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const cardBorder = darkMode
+    ? "border-white/[0.10]"
+    : "border-[#DDDDE3]";
+
+  const rowBorder = darkMode
+    ? "border-white/[0.08]"
+    : "border-[#E8E9ED]";
+
+  const mutedText = darkMode
+    ? "text-white/48"
+    : "text-[#6B6F7B]";
+
+  return (
+    <section
+      id={sectionId}
+      aria-label="Completed today"
+      className={`mt-4 w-full scroll-mt-8 overflow-hidden rounded-[12px] border ${cardBorder}`}
+    >
+      <div
+        className={`flex min-h-[66px] items-center justify-between gap-4 border-b px-4 ${rowBorder}`}
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2.5">
+            <h2
+              className={`text-[18px] font-[740] leading-none tracking-[-0.035em] ${
+                darkMode ? "text-white" : "text-[#17191F]"
+              }`}
+            >
+              Completed today
+            </h2>
+            <span
+              className={`flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[10px] font-[700] ${
+                darkMode ? "bg-white/[0.07] text-white/58" : "bg-[#F0F1F4] text-[#59606C]"
+              }`}
+            >
+              {completedToday.length}
+            </span>
           </div>
+          <p className={`mt-1.5 text-[11px] font-[500] ${mutedText}`}>
+            Well done! Keep the momentum going.
+          </p>
         </div>
 
         <button
+          type="button"
           onClick={archiveCompletedToday}
-          className={`flex h-9 items-center gap-2 rounded-[16px] px-3 ${textStyles.button} transition sm:h-10 sm:gap-3 sm:rounded-2xl sm:px-5 ${
-            completedToday.length === 0 ? "pointer-events-none opacity-30" : ""
-          } ${glass}`}
+          disabled={completedToday.length === 0}
+          className={`h-9 shrink-0 px-2 text-[11px] font-[650] transition ${
+            completedToday.length === 0
+              ? "cursor-not-allowed opacity-30"
+              : darkMode
+              ? "text-violet-300 hover:text-violet-200"
+              : "text-violet-600 hover:text-violet-700"
+          }`}
         >
-          Archive All
+          Archive all
         </button>
       </div>
 
-      <div className={`overflow-hidden rounded-[24px] border sm:rounded-3xl ${strongerGlass} ${border}`}>
-        {completedToday.length === 0 && (
-          <div className={`p-6 ${textStyles.small} opacity-40`}>Nothing completed yet.</div>
-        )}
+      {completedToday.length === 0 ? (
+        <div className={`px-4 py-8 text-[12px] font-[500] ${mutedText}`}>
+          Nothing completed yet.
+        </div>
+      ) : (
+        <div role="list">
+          <AnimatePresence initial={false}>
+            {visibleCompletedTasks.map((task: any) => {
+              const completedTime = formatCompletedTime(task.completedAt);
 
-        {completedToday.map((task: any) => (
-          <motion.div
-            key={task.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`flex min-h-[60px] items-center justify-between gap-3 border-b px-4 py-3 last:border-none sm:min-h-[72px] sm:gap-4 sm:px-5 ${border}`}
-          >
-            <div className="flex min-w-0 items-center gap-3">
-              <CheckCircle2 size={18} className="shrink-0 text-green-500" />
+              return (
+                <motion.div
+                  key={task.id}
+                  role="listitem"
+                  layout="position"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className={`grid min-h-[48px] grid-cols-[28px_minmax(0,1fr)_auto_34px] items-center gap-2 border-b px-3 last:border-b-0 ${rowBorder}`}
+                >
+                  <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-emerald-500 text-white">
+                    <Check size={12} strokeWidth={2.3} />
+                  </span>
 
-              <div className="min-w-0">
-              <p className={`truncate ${textStyles.taskTitle}`}>{task.title}</p>
+                  <div className="min-w-0 py-2">
+                    <p
+                      title={task.title}
+                      className={`truncate text-[12px] font-[550] line-through ${
+                        darkMode
+                          ? "text-white/55 decoration-white/30"
+                          : "text-[#5D626E] decoration-black/25"
+                      }`}
+                    >
+                      {task.title}
+                    </p>
+                    <p className={`mt-0.5 truncate text-[10px] font-[500] ${mutedText}`}>
+                      {task.category || "No category"}
+                    </p>
+                  </div>
 
-              <p className={`truncate ${textStyles.meta} opacity-40`}>
-                  {task.category}
-                  {task.dueDate ? ` • Due ${formatDueDate(task.dueDate)}` : ""}
-                </p>
-              </div>
-            </div>
+                  <time
+                    dateTime={task.completedAt}
+                    className={`whitespace-nowrap text-[10px] font-[500] tabular-nums ${mutedText}`}
+                  >
+                    {completedTime}
+                  </time>
 
+                  <button
+                    type="button"
+                    onClick={() => restoreCompletedTask(task.id)}
+                    aria-label={`Restore ${task.title}`}
+                    title="Restore task"
+                    className={`flex h-8 w-8 items-center justify-center transition ${
+                      darkMode ? "text-white/38 hover:text-white" : "text-[#747986] hover:text-[#252933]"
+                    }`}
+                  >
+                    <RotateCcw size={14} strokeWidth={1.7} />
+                  </button>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {(hiddenCompletedCount > 0 || completedToday.length > 0) && (
+        <div className={`flex min-h-[42px] items-center justify-center border-t px-3 ${rowBorder}`}>
+          {hiddenCompletedCount > 0 ? (
             <button
-              onClick={() => restoreCompletedTask(task.id)}
-              className={`h-8 shrink-0 rounded-[14px] px-3 ${textStyles.button} transition hover:scale-[1.02] sm:h-9 sm:rounded-xl ${
-                darkMode
-                  ? "bg-white/[0.06] text-white/55 hover:text-white"
-                  : "bg-black/[0.04] text-[#000000]/55 hover:text-[#000000]"
-              }`}
+              type="button"
+              onClick={() => setShowAllCompleted((previous) => !previous)}
+              className={`inline-flex items-center gap-1.5 text-[11px] font-[600] ${mutedText}`}
             >
-              Restore
+              {showAllCompleted ? "Show less" : `Show ${hiddenCompletedCount} more`}
+              <ChevronDown
+                size={12}
+                className={`transition ${showAllCompleted ? "rotate-180" : ""}`}
+              />
             </button>
-          </motion.div>
-        ))}
-      </div>
-    </div>
+          ) : (
+            <p className={`text-center text-[10.5px] font-[500] ${mutedText}`}>
+              You’ve completed {completedToday.length} task{completedToday.length === 1 ? "" : "s"} today. Amazing work! 💜
+            </p>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 
 function ArchiveView({
   archive,
   clearArchive,
-  glass,
-  strongerGlass,
-  border,
   darkMode,
 }: any) {
+  const [groupBy, setGroupBy] = useState<
+    "date" | "priority"
+  >("date");
+
+  const getArchiveDate = (task: any) => {
+    const rawDate =
+      task.completedAt ||
+      task.archivedAt ||
+      task.createdAt;
+
+    if (!rawDate) return null;
+
+    const date = new Date(rawDate);
+
+    return Number.isNaN(date.getTime())
+      ? null
+      : date;
+  };
+
+  const getLocalDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+    const day = String(date.getDate()).padStart(
+      2,
+      "0"
+    );
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const getDateGroupLabel = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const comparisonDate = new Date(date);
+    comparisonDate.setHours(0, 0, 0, 0);
+
+    const differenceInDays = Math.round(
+      (today.getTime() -
+        comparisonDate.getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    if (differenceInDays === 0) {
+      return "Today";
+    }
+
+    if (differenceInDays === 1) {
+      return "Yesterday";
+    }
+
+    return date.toLocaleDateString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year:
+        date.getFullYear() !==
+        today.getFullYear()
+          ? "numeric"
+          : undefined,
+    });
+  };
+
+  const archiveStats = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    /*
+     * Includes today and the previous six days.
+     * This avoids ambiguity around calendar weeks.
+     */
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(
+      sevenDaysAgo.getDate() - 6
+    );
+
+    const itemsClosedLastSevenDays =
+      archive.filter((task: any) => {
+        const completedDate =
+          getArchiveDate(task);
+
+        return (
+          completedDate &&
+          completedDate >= sevenDaysAgo
+        );
+      }).length;
+
+    const categoryCounts =
+      archive.reduce<Record<string, number>>(
+        (counts, task: any) => {
+          const category =
+            task.category || "No category";
+
+          counts[category] =
+            (counts[category] || 0) + 1;
+
+          return counts;
+        },
+        {}
+      );
+
+    const topCategoryEntry = Object.entries(
+      categoryCounts
+    ).sort((a, b) => b[1] - a[1])[0];
+
+    return {
+      totalClosed: archive.length,
+      itemsClosedLastSevenDays,
+      averagePerDay:
+        itemsClosedLastSevenDays === 0
+          ? "0.0"
+          : (
+              itemsClosedLastSevenDays / 7
+            ).toFixed(1),
+      topCategory:
+        topCategoryEntry?.[0] || "—",
+    };
+  }, [archive]);
+
+  const groupedArchive = useMemo(() => {
+    const sortedArchive = [...archive].sort(
+      (a: any, b: any) => {
+        const dateA = getArchiveDate(a);
+        const dateB = getArchiveDate(b);
+
+        return (
+          (dateB?.getTime() || 0) -
+          (dateA?.getTime() || 0)
+        );
+      }
+    );
+
+    if (groupBy === "priority") {
+      const priorityOrder = [
+        "High",
+        "Medium",
+        "Low",
+        "No priority",
+      ];
+
+      return priorityOrder
+        .map((priority) => {
+          const items = sortedArchive.filter(
+            (task: any) => {
+              const taskPriority =
+                task.priority || "No priority";
+
+              return taskPriority === priority;
+            }
+          );
+
+          return {
+            key: `priority:${priority}`,
+            title: priority,
+            items,
+          };
+        })
+        .filter((group) => group.items.length > 0);
+    }
+
+    const dateGroups = new Map<
+      string,
+      {
+        key: string;
+        title: string;
+        items: any[];
+      }
+    >();
+
+    sortedArchive.forEach((task: any) => {
+      const completedDate =
+        getArchiveDate(task);
+
+      const key = completedDate
+        ? getLocalDateKey(completedDate)
+        : "unknown-date";
+
+      const title = completedDate
+        ? getDateGroupLabel(completedDate)
+        : "Date unavailable";
+
+      if (!dateGroups.has(key)) {
+        dateGroups.set(key, {
+          key: `date:${key}`,
+          title,
+          items: [],
+        });
+      }
+
+      dateGroups.get(key)?.items.push(task);
+    });
+
+    return Array.from(dateGroups.values());
+  }, [archive, groupBy]);
+
+  const panelBorder = darkMode
+    ? "border-white/[0.10]"
+    : "border-[#DDDDE3]";
+
+  const rowBorder = darkMode
+    ? "border-white/[0.08]"
+    : "border-[#E8E9ED]";
+
+  const panelSurface = darkMode
+    ? "bg-[#14171B]"
+    : "bg-white";
+
+  const secondarySurface = darkMode
+    ? "bg-white/[0.025]"
+    : "bg-[#FAFAFB]";
+
+  const mutedText = darkMode
+    ? "text-white/48"
+    : "text-[#6B6F7B]";
+
+  const getPriorityPill = (
+    priority?: string
+  ) => {
+    if (priority === "High") {
+      return darkMode
+        ? "border-red-400/20 bg-red-400/10 text-red-300"
+        : "border-red-200 bg-red-50 text-red-600";
+    }
+
+    if (
+      priority === "Medium" ||
+      priority === "Med"
+    ) {
+      return darkMode
+        ? "border-orange-400/20 bg-orange-400/10 text-orange-300"
+        : "border-orange-200 bg-orange-50 text-orange-600";
+    }
+
+    if (priority === "Low") {
+      return darkMode
+        ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+        : "border-emerald-200 bg-emerald-50 text-emerald-600";
+    }
+
+    return darkMode
+      ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+      : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]";
+  };
+
   return (
-    <div>
-<PageHeader
-  title="Archived Items"
-  description="Completed work saved for reference."
-  darkMode={darkMode}
->
+    <div className="mx-auto w-full max-w-[1500px]">
+      {/* Header */}
+      <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1
+              className={`text-[28px] font-[760] leading-none tracking-[-0.045em] ${
+                darkMode
+                  ? "text-white"
+                  : "text-[#17191F]"
+              }`}
+            >
+              Archived items
+            </h1>
+
+            <span
+              className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[11px] font-[700] ${
+                darkMode
+                  ? "bg-white/[0.08] text-white/62"
+                  : "bg-[#F0F1F4] text-[#59606C]"
+              }`}
+            >
+              {archive.length}
+            </span>
+          </div>
+
+          <p
+            className={`mt-2 text-[13px] font-[500] ${mutedText}`}
+          >
+            Review completed work and understand
+            your execution patterns.
+          </p>
+        </div>
+
         <button
+          type="button"
           onClick={clearArchive}
           disabled={archive.length === 0}
-          className={`h-11 rounded-2xl px-5 text-sm font-[700] transition ${
+          className={`h-10 shrink-0 rounded-[9px] border px-4 text-[12px] font-[650] transition ${
             archive.length === 0
               ? "cursor-not-allowed opacity-30"
-              : "hover:scale-[1.02] active:scale-[0.98]"
-          } ${glass}`}
+              : darkMode
+              ? "border-white/[0.10] text-white/62 hover:bg-white/[0.06] hover:text-white"
+              : "border-[#DDDDE3] bg-white text-[#555B67] hover:bg-[#F4F5F7] hover:text-[#252933]"
+          }`}
         >
-          Clear All
+          Clear archive
         </button>
-      </PageHeader>
+      </header>
 
-      <div className={`overflow-hidden rounded-[24px] border sm:rounded-3xl ${strongerGlass} ${border}`}>
+      {/* Completion statistics */}
+      <section className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {[
+          {
+            label: "Total closed",
+            value: archiveStats.totalClosed,
+            description:
+              "All archived tasks",
+            icon: CheckCircle2,
+          },
+          {
+            label: "Closed last 7 days",
+            value:
+              archiveStats.itemsClosedLastSevenDays,
+            description:
+              "Recent completion volume",
+            icon: Calendar,
+          },
+          {
+            label: "Average per day",
+            value: archiveStats.averagePerDay,
+            description:
+              "Across the last 7 days",
+            icon: TrendingUp,
+          },
+          {
+            label: "Top category",
+            value: archiveStats.topCategory,
+            description:
+              "Most completed work",
+            icon: LayoutGrid,
+          },
+        ].map((stat) => {
+          const Icon = stat.icon;
 
-        {archive.length === 0 && (
-          <div className="p-10 text-sm opacity-50">No archived items yet.</div>
-        )}
+          return (
+            <div
+              key={stat.label}
+              className={`min-w-0 rounded-[13px] border p-4 ${panelBorder} ${panelSurface}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p
+                    className={`text-[10px] font-[700] uppercase tracking-[0.08em] ${mutedText}`}
+                  >
+                    {stat.label}
+                  </p>
 
-        {archive.map((task: any) => (
-          <div
-            key={task.id}
-            className={`flex min-h-[88px] flex-col items-start justify-between gap-3 border-b px-5 py-4 last:border-none sm:flex-row sm:items-center sm:gap-4 sm:px-6 ${border}`}
-          >
-            <div className="min-w-0">
-              <p className="mb-1 truncate text-[15px] font-[700]">
-                {task.title}
-              </p>
+                  <p
+                    title={String(stat.value)}
+                    className={`mt-3 truncate text-[24px] font-[740] leading-none tracking-[-0.045em] ${
+                      darkMode
+                        ? "text-white"
+                        : "text-[#17191F]"
+                    }`}
+                  >
+                    {stat.value}
+                  </p>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs opacity-50">
-                <span>{task.category}</span>
-                {task.dueDate && <span>Due {formatDueDate(task.dueDate)}</span>}
-                <span>{new Date(task.completedAt).toLocaleDateString()}</span>
+                  <p
+                    className={`mt-2 text-[10.5px] font-[500] ${mutedText}`}
+                  >
+                    {stat.description}
+                  </p>
+                </div>
+
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${
+                    darkMode
+                      ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+                      : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                  }`}
+                >
+                  <Icon
+                    size={16}
+                    strokeWidth={1.7}
+                  />
+                </div>
               </div>
             </div>
+          );
+        })}
+      </section>
 
-            <div className="shrink-0 text-xs opacity-40">Archived</div>
+      {/* Archive history */}
+      <section
+        className={`overflow-hidden rounded-[14px] border ${panelBorder} ${panelSurface}`}
+      >
+        <div
+          className={`flex min-h-[68px] flex-col gap-3 border-b px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${rowBorder}`}
+        >
+          <div>
+            <h2
+              className={`text-[17px] font-[720] tracking-[-0.025em] ${
+                darkMode
+                  ? "text-white"
+                  : "text-[#17191F]"
+              }`}
+            >
+              Completion history
+            </h2>
+
+            <p
+              className={`mt-1 text-[11px] font-[500] ${mutedText}`}
+            >
+              Group completed work by completion
+              date or task priority.
+            </p>
           </div>
-        ))}
-      </div>
+
+          <label className="relative shrink-0">
+            <span className="sr-only">
+              Group archived tasks
+            </span>
+
+            <select
+              value={groupBy}
+              onChange={(event) =>
+                setGroupBy(
+                  event.target.value as
+                    | "date"
+                    | "priority"
+                )
+              }
+              className={`h-9 min-w-[150px] appearance-none rounded-[8px] border bg-transparent pl-3 pr-8 text-[11px] font-[650] outline-none transition ${
+                darkMode
+                  ? "border-white/[0.10] text-white/72 hover:border-white/[0.20]"
+                  : "border-[#DDDDE3] text-[#484D59] hover:border-[#BFC0C8]"
+              }`}
+            >
+              <option value="date">
+                Group: Date
+              </option>
+              <option value="priority">
+                Group: Priority
+              </option>
+            </select>
+
+            <ChevronDown
+              size={13}
+              className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 ${mutedText}`}
+            />
+          </label>
+        </div>
+
+        {archive.length === 0 ? (
+          <div className="flex min-h-[300px] items-center justify-center px-6 py-12 text-center">
+            <div className="max-w-[360px]">
+              <div
+                className={`mx-auto flex h-11 w-11 items-center justify-center rounded-[10px] border ${
+                  darkMode
+                    ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+                    : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                }`}
+              >
+                <CheckCircle2
+                  size={19}
+                  strokeWidth={1.7}
+                />
+              </div>
+
+              <h3
+                className={`mt-4 text-[16px] font-[700] ${
+                  darkMode
+                    ? "text-white"
+                    : "text-[#17191F]"
+                }`}
+              >
+                No archived work yet
+              </h3>
+
+              <p
+                className={`mt-2 text-[12px] font-[500] leading-5 ${mutedText}`}
+              >
+                Completed tasks will appear here
+                after they are archived.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div>
+            {groupedArchive.map((group) => (
+              <section key={group.key}>
+                <div
+                  className={`flex min-h-[38px] items-center gap-2 border-b px-4 sm:px-5 ${rowBorder} ${secondarySurface}`}
+                >
+                  <h3
+                    className={`text-[11px] font-[700] ${
+                      darkMode
+                        ? "text-white/68"
+                        : "text-[#565C68]"
+                    }`}
+                  >
+                    {group.title}
+                  </h3>
+
+                  <span
+                    className={`text-[10px] font-[650] ${mutedText}`}
+                  >
+                    {group.items.length}
+                  </span>
+                </div>
+
+                <AnimatePresence
+                  initial={false}
+                  mode="popLayout"
+                >
+                  {group.items.map(
+                    (task: any) => {
+                      const completedDate =
+                        getArchiveDate(task);
+
+                      const priorityLabel =
+                        task.priority === "Medium" ||
+                        task.priority === "Med"
+                          ? "Medium"
+                          : task.priority ||
+                            "No priority";
+
+                      return (
+                        <motion.div
+                          key={task.id}
+                          layout
+                          initial={{
+                            opacity: 0,
+                            y: 4,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                          }}
+                          exit={{
+                            opacity: 0,
+                            y: -4,
+                          }}
+                          transition={{
+                            duration: 0.18,
+                            ease: [
+                              0.16, 1, 0.3, 1,
+                            ],
+                          }}
+                          className={`grid min-h-[68px] grid-cols-1 gap-3 border-b px-4 py-3.5 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 ${rowBorder}`}
+                        >
+                          <div className="min-w-0">
+                            <p
+                              title={task.title}
+                              className={`truncate text-[13px] font-[650] tracking-[-0.015em] ${
+                                darkMode
+                                  ? "text-white/88"
+                                  : "text-[#20232B]"
+                              }`}
+                            >
+                              {task.title}
+                            </p>
+
+                            <div
+                              className={`mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-[500] ${mutedText}`}
+                            >
+                              <span>
+                                {task.category ||
+                                  "No category"}
+                              </span>
+
+                              {task.dueDate && (
+                                <>
+                                  <span
+                                    aria-hidden="true"
+                                    className="opacity-40"
+                                  >
+                                    •
+                                  </span>
+
+                                  <span>
+                                    Due{" "}
+                                    {formatDueDate(
+                                      task.dueDate
+                                    )}
+                                  </span>
+                                </>
+                              )}
+
+                              {completedDate && (
+                                <>
+                                  <span
+                                    aria-hidden="true"
+                                    className="opacity-40"
+                                  >
+                                    •
+                                  </span>
+
+                                  <span>
+                                    Closed{" "}
+                                    {completedDate.toLocaleTimeString(
+                                      undefined,
+                                      {
+                                        hour:
+                                          "2-digit",
+                                        minute:
+                                          "2-digit",
+                                      }
+                                    )}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`rounded-[6px] border px-2 py-1 text-[10px] font-[650] ${getPriorityPill(
+                                task.priority
+                              )}`}
+                            >
+                              {priorityLabel}
+                            </span>
+
+                            {groupBy ===
+                              "priority" &&
+                              completedDate && (
+                                <time
+                                  dateTime={
+                                    task.completedAt
+                                  }
+                                  className={`whitespace-nowrap text-[10.5px] font-[500] ${mutedText}`}
+                                >
+                                  {completedDate.toLocaleDateString(
+                                    undefined,
+                                    {
+                                      month: "short",
+                                      day: "numeric",
+                                    }
+                                  )}
+                                </time>
+                              )}
+                          </div>
+                        </motion.div>
+                      );
+                    }
+                  )}
+                </AnimatePresence>
+              </section>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
@@ -5985,7 +6358,7 @@ function PageHeader({
 
         <p
           className={`mt-2 text-[13px] sm:text-sm ${
-            darkMode ? "text-white/45" : "text-[#000000]/45"
+            darkMode ? "text-white/55" : "text-[#666661]/45"
           }`}
         >
           {description}
@@ -6052,7 +6425,7 @@ function AssistantItem({ icon, title, description, color, darkMode }: any) {
         <p className="text-sm font-[700]">{title}</p>
         <p
           className={`mt-1 text-xs leading-5 ${
-            darkMode ? "text-white/42" : "text-[#000000]/42"
+            darkMode ? "text-white/42" : "text-[#666661]/42"
           }`}
         >
           {description}
@@ -6090,7 +6463,7 @@ function CompactMetric({
 
       <span
         className={`text-[11px] font-[700] ${
-          darkMode ? "text-white/38" : "text-[#000000]/38"
+          darkMode ? "text-white/38" : "text-[#666661]/38"
         }`}
       >
         {label}
@@ -6098,6 +6471,7 @@ function CompactMetric({
     </div>
   );
 }
+
 
 function DayTimeLeftCard({
   dayEndTime,
@@ -6109,169 +6483,333 @@ function DayTimeLeftCard({
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement | null>(null);
 
+  const getTimeParts = (value: string) => {
+    const [rawHour, rawMinute] = String(value || "18:00")
+      .split(":")
+      .map(Number);
+
+    const hour24 = Number.isFinite(rawHour)
+      ? Math.min(23, Math.max(0, rawHour))
+      : 18;
+
+    const minuteNumber = Number.isFinite(rawMinute)
+      ? Math.min(59, Math.max(0, rawMinute))
+      : 0;
+
+    const period: "AM" | "PM" =
+      hour24 >= 12 ? "PM" : "AM";
+
+    const displayHour =
+      hour24 === 0
+        ? 12
+        : hour24 > 12
+        ? hour24 - 12
+        : hour24;
+
+    return {
+      hour: displayHour,
+      minute: String(minuteNumber).padStart(2, "0"),
+      period,
+    };
+  };
+
+  const currentParts = getTimeParts(dayEndTime);
+
+  /*
+   * The picker edits draft values. The actual day end time
+   * changes only when the picker is closed.
+   */
+  const [draftHour, setDraftHour] = useState(
+    currentParts.hour
+  );
+
+  const [draftMinute, setDraftMinute] = useState(
+    currentParts.minute
+  );
+
+  const [draftPeriod, setDraftPeriod] = useState<
+    "AM" | "PM"
+  >(currentParts.period);
+
+  const hourOptions = Array.from(
+    { length: 12 },
+    (_, index) => index + 1
+  );
+
+  const minuteOptions = Array.from(
+    { length: 12 },
+    (_, index) =>
+      String(index * 5).padStart(2, "0")
+  );
+
+  const saveDraftTime = () => {
+    let hour24 = draftHour;
+
+    if (draftPeriod === "AM" && draftHour === 12) {
+      hour24 = 0;
+    }
+
+    if (draftPeriod === "PM" && draftHour !== 12) {
+      hour24 = draftHour + 12;
+    }
+
+    setDayEndTime(
+      `${String(hour24).padStart(
+        2,
+        "0"
+      )}:${draftMinute}`
+    );
+  };
+
+  const openPicker = () => {
+    const latestParts = getTimeParts(dayEndTime);
+
+    setDraftHour(latestParts.hour);
+    setDraftMinute(latestParts.minute);
+    setDraftPeriod(latestParts.period);
+    setIsPickerOpen(true);
+  };
+
+  const togglePicker = () => {
+    if (isPickerOpen) {
+      saveDraftTime();
+      setIsPickerOpen(false);
+      return;
+    }
+
+    openPicker();
+  };
+
+  /*
+   * Clicking outside applies the selected time
+   * and then closes the picker.
+   */
   useEffect(() => {
+    if (!isPickerOpen) return;
+
     const handleClickOutside = (event: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(
+          event.target as Node
+        )
+      ) {
+        let hour24 = draftHour;
+
+        if (
+          draftPeriod === "AM" &&
+          draftHour === 12
+        ) {
+          hour24 = 0;
+        }
+
+        if (
+          draftPeriod === "PM" &&
+          draftHour !== 12
+        ) {
+          hour24 = draftHour + 12;
+        }
+
+        setDayEndTime(
+          `${String(hour24).padStart(
+            2,
+            "0"
+          )}:${draftMinute}`
+        );
+
         setIsPickerOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
 
-  const [currentHourRaw, currentMinuteRaw] = dayEndTime.split(":").map(Number);
-  const period = currentHourRaw >= 12 ? "PM" : "AM";
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, [
+    isPickerOpen,
+    draftHour,
+    draftMinute,
+    draftPeriod,
+    setDayEndTime,
+  ]);
 
-  const displayHour =
-    currentHourRaw === 0 ? 12 : currentHourRaw > 12 ? currentHourRaw - 12 : currentHourRaw;
-
-  const displayMinute = String(currentMinuteRaw).padStart(2, "0");
-
-  const hourOptions = Array.from({ length: 12 }, (_, index) => index + 1);
-  const minuteOptions = Array.from({ length: 12 }, (_, index) =>
-    String(index * 5).padStart(2, "0")
-  );
-
-  const updateEndTime = (
-    nextHour: number,
-    nextMinute: string,
-    nextPeriod: "AM" | "PM"
-  ) => {
-    let hour24 = nextHour;
-
-    if (nextPeriod === "AM" && nextHour === 12) hour24 = 0;
-    if (nextPeriod === "PM" && nextHour !== 12) hour24 = nextHour + 12;
-
-    setDayEndTime(`${String(hour24).padStart(2, "0")}:${nextMinute}`);
-  };
-
-  const selectClass = `h-10 w-full appearance-none rounded-[14px] border px-3 text-sm font-[800] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${
+  const selectClass = `h-9 appearance-none rounded-[8px] border px-2 text-[11px] font-[700] outline-none transition ${
     darkMode
-      ? "border-white/[0.09] bg-[#1f1f21] text-white"
-      : "border-black/[0.08] bg-white text-[#000000]"
+      ? "border-white/[0.12] bg-[#202020] text-white focus:border-white/[0.30]"
+      : "border-[#D4D4CF] bg-white text-[#181818] focus:border-[#8B8B85]"
   }`;
 
   return (
-    <div ref={pickerRef} className="relative z-[500] w-full max-w-[250px]">
-      <div className="flex items-center justify-end gap-3">
-        <div className="text-right">
-          <p className="text-[15px] font-[600] leading-none tracking-[-0.035em]">
-            {dayTimeRemaining.label}
-          </p>
+    <div
+      ref={pickerRef}
+      className="relative z-[1000] inline-block"
+    >
+      <button
+        type="button"
+        onClick={togglePicker}
+        aria-expanded={isPickerOpen}
+        title="Edit day end time"
+        className={`group flex items-center gap-2 rounded-[10px] px-2 py-1.5 text-left transition ${
+          darkMode
+            ? "hover:bg-white/[0.05]"
+            : "hover:bg-black/[0.025]"
+        }`}
+      >
+        <div className="w-[168px]">
+          <div className="flex items-baseline justify-between gap-3">
+            <span
+              className={`whitespace-nowrap text-[13px] font-[700] leading-none tracking-[-0.025em] ${
+                darkMode
+                  ? "text-white"
+                  : "text-[#181818]"
+              }`}
+            >
+              {dayTimeRemaining.label}
+            </span>
 
-          <p
-            className={`mt-1 text-[10px] font-[700] ${
-              darkMode ? "text-white/38" : "text-[#000000]/38"
+            <span
+              className={`whitespace-nowrap text-[9px] font-[600] ${
+                darkMode
+                  ? "text-white/35"
+                  : "text-[#6F6F6A]"
+              }`}
+            >
+              Ends {currentParts.hour}:
+              {currentParts.minute}{" "}
+              {currentParts.period}
+            </span>
+          </div>
+
+          <div
+            className={`mt-2 h-[2px] overflow-hidden rounded-full ${
+              darkMode
+                ? "bg-white/[0.10]"
+                : "bg-black/[0.08]"
             }`}
           >
-            Ends {displayHour}:{displayMinute} {period}
-          </p>
+            <div
+              className="h-full rounded-full transition-[width] duration-500"
+              style={{
+                width: `${dayTimeRemaining.percentLeft}%`,
+                backgroundColor: themeColor,
+              }}
+            />
+          </div>
         </div>
 
-        <button
-          onClick={() => setIsPickerOpen((prev) => !prev)}
-          className={`rounded-full px-3 py-1.5 text-[10px] font-[900] transition hover:scale-[1.02] ${
+        <PencilLine
+          size={12}
+          className={`shrink-0 opacity-35 transition group-hover:opacity-75 ${
             darkMode
-              ? "bg-white/[0.06] text-white/60 hover:text-white"
-              : "bg-black/[0.04] text-[#000000]/60 hover:text-[#000000]"
+              ? "text-white"
+              : "text-[#181818]"
+          }`}
+        />
+      </button>
+
+      {isPickerOpen && (
+        <div
+          className={`absolute left-0 top-[calc(100%+8px)] z-[1100] w-[310px] rounded-[12px] border p-3 shadow-[0_14px_40px_rgba(0,0,0,0.14)] min-[1400px]:left-[calc(100%+16px)] min-[1400px]:top-0 ${
+            darkMode
+              ? "border-white/[0.10] bg-[#171717]"
+              : "border-[#D4D4CF] bg-white"
           }`}
         >
-          Edit
-        </button>
-      </div>
-
-      <div
-        className="mt-2 ml-auto h-1 w-[150px] rounded-full"
-        style={{ backgroundColor: themeColor }}
-      />
-
-{isPickerOpen && (
-  <div
-    className={`absolute right-0 top-[calc(100%+10px)] z-[600] w-[280px] rounded-[20px] border p-3 shadow-[0_20px_60px_rgba(0,0,0,0.38)] backdrop-blur-2xl ${
-            darkMode
-              ? "border-white/[0.09] bg-[#171717]/95"
-              : "border-black/[0.08] bg-white/95"
-          }`}
-        >
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-[11px] font-[900] uppercase tracking-[0.14em] opacity-45">
-              Set day end
-            </p>
-
-            <button
-              onClick={() => setIsPickerOpen(false)}
-              className="rounded-full px-3 py-1.5 text-[10px] font-[900] text-white"
-              style={{ backgroundColor: themeColor }}
+          <div className="flex items-center gap-2">
+            <span
+              className={`mr-1 shrink-0 text-[9px] font-[700] uppercase tracking-[0.12em] ${
+                darkMode
+                  ? "text-white/38"
+                  : "text-[#6F6F6A]"
+              }`}
             >
-              Done
-            </button>
+              End time
+            </span>
+
+            <select
+              value={draftHour}
+              onChange={(event) =>
+                setDraftHour(
+                  Number(event.target.value)
+                )
+              }
+              className={`${selectClass} w-[62px]`}
+              aria-label="End hour"
+            >
+              {hourOptions.map((hour) => (
+                <option key={hour} value={hour}>
+                  {String(hour).padStart(2, "0")}
+                </option>
+              ))}
+            </select>
+
+            <span
+              className={`text-[12px] font-[700] ${
+                darkMode
+                  ? "text-white/30"
+                  : "text-[#6F6F6A]"
+              }`}
+            >
+              :
+            </span>
+
+            <select
+              value={draftMinute}
+              onChange={(event) =>
+                setDraftMinute(event.target.value)
+              }
+              className={`${selectClass} w-[62px]`}
+              aria-label="End minute"
+            >
+              {minuteOptions.map((minute) => (
+                <option
+                  key={minute}
+                  value={minute}
+                >
+                  {minute}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={draftPeriod}
+              onChange={(event) =>
+                setDraftPeriod(
+                  event.target.value as "AM" | "PM"
+                )
+              }
+              className={`${selectClass} w-[62px]`}
+              aria-label="AM or PM"
+            >
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+            </select>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <p className="mb-2 text-[10px] font-[600] uppercase tracking-[0.12em] opacity-35">
-                Hrs
-              </p>
-              <select
-                value={displayHour}
-                onChange={(e) =>
-                  updateEndTime(Number(e.target.value), displayMinute, period)
-                }
-                className={selectClass}
-              >
-                {hourOptions.map((hour) => (
-                  <option key={hour} value={hour}>
-                    {String(hour).padStart(2, "0")}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <p className="mb-2 text-[10px] font-[700] uppercase tracking-[0.12em] opacity-35">
-                Min
-              </p>
-              <select
-                value={displayMinute}
-                onChange={(e) =>
-                  updateEndTime(displayHour, e.target.value, period)
-                }
-                className={selectClass}
-              >
-                {minuteOptions.map((minute) => (
-                  <option key={minute} value={minute}>
-                    {minute}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <p className="mb-2 text-[10px] font-[900] uppercase tracking-[0.12em] opacity-35">
-                Mode
-              </p>
-              <select
-                value={period}
-                onChange={(e) =>
-                  updateEndTime(
-                    displayHour,
-                    displayMinute,
-                    e.target.value as "AM" | "PM"
-                  )
-                }
-                className={selectClass}
-              >
-                <option value="AM">AM</option>
-                <option value="PM">PM</option>
-              </select>
-            </div>
-          </div>
+          <p
+            className={`mt-2 text-[9px] font-[500] ${
+              darkMode
+                ? "text-white/32"
+                : "text-[#777772]"
+            }`}
+          >
+            Click outside to apply the new time.
+          </p>
         </div>
       )}
     </div>
   );
 }
+
+
+
 function FocusModePanel({
   prioritizedTasks,
   completedToday,
@@ -6331,8 +6869,8 @@ function FocusModePanel({
   }, [prioritizedTasks.length, focusCacheKey, setManualFocusTaskIds]);
 
   useEffect(() => {
-    setManualFocusTaskIds((prev: string[]) =>
-      prev.filter((taskId) =>
+    setManualFocusTaskIds((previous: string[]) =>
+      previous.filter((taskId) =>
         prioritizedTasks.some((task: any) => task.id === taskId)
       )
     );
@@ -6363,77 +6901,36 @@ function FocusModePanel({
     const taskExists = prioritizedTasks.some((task: any) => task.id === taskId);
     if (!taskExists) return;
 
-    setManualFocusTaskIds((prev: string[]) => {
-      if (prev.includes(taskId)) return prev;
-      if (prev.length >= 3) return prev;
-      return [...prev, taskId];
+    setManualFocusTaskIds((previous: string[]) => {
+      if (previous.includes(taskId) || previous.length >= 3) return previous;
+      return [...previous, taskId];
     });
 
     setFocusIndex(0);
   };
 
-  const removeFocusTask = (taskId: string) => {
-    if (isManualMode) {
-      setManualFocusTaskIds((prev: string[]) =>
-        prev.filter((id) => id !== taskId)
-      );
-
-      setFocusIndex(0);
-      return;
-    }
-
-    setFocusPlan((prev: any) => {
-      if (!prev?.focusTaskIds) return prev;
-
-      const nextFocusTaskIds = prev.focusTaskIds.filter(
-        (id: string) => id !== taskId
-      );
-
-      const nextReasons = { ...(prev.reasons || {}) };
-      delete nextReasons[taskId];
-
-      const nextPlan = {
-        ...prev,
-        focusTaskIds: nextFocusTaskIds,
-        reasons: nextReasons,
-      };
-
-      if (nextFocusTaskIds.length === 0) {
-        localStorage.removeItem(focusCacheKey);
-        return null;
-      }
-
-      localStorage.setItem(focusCacheKey, JSON.stringify(nextPlan));
-      return nextPlan;
-    });
-
-    setFocusIndex(0);
-  };
-
-  const clearFocusStack = () => {
-    setManualFocusTaskIds([]);
-    setFocusPlan(null);
-    setFocusIndex(0);
-    localStorage.removeItem(focusCacheKey);
-  };
+  
 
   const moveNext = () => {
     if (activeFocusTasks.length === 0) return;
 
-    setFocusIndex((prev) => {
-      if (prev >= activeFocusTasks.length - 1) return 0;
-      return prev + 1;
-    });
+    setFocusIndex((previous) =>
+      previous >= activeFocusTasks.length - 1 ? 0 : previous + 1
+    );
   };
 
   const getTaskReason = (taskId: string) => {
     if (isManualMode) {
-      return "You manually added this to your focus stack.";
+      const task = prioritizedTasks.find((item: any) => item.id === taskId);
+      return (
+        task?.whyThisMatters ||
+        "You manually added this to your focus stack."
+      );
     }
 
     return (
       focusPlan?.reasons?.[taskId] ||
-      "Veira selected this as one of the strongest next moves."
+      "Momentuhm selected this as one of the strongest next moves."
     );
   };
 
@@ -6478,7 +6975,7 @@ function FocusModePanel({
       );
 
       if (validTaskIds.length === 0) {
-        throw new Error("Veira could not pick focus tasks.");
+        throw new Error("Momentuhm could not pick focus tasks.");
       }
 
       const nextFocusPlan = {
@@ -6486,7 +6983,7 @@ function FocusModePanel({
         reasons: data.reasons || {},
         summary:
           data.summary ||
-          "Veira selected the strongest next moves from your active tasks.",
+          "Momentuhm selected the strongest next moves from your active tasks.",
         generatedAt: new Date().toISOString(),
         source: "ai",
       };
@@ -6499,17 +6996,17 @@ function FocusModePanel({
       console.error(error);
 
       const fallbackTasks = prioritizedTasks.slice(0, 3);
-
       const fallbackFocusPlan = {
         focusTaskIds: fallbackTasks.map((task: any) => task.id),
         reasons: Object.fromEntries(
           fallbackTasks.map((task: any) => [
             task.id,
-            "Fallback pick: this task is near the top of your prioritized list.",
+            task.whyThisMatters ||
+              "This task is near the top of your prioritized list.",
           ])
         ),
         summary:
-          "Veira used a fallback stack because AI focus planning was unavailable.",
+          "Momentuhm used your prioritized list because AI focus planning was unavailable.",
         generatedAt: new Date().toISOString(),
         source: "fallback",
       };
@@ -6518,309 +7015,376 @@ function FocusModePanel({
       setManualFocusTaskIds([]);
       localStorage.setItem(focusCacheKey, JSON.stringify(fallbackFocusPlan));
       setFocusIndex(0);
-      setFocusError("AI focus was unavailable. Fallback stack used.");
+      setFocusError("AI focus was unavailable. Your top tasks were used instead.");
     } finally {
       setFocusLoading(false);
     }
   };
 
+  const openTaskEditor = (task: any) => {
+    /*
+     * An AI-generated focus plan lives locally inside FocusModePanel.
+     * Convert it into the editable manual stack before opening the modal.
+     */
+    if (!isManualMode && activeFocusTasks.length > 0) {
+      setManualFocusTaskIds(
+        activeFocusTasks.map((focusTask: any) => focusTask.id)
+      );
+    }
+  
+    setSelectedTask(task);
+    setIsEditModalOpen(true);
+  };
+  
+  const openCurrentTask = () => {
+    if (!currentTask) return;
+  
+    openTaskEditor(currentTask);
+  };
+
+  const dayProgress = Math.round(
+    (completedToday.length /
+      Math.max(1, completedToday.length + prioritizedTasks.length)) *
+      100
+  );
+
+  const cardBorder = darkMode
+    ? "border-white/[0.10]"
+    : "border-[#DDDDE3]";
+
+  const rowBorder = darkMode
+    ? "border-white/[0.08]"
+    : "border-[#E8E9ED]";
+
+  const mutedText = darkMode
+    ? "text-white/50"
+    : "text-[#6B6F7B]";
+
   return (
-    <section
-    className={`relative min-w-0 self-start overflow-hidden rounded-[24px] border p-4 sm:rounded-[36px] sm:p-6 ${
-      darkMode
-      ? "bg-[#171717] border-white/[0.055] shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
-      : `${strongerGlass} ${border}`
-    }`}
-  >
-      <div className="relative">
-        <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5 sm:gap-4">
-          <div className="min-w-0">
-            <h2 className={`flex items-center gap-2 ${textStyles.sectionTitle} tracking-[-0.025em]`}>
-              Focus Mode
-              <Sparkles size={15} style={{ color: themeColor }} />
-            </h2>
-
-            <p
-              className={`mt-1.5 max-w-md ${textStyles.small} sm:mt-2 ${
-                darkMode ? "text-white/64" : "text-[#000000]/45"
-              }`}
-            >
-              Drag up to 3 tasks here, or let Veira choose them.
-            </p>
-          </div>
-
-          <span
-            className={`shrink-0 rounded-full border px-3 py-1.5 ${textStyles.badge} ${
-              darkMode
-                ? "border-white/[0.16] bg-white/[0.06] text-white/75"
-                : "bg-black/[0.04] text-[#000000]/45"
+    <section className="min-w-0">
+      <header className="mb-6 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h2
+            className={`text-[24px] font-[760] leading-none tracking-[-0.045em] ${
+              darkMode ? "text-white" : "text-[#17191F]"
             }`}
           >
-            {isManualMode ? "Manual" : "AI Mode"}
-          </span>
+            Focus
+          </h2>
+          <p className={`mt-2 text-[13px] font-[500] ${mutedText}`}>
+            Stay focused. Finish what matters most.
+          </p>
         </div>
 
-        <div
-          onDragOver={(event) => {
-            event.preventDefault();
-            setIsDragOver(true);
-          }}
-          onDragLeave={() => setIsDragOver(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setIsDragOver(false);
-
-            const taskId = event.dataTransfer.getData("text/plain");
-            addManualFocusTask(taskId);
-          }}
-          className={`rounded-[22px] border p-4 transition sm:rounded-[26px] sm:p-5 ${
-            isDragOver
-              ? darkMode
-                ? "border-white/[0.24] bg-white/[0.08]"
-                : "border-[#05AD98] bg-[#05AD98]/10"
-              : darkMode
-              ? "border-white/[0.055] bg-[#111111]"
-              : "border-black/[0.04] bg-white/65"
+        <button
+          type="button"
+          onClick={() => void computeFocusStack()}
+          disabled={focusLoading || prioritizedTasks.length === 0}
+          className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-[9px] border px-3 text-[11px] font-[650] transition disabled:cursor-not-allowed disabled:opacity-40 ${
+            darkMode
+              ? "border-white/[0.10] bg-white/[0.04] text-white/68 hover:bg-white/[0.07]"
+              : "border-[#DDDDE3] bg-[#F7F8FA] text-[#4F5562] hover:bg-[#F0F1F4]"
           }`}
         >
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <p
-                className={textStyles.badge}
-                style={{ color: themeColor }}
-              >
-                Focus Stack
-              </p>
+          <Settings2 size={15} strokeWidth={1.7} />
+          {focusLoading ? "Updating..." : "AI Mode"}
+        </button>
+      </header>
 
-              <p
-                className={`mt-1 ${textStyles.meta} ${
-                  darkMode ? "text-white/48" : "text-[#000000]/40"
+      <div
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDragOver(false);
+          addManualFocusTask(event.dataTransfer.getData("text/plain"));
+        }}
+        className={`relative overflow-hidden rounded-[14px] border p-5 transition ${
+          isDragOver
+            ? darkMode
+              ? "border-amber-300/40 bg-amber-300/[0.08]"
+              : "border-amber-300 bg-amber-50"
+            : darkMode
+            ? "border-amber-300/20 bg-[linear-gradient(135deg,rgba(251,191,36,0.08),rgba(251,191,36,0.025))]"
+            : "border-amber-200 bg-[linear-gradient(135deg,#FFFDF8,#FFF9EE)]"
+        }`}
+      >
+        <div
+          className={`pointer-events-none absolute -right-8 -top-6 flex h-32 w-32 items-center justify-center rounded-full border-[10px] opacity-15 ${
+            darkMode ? "border-amber-300" : "border-amber-500"
+          }`}
+        >
+          <Target size={52} strokeWidth={1.5} />
+        </div>
+
+        {currentTask ? (
+          <div className="relative pr-8 sm:pr-20">
+            <span
+              className={`inline-flex rounded-full px-3 py-1 text-[10px] font-[700] ${
+                darkMode
+                  ? "bg-amber-300/10 text-amber-200"
+                  : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              Current focus
+            </span>
+
+            <button
+              type="button"
+              onClick={openCurrentTask}
+              className={`mt-3 block max-w-full text-left text-[17px] font-[720] leading-6 tracking-[-0.025em] hover:opacity-72 ${
+                darkMode ? "text-white" : "text-[#1C1F26]"
+              }`}
+            >
+              {currentTask.title}
+            </button>
+
+            <p className={`mt-1.5 text-[11px] font-[550] ${mutedText}`}>
+              {currentTask.priority} impact task
+              {currentTask.category ? ` · ${currentTask.category}` : ""}
+            </p>
+
+            <p
+              className={`mt-5 line-clamp-3 max-w-[500px] text-[12px] font-[500] leading-5 ${
+                darkMode ? "text-white/68" : "text-[#454A56]"
+              }`}
+            >
+              {getTaskReason(currentTask.id)}
+            </p>
+
+            {/* <div className="mt-6">
+              <div className="mb-2 flex items-center justify-between text-[11px] font-[600]">
+                <span className={darkMode ? "text-white/70" : "text-[#353A45]"}>
+                  Progress
+                </span>
+                <span className={darkMode ? "text-white/70" : "text-[#353A45]"}>
+                  {dayProgress}%
+                </span>
+              </div>
+              <div className={`h-2 overflow-hidden rounded-full ${darkMode ? "bg-white/[0.10]" : "bg-black/[0.08]"}`}>
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-[width] duration-500"
+                  style={{ width: `${dayProgress}%` }}
+                />
+              </div>
+            </div> */}
+          </div>
+        ) : (
+          <div className="relative flex min-h-[210px] items-center justify-center text-center">
+            <div className="max-w-sm">
+              <Target
+                size={34}
+                className={`mx-auto ${darkMode ? "text-amber-200/55" : "text-amber-600/55"}`}
+              />
+              <h3
+                className={`mt-4 text-[17px] font-[700] ${
+                  darkMode ? "text-white" : "text-[#1C1F26]"
                 }`}
               >
-                {activeFocusTasks.length > 0
-                  ? `${activeFocusTasks.length} selected`
-                  : "Drop tasks here to build your stack."}
+                Build your focus stack.
+              </h3>
+              <p className={`mt-2 text-[12px] font-[500] leading-5 ${mutedText}`}>
+                Drag a task here or let Momentuhm choose your strongest next move.
               </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {activeFocusTasks.length > 0 && (
-                <button
-                  onClick={clearFocusStack}
-                  className={`rounded-[13px] border px-3 py-1.5 ${textStyles.badge} transition hover:scale-[1.02] ${
-                    darkMode
-                      ? "border-white/[0.07] bg-[#111111] text-white/58 hover:text-white"
-                      : "bg-black/[0.04] text-[#000000]/45 hover:text-[#000000]"
-                  }`}
-                >
-                  Clear
-                </button>
-              )}
-
               <button
-                onClick={computeFocusStack}
+                type="button"
+                onClick={() => void computeFocusStack()}
                 disabled={focusLoading || prioritizedTasks.length === 0}
-                className={`rounded-[13px] border px-3 py-1.5 ${textStyles.badge} transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 ${
+                className={`mt-4 h-10 rounded-[9px] px-4 text-[11px] font-[700] transition disabled:cursor-not-allowed disabled:opacity-40 ${
                   darkMode
-                    ? "border-white/[0.14] bg-[#111111] text-white/70 hover:border-[#05AD98]/50 hover:text-white"
-                    : "bg-black/[0.04] text-[#000000]/45 hover:text-[#000000]"
+                    ? "bg-white text-[#181818]"
+                    : "bg-[#20232B] text-white"
                 }`}
               >
-                {focusLoading
-                  ? "Thinking..."
-                  : activeFocusTasks.length > 0
-                  ? "Use AI"
-                  : "Compute"}
+                {focusLoading ? "Thinking..." : "Choose focus tasks"}
               </button>
             </div>
           </div>
+        )}
+      </div>
 
-          {focusError && (
-            <p className="mb-3 rounded-2xl border border-white/[0.12] bg-white/[0.06] px-3 py-2 text-xs font-[700] text-white/65">
-              {focusError}
-            </p>
-          )}
+      {focusError && (
+        <p className="mt-3 rounded-[10px] border border-red-500/20 bg-red-500/10 px-3 py-2 text-[11px] font-[600] text-red-500">
+          {focusError}
+        </p>
+      )}
 
-          {activeFocusTasks.length === 0 ? (
-            <div
-              className={`flex min-h-[170px] items-center justify-center rounded-[22px] border border-dashed text-center 2xl:min-h-[220px] ${
-                darkMode
-                  ? "border-white/[0.14] bg-[#111111] text-white/35"
-                  : "border-black/[0.07] bg-black/[0.015] text-[#000000]/35"
-              }`}
-            >
-              <div className="max-w-xs px-5">
-                <h3 className={`${textStyles.sectionTitle} tracking-[-0.025em] text-current`}>
-                  Build your focus stack.
-                </h3>
+      <section className={`mt-4 overflow-hidden rounded-[13px] border ${cardBorder}`}>
+        <div className={`flex min-h-[58px] items-center gap-2 border-b px-4 ${rowBorder}`}>
+          <h3
+            className={`text-[17px] font-[720] tracking-[-0.025em] ${
+              darkMode ? "text-white" : "text-[#17191F]"
+            }`}
+          >
+            Focus stack
+          </h3>
+          <span
+            className={`flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[10px] font-[700] ${
+              darkMode ? "bg-white/[0.07] text-white/58" : "bg-[#F0F1F4] text-[#59606C]"
+            }`}
+          >
+            {activeFocusTasks.length}
+          </span>
+        </div>
 
-                <p className={`mt-2 ${textStyles.small} opacity-80`}>
-                  Drag tasks from the left list, or press Compute to let Veira
-                  choose your top 3.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {activeFocusTasks.map((task: any, index: number) => {
-                const isCurrent = currentTask && task.id === currentTask.id;
-                const visibleDueDate = task.dueDate || task.suggestedDueDate;
+        {activeFocusTasks.length === 0 ? (
+          <div className={`px-4 py-8 text-center text-[12px] font-[500] ${mutedText}`}>
+            Your focus stack is empty.
+          </div>
+        ) : (
+          activeFocusTasks.map((task: any, index: number) => {
+            const priorityPill =
+              task.priority === "High"
+                ? darkMode
+                  ? "border-red-400/20 bg-red-400/10 text-red-300"
+                  : "border-red-200 bg-red-50 text-red-600"
+                : task.priority === "Medium" || task.priority === "Med"
+                ? darkMode
+                  ? "border-orange-400/20 bg-orange-400/10 text-orange-300"
+                  : "border-orange-200 bg-orange-50 text-orange-600"
+                : darkMode
+                ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                : "border-emerald-200 bg-emerald-50 text-emerald-600";
 
-                return (
-                 <div
-  key={task.id}
-  onClick={() => setFocusIndex(index)}
-  style={
-    isCurrent
-      ? {
-          "--theme-border": `${themeColor}70`,
-          "--theme-soft": `${themeColor}14`,
-        } as React.CSSProperties
-      : undefined
-  }
-                    className={`group cursor-pointer rounded-[20px] border px-3 py-3 transition hover:scale-[1.005] sm:px-4 ${
-                      isCurrent
-                        ? darkMode
-                         ? "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
-: "border-[color:var(--theme-border)] bg-[color:var(--theme-soft)]"
-                        : darkMode
-                        ? "border-white/[0.12] bg-[#111111]"
-                        : "border-black/[0.045] bg-white/70"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-[900] text-white"
-                        style={{
-                          backgroundColor: isCurrent
-                            ? themeColor
-                            : darkMode
-                            ? "#334155"
-                            : "#a1a1aa",
-                        }}
-                      >
-                        {index + 1}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setSelectedTask(task);
-                            setIsEditModalOpen(true);
-                          }}
-                          title={task.title}
-                          className={`whitespace-normal break-words ${textStyles.taskTitle} tracking-[-0.01em] hover:opacity-70 xl:truncate`}
-                        >
-                          {task.title}
-                        </p>
-
-                        <p
-                          className={`mt-1 truncate ${textStyles.meta} ${
-                            darkMode ? "text-white/48" : "text-[#000000]/38"
-                          }`}
-                        >
-                          {task.priority}
-                          {visibleDueDate &&
-                            ` · ${formatDueDate(visibleDueDate)}`}
-                        </p>
-                      </div>
-
-                      {isCurrent && (
-                        <span
-                          className="hidden shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-[900] sm:inline-flex"
-                          style={{
-                            color: darkMode
-                              ? "rgba(255,255,255,0.72)"
-                              : "#000000",
-                            backgroundColor: darkMode
-                              ? "rgba(255,255,255,0.06)"
-                              : "#ffffff",
-                            borderColor: darkMode
-                              ? "rgba(255,255,255,0.12)"
-                              : "#BBBFBF",
-                          }}
-                        >
-                          Now
-                        </span>
-                      )}
-
-                      <button
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          removeFocusTask(task.id);
-                        }}
-                        className={`shrink-0 rounded-full px-2.5 py-1 ${textStyles.badge} opacity-70 transition hover:scale-[1.03] hover:opacity-100 ${
-                          darkMode
-                            ? "bg-white/[0.06] text-white/58 hover:text-white"
-                            : "bg-black/[0.05] text-[#000000]/50"
-                        }`}
-                      >
-                        Remove
-                      </button>
-                    </div>
-
-                    {isCurrent && (
-                      <div className="mt-4">
-                        <p
-                          className={`${textStyles.whyText} ${
-                            darkMode ? "text-white/52" : "text-[#000000]/45"
-                          }`}
-                        >
-                          {getTaskReason(task.id)}
-                        </p>
-
-                        <div className="mt-4 grid grid-cols-[1fr_0.72fr] gap-2 sm:gap-3">
-                          <button
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              toggleTaskById(task.id, event);
-                            }}
-                            className={`h-11 rounded-[17px] ${textStyles.button} text-white shadow-[0_16px_34px_rgba(0,0,0,0.22)] transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl`}
-                            style={{ backgroundColor: themeColor }}
-                          >
-                            Complete
-                          </button>
-
-                          <button
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              moveNext();
-                            }}
-                            className={`h-11 rounded-[18px] border ${textStyles.button} transition hover:scale-[1.01] sm:h-12 sm:rounded-2xl ${
-                              darkMode
-                                ? "border-white/[0.12] bg-[#111111] text-white/82"
-                                : border
-                            }`}
-                          >
-                            Next
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {activeFocusTasks.length < 3 && (
-                <div
-                  className={`flex h-[58px] items-center justify-center rounded-[18px] border border-dashed text-xs font-[900] ${
-                    darkMode
-                      ? "border-white/[0.12] bg-[#111111] text-white/28"
-                      : "border-black/[0.06] bg-black/[0.015] text-[#000000]/28"
+            return (
+              <div
+                key={task.id}
+                className={`grid min-h-[58px] w-full grid-cols-[24px_minmax(0,1fr)_auto_30px] items-center gap-2 border-b px-4 text-left last:border-b-0 ${rowBorder} ${
+                  currentTask?.id === task.id
+                    ? darkMode
+                      ? "bg-white/[0.035]"
+                      : "bg-[#FBFBFC]"
+                    : ""
+                }`}
+              >
+                <span
+                  className={`text-[11px] font-[700] ${
+                    currentTask?.id === task.id
+                      ? darkMode
+                        ? "text-white"
+                        : "text-[#20232B]"
+                      : mutedText
                   }`}
                 >
-                  Drop task #{activeFocusTasks.length + 1}
-                </div>
-              )}
-            </div>
-          )}
+                  {index + 1}.
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setFocusIndex(index)}
+                  title={task.title}
+                  className={`min-w-0 truncate text-left text-[12px] font-[600] ${
+                    darkMode ? "text-white/84" : "text-[#282C35]"
+                  }`}
+                >
+                  {task.title}
+                </button>
+
+                <span className={`rounded-[6px] border px-2 py-1 text-[10px] font-[650] ${priorityPill}`}>
+                  {task.priority === "Medium" || task.priority === "Med" ? "Medium" : task.priority}
+                </span>
+
+                <button
+  type="button"
+  onClick={() => openTaskEditor(task)}
+  aria-label={`Edit ${task.title}`}
+  title="Edit task"
+  className={`flex h-8 w-8 items-center justify-center transition ${
+    darkMode
+      ? "text-white/36 hover:text-white"
+      : "text-[#747986] hover:text-[#252933]"
+  }`}
+>
+  <MoreVertical size={15} strokeWidth={1.8} />
+</button>
+              </div>
+            );
+          })
+        )}
+      </section>
+
+      <section className={`mt-4 rounded-[13px] border p-4 ${cardBorder}`}>
+        <h3
+          className={`text-[17px] font-[720] tracking-[-0.025em] ${
+            darkMode ? "text-white" : "text-[#17191F]"
+          }`}
+        >
+          Quick actions
+        </h3>
+
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <button
+            type="button"
+            disabled={!currentTask}
+            onClick={(event) => {
+              if (!currentTask) return;
+              toggleTaskById(currentTask.id, event);
+            }}
+            className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-[10px] border px-2 text-center text-[11px] font-[600] transition disabled:cursor-not-allowed disabled:opacity-35 ${cardBorder} ${
+              darkMode ? "hover:bg-white/[0.04]" : "hover:bg-[#FAFAFB]"
+            }`}
+          >
+            <Check size={22} className="text-blue-500" strokeWidth={2} />
+            <span>Mark current complete</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={activeFocusTasks.length < 2}
+            onClick={moveNext}
+            className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-[10px] border px-2 text-center text-[11px] font-[600] transition disabled:cursor-not-allowed disabled:opacity-35 ${cardBorder} ${
+              darkMode ? "hover:bg-white/[0.04]" : "hover:bg-[#FAFAFB]"
+            }`}
+          >
+            <Play size={21} className="text-emerald-500" strokeWidth={1.9} />
+            <span>Start next in stack</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={!currentTask}
+            onClick={openCurrentTask}
+            className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-[10px] border px-2 text-center text-[11px] font-[600] transition disabled:cursor-not-allowed disabled:opacity-35 ${cardBorder} ${
+              darkMode ? "hover:bg-white/[0.04]" : "hover:bg-[#FAFAFB]"
+            }`}
+          >
+            <Calendar size={21} className="text-violet-500" strokeWidth={1.9} />
+            <span>Schedule focus time</span>
+          </button>
         </div>
-      </div>
+      </section>
+
+      <section
+        className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5 ${
+          darkMode
+            ? "border-violet-400/20 bg-violet-400/[0.06]"
+            : "border-violet-200 bg-[linear-gradient(135deg,#FBF8FF,#F7F2FF)]"
+        }`}
+      >
+        <Sparkles
+          size={30}
+          className={darkMode ? "shrink-0 text-violet-300" : "shrink-0 text-violet-600"}
+          strokeWidth={1.7}
+        />
+        <div className="min-w-0">
+          <h3
+            className={`text-[15px] font-[700] ${
+              darkMode ? "text-white" : "text-[#20232B]"
+            }`}
+          >
+            Keep going{completedToday.length > 0 ? " — you’re moving! 💪" : "! 💪"}
+          </h3>
+          <p className={`mt-1.5 text-[12px] font-[500] ${mutedText}`}>
+            You’ve got {prioritizedTasks.length} more task{prioritizedTasks.length === 1 ? "" : "s"} to complete today.
+          </p>
+        </div>
+      </section>
     </section>
   );
 }
-
 
 function DateBadge({ task, visibleDueDate, darkMode }: any) {
   if (visibleDueDate) {
@@ -6846,7 +7410,7 @@ function DateBadge({ task, visibleDueDate, darkMode }: any) {
       className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-[700] tracking-[-0.01em] ${
         darkMode
           ? "border-white/[0.08] bg-white/[0.04] text-white/35"
-          : "border-black/[0.06] bg-black/[0.025] text-[#000000]/35"
+          : "border-black/[0.06] bg-black/[0.025] text-[#666661]/35"
       }`}
     >
       No date
@@ -6919,7 +7483,7 @@ function PrioritiesView({
           </h2>
           <p
             className={`mt-2 text-sm ${
-              darkMode ? "text-white/45" : "text-[#000000]/45"
+              darkMode ? "text-white/55" : "text-[#666661]/45"
             }`}
           >
             Your active tasks grouped by importance.
@@ -6980,7 +7544,7 @@ function PriorityColumn({
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
             <h3 className="text-[15px] font-[700]">{title}</h3>
           </div>
-          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#000000]/40"}`}>
+          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#666661]/40"}`}>
             {description}
           </p>
         </div>
@@ -6996,7 +7560,7 @@ function PriorityColumn({
             className={`rounded-2xl border border-dashed p-5 text-sm ${
               darkMode
                 ? "border-white/10 text-white/35"
-                : "border-black/10 text-[#000000]/35"
+                : "border-black/10 text-[#666661]/35"
             }`}
           >
             {emptyMessage}
@@ -7045,7 +7609,7 @@ function CompactTaskCard({
           onClick={(e) => toggleTaskById(task.id, e)}
           className="mt-0.5 opacity-70 transition hover:opacity-100"
         >
-          <Circle size={18} className={darkMode ? "text-white/25" : "text-[#000000]/25"} />
+          <Circle size={18} className={darkMode ? "text-white/25" : "text-[#666661]/25"} />
         </button>
 
         <div className="min-w-0 flex-1">
@@ -7059,7 +7623,7 @@ function CompactTaskCard({
             {task.title}
           </p>
 
-          <p className={`mt-1 text-[11px] ${darkMode ? "text-white/38" : "text-[#000000]/38"}`}>
+          <p className={`mt-1 text-[11px] ${darkMode ? "text-white/38" : "text-[#666661]/38"}`}>
             {task.category}
           </p>
 
@@ -7109,7 +7673,7 @@ function PriorityListGroup({
             <h3 className="text-[15px] font-[700]">{title}</h3>
           </div>
 
-          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#000000]/40"}`}>
+          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#666661]/40"}`}>
             {description}
           </p>
         </div>
@@ -7166,13 +7730,13 @@ function AirtablePriorityGroup({
             <h3 className="text-[15px] font-[700] sm:text-[16px]">{title}</h3>
           </div>
 
-          <p className={`mt-1 text-[11px] sm:text-[12px] ${darkMode ? "text-white/45" : "text-[#000000]/45"}`}>
+          <p className={`mt-1 text-[11px] sm:text-[12px] ${darkMode ? "text-white/55" : "text-[#666661]/45"}`}>
             {description}
           </p>
         </div>
 
         <div className={`flex h-8 min-w-8 items-center justify-center rounded-full px-3 text-xs font-[700] ${
-          darkMode ? "bg-white/10 text-white/70" : "bg-black/[0.04] text-[#000000]/60"
+          darkMode ? "bg-white/10 text-white/70" : "bg-black/[0.04] text-[#666661]/60"
         }`}>
           {tasks.length}
         </div>
@@ -7206,10 +7770,10 @@ function AirtablePriorityGroup({
                 task.completed
                   ? darkMode
                     ? "text-white/55 line-through decoration-white/45"
-                    : "text-[#000000]/45 line-through decoration-black/45"
+                    : "text-[#666661]/45 line-through decoration-black/45"
                   : darkMode
                   ? "text-white"
-                  : "text-[#000000]"
+                  : "text-[#666661]"
               }`}
             >
               {task.title}
@@ -7226,10 +7790,10 @@ function AirtablePriorityGroup({
               task.completed
                 ? darkMode
                   ? "text-white/42"
-                  : "text-[#000000]/35"
+                  : "text-[#666661]/35"
                 : darkMode
                 ? "text-white/48"
-                : "text-[#000000]/40"
+                : "text-[#666661]/40"
             }`}
             >
               {task.category} • {task.priority}
@@ -7239,7 +7803,7 @@ function AirtablePriorityGroup({
           <div className="flex w-full flex-wrap items-center justify-start gap-3 text-[12px] font-[700] sm:w-auto sm:justify-end sm:gap-5 sm:text-[13px] sm:font-[700]">
             {task.dueDate && (
               <div className={`flex items-center gap-1.5 ${
-                darkMode ? "text-white/70" : "text-[#000000]/65"
+                darkMode ? "text-white/70" : "text-[#666661]/65"
               }`}>
                 <Calendar size={14} />
                 <span>{formatDueDate(task.dueDate)}</span>
@@ -7270,376 +7834,11 @@ function AirtablePriorityGroup({
   );
 }
 
-function SettingsView({
-  darkMode,
-  setDarkMode,
-  border,
-  className,
-  themeColor,
-setThemeColor,
-userRole,
-setUserRole,
-input,
-enableAppSuggestions,
-  setEnableAppSuggestions,
-  enableAutoPriority,
-  setEnableAutoPriority,
-enableClipboardAssist,
-setEnableClipboardAssist,
-  upcomingViewMode,
-  setUpcomingViewMode,
-  priorityViewMode,
-  setPriorityViewMode,
-  archiveCount,
-  clearArchive,
-  resetAppData,
-}: any) {
-  return (
-    <div>
-      <PageHeader
-        title="Settings"
-        description="Control how Veira looks, suggests, and organizes your tasks."
-        darkMode={darkMode}
-      />
-
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <SettingsCard
-          title="Appearance"
-          description="Choose how Veira looks."
-          darkMode={darkMode}
-          border={border}
-          className={`hidden ${className}`}
-        >
-          <SettingsRow
-            title="Theme"
-            description="Switch between light and dark mode."
-            darkMode={darkMode}
-          >
-            <SegmentedControl
-              value={darkMode ? "dark" : "light"}
-              options={[
-                { label: "Light", value: "light" },
-                { label: "Dark", value: "dark" },
-              ]}
-              onChange={(value: string) => setDarkMode(value === "dark")}
-              themeColor={themeColor}
-              darkMode={darkMode}
-              border={border}
-            />
-          </SettingsRow>
-          </SettingsCard>
-
-          <SettingsCard
-  title="Theme Color"
-  description="Choose the accent color used across Veira."
-  darkMode={darkMode}
-  border={border}
-  className={className}
->
-  <div className="grid grid-cols-6 gap-3 sm:grid-cols-8 lg:grid-cols-10">
-    {[
-           "#2FB7A7", // Veira Teal
-           "#0E95A8", // Deep Teal
-         
-           "#2563EB", // Calm Blue
-           "#7C3AED", // Deep Violet
-           "#059669", // Emerald
-         
-           "#D97706", // Burnt Amber
-           "#C2410C", // Terracotta
-           "#BE185D", // Raspberry
-         
-           "#334155", // Blue Slate
-           "#6D5D6E", // Muted Plum
-           "#1F2937", // Charcoal Navy
-           "#4B5563", // Soft Graphite
-           "#D72246", // Reddish Pink
-    ].map((color) => {
-      const isActive = themeColor === color;
-
-      return (
-        <button
-          key={color}
-          onClick={() => setThemeColor(color)}
-          className={`relative h-8 w-8 rounded-full transition hover:scale-110 ${
-            isActive ? "scale-110" : "opacity-90"
-          }`}
-          style={{ backgroundColor: color }}
-        >
-          {isActive && (
-            <span
-              className={`absolute inset-[-5px] rounded-full border ${
-                darkMode ? "border-white/70" : "border-black/35"
-              }`}
-            />
-          )}
-        </button>
-      );
-    })}
-  </div>
-</SettingsCard>
-
-<SettingsCard
-  title="Work Context"
-  description="Help Veira make task reasoning specific to your work."
-  darkMode={darkMode}
-  border={border}
-  className={className}
->
-  <SettingsRow
-    title="Your role"
-    description="Used by AI to suggest stronger reasons why each task matters."
-    darkMode={darkMode}
-  >
-    <input
-      value={userRole}
-      onChange={(e) => setUserRole(e.target.value)}
-      placeholder="Director of Engineering"
-      className={`h-11 w-full rounded-2xl px-4 text-sm font-[700] outline-none sm:w-[260px] ${input}`}
-    />
-  </SettingsRow>
-</SettingsCard>
-
-<SettingsCard
-  title="App Suggestions"
-          description="Control how much Veira helps organize new tasks."
-          darkMode={darkMode}
-          border={border}
-          className={className}
-        >
-          <SettingsRow
-            title="Suggested dates"
-            description="Let Veira suggest dates from task titles."
-            darkMode={darkMode}
-          >
-            <ToggleSwitch
-              checked={enableAppSuggestions}
-              onChange={setEnableAppSuggestions}
-              themeColor={themeColor}
-              darkMode={darkMode}
-            />
-          </SettingsRow>
-
-          <SettingsRow
-            title="Auto priority"
-            description="Let Veira classify new tasks as High, Medium, or Low."
-            darkMode={darkMode}
-          >
-            <ToggleSwitch
-              checked={enableAutoPriority}
-              onChange={setEnableAutoPriority}
-              themeColor={themeColor}
-              darkMode={darkMode}
-            />
-          </SettingsRow>
-
-          <SettingsRow
-            title="Clipboard Assist"
-            description="When you return to Veira, check copied text and automatically suggest tasks from it."
-            darkMode={darkMode}
-          >
-            <ToggleSwitch
-              checked={enableClipboardAssist}
-              onChange={setEnableClipboardAssist}
-              themeColor={themeColor}
-              darkMode={darkMode}
-            />
-          </SettingsRow>
-        </SettingsCard>
-
-        <SettingsCard
-          title="Default Views"
-          description="Choose your preferred planning layouts."
-          darkMode={darkMode}
-          border={border}
-          className={className}
-        >
-          <SettingsRow
-            title="Upcoming view"
-            description="Choose Calendar or List as the default upcoming layout."
-            darkMode={darkMode}
-          >
-            <SegmentedControl
-              value={upcomingViewMode}
-              options={[
-                { label: "Calendar", value: "calendar" },
-                { label: "List", value: "list" },
-              ]}
-              onChange={setUpcomingViewMode}
-              themeColor={themeColor}
-              darkMode={darkMode}
-              border={border}
-            />
-          </SettingsRow>
-
-          <SettingsRow
-            title="Priorities view"
-            description="Choose Cards or List as the default priorities layout."
-            darkMode={darkMode}
-          >
-            <SegmentedControl
-              value={priorityViewMode}
-              options={[
-                { label: "Cards", value: "cards" },
-                { label: "List", value: "list" },
-              ]}
-              onChange={setPriorityViewMode}
-              themeColor={themeColor}
-              darkMode={darkMode}
-              border={border}
-            />
-          </SettingsRow>
-        </SettingsCard>
-
-        <SettingsCard
-          title="Data"
-          description="Manage local app data stored in this browser."
-          darkMode={darkMode}
-          border={border}
-          className={className}
-        >
-          <SettingsRow
-            title="Archive"
-            description={`${archiveCount} archived item${archiveCount === 1 ? "" : "s"} saved.`}
-            darkMode={darkMode}
-          >
-            <button
-              onClick={clearArchive}
-              disabled={archiveCount === 0}
-              className={`h-10 rounded-xl px-4 text-xs font-[700] transition ${
-                archiveCount === 0
-                  ? "cursor-not-allowed opacity-30"
-                  : darkMode
-                  ? "bg-white/[0.06] text-white/60 hover:text-white"
-                  : "bg-black/[0.04] text-[#000000]/60 hover:text-[#000000]"
-              }`}
-            >
-              Clear archive
-            </button>
-          </SettingsRow>
-
-          <SettingsRow
-            title="Reset Veira"
-            description="Delete active tasks, completed tasks, and archived items."
-            darkMode={darkMode}
-          >
-            <button
-              onClick={resetAppData}
-              className="h-10 rounded-xl bg-red-500/10 px-4 text-xs font-[700] text-red-500 transition hover:scale-[1.02]"
-            >
-              Reset data
-            </button>
-          </SettingsRow>
-        </SettingsCard>
 
 
-      </div>
-    </div>
-  );
-}
 
-function SettingsCard({
-  title,
-  description,
-  children,
-  darkMode,
-  border,
-  className,
-}: any) {
-  return (
-    <section className={`rounded-[28px] border p-5 shadow-sm ${className} ${border}`}>
-      <div className="mb-5">
-        <h3 className="text-[16px] font-[700]">{title}</h3>
 
-        <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#000000]/40"}`}>
-          {description}
-        </p>
-      </div>
 
-      <div className="space-y-4">{children}</div>
-    </section>
-  );
-}
-
-function SettingsRow({ title, description, children, darkMode }: any) {
-  return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-      <div className="min-w-0">
-        <p className="text-sm font-[700]">{title}</p>
-
-        <p className={`mt-1 text-xs ${darkMode ? "text-white/38" : "text-[#000000]/38"}`}>
-          {description}
-        </p>
-      </div>
-
-      <div className="shrink-0">{children}</div>
-    </div>
-  );
-}
-
-function ToggleSwitch({ checked, onChange, themeColor, darkMode }: any) {
-  return (
-    <button
-      onClick={() => onChange(!checked)}
-      className={`flex h-7 w-12 items-center rounded-full p-1 transition ${
-        checked ? "" : darkMode ? "bg-white/[0.08]" : "bg-black/[0.08]"
-      }`}
-      style={
-        checked
-          ? {
-              backgroundColor: themeColor,
-            }
-          : undefined
-      }
-    >
-      <span
-        className={`h-5 w-5 rounded-full bg-white transition-transform ${
-          checked ? "translate-x-5" : "translate-x-0"
-        }`}
-      />
-    </button>
-  );
-}
-
-function SegmentedControl({
-  value,
-  options,
-  onChange,
-  themeColor,
-  darkMode,
-  border,
-}: any) {
-  return (
-    <div className={`flex rounded-2xl border p-1 ${border}`}>
-      {options.map((option: any) => {
-        const isActive = value === option.value;
-
-        return (
-          <button
-            key={option.value}
-            onClick={() => onChange(option.value)}
-            className={`h-9 rounded-xl px-4 text-xs font-[700] transition ${
-              isActive
-                ? "text-white"
-                : darkMode
-                ? "text-white/45 hover:text-white"
-                : "text-[#000000]/45 hover:text-[#000000]"
-            }`}
-            style={
-              isActive
-                ? {
-                    backgroundColor: themeColor,
-                  }
-                : undefined
-            }
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 function UpcomingView({
   darkMode,
@@ -7700,8 +7899,8 @@ function UpcomingView({
             Upcoming
           </h2>
 
-          <p className={`mt-2 text-[13px] sm:text-sm ${darkMode ? "text-white/45" : "text-[#000000]/45"}`}>
-            Tasks grouped by manual due dates and Veira-suggested dates.
+          <p className={`mt-2 text-[13px] sm:text-sm ${darkMode ? "text-white/55" : "text-[#666661]/45"}`}>
+            Tasks grouped by manual due dates and Momentuhm-suggested dates.
           </p>
         </div>
 
@@ -7719,8 +7918,8 @@ function UpcomingView({
                 viewMode === "calendar"
                   ? "text-white"
                   : darkMode
-                  ? "text-white/45 hover:text-white"
-                  : "text-[#000000]/45 hover:text-[#000000]"
+                  ? "text-white/55 hover:text-white"
+                  : "text-[#666661]/45 hover:text-[#666661]"
               }`}
               style={viewMode === "calendar" ? { backgroundColor: themeColor } : undefined}
             >
@@ -7733,8 +7932,8 @@ function UpcomingView({
                 viewMode === "list"
                   ? "text-white"
                   : darkMode
-                  ? "text-white/45 hover:text-white"
-                  : "text-[#000000]/45 hover:text-[#000000]"
+                  ? "text-white/55 hover:text-white"
+                  : "text-[#666661]/45 hover:text-[#666661]"
               }`}
               style={viewMode === "list" ? { backgroundColor: themeColor } : undefined}
             >
@@ -7848,7 +8047,7 @@ function UpcomingCalendarView({
                 <h3 className="text-[15px] font-[700]">{day.title}</h3>
               </div>
 
-              <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#000000]/40"}`}>
+              <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#666661]/40"}`}>
                 {day.dateLabel}
               </p>
             </div>
@@ -7857,7 +8056,7 @@ function UpcomingCalendarView({
               className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
                 darkMode
                   ? "bg-white/[0.06] text-white/50"
-                  : "bg-black/[0.04] text-[#000000]/50"
+                  : "bg-black/[0.04] text-[#666661]/50"
               }`}
             >
               {day.tasks.length}
@@ -7870,7 +8069,7 @@ function UpcomingCalendarView({
                 className={`rounded-2xl border border-dashed p-4 text-sm ${
                   darkMode
                     ? "border-white/10 text-white/35"
-                    : "border-black/10 text-[#000000]/35"
+                    : "border-black/10 text-[#666661]/35"
                 }`}
               >
                 {day.emptyMessage}
@@ -7930,7 +8129,7 @@ function UpcomingCalendarTaskCard({
         >
           <Circle
             size={17}
-            className={darkMode ? "text-white/25" : "text-[#000000]/25"}
+            className={darkMode ? "text-white/25" : "text-[#666661]/25"}
           />
         </button>
 
@@ -7947,7 +8146,7 @@ function UpcomingCalendarTaskCard({
 
           <p
             className={`mt-1 text-[11px] ${
-              darkMode ? "text-white/38" : "text-[#000000]/38"
+              darkMode ? "text-white/38" : "text-[#666661]/38"
             }`}
           >
             {task.category}
@@ -7981,7 +8180,7 @@ function UpcomingCalendarTaskCard({
             className={`rounded-full px-2.5 py-1 text-[10px] font-[700] transition hover:scale-[1.03] ${
               darkMode
                 ? "bg-white/[0.06] text-white/55 hover:text-white"
-                : "bg-black/[0.04] text-[#000000]/55 hover:text-[#000000]"
+                : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
             }`}
           >
             Accept
@@ -8016,7 +8215,7 @@ function UpcomingGroup({
             <h3 className="text-[15px] font-[700]">{title}</h3>
           </div>
 
-          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#000000]/40"}`}>
+          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#666661]/40"}`}>
             {description}
           </p>
         </div>
@@ -8025,7 +8224,7 @@ function UpcomingGroup({
           className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
             darkMode
               ? "bg-white/[0.06] text-white/50"
-              : "bg-black/[0.04] text-[#000000]/50"
+              : "bg-black/[0.04] text-[#666661]/50"
           }`}
         >
           {tasks.length}
@@ -8061,7 +8260,7 @@ function TaskRows({
   return (
     <div>
       {tasks.length === 0 && (
-        <div className={`p-5 text-sm ${darkMode ? "text-white/35" : "text-[#000000]/35"}`}>
+        <div className={`p-5 text-sm ${darkMode ? "text-white/35" : "text-[#666661]/35"}`}>
           {emptyMessage}
         </div>
       )}
@@ -8084,7 +8283,7 @@ function TaskRows({
                 onClick={(e) => toggleTaskById(task.id, e)}
                 className="mt-0.5 shrink-0 opacity-70 transition hover:opacity-100 sm:mt-0"
               >
-                <Circle size={18} className={darkMode ? "text-white/25" : "text-[#000000]/25"} />
+                <Circle size={18} className={darkMode ? "text-white/25" : "text-[#666661]/25"} />
               </button>
 
               <div className="min-w-0 flex-1">
@@ -8100,7 +8299,7 @@ function TaskRows({
 
                 <p
                   className={`mt-1 truncate text-[10.5px] font-[700] sm:mt-1.5 sm:text-[11px] sm:font-[650] ${
-                    darkMode ? "text-white/38" : "text-[#000000]/38"
+                    darkMode ? "text-white/38" : "text-[#666661]/38"
                   }`}
                 >
                   {task.category} · {task.priority}
@@ -8119,7 +8318,7 @@ function TaskRows({
                   className={`rounded-full px-3 py-1 text-[11px] font-[700] transition hover:scale-[1.03] ${
                     darkMode
                       ? "bg-white/[0.06] text-white/55 hover:text-white"
-                      : "bg-black/[0.04] text-[#000000]/55 hover:text-[#000000]"
+                      : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
                   }`}
                 >
                   Accept
@@ -8171,7 +8370,7 @@ function InboxView({
 
           <p
             className={`mt-2 text-sm ${
-              darkMode ? "text-white/45" : "text-[#000000]/45"
+              darkMode ? "text-white/55" : "text-[#666661]/45"
             }`}
           >
             Captured tasks that still need a clear date or review.
@@ -8203,7 +8402,7 @@ function InboxView({
 
             <p
               className={`mt-1 text-xs ${
-                darkMode ? "text-white/40" : "text-[#000000]/40"
+                darkMode ? "text-white/40" : "text-[#666661]/40"
               }`}
             >
               These tasks do not have a manual or suggested date yet.
@@ -8214,7 +8413,7 @@ function InboxView({
             className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
               darkMode
                 ? "bg-white/[0.06] text-white/50"
-                : "bg-black/[0.04] text-[#000000]/50"
+                : "bg-black/[0.04] text-[#666661]/50"
             }`}
           >
             {inboxTasks.length}
@@ -8225,11 +8424,11 @@ function InboxView({
           {inboxTasks.length === 0 && (
             <div
               className={`p-8 text-sm ${
-                darkMode ? "text-white/35" : "text-[#000000]/35"
+                darkMode ? "text-white/35" : "text-[#666661]/35"
               }`}
             >
               Your inbox is clear. Every active task has either a date or a
-              Veira suggestion.
+              Momentuhm suggestion.
             </div>
           )}
 
@@ -8255,7 +8454,7 @@ function InboxView({
                 >
                   <Circle
                     size={18}
-                    className={darkMode ? "text-white/25" : "text-[#000000]/25"}
+                    className={darkMode ? "text-white/25" : "text-[#666661]/25"}
                   />
                 </button>
 
@@ -8272,7 +8471,7 @@ function InboxView({
 
                   <p
                     className={`mt-1 truncate text-[11px] ${
-                      darkMode ? "text-white/38" : "text-[#000000]/38"
+                      darkMode ? "text-white/38" : "text-[#666661]/38"
                     }`}
                   >
                     {task.category} · Needs date
@@ -8298,7 +8497,7 @@ function InboxView({
                       className={`h-9 rounded-xl px-3 text-xs font-[700] transition hover:scale-[1.02] ${
                         darkMode
                           ? "bg-white/[0.06] text-white/55 hover:text-white"
-                          : "bg-black/[0.04] text-[#000000]/55 hover:text-[#000000]"
+                          : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
                       }`}
                     >
                       Today
@@ -8309,7 +8508,7 @@ function InboxView({
                       className={`h-9 rounded-xl px-3 text-xs font-[700] transition hover:scale-[1.02] ${
                         darkMode
                           ? "bg-white/[0.06] text-white/55 hover:text-white"
-                          : "bg-black/[0.04] text-[#000000]/55 hover:text-[#000000]"
+                          : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
                       }`}
                     >
                       Tomorrow
@@ -8361,10 +8560,9 @@ function MobileBottomNav({
 
   const goToFocus = () => {
     setSelectedView("today");
+
     window.setTimeout(() => {
-      document
-        .getElementById("mobile-focus-card")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.dispatchEvent(new Event("momentuhm:open-focus"));
     }, 120);
   };
 
@@ -8379,10 +8577,10 @@ function MobileBottomNav({
 
   return (
     <nav
-      className={`fixed bottom-4 left-4 right-4 z-[180] grid h-[72px] grid-cols-5 items-center rounded-[28px] border px-2 shadow-[0_22px_70px_rgba(17,24,39,0.22)] backdrop-blur-2xl min-[1360px]:hidden ${
+      className={`fixed bottom-4 left-4 right-4 z-[180] grid h-[72px] grid-cols-5 items-center rounded-[28px] border px-2 shadow-[0_22px_70px_rgba(17,24,39,0.22)] backdrop-blur-2xl lg:hidden ${
         darkMode
           ? "border-white/[0.10] bg-[#0b1113]/92 text-white"
-          : "border-black/[0.07] bg-white/[0.92] text-[#000000]"
+          : "border-black/[0.07] bg-white/[0.92] text-[#666661]"
       }`}
     >
       <button
@@ -8391,8 +8589,8 @@ function MobileBottomNav({
           selectedView === "today"
             ? "text-white"
             : darkMode
-            ? "text-white/45"
-            : "text-[#000000]/45"
+            ? "text-white/55"
+            : "text-[#666661]/45"
         }`}
         style={
           selectedView === "today"
@@ -8409,7 +8607,7 @@ function MobileBottomNav({
       <button
         onClick={goToFocus}
         className={`flex flex-col items-center justify-center gap-1 rounded-[20px] py-2 text-[10px] font-[900] ${
-          darkMode ? "text-white/45" : "text-[#000000]/45"
+          darkMode ? "text-white/55" : "text-[#666661]/45"
         }`}
       >
         <Target size={18} />
@@ -8432,8 +8630,8 @@ function MobileBottomNav({
           selectedView === "inbox"
             ? "text-white"
             : darkMode
-            ? "text-white/45"
-            : "text-[#000000]/45"
+            ? "text-white/55"
+            : "text-[#666661]/45"
         }`}
         style={
           selectedView === "inbox"
@@ -8450,7 +8648,7 @@ function MobileBottomNav({
           <span
             className={`absolute right-3 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-[900] ${
               selectedView === "inbox"
-                ? "bg-white text-[#000000]"
+                ? "bg-white text-[#666661]"
                 : "bg-red-500 text-white"
             }`}
           >
@@ -8495,7 +8693,7 @@ function MobileBottomNav({
 
         <span
           className={`text-[10px] font-[900] ${
-            darkMode ? "text-white/45" : "text-[#000000]/45"
+            darkMode ? "text-white/55" : "text-[#666661]/45"
           }`}
         >
           Account
@@ -8507,187 +8705,492 @@ function MobileBottomNav({
 
 function ClipboardAssistPrompt({
   text,
-  themeColor,
   darkMode,
   loading,
   error,
-  extractedTasks,
+  extractedTasks = [],
   onClose,
   onAddAsIs,
   onToggleTask,
   onAddSelected,
 }: any) {
   const preview = normalizeClipboardText(text);
-  const clippedPreview =
-    preview.length > 220 ? `${preview.slice(0, 220)}...` : preview;
 
-  const selectedCount = extractedTasks.filter((task: any) => task.selected).length;
+  const clippedPreview =
+    preview.length > 360
+      ? `${preview.slice(0, 360).trim()}...`
+      : preview;
+
+  const selectedCount = extractedTasks.filter(
+    (task: any) => task.selected
+  ).length;
+
   const hasTasks = extractedTasks.length > 0;
+
+  const panelBorder = darkMode
+    ? "border-white/[0.12]"
+    : "border-[#D4D4CF]";
+
+  const rowBorder = darkMode
+    ? "border-white/[0.08]"
+    : "border-[#E8E9ED]";
+
+  const panelSurface = darkMode
+    ? "bg-[#171717] text-white"
+    : "bg-white text-[#181818]";
+
+  const secondarySurface = darkMode
+    ? "bg-white/[0.035]"
+    : "bg-[#FAFAFB]";
+
+  const mutedText = darkMode
+    ? "text-white/48"
+    : "text-[#6B6F7B]";
+
+  const getPriorityClass = (priority: string) => {
+    if (priority === "High") {
+      return darkMode
+        ? "border-red-400/20 bg-red-400/10 text-red-300"
+        : "border-red-200 bg-red-50 text-red-600";
+    }
+
+    if (priority === "Medium" || priority === "Med") {
+      return darkMode
+        ? "border-orange-400/20 bg-orange-400/10 text-orange-300"
+        : "border-orange-200 bg-orange-50 text-orange-600";
+    }
+
+    return darkMode
+      ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+      : "border-emerald-200 bg-emerald-50 text-emerald-600";
+  };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 22, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 18, scale: 0.97 }}
-      transition={{ type: "spring", stiffness: 360, damping: 32, mass: 0.85 }}
+      initial={{
+        opacity: 0,
+      }}
+      animate={{
+        opacity: 1,
+      }}
+      exit={{
+        opacity: 0,
+      }}
+      transition={{
+        duration: 0.18,
+        ease: [0.16, 1, 0.3, 1],
+      }}
       className="pointer-events-none fixed inset-0 z-[193] flex items-center justify-center p-4 sm:p-6"
     >
-      <div
-        className={`pointer-events-auto relative w-full max-w-[560px] overflow-hidden rounded-[28px] border p-4 shadow-[0_28px_90px_rgba(15,23,42,0.22)] backdrop-blur-2xl sm:p-5 ${
-          darkMode
-            ? "border-white/[0.10] bg-[#171717]/96 text-white"
-            : "border-[#BBBFBF]/45 bg-white/96 text-[#000000]"
-        }`}
+      <motion.section
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="clipboard-assist-title"
+        initial={{
+          opacity: 0,
+          y: 16,
+          scale: 0.985,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          scale: 1,
+        }}
+        exit={{
+          opacity: 0,
+          y: 10,
+          scale: 0.99,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 380,
+          damping: 34,
+          mass: 0.82,
+        }}
+        className={`pointer-events-auto flex max-h-[82vh] w-full max-w-[660px] flex-col overflow-hidden rounded-[16px] border shadow-[0_24px_80px_rgba(0,0,0,0.22)] ${panelBorder} ${panelSurface}`}
       >
-        <button
-          onClick={onClose}
-          className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-105 ${
-            darkMode
-              ? "bg-white/[0.06] text-white/45 hover:text-white"
-              : "bg-black/[0.035] text-[#000000]/42 hover:text-[#000000]"
-          }`}
+        {/* Header */}
+        <header
+          className={`flex shrink-0 items-start justify-between gap-5 border-b px-5 py-5 sm:px-6 ${rowBorder}`}
         >
-          <X size={15} />
-        </button>
-
-        <div className="relative pr-8">
-          <div className="flex items-start gap-3">
+          <div className="flex min-w-0 items-start gap-3.5">
             <div
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white"
-              style={{ backgroundColor: themeColor }}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] border ${
+                darkMode
+                  ? "border-white/[0.10] bg-white/[0.05] text-white"
+                  : "border-[#DDDDE3] bg-[#F7F8FA] text-[#252933]"
+              }`}
             >
-              <Sparkles size={18} />
+              <Sparkles
+                size={17}
+                strokeWidth={1.7}
+              />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <p
-                className="text-[10px] font-[900] uppercase tracking-[0.16em]"
-                style={{ color: themeColor }}
+                className={`text-[9px] font-[750] uppercase tracking-[0.14em] ${mutedText}`}
               >
                 Clipboard Assist
               </p>
 
-              <h3 className="mt-1 text-[18px] font-[900] leading-tight tracking-[-0.04em]">
+              <h2
+                id="clipboard-assist-title"
+                className={`mt-1 text-[20px] font-[750] leading-tight tracking-[-0.04em] ${
+                  darkMode
+                    ? "text-white"
+                    : "text-[#17191F]"
+                }`}
+              >
                 {loading
-                  ? "Reading copied text..."
+                  ? "Reading copied text"
                   : hasTasks
-                  ? `Veira found ${extractedTasks.length} task${
+                  ? `${extractedTasks.length} possible task${
                       extractedTasks.length === 1 ? "" : "s"
-                    }`
-                  : "Do you want to add this as a task?"}
-              </h3>
+                    } found`
+                  : "Save copied text"}
+              </h2>
 
-              <p className={`mt-1 text-xs font-[700] ${darkMode ? "text-white/42" : "text-[#000000]/42"}`}>
-  {loading
-    ? "Looking for possible action items..."
-    : hasTasks
-    ? "Review and add the useful ones."
-    : "No clear action items were found, but you can still save the copied text."}
-</p>
+              <p
+                className={`mt-1.5 max-w-[510px] text-[12px] font-[500] leading-5 ${mutedText}`}
+              >
+                {loading
+                  ? "Momentuhm is checking the copied content for useful action items."
+                  : hasTasks
+                  ? "Review the suggested tasks and select the ones you want to add."
+                  : "No clear action items were found. You can still save the copied content as one task."}
+              </p>
             </div>
           </div>
 
-          {loading && (
-            <div className={`mt-4 rounded-[18px] border px-4 py-4 text-sm font-[800] ${
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close Clipboard Assist"
+            title="Close"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border transition ${
               darkMode
-                ? "border-white/[0.08] bg-white/[0.045] text-white/55"
-                : "border-black/[0.06] bg-black/[0.018] text-[#000000]/55"
-            }`}>
-              Veira is extracting possible tasks...
-            </div>
-          )}
+                ? "border-white/[0.10] text-white/48 hover:bg-white/[0.06] hover:text-white"
+                : "border-[#DDDDE3] text-[#6B6F7B] hover:bg-[#F4F5F7] hover:text-[#252933]"
+            }`}
+          >
+            <X
+              size={17}
+              strokeWidth={1.7}
+            />
+          </button>
+        </header>
 
-          {!loading && hasTasks && (
-            <div className="mt-4 max-h-[280px] space-y-2 overflow-y-auto">
-              {extractedTasks.map((task: any) => (
-                <button
-                  key={task.id}
-                  onClick={() => onToggleTask(task.id)}
-                  className={`flex w-full items-start gap-3 rounded-[18px] border p-3 text-left transition ${
+        {/* Loading state */}
+        {loading && (
+          <section className="px-5 py-5 sm:px-6">
+            <div
+              className={`overflow-hidden rounded-[11px] border ${panelBorder} ${secondarySurface}`}
+            >
+              <div className="flex items-center gap-3 px-4 py-4">
+                <div
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] border ${
                     darkMode
-                      ? "border-white/[0.08] bg-white/[0.04]"
-                      : "border-black/[0.06] bg-black/[0.018]"
+                      ? "border-white/[0.10] bg-white/[0.04]"
+                      : "border-[#DDDDE3] bg-white"
                   }`}
                 >
-                  {task.selected ? (
-                    <CheckCircle2 size={18} style={{ color: themeColor }} />
-                  ) : (
-                    <Circle size={18} className={darkMode ? "text-white/30" : "text-[#000000]/30"} />
-                  )}
+                  <Sparkles
+                    size={14}
+                    strokeWidth={1.7}
+                    className={
+                      darkMode
+                        ? "text-white/60"
+                        : "text-[#5F6572]"
+                    }
+                  />
+                </div>
+
+                <div className="min-w-0">
+                  <p
+                    className={`text-[12px] font-[650] ${
+                      darkMode
+                        ? "text-white/82"
+                        : "text-[#252933]"
+                    }`}
+                  >
+                    Extracting possible tasks
+                  </p>
+
+                  <p
+                    className={`mt-1 text-[11px] font-[500] ${mutedText}`}
+                  >
+                    This normally takes only a moment.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className={`relative h-[2px] overflow-hidden ${
+                  darkMode
+                    ? "bg-white/[0.08]"
+                    : "bg-black/[0.07]"
+                }`}
+              >
+                <motion.div
+                  className={`absolute inset-y-0 w-1/3 ${
+                    darkMode
+                      ? "bg-white"
+                      : "bg-[#181818]"
+                  }`}
+                  initial={{
+                    x: "-110%",
+                  }}
+                  animate={{
+                    x: "330%",
+                  }}
+                  transition={{
+                    duration: 1.15,
+                    ease: "easeInOut",
+                    repeat: Infinity,
+                  }}
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Extracted tasks */}
+        {!loading && hasTasks && (
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {extractedTasks.map((task: any) => {
+              const priorityLabel =
+                task.priority === "Medium" ||
+                task.priority === "Med"
+                  ? "Medium"
+                  : task.priority;
+
+              return (
+                <motion.button
+                  key={task.id}
+                  type="button"
+                  layout
+                  aria-pressed={task.selected}
+                  onClick={() => onToggleTask(task.id)}
+                  initial={{
+                    opacity: 0,
+                    y: 5,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -4,
+                  }}
+                  transition={{
+                    duration: 0.18,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className={`flex w-full items-start gap-3 border-b px-5 py-4 text-left transition last:border-b-0 sm:px-6 ${
+                    darkMode
+                      ? "border-white/[0.08] hover:bg-white/[0.025]"
+                      : "border-[#E8E9ED] hover:bg-[#FBFBFC]"
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border transition ${
+                      task.selected
+                        ? darkMode
+                          ? "border-white bg-white text-[#181818]"
+                          : "border-[#181818] bg-[#181818] text-white"
+                        : darkMode
+                        ? "border-white/38 text-transparent"
+                        : "border-[#9297A1] text-transparent"
+                    }`}
+                  >
+                    <Check
+                      size={12}
+                      strokeWidth={2.4}
+                    />
+                  </span>
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-[900] leading-5">
+                    <p
+                      className={`text-[13px] font-[650] leading-5 tracking-[-0.015em] ${
+                        darkMode
+                          ? "text-white/90"
+                          : "text-[#20232B]"
+                      }`}
+                    >
                       {task.title}
                     </p>
 
-                    <p className={`mt-1 text-[10px] font-[800] ${
-                      darkMode ? "text-white/38" : "text-[#000000]/38"
-                    }`}>
-                      {task.category} ·{" "}
-                      {task.priority === "Medium" ? "Mid" : task.priority}
-                      {task.suggestedDueDate
-                        ? ` · ${formatDueDate(task.suggestedDueDate)}`
-                        : ""}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={`rounded-[6px] border px-2 py-1 text-[10px] font-[650] ${getPriorityClass(
+                          task.priority
+                        )}`}
+                      >
+                        {priorityLabel}
+                      </span>
 
-          {!loading && !hasTasks && (
+                      <span
+                        className={`rounded-[6px] border px-2 py-1 text-[10px] font-[600] ${
+                          darkMode
+                            ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+                            : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                        }`}
+                      >
+                        {task.category || "No category"}
+                      </span>
+
+                      {task.suggestedDueDate && (
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-[6px] border px-2 py-1 text-[10px] font-[600] ${
+                            darkMode
+                              ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+                              : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                          }`}
+                        >
+                          <Calendar
+                            size={11}
+                            strokeWidth={1.7}
+                          />
+
+                          {formatDueDate(
+                            task.suggestedDueDate
+                          )}
+                        </span>
+                      )}
+
+                      {hasFollowUpTag(task) && (
+                        <span
+                          className={`rounded-[6px] border px-2 py-1 text-[10px] font-[600] ${
+                            darkMode
+                              ? "border-white/[0.10] text-white/50"
+                              : "border-[#DDDDE3] text-[#5F6572]"
+                          }`}
+                        >
+                          Follow-up
+                        </span>
+                      )}
+                    </div>
+
+                    {task.reason && (
+                      <p
+                        className={`mt-2 line-clamp-2 text-[11px] font-[500] leading-4 ${mutedText}`}
+                      >
+                        {task.reason}
+                      </p>
+                    )}
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Copied-text fallback */}
+        {!loading && !hasTasks && (
+          <section className="px-5 py-5 sm:px-6">
             <div
-              className={`mt-4 max-h-[112px] overflow-hidden rounded-[18px] border px-3 py-2.5 text-[12px] font-[650] leading-5 ${
+              className={`rounded-[11px] border ${panelBorder} ${secondarySurface}`}
+            >
+              <div
+                className={`border-b px-4 py-3 text-[10px] font-[700] uppercase tracking-[0.12em] ${rowBorder} ${mutedText}`}
+              >
+                Copied text
+              </div>
+
+              <p
+                className={`max-h-[150px] overflow-y-auto px-4 py-3 text-[12px] font-[500] leading-5 ${
+                  darkMode
+                    ? "text-white/68"
+                    : "text-[#4F5562]"
+                }`}
+              >
+                {clippedPreview}
+              </p>
+            </div>
+          </section>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="px-5 pb-4 sm:px-6">
+            <div
+              className={`rounded-[9px] border px-3 py-2.5 text-[11px] font-[600] leading-4 ${
                 darkMode
-                  ? "border-white/[0.08] bg-white/[0.045] text-white/54"
-                  : "border-black/[0.06] bg-black/[0.018] text-[#000000]/54"
+                  ? "border-red-400/20 bg-red-400/10 text-red-300"
+                  : "border-red-200 bg-red-50 text-red-600"
               }`}
             >
-              {clippedPreview}
-            </div>
-          )}
-
-          {error && (
-            <div className="mt-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-[800] text-red-500">
               {error}
             </div>
-          )}
+          </div>
+        )}
 
-          <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+        {/* Footer */}
+        <footer
+          className={`flex shrink-0 flex-col gap-3 border-t px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6 ${rowBorder} ${secondarySurface}`}
+        >
+          <p className={`text-[11px] font-[500] ${mutedText}`}>
+            {loading
+              ? "You can add the full copied text immediately."
+              : hasTasks
+              ? `${selectedCount} of ${extractedTasks.length} selected`
+              : "Save the full content as one task."}
+          </p>
+
+          <div className="flex items-center justify-end gap-2">
             <button
+              type="button"
               onClick={onClose}
-              className={`h-10 rounded-[15px] px-3 text-xs font-[900] ${
+              className={`h-9 rounded-[8px] border px-3.5 text-[11px] font-[650] transition ${
                 darkMode
-                  ? "bg-white/[0.06] text-white/48 hover:text-white"
-                  : "bg-black/[0.04] text-[#000000]/46 hover:text-[#000000]"
+                  ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
+                  : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
               }`}
             >
               Dismiss
             </button>
 
             <button
+              type="button"
               onClick={onAddAsIs}
-              className={`h-10 rounded-[15px] border px-3.5 text-xs font-[900] ${
+              className={`h-9 rounded-[8px] border px-3.5 text-[11px] font-[650] transition ${
                 darkMode
-                  ? "border-white/[0.10] bg-white/[0.04] text-white/62 hover:text-white"
-                  : "border-black/[0.07] bg-white text-[#000000]/58 hover:text-[#000000]"
+                  ? "border-white/[0.12] bg-white/[0.05] text-white/72 hover:bg-white/[0.08] hover:text-white"
+                  : "border-[#CFCFC9] bg-white text-[#353A45] hover:bg-[#F4F5F7]"
               }`}
             >
-              Add as is
+              Add copied text
             </button>
 
             {hasTasks && (
               <button
+                type="button"
                 onClick={onAddSelected}
-                className="h-10 rounded-[15px] px-4 text-xs font-[900] text-white"
-                style={{ backgroundColor: themeColor }}
+                disabled={selectedCount === 0}
+                className={`inline-flex h-9 items-center justify-center gap-2 rounded-[8px] px-3.5 text-[11px] font-[700] transition ${
+                  selectedCount === 0
+                    ? "cursor-not-allowed opacity-30"
+                    : darkMode
+                    ? "bg-white text-[#181818] hover:bg-white/90"
+                    : "bg-[#181818] text-white hover:bg-[#2A2A2A]"
+                }`}
               >
-                Add selected ({selectedCount})
+                <Plus
+                  size={13}
+                  strokeWidth={2}
+                />
+                Add selected
+                <span className="opacity-55">
+                  ({selectedCount})
+                </span>
               </button>
             )}
           </div>
-        </div>
-      </div>
+        </footer>
+      </motion.section>
     </motion.div>
   );
 }
@@ -8735,9 +9238,9 @@ function DueTasksReminderPopup({
         }}
         transition={{
           type: "spring",
-          stiffness: 360,
-          damping: 32,
-          mass: 0.85,
+          stiffness: 280,
+          damping: 28,
+          mass: 0.9,
         }}
         onClick={(event) => event.stopPropagation()}
         className="relative w-full max-w-[520px] overflow-hidden rounded-[30px] border border-[#BBBFBF]/45 bg-white shadow-[0_30px_100px_rgba(17,24,39,0.18)]"
@@ -8757,7 +9260,7 @@ function DueTasksReminderPopup({
         <div className="relative p-5 sm:p-6">
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/[0.035] text-[#000000]/45 transition hover:scale-105 hover:text-[#000000]"
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/[0.035] text-[#666661]/45 transition hover:scale-105 hover:text-[#666661]"
           >
             <X size={17} />
           </button>
@@ -8775,11 +9278,11 @@ function DueTasksReminderPopup({
             </div>
 
             <div className="min-w-0">
-              <h2 className="text-[22px] font-[900] leading-tight tracking-[-0.045em] text-[#000000]">
+              <h2 className="text-[22px] font-[900] leading-tight tracking-[-0.045em] text-[#666661]">
                 2 hours left in your day
               </h2>
 
-              <p className="mt-1 text-sm font-[700] text-[#000000]/48">
+              <p className="mt-1 text-sm font-[700] text-[#666661]/48">
                 Here are your tasks due today
               </p>
             </div>
@@ -8801,11 +9304,11 @@ function DueTasksReminderPopup({
                   />
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-[850] leading-5 tracking-[-0.018em] text-[#000000]">
+                    <p className="truncate text-[13px] font-[850] leading-5 tracking-[-0.018em] text-[#666661]">
                       {task.title}
                     </p>
 
-                    <p className="mt-0.5 truncate text-[10.5px] font-[750] text-[#000000]/36">
+                    <p className="mt-0.5 truncate text-[10.5px] font-[750] text-[#666661]/36">
                       {task.category} ·{" "}
                       {task.priority === "Medium" || task.priority === "Med"
                         ? "Mid"
@@ -8829,7 +9332,7 @@ function DueTasksReminderPopup({
           </div>
 
           <div className="mt-5 flex items-center justify-between gap-4">
-            <p className="text-sm font-[750] text-[#000000]/50">
+            <p className="text-sm font-[750] text-[#666661]/50">
               {tasks.length} task{tasks.length === 1 ? "" : "s"} due today
             </p>
 
@@ -8860,16 +9363,20 @@ function ExtractTasksModal({
   extractTasksFromText,
   toggleExtractedTask,
   addSelectedExtractedTasks,
-  themeColor,
   darkMode,
-  glass,
-  strongerGlass,
-  border,
 }: any) {
-  const selectedCount = extractedTasks.filter((task: any) => task.selected).length;
+  const selectedCount = extractedTasks.filter(
+    (task: any) => task.selected
+  ).length;
 
   const closeModal = () => {
     setIsExtractModalOpen(false);
+  };
+
+  const handleExtract = () => {
+    if (!extractInput.trim() || extractLoading) return;
+
+    void extractTasksFromText();
   };
 
   return (
@@ -8877,242 +9384,336 @@ function ExtractTasksModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-[195] flex items-center justify-center bg-black/40 p-4 backdrop-blur-md sm:p-6"
+      transition={{ duration: 0.16 }}
       onClick={closeModal}
+      className="fixed inset-0 z-[195] flex items-center justify-center bg-black/25 p-4 backdrop-blur-[3px] sm:p-6"
     >
       <motion.div
-        initial={{
-          opacity: 0,
-          scale: 0.84,
-          y: 18,
-          transformOrigin: "50% 48%",
-        }}
-        animate={{
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          transformOrigin: "50% 48%",
-        }}
-        exit={{
-          opacity: 0,
-          scale: 0.88,
-          y: 14,
-          transformOrigin: "50% 48%",
-        }}
+        initial={{ opacity: 0, scale: 0.97, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.98, y: 8 }}
         transition={{
-          type: "spring",
-          stiffness: 520,
-          damping: 38,
-          mass: 0.8,
+          duration: 0.2,
+          ease: [0.16, 1, 0.3, 1],
         }}
-        onClick={(e) => e.stopPropagation()}
-        className={`max-h-[92vh] w-full max-w-[860px] overflow-hidden rounded-[34px] border shadow-[0_35px_140px_rgba(0,0,0,0.38)] backdrop-blur-3xl ${strongerGlass} ${border}`}
+        onClick={(event) => event.stopPropagation()}
+        className={`flex max-h-[88vh] w-full max-w-[760px] flex-col overflow-hidden rounded-[16px] border shadow-[0_24px_70px_rgba(0,0,0,0.15)] ${
+          darkMode
+            ? "border-white/[0.10] bg-[#181818] text-white"
+            : "border-[#DEDED9] bg-white text-[#181818]"
+        }`}
       >
-        <div className="relative overflow-hidden">
-          <div
-            className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full opacity-20 blur-3xl"
-            style={{ backgroundColor: themeColor }}
-          />
+        {/* Header */}
+        <header
+          className={`flex items-start justify-between gap-6 border-b px-6 py-5 sm:px-7 ${
+            darkMode ? "border-white/[0.08]" : "border-[#E7E7E3]"
+          }`}
+        >
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Sparkles
+                size={14}
+                strokeWidth={1.6}
+                className={
+                  darkMode ? "text-white/42" : "text-[#181818]/42"
+                }
+              />
 
-          <div className={`relative border-b px-5 py-5 sm:px-7 sm:py-6 ${border}`}>
-            <div className="flex items-start justify-between gap-5">
-              <div className="min-w-0">
-                <div className="mb-4 flex items-center gap-3">
-                  <div
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_14px_34px_rgba(0,0,0,0.22)]"
-                    style={{ backgroundColor: themeColor }}
-                  >
-                    <Sparkles size={19} />
-                  </div>
+              <p
+                className={`text-[10px] font-[700] uppercase tracking-[0.16em] ${
+                  darkMode ? "text-white/38" : "text-[#6F6F6A]"
+                }`}
+              >
+                Momentuhm Capture
+              </p>
+            </div>
 
-                  <div>
-                    <p className="text-[11px] font-[900] uppercase tracking-[0.16em] opacity-35">
-                    Veira Capture
-                    </p>
+            <h2
+              className={`mt-2 text-[25px] font-[750] leading-none tracking-[-0.045em] ${
+                darkMode ? "text-white" : "text-[#181818]"
+              }`}
+            >
+              Extract action items
+            </h2>
 
-                    <h2 className="text-[27px] font-[900] tracking-[-0.05em] sm:text-[31px]">
-                      Extract Action Items
-                    </h2>
-                  </div>
-                </div>
+            <p
+              className={`mt-2 max-w-[540px] text-[13px] font-[500] leading-5 ${
+                darkMode ? "text-white/42" : "text-[#6F6F6A]"
+              }`}
+            >
+              Paste an email, message, or meeting note. Momentuhm will identify
+              the useful actions.
+            </p>
+          </div>
 
-                <p className="max-w-xl text-sm leading-6 opacity-45">
-                  Paste notes, emails, chats, or meeting snippets. Veira will
-                  pull out likely tasks for you to review.
-                </p>
+          <button
+            type="button"
+            onClick={closeModal}
+            aria-label="Close extract action items"
+            className={`flex h-8 w-8 shrink-0 items-center justify-center transition ${
+              darkMode
+                ? "text-white/38 hover:text-white"
+                : "text-[#181818]/38 hover:text-[#181818]"
+            }`}
+          >
+            <X size={18} strokeWidth={1.6} />
+          </button>
+        </header>
+
+        {/* Scrollable content */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <section className="px-6 py-5 sm:px-7">
+            <div className="mb-2 flex items-center justify-between gap-4">
+              <label
+                className={`text-[10px] font-[700] uppercase tracking-[0.14em] ${
+                  darkMode ? "text-white/35" : "text-[#6F6F6A]"
+                }`}
+              >
+                Source text
+              </label>
+
+              <span
+                className={`hidden text-[10px] font-[500] sm:block ${
+                  darkMode ? "text-white/68" : "text-[#6F6F6A]"
+                }`}
+              >
+                Ctrl / ⌘ + Enter
+              </span>
+            </div>
+
+            <textarea
+              autoFocus
+              value={extractInput}
+              onChange={(event) => setExtractInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  (event.metaKey || event.ctrlKey)
+                ) {
+                  event.preventDefault();
+                  handleExtract();
+                }
+              }}
+              placeholder="Paste text here..."
+              className={`min-h-[180px] w-full resize-none rounded-[10px] border px-4 py-3 text-[13px] font-[500] leading-6 outline-none transition ${
+                darkMode
+                  ? "border-white/[0.10] bg-transparent text-white placeholder:text-white/25 focus:border-white/[0.25]"
+                  : "border-[#DEDED9] bg-transparent text-[#181818] placeholder:text-[#AAA9A4] focus:border-[#999994]"
+              }`}
+            />
+
+            {extractError && (
+              <div
+                className={`mt-3 border-l-2 px-3 py-2 text-[12px] font-[600] leading-5 ${
+                  darkMode
+                    ? "border-white/35 text-white/60"
+                    : "border-[#181818]/35 text-[#555550]"
+                }`}
+              >
+                {extractError}
               </div>
+            )}
+
+            <div className="mt-4 flex items-center justify-between gap-4">
+              <p
+                className={`hidden text-[11px] font-[500] sm:block ${
+                  darkMode ? "text-white/28" : "text-[#6F6F6A]"
+                }`}
+              >
+                You can review everything before adding it.
+              </p>
 
               <button
-                onClick={closeModal}
-                className={`h-10 shrink-0 rounded-2xl px-4 text-sm font-[700] transition hover:scale-[1.02] ${glass}`}
+                type="button"
+                onClick={handleExtract}
+                disabled={!extractInput.trim() || extractLoading}
+                className={`ml-auto flex h-10 items-center gap-2 rounded-[10px] px-4 text-[12px] font-[700] transition ${
+                  !extractInput.trim() || extractLoading
+                    ? "cursor-not-allowed opacity-25"
+                    : darkMode
+                    ? "bg-white text-black hover:bg-white/90"
+                    : "bg-[#181818] text-white hover:bg-[#2A2A2A]"
+                }`}
               >
-                Close
+                <Sparkles size={14} strokeWidth={1.7} />
+
+                {extractLoading ? "Extracting…" : "Extract action items"}
               </button>
             </div>
-          </div>
+          </section>
 
-          <div className="max-h-[calc(92vh-185px)] overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
-            <div className="space-y-5">
-              <section>
-                <label className="mb-2 block text-xs font-[900] uppercase tracking-[0.14em] opacity-40">
-                  Paste source text
-                </label>
-
-                <textarea
-                  value={extractInput}
-                  onChange={(event) => setExtractInput(event.target.value)}
-                  className={`min-h-[170px] w-full resize-none rounded-[26px] px-4 py-4 text-sm leading-6 outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${darkMode
-                    ? "bg-white/[0.07] text-white placeholder:text-white/35 border border-white/[0.06]"
-                    : "bg-white text-[#000000] placeholder:text-[#000000]/35 border border-black/[0.08]"
-                  }`}
-                  placeholder="Paste an email, Slack message, meeting note, or paragraph..."
-                />
-              </section>
-
-              {extractError && (
-                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-[700] text-red-500">
-                  {extractError}
-                </div>
-              )}
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  onClick={extractTasksFromText}
-                  disabled={extractLoading}
-                  className="h-12 rounded-2xl px-5 text-sm font-[900] text-white shadow-[0_16px_36px_rgba(0,0,0,0.20)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{ backgroundColor: themeColor }}
-                >
-                  {extractLoading ? "Extracting..." : "Extract Action Items"}
-                </button>
-
-                {extractedTasks.length > 0 && (
-                  <button
-                    onClick={addSelectedExtractedTasks}
-                    className={`h-12 rounded-2xl px-5 text-sm font-[900] transition hover:scale-[1.01] ${glass}`}
+          {/* Extracted results */}
+          {extractedTasks.length > 0 && (
+            <section
+              className={`border-t ${
+                darkMode ? "border-white/[0.08]" : "border-[#E7E7E3]"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-4 px-6 py-4 sm:px-7">
+                <div>
+                  <h3
+                    className={`text-[13px] font-[700] ${
+                      darkMode ? "text-white" : "text-[#181818]"
+                    }`}
                   >
-                    Add Selected ({selectedCount})
-                  </button>
-                )}
+                    Suggested tasks
+                  </h3>
+
+                  <p
+                    className={`mt-1 text-[11px] font-[500] ${
+                      darkMode ? "text-white/35" : "text-[#6F6F6A]"
+                    }`}
+                  >
+                    Select the actions you want to add.
+                  </p>
+                </div>
+
+                <span
+                  className={`text-[11px] font-[600] ${
+                    darkMode ? "text-white/42" : "text-[#6F6F6A]"
+                  }`}
+                >
+                  {selectedCount} of {extractedTasks.length}
+                </span>
               </div>
 
-              {extractedTasks.length > 0 && (
-                <section>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <h3 className="text-[13px] font-[900]">
-                      Review extracted tasks
-                    </h3>
+              <div
+                className={`border-t ${
+                  darkMode ? "border-white/[0.08]" : "border-[#E7E7E3]"
+                }`}
+              >
+                {extractedTasks.map((task: any) => {
+                  const visibleDate = task.suggestedDueDate
+                    ? formatDueDate(task.suggestedDueDate)
+                    : "";
 
-                    <span className="text-xs font-[700] opacity-40">
-                      {selectedCount} selected
-                    </span>
-                  </div>
+                  return (
+                    <button
+                      key={task.id}
+                      type="button"
+                      onClick={() => toggleExtractedTask(task.id)}
+                      className={`flex w-full items-start gap-3 border-b px-6 py-3.5 text-left transition last:border-b-0 sm:px-7 ${
+                        darkMode
+                          ? "border-white/[0.07] hover:bg-white/[0.025]"
+                          : "border-[#EEEEEA] hover:bg-black/[0.015]"
+                      }`}
+                    >
+                      <span className="mt-0.5 shrink-0">
+                        {task.selected ? (
+                          <CheckCircle2
+                            size={18}
+                            strokeWidth={1.8}
+                            className={
+                              darkMode
+                                ? "text-white"
+                                : "text-[#181818]"
+                            }
+                          />
+                        ) : (
+                          <Circle
+                            size={18}
+                            strokeWidth={1.4}
+                            className={
+                              darkMode
+                                ? "text-white/25"
+                                : "text-[#181818]/25"
+                            }
+                          />
+                        )}
+                      </span>
 
-                  <div className="space-y-3">
-                    {extractedTasks.map((task: any) => (
-                      <div
-                        key={task.id}
-                        className={`rounded-[24px] border p-4 ${border} ${
-                          darkMode ? "bg-white/[0.035]" : "bg-black/[0.015]"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <button
-                            onClick={() => toggleExtractedTask(task.id)}
-                            className="mt-0.5 shrink-0"
-                          >
-                            {task.selected ? (
-                              <CheckCircle2
-                                size={20}
-                                style={{ color: themeColor }}
-                              />
-                            ) : (
-                              <Circle
-                                size={20}
-                                className={
-                                  darkMode ? "text-white/30" : "text-[#000000]/30"
-                                }
-                              />
-                            )}
-                          </button>
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`text-[13px] font-[650] leading-5 ${
+                            darkMode ? "text-white/88" : "text-[#181818]"
+                          }`}
+                        >
+                          {task.title}
+                        </p>
 
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[15px] font-[900] leading-6">
-                              {task.title}
-                            </p>
+                        <div
+                          className={`mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-[600] ${
+                            darkMode ? "text-white/35" : "text-[#6F6F6A]"
+                          }`}
+                        >
+                          <span>{task.category}</span>
+                          <span>·</span>
+                          <span>
+                            {task.priority === "Medium"
+                              ? "Mid"
+                              : task.priority}
+                          </span>
 
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              <span
-                                className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${getPriorityClass(
-                                  task.priority
-                                )}`}
-                              >
-                                {task.priority}
-                              </span>
+                          {visibleDate && (
+                            <>
+                              <span>·</span>
+                              <span>{visibleDate}</span>
+                            </>
+                          )}
 
-                              {task.suggestedDueDate && (
-                                <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-[900] text-orange-600 dark:bg-orange-500/10 dark:text-orange-300">
-                                  Suggested{" "}
-                                  {formatDueDate(task.suggestedDueDate)}
-                                </span>
-                              )}
-
-                              <span
-                                className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
-                                  darkMode
-                                    ? "bg-white/[0.06] text-white/45"
-                                    : "bg-black/[0.04] text-[#000000]/45"
-                                }`}
-                              >
-                                {task.category}
-                              </span>
-
-                              <span
-                                className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
-                                  darkMode
-                                    ? "bg-white/[0.06] text-white/45"
-                                    : "bg-black/[0.04] text-[#000000]/45"
-                                }`}
-                              >
-                                {Math.round(task.confidence * 100)}%
-                              </span>
-
-                              {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
-                            </div>
-
-                            {task.notes && (
-                              <p
-                                className={`mt-3 text-sm leading-6 ${
-                                  darkMode
-                                    ? "text-white/45"
-                                    : "text-[#000000]/45"
-                                }`}
-                              >
-                                {task.notes}
-                              </p>
-                            )}
-
-                            {task.reason && (
-                              <p
-                                className={`mt-2 text-xs leading-5 ${
-                                  darkMode
-                                    ? "text-white/35"
-                                    : "text-[#000000]/35"
-                                }`}
-                              >
-                                {task.reason}
-                              </p>
-                            )}
-                          </div>
+                          {hasFollowUpTag(task) && (
+                            <>
+                              <span>·</span>
+                              <span>Follow-up</span>
+                            </>
+                          )}
                         </div>
+
+                        {task.reason && (
+                          <p
+                            className={`mt-1.5 line-clamp-2 text-[11px] font-[500] leading-4 ${
+                              darkMode ? "text-white/30" : "text-[#6F6F6A]"
+                            }`}
+                          >
+                            {task.reason}
+                          </p>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-            </div>
-          </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
+
+        {/* Footer */}
+        {extractedTasks.length > 0 && (
+          <footer
+            className={`flex items-center justify-between gap-4 border-t px-6 py-4 sm:px-7 ${
+              darkMode ? "border-white/[0.08]" : "border-[#E7E7E3]"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={closeModal}
+              className={`h-9 text-[12px] font-[600] transition ${
+                darkMode
+                  ? "text-white/42 hover:text-white"
+                  : "text-[#6F6F6A] hover:text-[#181818]"
+              }`}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={addSelectedExtractedTasks}
+              disabled={selectedCount === 0}
+              className={`flex h-10 items-center gap-2 rounded-[10px] px-4 text-[12px] font-[700] transition ${
+                selectedCount === 0
+                  ? "cursor-not-allowed opacity-25"
+                  : darkMode
+                  ? "bg-white text-black hover:bg-white/90"
+                  : "bg-[#181818] text-white hover:bg-[#2A2A2A]"
+              }`}
+            >
+              <Plus size={14} strokeWidth={1.8} />
+              Add selected
+              <span className="opacity-55">({selectedCount})</span>
+            </button>
+          </footer>
+        )}
       </motion.div>
     </motion.div>
   );
@@ -9121,187 +9722,390 @@ function ExtractTasksModal({
 function SuggestionsReviewModal({
   tasks,
   darkMode,
-  themeColor,
-  glass,
-  strongerGlass,
-  border,
   setIsSuggestionsModalOpen,
   acceptSuggestedDateById,
   acceptAllSuggestedDates,
   setSelectedTask,
   setIsEditModalOpen,
 }: any) {
+  const closeModal = () => {
+    setIsSuggestionsModalOpen(false);
+  };
+
+  const openTaskEditor = (task: any) => {
+    setSelectedTask(task);
+    setIsSuggestionsModalOpen(false);
+    setIsEditModalOpen(true);
+  };
+
+  const panelBorder = darkMode
+    ? "border-white/[0.12]"
+    : "border-[#D4D4CF]";
+
+  const rowBorder = darkMode
+    ? "border-white/[0.08]"
+    : "border-[#E8E9ED]";
+
+  const panelSurface = darkMode
+    ? "bg-[#171717] text-white"
+    : "bg-white text-[#181818]";
+
+  const secondarySurface = darkMode
+    ? "bg-white/[0.035]"
+    : "bg-[#FAFAFB]";
+
+  const mutedText = darkMode
+    ? "text-white/48"
+    : "text-[#6B6F7B]";
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[190] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6"
-      onClick={() => setIsSuggestionsModalOpen(false)}
+      transition={{
+        duration: 0.18,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      onClick={closeModal}
+      className="fixed inset-0 z-[190] flex items-center justify-center bg-black/30 p-3 backdrop-blur-[3px] sm:p-6"
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 24, filter: "blur(10px)" }}
-        animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
-        exit={{ opacity: 0, scale: 0.94, y: 16, filter: "blur(8px)" }}
-        transition={{ type: "spring", stiffness: 240, damping: 24 }}
-        onClick={(e) => e.stopPropagation()}
-        className={`max-h-[88vh] w-full max-w-[760px] overflow-hidden rounded-[28px] border shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur-3xl sm:rounded-[36px] ${strongerGlass} ${border}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="suggestions-modal-title"
+        initial={{
+          opacity: 0,
+          y: 16,
+          scale: 0.985,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          scale: 1,
+        }}
+        exit={{
+          opacity: 0,
+          y: 10,
+          scale: 0.99,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 380,
+          damping: 34,
+          mass: 0.82,
+        }}
+        onClick={(event) => event.stopPropagation()}
+        className={`flex max-h-[88vh] w-full max-w-[820px] flex-col overflow-hidden rounded-[16px] border shadow-[0_24px_80px_rgba(0,0,0,0.18)] ${panelBorder} ${panelSurface}`}
       >
-        <div className={`border-b p-5 sm:p-6 ${border}`}>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div
-                className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl text-white"
-                style={{ backgroundColor: themeColor }}
-              >
-                <Sparkles size={18} />
-              </div>
-
-              <h2 className="text-[25px] font-[700] tracking-[-0.04em] sm:text-[30px]">
-                Review Veira Suggestions
-              </h2>
-
-              <p
-                className={`mt-2 max-w-xl text-sm leading-6 ${
-                  darkMode ? "text-white/45" : "text-[#000000]/45"
-                }`}
-              >
-                Veira found tasks that look time-sensitive. Review the
-                suggested dates before they become part of your plan.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setIsSuggestionsModalOpen(false)}
-              className={`h-10 rounded-2xl px-4 text-sm font-[700] ${glass}`}
-            >
-              Close
-            </button>
-          </div>
-
-          {tasks.length > 0 && (
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <button
-                onClick={acceptAllSuggestedDates}
-                className="h-11 rounded-2xl px-5 text-sm font-[700] text-white transition hover:scale-[1.01]"
-                style={{ backgroundColor: themeColor }}
-              >
-                Accept All Suggested Dates
-              </button>
-
-              <button
-                onClick={() => setIsSuggestionsModalOpen(false)}
-                className={`h-11 rounded-2xl px-5 text-sm font-[700] ${glass}`}
-              >
-                Review Later
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="max-h-[56vh] overflow-y-auto p-4 sm:p-5">
-          {tasks.length === 0 ? (
+        {/* Header */}
+        <header
+          className={`flex shrink-0 items-start justify-between gap-5 border-b px-5 py-5 sm:px-6 ${rowBorder}`}
+        >
+          <div className="flex min-w-0 items-start gap-3.5">
             <div
-              className={`rounded-[24px] border border-dashed p-8 text-center ${border}`}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] border ${
+                darkMode
+                  ? "border-white/[0.10] bg-white/[0.05] text-white"
+                  : "border-[#DDDDE3] bg-[#F7F8FA] text-[#252933]"
+              }`}
             >
-              <div
-                className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl text-white"
-                style={{ backgroundColor: themeColor }}
-              >
-                <CheckCircle2 size={20} />
-              </div>
-
-              <h3 className="text-lg font-[700]">No suggestions to review</h3>
-
-              <p
-                className={`mx-auto mt-2 max-w-sm text-sm leading-6 ${
-                  darkMode ? "text-white/40" : "text-[#000000]/40"
-                }`}
-              >
-                Veira will show suggestions here when a task sounds like it
-                needs a date.
-              </p>
+              <Sparkles size={17} strokeWidth={1.7} />
             </div>
-          ) : (
-            <div className="space-y-3">
-              {tasks.map((task: any) => (
-                <div
-                  key={task.id}
-                  className={`rounded-[24px] border p-4 ${border} ${
-                    darkMode ? "bg-white/[0.035]" : "bg-black/[0.015]"
+
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2
+                  id="suggestions-modal-title"
+                  className={`text-[22px] font-[750] leading-tight tracking-[-0.04em] ${
+                    darkMode ? "text-white" : "text-[#17191F]"
                   }`}
                 >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  Review suggested dates
+                </h2>
+
+                {tasks.length > 0 && (
+                  <span
+                    className={`flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[10px] font-[700] ${
+                      darkMode
+                        ? "bg-white/[0.08] text-white/60"
+                        : "bg-[#F0F1F4] text-[#59606C]"
+                    }`}
+                  >
+                    {tasks.length}
+                  </span>
+                )}
+              </div>
+
+              <p
+                className={`mt-1.5 max-w-[560px] text-[12px] font-[500] leading-5 ${mutedText}`}
+              >
+                Momentuhm found tasks that may need a confirmed due date.
+                Accept the suggestion or open the task to adjust it.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={closeModal}
+            aria-label="Close suggested dates"
+            title="Close"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border transition ${
+              darkMode
+                ? "border-white/[0.10] text-white/48 hover:bg-white/[0.06] hover:text-white"
+                : "border-[#DDDDE3] text-[#6B6F7B] hover:bg-[#F4F5F7] hover:text-[#252933]"
+            }`}
+          >
+            <X size={17} strokeWidth={1.7} />
+          </button>
+        </header>
+
+        {/* Summary actions */}
+        {tasks.length > 0 && (
+          <div
+            className={`flex shrink-0 flex-col gap-3 border-b px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6 ${rowBorder} ${secondarySurface}`}
+          >
+            <p className={`text-[11px] font-[500] ${mutedText}`}>
+              Accepting a date moves it from a suggestion to the task’s
+              confirmed due date.
+            </p>
+
+            <button
+              type="button"
+              onClick={acceptAllSuggestedDates}
+              className={`inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-[8px] px-3.5 text-[11px] font-[700] transition ${
+                darkMode
+                  ? "bg-white text-[#181818] hover:bg-white/90"
+                  : "bg-[#181818] text-white hover:bg-[#2A2A2A]"
+              }`}
+            >
+              <Check size={14} strokeWidth={2} />
+              Accept all dates
+            </button>
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {tasks.length === 0 ? (
+            <div className="flex min-h-[300px] items-center justify-center px-6 py-12 text-center">
+              <div className="max-w-[360px]">
+                <div
+                  className={`mx-auto flex h-11 w-11 items-center justify-center rounded-[10px] border ${
+                    darkMode
+                      ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+                      : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                  }`}
+                >
+                  <Check size={19} strokeWidth={1.8} />
+                </div>
+
+                <h3
+                  className={`mt-4 text-[16px] font-[700] ${
+                    darkMode ? "text-white" : "text-[#17191F]"
+                  }`}
+                >
+                  Everything is reviewed
+                </h3>
+
+                <p
+                  className={`mt-2 text-[12px] font-[500] leading-5 ${mutedText}`}
+                >
+                  There are no remaining date suggestions. New suggestions
+                  will appear here when a task sounds time-sensitive.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {tasks.map((task: any) => {
+                const priorityLabel =
+                  task.priority === "Medium" ||
+                  task.priority === "Med"
+                    ? "Medium"
+                    : task.priority;
+
+                const priorityClass =
+                  task.priority === "High"
+                    ? darkMode
+                      ? "border-red-400/20 bg-red-400/10 text-red-300"
+                      : "border-red-200 bg-red-50 text-red-600"
+                    : task.priority === "Medium" ||
+                      task.priority === "Med"
+                    ? darkMode
+                      ? "border-orange-400/20 bg-orange-400/10 text-orange-300"
+                      : "border-orange-200 bg-orange-50 text-orange-600"
+                    : darkMode
+                    ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-600";
+
+                return (
+                  <motion.div
+                    key={task.id}
+                    layout
+                    initial={{
+                      opacity: 0,
+                      y: 5,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: -4,
+                    }}
+                    transition={{
+                      duration: 0.18,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className={`grid grid-cols-1 gap-4 border-b px-5 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_148px] sm:items-center sm:px-6 ${rowBorder}`}
+                  >
                     <div className="min-w-0">
-                      <p className="text-[15px] font-[700] leading-6">
-                        {task.title}
-                      </p>
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span
-                       className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[700] tracking-[-0.01em] ${getPriorityClass(
-                        task.priority
-                      )}`}
-                        >
-                          {task.priority}
-                        </span>
-
-                        <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-[700] text-orange-600 dark:bg-orange-500/10 dark:text-orange-300">
-                          Suggested {formatDueDate(task.suggestedDueDate)}
-                        </span>
-
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-[10px] font-[700] ${
-                            darkMode
-                              ? "bg-white/[0.06] text-white/40"
-                              : "bg-black/[0.04] text-[#000000]/40"
-                          }`}
-                        >
-                          {task.category}
-                        </span>
-                      </div>
-
-                      <p
-                        className={`mt-3 text-sm leading-6 ${
-                          darkMode ? "text-white/45" : "text-[#000000]/45"
+                      <button
+                        type="button"
+                        onClick={() => openTaskEditor(task)}
+                        className={`block max-w-full text-left text-[13px] font-[680] leading-5 tracking-[-0.015em] transition hover:opacity-70 ${
+                          darkMode
+                            ? "text-white/90"
+                            : "text-[#20232B]"
                         }`}
                       >
-                        {task.aiReason ||
-                          "Veira thinks this task may need attention soon."}
-                      </p>
+                        {task.title}
+                      </button>
+
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={`rounded-[6px] border px-2 py-1 text-[10px] font-[650] ${priorityClass}`}
+                        >
+                          {priorityLabel}
+                        </span>
+
+                        <span
+                          className={`rounded-[6px] border px-2 py-1 text-[10px] font-[600] ${
+                            darkMode
+                              ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+                              : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                          }`}
+                        >
+                          {task.category || "No category"}
+                        </span>
+
+                        {task.suggestedDueDate && (
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-[6px] border px-2 py-1 text-[10px] font-[650] ${
+                              darkMode
+                                ? "border-white/[0.12] bg-white/[0.05] text-white/72"
+                                : "border-[#CFCFC9] bg-white text-[#353A45]"
+                            }`}
+                          >
+                            <Calendar
+                              size={11}
+                              strokeWidth={1.8}
+                            />
+                            {formatDueDate(
+                              task.suggestedDueDate
+                            )}
+                          </span>
+                        )}
+
+                        {hasFollowUpTag(task) && (
+                          <span
+                            className={`rounded-[6px] border px-2 py-1 text-[10px] font-[600] ${
+                              darkMode
+                                ? "border-white/[0.10] text-white/50"
+                                : "border-[#DDDDE3] text-[#5F6572]"
+                            }`}
+                          >
+                            Follow-up
+                          </span>
+                        )}
+                      </div>
+
+                      {(task.aiReason ||
+                        task.whyThisMatters) && (
+                        <p
+                          className={`mt-2.5 line-clamp-2 max-w-[570px] text-[11px] font-[500] leading-4 ${mutedText}`}
+                        >
+                          {task.aiReason ||
+                            task.whyThisMatters}
+                        </p>
+                      )}
                     </div>
 
-                    <div className="flex shrink-0 flex-col gap-2 sm:w-[150px]">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
                       <button
-                        onClick={() => acceptSuggestedDateById(task.id)}
-                        className="h-10 rounded-2xl px-4 text-xs font-[700] text-white transition hover:scale-[1.02]"
-                        style={{ backgroundColor: themeColor }}
+                        type="button"
+                        onClick={() =>
+                          acceptSuggestedDateById(task.id)
+                        }
+                        className={`inline-flex h-9 items-center justify-center gap-2 rounded-[8px] px-3 text-[11px] font-[700] transition ${
+                          darkMode
+                            ? "bg-white text-[#181818] hover:bg-white/90"
+                            : "bg-[#181818] text-white hover:bg-[#2A2A2A]"
+                        }`}
                       >
-                        Accept Date
+                        <Check
+                          size={13}
+                          strokeWidth={2}
+                        />
+                        Accept date
                       </button>
 
                       <button
-                        onClick={() => {
-                          setSelectedTask(task);
-                          setIsEditModalOpen(true);
-                          setIsSuggestionsModalOpen(false);
-                        }}
-                        className={`h-10 rounded-2xl px-4 text-xs font-[700] ${glass}`}
+                        type="button"
+                        onClick={() =>
+                          openTaskEditor(task)
+                        }
+                        className={`inline-flex h-9 items-center justify-center gap-2 rounded-[8px] border px-3 text-[11px] font-[650] transition ${
+                          darkMode
+                            ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
+                            : "border-[#DDDDE3] text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                        }`}
                       >
-                        Edit Task
+                        <PencilLine
+                          size={13}
+                          strokeWidth={1.7}
+                        />
+                        Edit task
                       </button>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
           )}
         </div>
+
+        {/* Footer */}
+        <footer
+          className={`flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6 ${rowBorder} ${secondarySurface}`}
+        >
+          <p className={`text-[11px] font-[500] ${mutedText}`}>
+            {tasks.length === 0
+              ? "No suggestions need attention."
+              : `${tasks.length} suggestion${
+                  tasks.length === 1 ? "" : "s"
+                } remaining`}
+          </p>
+
+          <button
+            type="button"
+            onClick={closeModal}
+            className={`h-9 rounded-[8px] border px-3.5 text-[11px] font-[650] transition ${
+              darkMode
+                ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
+                : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+            }`}
+          >
+            Review later
+          </button>
+        </footer>
       </motion.div>
     </motion.div>
   );
 }
-
 
 
 
@@ -9310,70 +10114,77 @@ function EditTaskModal({
   setSelectedTask,
   setIsEditModalOpen,
   saveTaskChanges,
-  completeTaskFromModal,
   deleteTaskEverywhere,
   restoreCompletedTask,
   categories,
-  themeColor,
   darkMode,
-  input,
-  modalSelect,
-  glass,
-  strongerGlass,
-  border,
+  manualFocusTaskIds = [],
+  setManualFocusTaskIds = () => {},
 }: any) {
-  const closeModal = () => {
-    if (selectedTask?.title?.trim()) {
-      saveTaskChanges(selectedTask);
-      return;
-    }
-
-    setIsEditModalOpen(false);
-    setSelectedTask(null);
-  };
-
   const priorityOptions: Priority[] = ["Low", "Medium", "High"];
   const statusOptions = ["Active", "Waiting", "Someday"];
 
   const [newStepTitle, setNewStepTitle] = useState("");
-
   const [editingStepId, setEditingStepId] = useState<string | null>(null);
-const [editingStepTitle, setEditingStepTitle] = useState("");
-
-const startEditingStep = (step: Subtask) => {
-  setEditingStepId(step.id);
-  setEditingStepTitle(step.title);
-};
-
-const cancelEditingStep = () => {
-  setEditingStepId(null);
-  setEditingStepTitle("");
-};
-
-const saveEditedStep = () => {
-  const title = editingStepTitle.trim();
-
-  if (!title || !editingStepId) {
-    cancelEditingStep();
-    return;
-  }
-
-  setSelectedTask({
-    ...selectedTask,
-    subtasks: getTaskSubtasks(selectedTask).map((step) =>
-      step.id === editingStepId
-        ? {
-            ...step,
-            title,
-          }
-        : step
-    ),
-  });
-
-  cancelEditingStep();
-};
+  const [editingStepTitle, setEditingStepTitle] = useState("");
 
   const stepProgress = getSubtaskProgress(selectedTask);
+
+const isTaskInFocus = manualFocusTaskIds.includes(
+  selectedTask.id
+);
+
+const isFocusStackFull =
+  !isTaskInFocus && manualFocusTaskIds.length >= 3;
+
+const toggleTaskFocus = () => {
+  setManualFocusTaskIds((previous: string[]) => {
+    if (previous.includes(selectedTask.id)) {
+      return previous.filter(
+        (taskId) => taskId !== selectedTask.id
+      );
+    }
+
+    if (previous.length >= 3) {
+      return previous;
+    }
+
+    return [...previous, selectedTask.id];
+  });
+};
+
+  const closeWithoutSaving = () => {
+    setIsEditModalOpen(false);
+    setSelectedTask(null);
+  };
+
+  const saveAndClose = () => {
+    if (!selectedTask?.title?.trim()) return;
+
+    saveTaskChanges(selectedTask);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeWithoutSaving();
+      }
+
+      if (
+        event.key === "Enter" &&
+        (event.metaKey || event.ctrlKey)
+      ) {
+        event.preventDefault();
+        saveAndClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedTask]);
 
   const addStepToSelectedTask = () => {
     const title = newStepTitle.trim();
@@ -9417,214 +10228,310 @@ const saveEditedStep = () => {
         (step) => step.id !== stepId
       ),
     });
+
+    if (editingStepId === stepId) {
+      setEditingStepId(null);
+      setEditingStepTitle("");
+    }
   };
 
-  const fieldLabel = `mb-1.5 block text-[10px] font-[900] uppercase tracking-[0.16em] ${
-    darkMode ? "text-white/38" : "text-slate-500"
+  const startEditingStep = (step: Subtask) => {
+    setEditingStepId(step.id);
+    setEditingStepTitle(step.title);
+  };
+
+  const cancelEditingStep = () => {
+    setEditingStepId(null);
+    setEditingStepTitle("");
+  };
+
+  const saveEditedStep = () => {
+    const title = editingStepTitle.trim();
+
+    if (!editingStepId || !title) {
+      cancelEditingStep();
+      return;
+    }
+
+    setSelectedTask({
+      ...selectedTask,
+      subtasks: getTaskSubtasks(selectedTask).map((step) =>
+        step.id === editingStepId
+          ? {
+              ...step,
+              title,
+            }
+          : step
+      ),
+    });
+
+    cancelEditingStep();
+  };
+
+  const restoreTask = () => {
+    restoreCompletedTask(selectedTask.id);
+    setIsEditModalOpen(false);
+    setSelectedTask(null);
+  };
+
+  const deleteTask = () => {
+    const confirmed = window.confirm(
+      `Delete "${selectedTask.title}" permanently?`
+    );
+
+    if (!confirmed) return;
+
+    deleteTaskEverywhere(selectedTask.id);
+  };
+
+  const fieldLabelClass = `mb-2 block text-[10px] font-[750] uppercase tracking-[0.14em] ${
+    darkMode ? "text-white/55" : "text-[#6F6F6A]"
   }`;
 
-  const fieldClass = darkMode
-    ? "border-white/[0.08] bg-[#1f1f21] text-white placeholder:text-white/32"
-    : "border-slate-200 bg-white text-[#000000] placeholder:text-slate-400";
+  const fieldClass = `w-full border px-3 text-[13px] font-[550] outline-none transition ${
+    darkMode
+      ? "border-white/[0.24] bg-[#171717] text-white placeholder:text-white/40 hover:border-white/[0.38] focus:border-white/[0.70]"
+      : "border-[#A8A8A2] bg-white text-[#181818] placeholder:text-[#777772] hover:border-[#777772] focus:border-[#181818]"
+  }`;
 
-  const panelClass = darkMode
-    ? "border-white/[0.08] bg-white/[0.035]"
-    : "border-slate-200 bg-white/75";
+  const mutedTextClass = darkMode
+    ? "text-white/55"
+    : "text-[#6F6F6A]";
 
-  const softPanelClass = darkMode
-    ? "border-white/[0.08] bg-[#111111]/80"
-    : "border-slate-200 bg-white/90";
+  const dividerClass = darkMode
+    ? "border-white/[0.12]"
+    : "border-[#D4D4CF]";
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/45 p-4 backdrop-blur-md sm:p-6"
-      onClick={closeModal}
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  transition={{
+    duration: 0.28,
+    ease: [0.22, 1, 0.36, 1],
+  }}
+  onClick={closeWithoutSaving}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/35 p-3 backdrop-blur-[2px] sm:p-6"
     >
-      <motion.div
-        initial={{
-          opacity: 0,
-          scale: 0.86,
-          y: 18,
-          transformOrigin: "50% 48%",
-        }}
-        animate={{
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          transformOrigin: "50% 48%",
-        }}
-        exit={{
-          opacity: 0,
-          scale: 0.9,
-          y: 14,
-          transformOrigin: "50% 48%",
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 520,
-          damping: 38,
-          mass: 0.8,
-        }}
-        onClick={(e) => e.stopPropagation()}
-        className={`max-h-[94vh] w-full max-w-[1180px] overflow-hidden rounded-[34px] border shadow-[0_35px_140px_rgba(0,0,0,0.38)] backdrop-blur-3xl ${strongerGlass} ${border}`}
+     <motion.div
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="edit-task-modal-title"
+  initial={{
+    opacity: 0,
+    x: "0%",
+    y: "32vh",
+    scaleX: 0.12,
+    scaleY: 0.04,
+    skewY: 0,
+    clipPath: "inset(88% 44% 0% 44% round 18px)",
+    filter: "blur(5px)",
+  }}
+  animate={{
+    opacity: 1,
+    x: "0%",
+    y: "0vh",
+    scaleX: 1,
+    scaleY: 1,
+    skewY: 0,
+    clipPath: "inset(0% 0% 0% 0% round 10px)",
+    filter: "blur(0px)",
+  }}
+  exit={{
+    opacity: 0,
+    x: "0%",
+    y: "32vh",
+    scaleX: 0.12,
+    scaleY: 0.04,
+    skewY: 0,
+    clipPath: "inset(88% 44% 0% 44% round 18px)",
+    filter: "blur(5px)",
+  }}
+  transition={{
+    opacity: {
+      duration: 0.3,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  
+    x: {
+      type: "spring",
+      stiffness: 125,
+      damping: 23,
+      mass: 1.05,
+    },
+  
+    y: {
+      type: "spring",
+      stiffness: 112,
+      damping: 22,
+      mass: 1.08,
+    },
+  
+    scaleX: {
+      type: "spring",
+      stiffness: 132,
+      damping: 22,
+      mass: 1.05,
+    },
+  
+    scaleY: {
+      type: "spring",
+      stiffness: 105,
+      damping: 21,
+      mass: 1.12,
+    },
+  
+    skewY: {
+      duration: 0.58,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  
+    clipPath: {
+      duration: 0.65,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  
+    filter: {
+      duration: 0.46,
+      ease: "easeOut",
+    },
+  }}
+  style={{
+    transformOrigin: "50% 100%",
+  }}
+  onClick={(event) => event.stopPropagation()}
+        className={`will-change-[transform,clip-path,filter] flex max-h-[92vh] w-full max-w-[1120px] flex-col overflow-hidden rounded-[10px] border shadow-[0_24px_80px_rgba(0,0,0,0.20)] ${
+          darkMode
+            ? "border-white/[0.14] bg-[#151515] text-white"
+            : "border-[#CFCFCA] bg-[#FAFAF8] text-[#181818]"
+        }`}
       >
-        <div className="relative overflow-hidden">
-          <div
-            className="pointer-events-none absolute -right-28 -top-28 h-64 w-64 rounded-full opacity-[0.12] blur-3xl"
-            style={{ backgroundColor: themeColor }}
-          />
+        {/* Header */}
+        <header
+          className={`flex shrink-0 items-start justify-between gap-6 border-b px-5 py-5 sm:px-7 ${dividerClass}`}
+        >
+          <div className="min-w-0">
+            <h2
+              id="edit-task-modal-title"
+              className={`text-[24px] font-[750] leading-none tracking-[-0.045em] ${
+                darkMode ? "text-white" : "text-[#181818]"
+              }`}
+            >
+              Edit Task
+            </h2>
 
-          <div
-            className="pointer-events-none absolute -left-24 bottom-0 h-56 w-56 rounded-full opacity-[0.08] blur-3xl"
-            style={{ backgroundColor: themeColor }}
-          />
-
-          <div className="relative px-6 pb-3 pt-5 sm:px-8 sm:pt-6">
-            <div className="flex items-start justify-between gap-5">
-              <div className="flex min-w-0 items-start gap-4">
-                <div
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] text-white shadow-[0_16px_36px_rgba(0,0,0,0.18)]"
-                  style={{
-                    backgroundColor: themeColor,
-                    boxShadow: `0 18px 36px ${themeColor}26`,
-                  }}
-                >
-                  <Sparkles size={20} />
-                </div>
-
-                <div className="min-w-0">
-                  <p
-                    className={`text-[11px] font-[900] uppercase tracking-[0.24em] ${
-                      darkMode ? "text-white/35" : "text-slate-400"
-                    }`}
-                  >
-                    Veira Task
-                  </p>
-
-                  <h2 className="mt-0.5 text-[26px] font-[900] leading-none tracking-[-0.06em] sm:text-[30px]">
-                    Edit Task
-                  </h2>
-
-                  <p
-  className={`mt-3 max-w-[720px] text-[13px] font-[650] leading-5 ${
-    darkMode ? "text-white/45" : "text-slate-500"
-  }`}
->
-                    Edit the task details on the left. Break execution into
-                    steps on the right.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex shrink-0 items-center">
-  <button
-    onClick={closeModal}
-    className="h-11 rounded-full px-6 text-sm font-[900] text-white shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition hover:scale-[1.02]"
-    style={{ backgroundColor: themeColor }}
-  >
-    Done
-  </button>
-</div>
-            </div>
+            <p
+              className={`mt-2 text-[12px] font-[500] leading-5 ${mutedTextClass}`}
+            >
+              Edit the task details on the left. Break execution into steps on
+              the right.
+            </p>
           </div>
 
-          <div className="relative max-h-[calc(94vh-132px)] overflow-y-auto px-4 pb-5 sm:px-6 sm:pb-6 xl:px-8">
-            <div className="grid grid-cols-1 gap-5 2xl:grid-cols-2">
-              {/* Left column */}
-              <section className={`rounded-[28px] border p-4 sm:p-5 ${panelClass}`}>
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <div>
-                    <label className={fieldLabel}>Title</label>
+          <button
+            type="button"
+            onClick={closeWithoutSaving}
+            aria-label="Close edit task"
+            title="Close"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] transition ${
+              darkMode
+                ? "text-white/55 hover:bg-white/[0.07] hover:text-white"
+                : "text-[#6F6F6A] hover:bg-black/[0.04] hover:text-[#181818]"
+            }`}
+          >
+            <X size={18} strokeWidth={1.6} />
+          </button>
+        </header>
 
-                    <input
-                      value={selectedTask.title}
-                      onChange={(e) =>
-                        setSelectedTask({
-                          ...selectedTask,
-                          title: e.target.value,
-                        })
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") saveTaskChanges(selectedTask);
-                      }}
-                      className={`h-12 w-full rounded-[22px] border px-4 text-[13px] font-[800] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${fieldClass}`}
-                      placeholder="What needs to get done?"
-                    />
-                  </div>
+        {/* Scrollable content */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="grid min-h-full grid-cols-1 lg:grid-cols-[minmax(0,0.95fr)_1px_minmax(0,1.05fr)]">
+            {/* Task details */}
+            <section className="px-5 py-5 sm:px-7 sm:py-6">
+              <div className="space-y-5">
+                {/* Title */}
+                <div>
+                  <label
+                    htmlFor="task-title"
+                    className={fieldLabelClass}
+                  >
+                    Title
+                  </label>
 
-                  <div>
-                    <label className={fieldLabel}>Why it matters</label>
+                  <input
+                    id="task-title"
+                    value={selectedTask.title || ""}
+                    onChange={(event) =>
+                      setSelectedTask({
+                        ...selectedTask,
+                        title: event.target.value,
+                      })
+                    }
+                    placeholder="What needs to get done?"
+                    className={`h-11 rounded-[7px] ${fieldClass}`}
+                  />
+                </div>
 
-                    <input
-                      value={selectedTask.whyThisMatters || ""}
-                      onChange={(e) =>
-                        setSelectedTask({
-                          ...selectedTask,
-                          whyThisMatters: e.target.value,
-                        })
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") saveTaskChanges(selectedTask);
-                      }}
-                      className={`h-12 w-full rounded-[22px] border px-4 text-[13px] font-[800] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${fieldClass}`}
-                      placeholder="Impact, outcome, or consequence..."
-                    />
-                  </div>
-
-                  <div>
-                    <label className={fieldLabel}>Priority</label>
+                {/* Priority and status */}
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <fieldset>
+                    <legend className={fieldLabelClass}>
+                      Priority
+                    </legend>
 
                     <div
-                      className={`grid h-12 grid-cols-3 gap-1 rounded-[22px] border p-1 ${softPanelClass}`}
+                      className={`grid h-11 grid-cols-3 overflow-hidden rounded-[7px] border ${
+                        darkMode
+                          ? "border-white/[0.24]"
+                          : "border-[#A8A8A2]"
+                      }`}
                     >
-                      {priorityOptions.map((priority) => {
-                        const isActive = selectedTask.priority === priority;
+                      {priorityOptions.map((priority, index) => {
+                        const isActive =
+                          selectedTask.priority === priority;
 
                         return (
                           <button
                             key={priority}
+                            type="button"
+                            aria-pressed={isActive}
                             onClick={() =>
                               setSelectedTask({
                                 ...selectedTask,
                                 priority,
                               })
                             }
-                            className={`rounded-[17px] text-xs font-[900] transition ${
+                            className={`border-r text-[11px] font-[700] transition last:border-r-0 ${dividerClass} ${
                               isActive
-                                ? "text-white shadow-[0_16px_34px_rgba(0,0,0,0.18)]"
+                                ? darkMode
+                                  ? "bg-white text-[#181818]"
+                                  : "bg-[#181818] text-white"
                                 : darkMode
-                                ? "text-white/42 hover:text-white"
-                                : "text-slate-500 hover:text-[#000000]"
+                                ? "bg-transparent text-white/55 hover:bg-white/[0.05] hover:text-white"
+                                : "bg-transparent text-[#6F6F6A] hover:bg-black/[0.035] hover:text-[#181818]"
                             }`}
-                            style={
-                              isActive
-                                ? {
-                                    backgroundColor:
-                                      priority === "High"
-                                        ? "#ef4444"
-                                        : priority === "Medium"
-                                        ? "#f59e0b"
-                                        : "#10b981",
-                                  }
-                                : undefined
-                            }
                           >
-                            {priority === "Medium" ? "Mid" : priority}
+                            {priority === "Medium"
+                              ? "Mid"
+                              : priority}
                           </button>
                         );
                       })}
                     </div>
-                  </div>
+                  </fieldset>
 
-                  <div>
-                    <label className={fieldLabel}>Status</label>
+                  <fieldset>
+                    <legend className={fieldLabelClass}>
+                      Status
+                    </legend>
 
                     <div
-                      className={`grid h-12 grid-cols-3 gap-1 rounded-[22px] border p-1 ${softPanelClass}`}
+                      className={`grid h-11 grid-cols-3 overflow-hidden rounded-[7px] border ${
+                        darkMode
+                          ? "border-white/[0.24]"
+                          : "border-[#A8A8A2]"
+                      }`}
                     >
                       {statusOptions.map((status) => {
                         const isActive =
@@ -9633,453 +10540,655 @@ const saveEditedStep = () => {
                         return (
                           <button
                             key={status}
+                            type="button"
+                            aria-pressed={isActive}
                             onClick={() =>
                               setSelectedTask({
                                 ...selectedTask,
                                 status,
                               })
                             }
-                            className={`rounded-[17px] text-xs font-[900] transition ${
+                            className={`border-r text-[11px] font-[700] transition last:border-r-0 ${dividerClass} ${
                               isActive
-                                ? "text-white shadow-[0_16px_34px_rgba(0,0,0,0.18)]"
+                                ? darkMode
+                                  ? "bg-white text-[#181818]"
+                                  : "bg-[#181818] text-white"
                                 : darkMode
-                                ? "text-white/42 hover:text-white"
-                                : "text-slate-500 hover:text-[#000000]"
+                                ? "bg-transparent text-white/55 hover:bg-white/[0.05] hover:text-white"
+                                : "bg-transparent text-[#6F6F6A] hover:bg-black/[0.035] hover:text-[#181818]"
                             }`}
-                            style={
-                              isActive
-                                ? {
-                                    backgroundColor: themeColor,
-                                  }
-                                : undefined
-                            }
                           >
                             {status}
                           </button>
                         );
                       })}
                     </div>
+                  </fieldset>
+                </div>
+
+
+{/* Focus mode */}
+<div
+  className={`flex items-center justify-between gap-4 rounded-[7px] border px-3 py-3 ${
+    darkMode
+      ? "border-white/[0.24] bg-[#171717]"
+      : "border-[#A8A8A2] bg-white"
+  }`}
+>
+  <div className="min-w-0">
+    <div className="flex items-center gap-2">
+      <Target
+        size={15}
+        strokeWidth={1.7}
+        className={
+          isTaskInFocus
+            ? darkMode
+              ? "text-emerald-300"
+              : "text-emerald-600"
+            : darkMode
+            ? "text-white/55"
+            : "text-[#6F6F6A]"
+        }
+      />
+
+      <p
+        className={`text-[12px] font-[700] ${
+          darkMode ? "text-white" : "text-[#181818]"
+        }`}
+      >
+        Focus mode
+      </p>
+    </div>
+
+    <p
+      className={`mt-1 text-[11px] font-[500] leading-4 ${
+        darkMode
+          ? "text-white/55"
+          : "text-[#6F6F6A]"
+      }`}
+    >
+      {isTaskInFocus
+        ? "This task is currently in your Focus stack."
+        : isFocusStackFull
+        ? "Your Focus stack already contains three tasks."
+        : "Add this task to your current Focus stack."}
+    </p>
+  </div>
+
+  <button
+    type="button"
+    onClick={toggleTaskFocus}
+    disabled={isFocusStackFull}
+    aria-pressed={isTaskInFocus}
+    className={`h-9 shrink-0 rounded-[7px] border px-3 text-[11px] font-[700] transition ${
+      isFocusStackFull
+        ? "cursor-not-allowed opacity-35"
+        : isTaskInFocus
+        ? darkMode
+          ? "border-red-300/20 bg-red-300/[0.08] text-red-200 hover:bg-red-300/[0.12]"
+          : "border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+        : darkMode
+        ? "border-white bg-white text-[#181818] hover:bg-white/90"
+        : "border-[#181818] bg-[#181818] text-white hover:bg-[#2A2A2A]"
+    }`}
+  >
+    {isTaskInFocus
+      ? "Remove"
+      : isFocusStackFull
+      ? "Focus stack full"
+      : "Add to focus"}
+  </button>
+</div>
+
+                {/* Date and category */}
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="task-due-date"
+                      className={fieldLabelClass}
+                    >
+                      Due date
+                    </label>
+
+                    <input
+                      id="task-due-date"
+                      type="date"
+                      value={
+                        selectedTask.dueDate ||
+                        selectedTask.suggestedDueDate ||
+                        ""
+                      }
+                      onChange={(event) =>
+                        setSelectedTask({
+                          ...selectedTask,
+                          dueDate: event.target.value || undefined,
+                          suggestedDueDate: undefined,
+                          aiReason: event.target.value
+                            ? "You manually scheduled this task."
+                            : undefined,
+                          aiConfidence: event.target.value ? 1 : 0,
+                        })
+                      }
+                      className={`h-11 rounded-[7px] ${fieldClass}`}
+                    />
                   </div>
 
                   <div>
-                    <label className={fieldLabel}>Due date</label>
-
-                    <div className="relative">
-                      <input
-                        type="date"
-                        value={
-                          selectedTask.dueDate ||
-                          selectedTask.suggestedDueDate ||
-                          ""
-                        }
-                        onChange={(e) =>
-                          setSelectedTask({
-                            ...selectedTask,
-                            dueDate: e.target.value || undefined,
-                            suggestedDueDate: undefined,
-                            aiReason: e.target.value
-                              ? "You manually scheduled this task."
-                              : undefined,
-                            aiConfidence: e.target.value ? 1 : 0,
-                          })
-                        }
-                        className={`h-12 w-full rounded-[22px] border px-4 pr-11 text-sm font-[800] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${fieldClass}`}
-                      />
-
-                      <Calendar
-                        size={17}
-                        className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${
-                          darkMode ? "text-white/45" : "text-slate-500"
-                        }`}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className={fieldLabel}>Category</label>
+                    <label
+                      htmlFor="task-category"
+                      className={fieldLabelClass}
+                    >
+                      Category
+                    </label>
 
                     <div className="relative">
                       <select
-                        value={selectedTask.category}
-                        onChange={(e) =>
+                        id="task-category"
+                        value={
+                          selectedTask.category ||
+                          categories[0]?.title ||
+                          ""
+                        }
+                        onChange={(event) =>
                           setSelectedTask({
                             ...selectedTask,
-                            category: e.target.value,
+                            category: event.target.value,
                           })
                         }
-                        className={`h-12 w-full appearance-none rounded-[22px] border px-4 pr-11 text-sm font-[800] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${fieldClass}`}
+                        className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
                       >
                         {categories.map((category: any) => (
-                          <option key={category.id} value={category.title}>
+                          <option
+                            key={category.id}
+                            value={category.title}
+                          >
                             {category.title}
                           </option>
                         ))}
                       </select>
 
                       <ChevronDown
-                        size={18}
-                        className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${
-                          darkMode ? "text-white/45" : "text-slate-500"
+                        aria-hidden="true"
+                        size={15}
+                        strokeWidth={1.6}
+                        className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${
+                          darkMode
+                            ? "text-white/55"
+                            : "text-[#6F6F6A]"
                         }`}
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-5">
-                  <label className={fieldLabel}>Notes</label>
+                {/* Why */}
+                <div>
+                  <label
+                    htmlFor="task-why"
+                    className={fieldLabelClass}
+                  >
+                    Why it matters
+                  </label>
 
                   <textarea
-                    value={selectedTask.notes || ""}
-                    onChange={(e) =>
+                    id="task-why"
+                    value={selectedTask.whyThisMatters || ""}
+                    onChange={(event) =>
                       setSelectedTask({
                         ...selectedTask,
-                        notes: e.target.value,
+                        whyThisMatters: event.target.value,
                       })
                     }
-                    className={`min-h-[88px] w-full resize-none rounded-[22px] border px-4 py-3 text-[13px] font-[650] leading-5 outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${fieldClass}`}
-                    placeholder="Add context, links, blockers, or anything useful..."
+                    placeholder="Impact, outcome, or consequence..."
+                    className={`min-h-[78px] resize-none rounded-[7px] py-3 leading-5 ${fieldClass}`}
                   />
                 </div>
 
+                {/* Notes */}
+                <div>
+                  <label
+                    htmlFor="task-notes"
+                    className={fieldLabelClass}
+                  >
+                    Notes
+                  </label>
+
+                  <textarea
+                    id="task-notes"
+                    value={selectedTask.notes || ""}
+                    onChange={(event) =>
+                      setSelectedTask({
+                        ...selectedTask,
+                        notes: event.target.value,
+                      })
+                    }
+                    placeholder="Add context, links, blockers, or anything useful..."
+                    className={`min-h-[94px] resize-none rounded-[7px] py-3 leading-5 ${fieldClass}`}
+                  />
+                </div>
+
+                {/* AI interpretation */}
                 {selectedTask.aiReason &&
                   selectedTask.aiReason !==
                     "You manually scheduled this task." && (
-                    <section
-                      className={`mt-5 rounded-[26px] border p-4 ${softPanelClass}`}
+                    <div
+                      className={`border-t pt-5 ${dividerClass}`}
                     >
-                      <div className="mb-4 flex items-start justify-between gap-4">
-                        <div className="flex min-w-0 items-start gap-3">
-                          <Sparkles
-                            size={18}
-                            className="mt-0.5 shrink-0 text-blue-500"
-                          />
-
-                          <div>
-                            <p className="text-sm font-[900] uppercase tracking-[0.06em]">
-                              Veira&apos;s suggestion
-                            </p>
-
-                            <p
-                              className={`mt-1 text-xs font-[700] ${
-                                darkMode ? "text-white/40" : "text-slate-500"
-                              }`}
-                            >
-                              This is how Veira interpreted the task.
-                            </p>
-                          </div>
-                        </div>
-
-                        <span
-                          className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-[900] text-white"
-                          style={{ backgroundColor: themeColor }}
+                      <div className="flex items-center justify-between gap-4">
+                        <p
+                          className={`text-[10px] font-[750] uppercase tracking-[0.14em] ${mutedTextClass}`}
                         >
-                          {Math.round((selectedTask.aiConfidence || 0) * 100)}%
-                          confidence
-                        </span>
-                      </div>
+                          Momentuhm interpretation
+                        </p>
 
-                      <div className="flex flex-wrap gap-2 pl-8">
-                        <span className="rounded-full bg-orange-50 px-3 py-1.5 text-[11px] font-[900] text-orange-600 dark:bg-orange-500/10 dark:text-orange-300">
-                          {selectedTask.suggestedDueDate
-                            ? `Suggested ${formatDueDate(
-                                selectedTask.suggestedDueDate
-                              )}`
-                            : selectedTask.dueDate
-                            ? `Due ${formatDueDate(selectedTask.dueDate)}`
-                            : "No date suggested"}
-                        </span>
-
-                        <span
-                          className={`rounded-full px-3 py-1.5 text-[11px] font-[900] ${
-                            selectedTask.priority === "High"
-                              ? "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-300"
-                              : selectedTask.priority === "Medium"
-                              ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300"
-                              : "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
-                          }`}
-                        >
-                          {selectedTask.priority === "Medium"
-                            ? "Mid"
-                            : selectedTask.priority}{" "}
-                          priority
-                        </span>
-
-                        {hasFollowUpTag(selectedTask) && (
-                          <FollowUpTag darkMode={darkMode} />
+                        {typeof selectedTask.aiConfidence ===
+                          "number" && (
+                          <span
+                            className={`text-[10px] font-[650] ${mutedTextClass}`}
+                          >
+                            {Math.round(
+                              selectedTask.aiConfidence * 100
+                            )}
+                            % confidence
+                          </span>
                         )}
                       </div>
 
                       <p
-                        className={`mt-4 pl-8 text-sm font-[650] leading-6 ${
-                          darkMode ? "text-white/48" : "text-slate-500"
-                        }`}
+                        className={`mt-2 text-[12px] font-[500] leading-5 ${mutedTextClass}`}
                       >
-                        {selectedTask.aiReason ||
-                          "Veira thinks this task may need attention soon."}
+                        {selectedTask.aiReason}
                       </p>
-                    </section>
-                  )}
-              </section>
 
-              {/* Right column */}
-              <section className={`rounded-[28px] border p-4 sm:p-5 ${panelClass}`}>
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-3">
-                      <List size={21} style={{ color: themeColor }} />
-
-                      <h3 className="text-[13px] font-[650] uppercase tracking-[0.08em]">
-                        Subtask
-                      </h3>
-                    </div>
-
-                    <p
-                      className={`mt-2 text-[12px] font-[650] leading-5 ${
-                        darkMode ? "text-white/45" : "text-slate-500"
-                      }`}
-                    >
-                      Big tasks become lighter when the next step is clear.
-                      
-                    </p>
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-4 text-[18px]">
-                    <span
-                      className={`text-sm font-[800] ${
-                        darkMode ? "text-white/48" : "text-slate-500"
-                      }`}
-                    >
-                      {stepProgress.completed} / {stepProgress.total} 
-                    </span>
-
-                    <div
-                      className="relative flex h-[52px] w-[52px] items-center justify-center rounded-full"
-                      style={{
-                        background: `conic-gradient(${themeColor} ${
-                          stepProgress.percent * 3.6
-                        }deg, ${
-                          darkMode
-                            ? "rgba(255,255,255,0.10)"
-                            : "rgb(226 232 240)"
-                        } 0deg)`,
-                      }}
-                    >
-                      <div
-                        className={`flex h-[40px] w-[40px] items-center justify-center rounded-full text-[12px] font-[900] ${
-                          darkMode
-                            ? "bg-[#171717] text-white"
-                            : "bg-white text-[#000000]"
-                        }`}
+                      <p
+                        className={`mt-3 text-[10px] font-[650] ${mutedTextClass}`}
                       >
-                        {stepProgress.percent}%
-                      </div>
+                        {selectedTask.priority === "Medium"
+                          ? "Mid"
+                          : selectedTask.priority}{" "}
+                        priority
+                        {selectedTask.suggestedDueDate
+                          ? ` · Suggested ${formatDueDate(
+                              selectedTask.suggestedDueDate
+                            )}`
+                          : selectedTask.dueDate
+                          ? ` · Due ${formatDueDate(
+                              selectedTask.dueDate
+                            )}`
+                          : ""}
+                        {hasFollowUpTag(selectedTask)
+                          ? " · Follow-up"
+                          : ""}
+                      </p>
                     </div>
+                  )}
+              </div>
+            </section>
+
+            {/* Desktop divider */}
+            <div
+              aria-hidden="true"
+              className={`hidden border-l lg:block ${dividerClass}`}
+            />
+
+            {/* Subtasks */}
+            <section
+              className={`border-t px-5 py-5 sm:px-7 sm:py-6 lg:border-t-0 ${
+                darkMode
+                  ? "border-white/[0.12]"
+                  : "border-[#D4D4CF]"
+              }`}
+            >
+              {/* Subtask header */}
+              <div className="flex items-start justify-between gap-5">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <ListChecks
+                      size={17}
+                      strokeWidth={1.6}
+                      className={mutedTextClass}
+                    />
+
+                    <h3
+                      className={`text-[13px] font-[750] uppercase tracking-[0.08em] ${
+                        darkMode ? "text-white" : "text-[#181818]"
+                      }`}
+                    >
+                      Subtasks
+                    </h3>
                   </div>
-                </div>
 
-                <div
-  className={`mb-4 h-1.5 overflow-hidden rounded-full ${
-                    darkMode ? "bg-white/[0.08]" : "bg-slate-200"
-                  }`}
-                >
-                  <div
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{
-                      width: `${stepProgress.percent}%`,
-                      backgroundColor: themeColor,
-                    }}
-                  />
-                </div>
-
-                <div className="mb-4 grid grid-cols-[minmax(0,1fr)_100px] gap-3">
-                  <input
-                    value={newStepTitle}
-                    onChange={(e) => setNewStepTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addStepToSelectedTask();
-                      }
-                    }}
-                    className={`h-12 min-w-0 rounded-[22px] border px-4 text-sm font-[800] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${fieldClass}`}
-                    placeholder="Add a subtask..."
-                  />
-
-                  <button
-                    onClick={addStepToSelectedTask}
-                   className="flex h-12 items-center justify-center gap-2 rounded-[20px] text-sm font-[700] text-white shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition hover:scale-[1.02]"
-                    style={{ backgroundColor: themeColor }}
+                  <p
+                    className={`mt-2 text-[11px] font-[500] leading-5 ${mutedTextClass}`}
                   >
-                    <Plus size={15} />
-                    Add
-                  </button>
+                    Big tasks become lighter when the next step is clear.
+                  </p>
                 </div>
 
-                {stepProgress.subtasks.length === 0 ? (
-                  <div
-                    className={`rounded-[24px] border border-dashed px-4 py-10 text-center text-sm font-[800] ${
-                      darkMode
-                        ? "border-white/[0.10] text-white/35"
-                        : "border-slate-200 text-slate-400"
+                <div className="shrink-0 text-right">
+                  <p
+                    className={`text-[11px] font-[700] ${
+                      darkMode ? "text-white" : "text-[#181818]"
                     }`}
                   >
-                    No steps yet. Add the first step to break this task down.
-                  </div>
-                ) : (
-                  <div
-                    className={`overflow-hidden rounded-[24px] border ${softPanelClass}`}
+                    {stepProgress.completed} / {stepProgress.total}
+                  </p>
+
+                  <p
+                    className={`mt-1 text-[10px] font-[600] ${mutedTextClass}`}
                   >
-                    {stepProgress.subtasks.map((step) => (
+                    {stepProgress.percent}%
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress */}
+              <div
+                role="progressbar"
+                aria-label="Subtask progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={stepProgress.percent}
+                className={`mt-4 h-[2px] w-full ${
+                  darkMode
+                    ? "bg-white/[0.12]"
+                    : "bg-[#DEDED9]"
+                }`}
+              >
+                <div
+                  className={`h-full transition-[width] duration-500 ${
+                    darkMode ? "bg-white" : "bg-[#181818]"
+                  }`}
+                  style={{
+                    width: `${stepProgress.percent}%`,
+                  }}
+                />
+              </div>
+
+              {/* Add subtask */}
+              <div className="mt-5 grid grid-cols-[minmax(0,1fr)_72px] gap-2">
+                <input
+                  aria-label="New subtask"
+                  value={newStepTitle}
+                  onChange={(event) =>
+                    setNewStepTitle(event.target.value)
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addStepToSelectedTask();
+                    }
+                  }}
+                  placeholder="Add a subtask..."
+                  className={`h-11 rounded-[7px] ${fieldClass}`}
+                />
+
+                <button
+                  type="button"
+                  onClick={addStepToSelectedTask}
+                  disabled={!newStepTitle.trim()}
+                  className={`h-11 rounded-[7px] border text-[12px] font-[700] transition ${
+                    !newStepTitle.trim()
+                      ? "cursor-not-allowed opacity-35"
+                      : darkMode
+                      ? "border-white bg-white text-[#181818] hover:bg-white/90"
+                      : "border-[#181818] bg-[#181818] text-white hover:bg-[#2A2A2A]"
+                  }`}
+                >
+                  Add
+                </button>
+              </div>
+
+              {/* Empty state */}
+              {stepProgress.subtasks.length === 0 ? (
+                <div
+                  className={`mt-5 flex min-h-[170px] items-center justify-center border px-5 text-center ${
+                    darkMode
+                      ? "border-white/[0.14]"
+                      : "border-[#D4D4CF]"
+                  }`}
+                >
+                  <div>
+                    <List
+                      size={20}
+                      strokeWidth={1.4}
+                      className={`mx-auto ${mutedTextClass}`}
+                    />
+
+                    <p
+                      className={`mt-3 text-[12px] font-[650] ${
+                        darkMode ? "text-white" : "text-[#181818]"
+                      }`}
+                    >
+                      No steps yet.
+                    </p>
+
+                    <p
+                      className={`mt-1 text-[11px] font-[500] leading-5 ${mutedTextClass}`}
+                    >
+                      Add the first step to break this task down.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className={`mt-5 border ${
+                    darkMode
+                      ? "border-white/[0.14]"
+                      : "border-[#D4D4CF]"
+                  }`}
+                >
+                  {stepProgress.subtasks.map(
+                    (step: Subtask, index: number) => (
                       <div
                         key={step.id}
-                        className={`group/step grid min-h-[52px] grid-cols-[30px_minmax(0,1fr)_24px_30px_30px] items-center gap-1.5 gap-2.5 border-b px-3 py-1.5 last:border-b-0 ${
-                          darkMode
-                            ? "border-white/[0.07]"
-                            : "border-slate-200"
-                        }`}
+                        className={`grid min-h-[54px] grid-cols-[36px_minmax(0,1fr)_34px_34px] items-center gap-2 border-b px-2 last:border-b-0 ${dividerClass}`}
                       >
                         <button
-                          onClick={() => toggleSelectedStep(step.id)}
-                          className="flex h-8 w-8 items-center justify-center transition hover:scale-110"
+                          type="button"
+                          onClick={() =>
+                            toggleSelectedStep(step.id)
+                          }
+                          aria-label={
+                            step.completed
+                              ? `Mark ${step.title} incomplete`
+                              : `Complete ${step.title}`
+                          }
+                          className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
+                            darkMode
+                              ? "text-white/55 hover:bg-white/[0.06] hover:text-white"
+                              : "text-[#6F6F6A] hover:bg-black/[0.04] hover:text-[#181818]"
+                          }`}
                         >
                           {step.completed ? (
                             <span
-                              className="flex h-[22px] w-[22px] items-center justify-center rounded-full text-white"
-                              style={{ backgroundColor: themeColor }}
+                              className={`flex h-[18px] w-[18px] items-center justify-center border ${
+                                darkMode
+                                  ? "border-white bg-white text-[#181818]"
+                                  : "border-[#181818] bg-[#181818] text-white"
+                              }`}
                             >
-                              <Check size={14} strokeWidth={3} />
+                              <Check
+                                size={12}
+                                strokeWidth={2.4}
+                              />
                             </span>
                           ) : (
-                            <Circle
-                              size={22}
-                              className={
-                                darkMode ? "text-white/32" : "text-slate-400"
-                              }
+                            <span
+                              className={`h-[18px] w-[18px] border ${
+                                darkMode
+                                  ? "border-white/55"
+                                  : "border-[#777772]"
+                              }`}
                             />
                           )}
                         </button>
 
                         {editingStepId === step.id ? (
-  <input
-    autoFocus
-    value={editingStepTitle}
-    onChange={(e) => setEditingStepTitle(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") saveEditedStep();
-      if (e.key === "Escape") cancelEditingStep();
-    }}
-    onBlur={saveEditedStep}
-    className={`h-9 min-w-0 rounded-[14px] border px-3 text-[12px] font-[650] outline-none transition focus:ring-4 focus:ring-[#05AD98]/15 ${fieldClass}`}
-  />
-) : (
-  <button
-    type="button"
-    onClick={() => startEditingStep(step)}
-    className={`min-w-0 whitespace-normal break-words py-2 text-left text-[12px] font-[500] leading-5 [overflow-wrap:anywhere] hover:opacity-70 ${
-      step.completed
-        ? darkMode
-          ? "text-white/38 line-through decoration-white/25"
-          : "text-slate-400 line-through decoration-slate-300"
-        : darkMode
-        ? "text-white/78"
-        : "text-[#000000]"
-    }`}
-  >
-    {step.title}
-  </button>
-)}
+                          <input
+                            autoFocus
+                            value={editingStepTitle}
+                            onChange={(event) =>
+                              setEditingStepTitle(
+                                event.target.value
+                              )
+                            }
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                saveEditedStep();
+                              }
 
-                        {step.completed ? (
-                          <span
-                            className={`justify-self-end rounded-full px-2.5 py-0.5 text-[10px] font-[900] ${
-                              darkMode
-                                ? "bg-emerald-400/[0.10] text-emerald-200"
-                                : "bg-emerald-50 text-emerald-600"
-                            }`}
-                          >
-                            Done
-                          </span>
+                              if (event.key === "Escape") {
+                                event.stopPropagation();
+                                cancelEditingStep();
+                              }
+                            }}
+                            onBlur={saveEditedStep}
+                            className={`h-9 rounded-[6px] ${fieldClass}`}
+                          />
                         ) : (
-                          <span
-                            className={`justify-self-end text-sm font-[700] text-[10px] ${
-                              darkMode ? "text-white/28" : "text-slate-400"
+                          <button
+                            type="button"
+                            onClick={() =>
+                              startEditingStep(step)
+                            }
+                            className={`min-w-0 py-3 text-left text-[12px] font-[550] leading-5 ${
+                              step.completed
+                                ? darkMode
+                                  ? "text-white/40 line-through decoration-white/30"
+                                  : "text-[#777772] line-through decoration-black/25"
+                                : darkMode
+                                ? "text-white/82"
+                                : "text-[#181818]"
                             }`}
                           >
-                            -
-                          </span>
+                            {step.title}
+                          </button>
                         )}
 
-
-<button
-  onClick={() => startEditingStep(step)}
-  className={`flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 ${
-    darkMode
-      ? "text-white/35 hover:bg-white/[0.06] hover:text-white"
-      : "text-slate-400 hover:bg-slate-100 hover:text-[#000000]"
-  }`}
-  title="Edit subtask"
->
-  <PencilLine size={16} />
-</button>
                         <button
-                          onClick={() => deleteSelectedStep(step.id)}
-                          className={`flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 hover:text-red-500 ${
+                          type="button"
+                          onClick={() =>
+                            startEditingStep(step)
+                          }
+                          aria-label={`Edit ${step.title}`}
+                          title="Edit subtask"
+                          className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
                             darkMode
-                              ? "text-white/35 hover:bg-white/[0.06]"
-                              : "text-slate-400 hover:bg-slate-100"
+                              ? "text-white/45 hover:bg-white/[0.06] hover:text-white"
+                              : "text-[#777772] hover:bg-black/[0.04] hover:text-[#181818]"
                           }`}
                         >
-                          <Trash2 size={18} />
+                          <PencilLine
+                            size={14}
+                            strokeWidth={1.6}
+                          />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deleteSelectedStep(step.id)
+                          }
+                          aria-label={`Delete ${step.title}`}
+                          title="Delete subtask"
+                          className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
+                            darkMode
+                              ? "text-white/40 hover:bg-white/[0.06] hover:text-white"
+                              : "text-[#777772] hover:bg-black/[0.04] hover:text-[#181818]"
+                          }`}
+                        >
+                          <Trash2
+                            size={14}
+                            strokeWidth={1.6}
+                          />
                         </button>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    )
+                  )}
+                </div>
+              )}
 
-                {stepProgress.allComplete && (
-                  <div
-                    className={`mt-4 rounded-[20px] border px-4 py-3 ${
-                      darkMode
-                        ? "border-[#05AD98]/20 bg-[#05AD98]/10"
-                        : "border-[#05AD98]/20 bg-[#05AD98]/[0.08]"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                        style={{
-                          color: themeColor,
-                          backgroundColor: `${themeColor}18`,
-                        }}
-                      >
-                        <Sparkles size={15} />
-                      </div>
-
-                      <div>
-                        <p
-                          className="text-[13px] font-[900]"
-                          style={{ color: darkMode ? "white" : "#064E4A" }}
-                        >
-                          All steps are done?
-                        </p>
-
-                        <p
-                          className={`mt-0.5 text-[12px] font-[650] leading-5 ${
-                            darkMode ? "text-white/55" : "text-teal-700"
-                          }`}
-                        >
-                          Mark the parent task complete when the full outcome is
-                          achieved.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </section>
-            </div>
+              {stepProgress.allComplete && (
+                <p
+                  className={`mt-4 border-l-2 pl-3 text-[11px] font-[550] leading-5 ${
+                    darkMode
+                      ? "border-white/45 text-white/60"
+                      : "border-[#777772] text-[#555550]"
+                  }`}
+                >
+                  All subtasks are complete. Mark the parent task complete when
+                  the full outcome is achieved.
+                </p>
+              )}
+            </section>
           </div>
         </div>
+
+        {/* Footer */}
+        <footer
+          className={`flex shrink-0 flex-col-reverse gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7 ${dividerClass}`}
+        >
+          <div className="flex items-center gap-4">
+            {selectedTask.completed && (
+              <button
+                type="button"
+                onClick={restoreTask}
+                className={`flex h-10 items-center gap-2 text-[12px] font-[650] transition ${
+                  darkMode
+                    ? "text-white/55 hover:text-white"
+                    : "text-[#6F6F6A] hover:text-[#181818]"
+                }`}
+              >
+                <RotateCcw size={14} strokeWidth={1.7} />
+                Restore task
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={deleteTask}
+              className={`flex h-10 items-center gap-2 text-[12px] font-[650] transition ${
+                darkMode
+                  ? "text-white/45 hover:text-white"
+                  : "text-[#777772] hover:text-[#181818]"
+              }`}
+            >
+              <Trash2 size={14} strokeWidth={1.6} />
+              Delete task
+            </button>
+          </div>
+
+          <div className="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={closeWithoutSaving}
+              className={`h-10 rounded-[7px] px-4 text-[12px] font-[650] transition ${
+                darkMode
+                  ? "text-white/55 hover:bg-white/[0.06] hover:text-white"
+                  : "text-[#6F6F6A] hover:bg-black/[0.035] hover:text-[#181818]"
+              }`}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={saveAndClose}
+              disabled={!selectedTask?.title?.trim()}
+              className={`h-10 min-w-[76px] rounded-[7px] px-5 text-[12px] font-[700] transition ${
+                !selectedTask?.title?.trim()
+                  ? "cursor-not-allowed opacity-35"
+                  : darkMode
+                  ? "bg-white text-[#181818] hover:bg-white/90"
+                  : "bg-[#181818] text-white hover:bg-[#2A2A2A]"
+              }`}
+            >
+              Done
+            </button>
+          </div>
+        </footer>
       </motion.div>
     </motion.div>
   );

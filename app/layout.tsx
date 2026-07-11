@@ -2,7 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 export const metadata = {
-  title: "Veira",
+  title: "Momentuhm.app",
   description: "Your progress. Your pride.",
 };
 
