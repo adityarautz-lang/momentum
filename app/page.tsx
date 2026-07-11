@@ -5162,21 +5162,11 @@ function TaskListPanel({
               ? "Not started"
               : task.status || "Not started";
 
-            const dueLabel = !visibleDueDate
-              ? "—"
-              : isToday(visibleDueDate)
-              ? "Today"
-              : isTomorrow(visibleDueDate)
-              ? "Tomorrow"
-              : formatDueDate(visibleDueDate);
+              const dueLabel = visibleDueDate
+              ? formatDueDate(visibleDueDate)
+              : "—";
 
-            const dueClass = isTaskOverdue
-              ? "text-red-500"
-              : isToday(visibleDueDate)
-              ? "text-red-500"
-              : isTomorrow(visibleDueDate)
-              ? "text-orange-500"
-              : mutedText;
+              const dueClass = mutedText;
 
             const priorityPill =
               task.priority === "High"
@@ -5265,16 +5255,20 @@ function TaskListPanel({
 </div>
 
                   <div className="flex min-w-0 flex-col justify-start px-2 py-3">
-  <button
-    type="button"
-    onClick={() => openTask(task)}
-    title={task.title}
-    className={`block w-full truncate text-left text-[13px] font-[650] leading-5 tracking-[-0.015em] transition hover:opacity-70 ${
-      darkMode ? "text-white/90" : "text-[#20232B]"
-    }`}
-  >
-    {task.title}
-  </button>
+                  <button
+  type="button"
+  onClick={() => openTask(task)}
+  title={task.title}
+  className={`block w-full text-left text-[13px] font-[600] leading-5 tracking-[-0.015em] transition hover:opacity-70 ${
+    groupMode === "category"
+      ? "line-clamp-2 whitespace-normal"
+      : "truncate"
+  } ${
+    darkMode ? "text-white/90" : "text-[#20232B]"
+  }`}
+>
+  {task.title}
+</button>
 
   {groupMode !== "category" && (
     <div
@@ -5317,7 +5311,7 @@ function TaskListPanel({
     )}
 </div>
 
-                  <div className={`flex items-center justify-center border-l px-1 text-center text-[10.5px] font-[600] ${rowBorder} ${dueClass}`}>
+                  <div className={`flex items-center justify-center border-l px-1 text-center text-[12px] font-[600] ${rowBorder} ${dueClass}`}>
                     {dueLabel}
                   </div>
 
@@ -7093,7 +7087,7 @@ function FocusModePanel({
       <header className="mb-6 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h2
-            className={`text-[24px] font-[760] leading-none tracking-[-0.045em] ${
+            className={`text-[20px] font-[760] leading-none tracking-[-0.045em] ${
               darkMode ? "text-white" : "text-[#17191F]"
             }`}
           >
