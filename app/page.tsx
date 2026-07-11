@@ -1032,7 +1032,9 @@ const anchorTaskList = () => {
 
   const rect = el.getBoundingClientRect();
   const idealTopOffset =
-  window.innerWidth < 640 ? 18 : window.innerWidth < 1024 ? 148 : 32;
+  window.innerWidth < 640
+    ? 18
+    : 80;
   const targetTop = Math.max(0, rect.top + window.scrollY - idealTopOffset);
 
   if (Math.abs(targetTop - window.scrollY) < 4) return true;
@@ -5015,7 +5017,7 @@ function TaskListPanel({
       id="Momentuhm-task-list-anchor"
       ref={taskListRef}
       aria-label={description || title}
-      className={`w-full min-w-0 scroll-mt-[148px] overflow-hidden rounded-[12px] border lg:scroll-mt-8 ${cardBorder}`}
+      className={`w-full min-w-0 scroll-mt-[80px] overflow-hidden rounded-[12px] border ${cardBorder}`}
     >
       <div
         className={`flex min-h-[72px] flex-col gap-3 border-b px-4 py-3.5 xl:flex-row xl:items-center xl:justify-between ${rowBorder}`}
