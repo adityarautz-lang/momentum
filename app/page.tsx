@@ -3441,14 +3441,16 @@ function TodayView({
     ? "text-white/52"
     : "text-[#6B6F7B]";
 
-    const insightText = boostLoading
-    ? "Building your momentum..."
-    : completedToday.length > 0
-    ? formatSingleLineInsight(boostMessage) ||
-      "Nice progress. Keep moving."
-    : showMorningBrief
-    ? formatSingleLineInsight(morningBrief.quote)
-    : "One clear step at a time.";
+    const insightText =
+    completedToday.length === 0
+      ? "One clear step at a time."
+      : completionPercent >= 80
+      ? "Excellent momentum. Finish strong."
+      : completionPercent >= 50
+      ? "Great progress. Keep moving."
+      : completedToday.length >= 3
+      ? "Strong progress. Stay focused."
+      : "Nice start. Keep going.";
 
   return (
     <>
