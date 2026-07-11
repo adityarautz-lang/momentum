@@ -239,20 +239,20 @@ const formatDateLong = () => {
 const formatSingleLineInsight = (message: string) => {
   const cleaned = String(message || "")
     .replace(/\s+/g, " ")
+    .replace(/^["'“”]+|["'“”]+$/g, "")
     .trim();
 
   if (!cleaned) return "";
 
-  const firstSentence =
-    cleaned.match(/^.*?[.!?](?:\s|$)/)?.[0]?.trim() || cleaned;
+  const shortened = cleaned
+    .split(/\s+/)
+    .slice(0, 6)
+    .join(" ")
+    .replace(/[,:;–—-]+$/, "");
 
-  const words = firstSentence.split(/\s+/);
-
-  if (words.length <= 18) {
-    return firstSentence;
-  }
-
-  return `${words.slice(0, 18).join(" ").replace(/[,:;–—-]+$/, "")}…`;
+  return /[.!?]$/.test(shortened)
+    ? shortened
+    : `${shortened}.`;
 };
 
 const getAccessibleTextColor = (hexColor: string) => {
@@ -1625,7 +1625,7 @@ const boostCacheDate = getTodayDate();
 * Using v2 prevents the previous long cached paragraph
 * from being loaded again.
 */
-const boostCacheKey = `momentum-boost-v2-${boostCacheDate}`;
+const boostCacheKey = `momentum-boost-v3-${boostCacheDate}`;
 
 /* ------------------------------------------------ */
 /* Load Momentuhm Boost Cache */
@@ -1687,7 +1687,7 @@ const timeout = window.setTimeout(async () => {
       body: JSON.stringify({
         completedTasks: completedTaskTitles,
         instruction:
-          "Return exactly one encouraging sentence with a maximum of 18 words. Do not list tasks or use headings.",
+        "Return one encouraging phrase of 3 to 6 words. Do not mention task names, task details, numbers, headings, or emojis.",
       }),
     });
 
@@ -3441,13 +3441,14 @@ function TodayView({
     ? "text-white/52"
     : "text-[#6B6F7B]";
 
-  const insightText = boostLoading
-    ? "Creating today’s insight..."
+    const insightText = boostLoading
+    ? "Building your momentum..."
     : completedToday.length > 0
-    ? boostMessage || "You’re building momentum. Keep it going."
+    ? formatSingleLineInsight(boostMessage) ||
+      "Nice progress. Keep moving."
     : showMorningBrief
     ? formatSingleLineInsight(morningBrief.quote)
-    : "You’re building momentum. Keep it going.";
+    : "One clear step at a time.";
 
   return (
     <>
@@ -3511,7 +3512,7 @@ function TodayView({
 
                       <p
                         title={insightText}
-                        className={`mt-1.5 line-clamp-2 text-[13px] font-[500] leading-5 ${mutedText}`}
+                        className={`mt-1.5 line-clamp-1 text-[13px] font-[500] leading-5 ${mutedText}`}
                       >
                         {insightText}
                       </p>
