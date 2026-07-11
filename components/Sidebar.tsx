@@ -284,7 +284,7 @@ function SidebarContent({
     <>
       <nav className="min-h-0 flex-1 overflow-y-auto pr-1">
         <SidebarSectionLabel
-          label="Plan"
+          label=""
           darkMode={darkMode}
         />
 
