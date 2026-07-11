@@ -5213,20 +5213,36 @@ function TaskListPanel({
                   </div>
                 )}
 
-                <motion.div
-                  layout="position"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  draggable={draggableTasks}
-                  onDragStart={(event) => {
-                    if (!draggableTasks) return;
-                    event.dataTransfer.setData("text/plain", task.id);
-                    event.dataTransfer.effectAllowed = "copy";
-                  }}
-                  className={`group/task ${tableGridClass} min-h-[62px] border-b transition last:border-b-0 ${rowBorder} ${
-                    darkMode ? "hover:bg-white/[0.025]" : "hover:bg-[#FBFBFC]"
-                  } ${isNewlyAdded ? "animate-[veiraNewTaskGlow_2.2s_ease-out]" : ""}`}
-                >
+<motion.div
+  layout="position"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  draggable={Boolean(draggableTasks)}
+  onDragStartCapture={(
+    event: React.DragEvent<HTMLDivElement>
+  ) => {
+    if (!draggableTasks) {
+      event.preventDefault();
+      return;
+    }
+
+    event.dataTransfer.setData(
+      "text/plain",
+      String(task.id)
+    );
+
+    event.dataTransfer.effectAllowed = "copy";
+  }}
+  className={`group/task ${tableGridClass} min-h-[62px] border-b transition last:border-b-0 ${rowBorder} ${
+    darkMode
+      ? "hover:bg-white/[0.025]"
+      : "hover:bg-[#FBFBFC]"
+  } ${
+    isNewlyAdded
+      ? "animate-[veiraNewTaskGlow_2.2s_ease-out]"
+      : ""
+  }`}
+>
                 <div className="flex items-start justify-center pt-3">
   <button
     type="button"
@@ -5649,23 +5665,32 @@ function ArchiveView({
         );
       }).length;
 
-    const categoryCounts =
-      archive.reduce<Record<string, number>>(
-        (counts, task: any) => {
+      const categoryCounts: Record<string, number> = (
+        Array.isArray(archive) ? archive : []
+      ).reduce(
+        (
+          counts: Record<string, number>,
+          task: any
+        ) => {
           const category =
             task.category || "No category";
-
+      
           counts[category] =
             (counts[category] || 0) + 1;
-
+      
           return counts;
         },
-        {}
+        {} as Record<string, number>
       );
-
-    const topCategoryEntry = Object.entries(
-      categoryCounts
-    ).sort((a, b) => b[1] - a[1])[0];
+      
+      const topCategoryEntry = (
+        Object.entries(categoryCounts) as Array<
+          [string, number]
+        >
+      ).sort(
+        ([, countA], [, countB]) =>
+          countB - countA
+      )[0];
 
     return {
       totalClosed: archive.length,
