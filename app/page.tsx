@@ -3113,13 +3113,15 @@ userFirstName={user?.firstName || ""}
 
 <AnimatePresence>
   {showDueReminderPopup && todayTasks.length > 0 && (
-    <DueTasksReminderPopup
-      tasks={todayTasks}
-      themeColor={themeColor}
-      onClose={closeDueReminderPopup}
-      onViewAll={viewDueReminderTasks}
-      onOpenTask={openDueReminderTask}
-    />
+  <DueTasksReminderPopup
+  tasks={todayTasks}
+  themeColor={themeColor}
+  darkMode={darkMode}
+  timeRemainingLabel={dayTimeRemaining.label}
+  onClose={closeDueReminderPopup}
+  onViewAll={viewDueReminderTasks}
+  onOpenTask={openDueReminderTask}
+/>
   )}
 
 {CLIPBOARD_ASSIST_ENABLED_FOR_TESTING &&
@@ -3457,8 +3459,9 @@ function TodayView({
   return (
     <>
       <MobileTodayAppView
-        darkMode={darkMode}
-        themeColor={themeColor}
+  darkMode={darkMode}
+  setDarkMode={setDarkMode}
+  themeColor={themeColor}
         strongerGlass={strongerGlass}
         border={border}
         allTasks={allTasks}
@@ -3731,1092 +3734,259 @@ function TodayView({
   );
 }
 
-function MobileTodayAppView({
+
+function MobileBottomNav({
+  selectedView,
+  setSelectedView,
+  inboxCount,
   darkMode,
   themeColor,
-  strongerGlass,
-  border,
-  allTasks,
-  prioritizedTasks,
-  completedToday,
-  completionPercent,
-  dayTimeRemaining,
-  dayEndTime,
-  setDayEndTime,
-  newTask,
-  setNewTask,
-  newTaskWhy,
-  setNewTaskWhy,
-  addTask,
-  setIsExtractModalOpen,
-  toggleTaskById,
-  deleteTask,
-  setSelectedTask,
-  setIsEditModalOpen,
-  manualFocusTaskIds,
-  setManualFocusTaskIds,
-  archiveCompletedToday,
-  restoreCompletedTask,
-  anchorTaskListSoon = () => {},
-userFirstName = "",
 }: any) {
-  const [mobileGroupMode, setMobileGroupMode] =
-  useState<MobileGroupMode>("category");
-  const [selectedChip, setSelectedChip] = useState("");
-  const [showAllMobileTasks, setShowAllMobileTasks] = useState(false);
-  const [isMobileTimePickerOpen, setIsMobileTimePickerOpen] = useState(false);
-  const [mobileWorkspaceMode, setMobileWorkspaceMode] =
-    useState<"tasks" | "focus">("tasks");
+  const [
+    activeMobileTab,
+    setActiveMobileTab,
+  ] = useState<
+    "today" | "focus" | "inbox"
+  >(
+    selectedView === "inbox"
+      ? "inbox"
+      : "today"
+  );
 
-    useEffect(() => {
-      if (typeof window === "undefined") return;
-    
-      const openTasksWorkspace = () => {
-        setMobileWorkspaceMode("tasks");
-      };
-    
-      window.addEventListener(
-        "momentuhm:open-tasks",
-        openTasksWorkspace
-      );
-    
-      return () => {
-        window.removeEventListener(
-          "momentuhm:open-tasks",
-          openTasksWorkspace
-        );
-      };
-    }, []);
+  useEffect(() => {
+    if (selectedView === "inbox") {
+      setActiveMobileTab("inbox");
+      return;
+    }
 
-useEffect(() => {
-  if (typeof window === "undefined") return;
+    if (selectedView !== "today") {
+      setActiveMobileTab("today");
+    }
+  }, [selectedView]);
 
-  const openFocusWorkspace = () => {
-    setMobileWorkspaceMode("focus");
+  const goToToday = () => {
+    setActiveMobileTab("today");
+    setSelectedView("today");
 
     window.setTimeout(() => {
-      document
-        .getElementById("Momentuhm-mobile-workspace-anchor")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.dispatchEvent(
+        new Event(
+          "momentuhm:open-tasks"
+        )
+      );
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
     }, 60);
   };
 
-  window.addEventListener("momentuhm:open-focus", openFocusWorkspace);
+  const goToFocus = () => {
+    setActiveMobileTab("focus");
+    setSelectedView("today");
 
-  return () => {
-    window.removeEventListener("momentuhm:open-focus", openFocusWorkspace);
+    window.setTimeout(() => {
+      window.dispatchEvent(
+        new Event(
+          "momentuhm:open-focus"
+        )
+      );
+    }, 80);
   };
-}, []);
 
-useEffect(() => {
-  if (typeof window === "undefined") return;
+  const goToCapture = () => {
+    setActiveMobileTab("today");
+    setSelectedView("today");
 
-  const savedMobileGroupMode = window.localStorage.getItem(
-    MOBILE_GROUP_MODE_KEY
-  );
-
-  if (
-    savedMobileGroupMode === "category" ||
-    savedMobileGroupMode === "priority" ||
-    savedMobileGroupMode === "date"
-  ) {
-    setMobileGroupMode(savedMobileGroupMode);
-  }
-}, []);
-
-const changeMobileGroupMode = (nextMode: MobileGroupMode) => {
-  setMobileGroupMode(nextMode);
-  setSelectedChip("");
-  setShowAllMobileTasks(false);
-
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(MOBILE_GROUP_MODE_KEY, nextMode);
-  }
-
-  anchorTaskListSoon();
-};
-
-const getMobileDateGroup = (task: any) => {
-  const date = getTaskDate(task);
-
-  if (!date) {
-    return {
-      key: "date:no-date",
-      label: "No date",
-      order: 5,
-    };
-  }
-
-  if (isOverdue(date)) {
-    return {
-      key: "date:overdue",
-      label: "Overdue",
-      order: 1,
-    };
-  }
-
-  if (isToday(date)) {
-    return {
-      key: "date:today",
-      label: "Today",
-      order: 2,
-    };
-  }
-
-  if (isTomorrow(date)) {
-    return {
-      key: "date:tomorrow",
-      label: "Tomorrow",
-      order: 3,
-    };
-  }
-
-  return {
-    key: "date:later",
-    label: "Later",
-    order: 4,
+    window.setTimeout(() => {
+      window.dispatchEvent(
+        new Event(
+          "momentuhm:open-capture"
+        )
+      );
+    }, 80);
   };
-};
 
-const mobileGroupTabs = useMemo((): any[] => {
-  if (mobileGroupMode === "priority") {
-    const priorityOrder = ["High", "Medium", "Low"];
+  const goToInbox = () => {
+    setActiveMobileTab("inbox");
+    setSelectedView("inbox");
 
-    return priorityOrder
-      .map((priority) => {
-        const count = prioritizedTasks.filter(
-          (task: any) => task.priority === priority
-        ).length;
+    window.setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }, 60);
+  };
 
-        return {
-          key: `priority:${priority}`,
-          label: priority === "Medium" ? "Mid" : priority,
-          count,
-          order: priorityOrder.indexOf(priority),
-        };
-      })
-      .filter((tab) => tab.count > 0);
-  }
+  const getNavigationItemClass = (
+    isActive: boolean
+  ) => {
+    return `flex min-w-0 flex-col items-center justify-center gap-1 rounded-[14px] py-1.5 text-[9.5px] font-[600] transition active:scale-[0.97] ${
+      isActive
+        ? darkMode
+          ? "text-[#F1F3F4]"
+          : "text-[#202124]"
+        : darkMode
+        ? "text-white/42 hover:text-white/70"
+        : "text-[#5F6368] hover:text-[#202124]"
+    }`;
+  };
 
-  if (mobileGroupMode === "date") {
-    const dateGroups = prioritizedTasks.reduce(
-      (acc: Record<string, any>, task: any) => {
-        const group = getMobileDateGroup(task);
-    
-        if (!acc[group.key]) {
-          acc[group.key] = {
-            ...group,
-            count: 0,
-          };
-        }
-    
-        acc[group.key].count += 1;
-        return acc;
-      },
-      {} as Record<string, any>
-    );
+  const getActiveIndicatorStyle = (
+    isActive: boolean
+  ): React.CSSProperties | undefined => {
+    if (!isActive) return undefined;
 
-    return Object.values(dateGroups).sort((a: any, b: any) => a.order - b.order);
-  }
-
-  const categoryGroups = prioritizedTasks.reduce(
-    (acc: Record<string, any>, task: any) => {
-      const category = task.category || "No Category";
-  
-      if (!acc[category]) {
-        const label =
-          category === "Major Projects"
-            ? "Projects"
-            : category === "Small Wins"
-            ? "Wins"
-            : category === "Self Growth"
-            ? "Growth"
-            : category;
-  
-        acc[category] = {
-          key: `category:${category}`,
-          label,
-          category,
-          count: 0,
-          order: Object.keys(acc).length,
-        };
-      }
-  
-      acc[category].count += 1;
-      return acc;
-    },
-    {} as Record<string, any>
-  );
-
-  return Object.values(categoryGroups).sort((a: any, b: any) => a.order - b.order);
-}, [mobileGroupMode, prioritizedTasks]);
-
-const activeChip = selectedChip || mobileGroupTabs[0]?.key || "";
-
-useEffect(() => {
-  if (mobileGroupTabs.length === 0) {
-    if (selectedChip) setSelectedChip("");
-    return;
-  }
-
-  const selectedStillExists = mobileGroupTabs.some(
-    (tab: any) => tab.key === selectedChip
-  );
-
-  if (!selectedChip || !selectedStillExists) {
-    setSelectedChip(mobileGroupTabs[0].key);
-  }
-}, [mobileGroupTabs, selectedChip]);
-
-const filteredTasks = activeChip
-  ? prioritizedTasks.filter((task: any) => {
-      if (mobileGroupMode === "priority") {
-        return `priority:${task.priority}` === activeChip;
-      }
-
-      if (mobileGroupMode === "date") {
-        return getMobileDateGroup(task).key === activeChip;
-      }
-
-      return `category:${task.category || "No Category"}` === activeChip;
-    })
-  : prioritizedTasks;
-
-  const visibleTasks = showAllMobileTasks
-    ? filteredTasks
-    : filteredTasks.slice(0, 4);
-
-  const hiddenCount = Math.max(filteredTasks.length - 4, 0);
-
-  const focusTasks =
-    manualFocusTaskIds.length > 0
-      ? manualFocusTaskIds
-          .map((taskId: string) =>
-            prioritizedTasks.find((task: any) => task.id === taskId)
-          )
-          .filter(Boolean)
-      : prioritizedTasks.slice(0, 3);
-
-  const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-
-    const mobileEndTimeParts = (() => {
-      const [hours, minutes] = dayEndTime.split(":").map(Number);
-      const period = hours >= 12 ? "PM" : "AM";
-      const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-  
-      return {
-        hour: displayHour,
-        minute: String(minutes).padStart(2, "0"),
-        period,
-        label: `${displayHour}:${String(minutes).padStart(2, "0")} ${period}`,
-      };
-    })();
-  
-    const displayEndTime = mobileEndTimeParts.label;
-  
-    const mobileHourOptions = Array.from({ length: 12 }, (_, index) => index + 1);
-    const mobileMinuteOptions = Array.from({ length: 12 }, (_, index) =>
-      String(index * 5).padStart(2, "0")
-    );
-  
-    const updateMobileEndTime = (
-      nextHour: number,
-      nextMinute: string,
-      nextPeriod: "AM" | "PM"
-    ) => {
-      let hour24 = nextHour;
-  
-      if (nextPeriod === "AM" && nextHour === 12) hour24 = 0;
-      if (nextPeriod === "PM" && nextHour !== 12) hour24 = nextHour + 12;
-  
-      setDayEndTime(`${String(hour24).padStart(2, "0")}:${nextMinute}`);
+    return {
+      backgroundColor: darkMode
+        ? `${themeColor}28`
+        : `${themeColor}16`,
     };
-
-  const addTaskToFocus = (taskId: string) => {
-    setManualFocusTaskIds((prev: string[]) => {
-      if (prev.includes(taskId)) return prev;
-      if (prev.length >= 3) return prev;
-
-      return [...prev, taskId];
-    });
   };
 
   return (
-    <div className="sm:hidden">
-      <div className="mb-5">
-  <div className="mb-4 flex items-center justify-between gap-4">
-  <div className="flex items-center gap-3">
-  <div
-    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] shadow-[0_12px_28px_rgba(0,0,0,0.18)]"
-    style={{
-      backgroundColor: darkMode ? "#FFFFFF" : "#1F2937",
-      color: darkMode ? "#1F2937" : "#FFFFFF",
-    }}
-  >
-    <svg
-      width="27"
-      height="27"
-      viewBox="0 0 36 36"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M7.5 18.6L14.2 25.2L29 10.3"
-        stroke="currentColor"
-        strokeWidth="4.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      <path
-        d="M24.8 10.4H29V14.6"
-        stroke="currentColor"
-        strokeWidth="4.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.55"
-      />
-
-      <path
-        d="M6.5 10.2H15.5"
-        stroke="currentColor"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-        opacity="0.35"
-      />
-
-      <path
-        d="M4.8 14.2H10.8"
-        stroke="currentColor"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-        opacity="0.22"
-      />
-    </svg>
-  </div>
-
-  <div className="min-w-0">
-    <p
-      className="text-[25px] font-[900] leading-none tracking-[-0.055em]"
-      style={{ color: darkMode ? "#FFFFFF" : "#000000" }}
-    >
-      Momentuhm
-    </p>
-
-    <p
-      className="mt-1.5 whitespace-nowrap text-[9px] font-[800] uppercase leading-none tracking-[0.04em]"
-      style={{ color: darkMode ? "#FFFFFF" : "#000000" }}
-    >
-      Focus. Prioritize. Move forward.
-    </p>
-  </div>
-</div>
-
-    <div
-      className={`flex h-9 items-center gap-1.5 rounded-full border px-3 text-[11px] font-[850] ${
+    <nav
+      aria-label="Mobile navigation"
+      className={`fixed bottom-3 left-1/2 z-[180] grid h-[68px] w-[calc(100%_-_24px)] max-w-[430px] -translate-x-1/2 grid-cols-5 items-center rounded-[22px] border px-2 shadow-[0_8px_30px_rgba(60,64,67,0.22)] backdrop-blur-xl lg:hidden ${
         darkMode
-          ? "border-white/[0.08] bg-white/[0.045] text-white/48"
-          : "border-black/[0.06] bg-white text-[#666661]/45"
+          ? "border-white/[0.10] bg-[#202124]/95 text-[#F1F3F4]"
+          : "border-[#DADCE0] bg-white/95 text-[#202124]"
       }`}
     >
-      <Sparkles size={13} style={{ color: themeColor }} />
-      Today
-    </div>
-  </div>
-
-  <div>
-  <p className="text-[18px] font-[900] tracking-[-0.04em]">
-  {greeting}
-  {userFirstName ? `, ${userFirstName}` : ""} 👋
-</p>
-
-    <p
-      className={
-        darkMode
-          ? "mt-1 text-xs font-[700] text-white/42"
-          : "mt-1 text-xs font-[700] text-[#666661]/42"
-      }
-    >
-      Let&apos;s make today count.
-    </p>
-  </div>
-</div>
-
-    
-
-<section
-        className="relative mb-4 overflow-hidden rounded-[26px] px-4 py-3.5 text-white shadow-[0_18px_48px_rgba(17,24,39,0.16)]"
-        style={{
-          background: `linear-gradient(135deg, ${themeColor}, ${themeColor}CC)`,
-        }}
-      >
-        <div className="pointer-events-none absolute -right-10 -top-16 h-32 w-32 rounded-full bg-white/18 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-16 left-12 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
-
-        <div className="relative">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[24px] font-[950] leading-none tracking-[-0.065em]">
-                {dayTimeRemaining.shortLabel}
-              </p>
-
-              <button
-                onClick={() => setIsMobileTimePickerOpen((prev) => !prev)}
-                className="mt-1 inline-flex items-center gap-1.5 rounded-full text-[11px] font-[850] text-white/78 active:scale-[0.98]"
-              >
-                Ends {displayEndTime}
-                <ChevronDown
-                  size={13}
-                  className={`transition ${
-                    isMobileTimePickerOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-            </div>
-
-            <button
-              onClick={() => setIsMobileTimePickerOpen((prev) => !prev)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.18] transition active:scale-95"
-              title="Edit day end time"
-            >
-              <Clock3 size={17} />
-            </button>
-          </div>
-
-          {isMobileTimePickerOpen && (
-            <div className="mt-3 rounded-[20px] border border-white/[0.14] bg-white/[0.12] p-2.5 backdrop-blur-xl">
-              <div className="grid grid-cols-3 gap-2">
-                <select
-                  value={mobileEndTimeParts.hour}
-                  onChange={(e) =>
-                    updateMobileEndTime(
-                      Number(e.target.value),
-                      mobileEndTimeParts.minute,
-                      mobileEndTimeParts.period as "AM" | "PM"
-                    )
-                  }
-                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#666661] outline-none"
-                >
-                  {mobileHourOptions.map((hour) => (
-                    <option key={hour} value={hour}>
-                      {String(hour).padStart(2, "0")}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={mobileEndTimeParts.minute}
-                  onChange={(e) =>
-                    updateMobileEndTime(
-                      mobileEndTimeParts.hour,
-                      e.target.value,
-                      mobileEndTimeParts.period as "AM" | "PM"
-                    )
-                  }
-                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#666661] outline-none"
-                >
-                  {mobileMinuteOptions.map((minute) => (
-                    <option key={minute} value={minute}>
-                      {minute}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={mobileEndTimeParts.period}
-                  onChange={(e) =>
-                    updateMobileEndTime(
-                      mobileEndTimeParts.hour,
-                      mobileEndTimeParts.minute,
-                      e.target.value as "AM" | "PM"
-                    )
-                  }
-                  className="h-9 rounded-[14px] border border-white/[0.14] bg-white text-[12px] font-[900] text-[#666661] outline-none"
-                >
-                  <option value="AM">AM</option>
-                  <option value="PM">PM</option>
-                </select>
-              </div>
-
-              <button
-                onClick={() => setIsMobileTimePickerOpen(false)}
-                className="mt-2 h-8 w-full rounded-[14px] bg-white/[0.18] text-[11px] font-[900] text-white"
-              >
-                Done
-              </button>
-            </div>
-          )}
-
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.22]">
-            <div
-              className="h-full rounded-full bg-white transition-all duration-500"
-              style={{ width: `${dayTimeRemaining.percentLeft}%` }}
-            />
-          </div>
-
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            <div className="flex h-[56px] flex-col items-center justify-center rounded-[18px] bg-white/[0.13] px-3 py-2 text-center">
-              <p className="text-[15px] font-[950] leading-none">
-                {allTasks.length}
-              </p>
-              <p className="mt-0.5 text-[9.5px] font-[850] text-white/70">
-                Tasks
-              </p>
-            </div>
-
-            <div className="flex h-[56px] flex-col items-center justify-center rounded-[18px] bg-white/[0.13] px-3 py-2 text-center">
-              <p className="text-[15px] font-[950] leading-none">
-                {completedToday.length}
-              </p>
-              <p className="mt-0.5 text-[9.5px] font-[850] text-white/70">
-                Done
-              </p>
-            </div>
-
-            <div className="flex h-[56px] flex-col items-center justify-center rounded-[18px] bg-white/[0.13] px-3 py-2 text-center">
-              <p className="text-[15px] font-[950] leading-none">
-                {completionPercent}%
-              </p>
-              <p className="mt-0.5 text-[9.5px] font-[850] text-white/70">
-                Progress
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="mobile-quick-capture"
-        className={`mb-4 rounded-[28px] border p-4 shadow-[0_18px_50px_rgba(17,24,39,0.06)] ${
-          darkMode
-            ? "border-white/[0.08] bg-[#171717]"
-            : "border-black/[0.06] bg-white"
-        }`}
-      >
-        <div className="mb-3 flex items-center gap-2">
-          <Send size={16} style={{ color: themeColor }} />
-
-          <div>
-            <h2 className="text-[17px] font-[900] tracking-[-0.04em]">
-              Quick Capture
-            </h2>
-
-            <p className={darkMode ? "text-[11px] font-[700] text-white/40" : "text-[11px] font-[700] text-[#666661]/40"}>
-              Momentuhm will organize it for you
-            </p>
-          </div>
-        </div>
-
-        <div
-          className={`overflow-hidden rounded-[24px] border ${
-            darkMode
-              ? "border-white/[0.08] bg-white/[0.04]"
-              : "border-black/[0.06] bg-black/[0.018]"
-          }`}
-        >
-          <input
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") addTask();
-            }}
-            placeholder="Capture anything..."
-            className={`h-12 w-full bg-transparent px-4 text-[13px] font-[800] outline-none ${
-              darkMode
-                ? "text-white placeholder:text-white/32"
-                : "text-[#666661] placeholder:text-[#666661]/32"
-            }`}
-          />
-
-          <div className={darkMode ? "h-px bg-white/[0.07]" : "h-px bg-black/[0.055]"} />
-
-          <div className="grid grid-cols-[minmax(0,1fr)_46px] items-center">
-            <input
-              value={newTaskWhy}
-              onChange={(e) => setNewTaskWhy(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") addTask();
-              }}
-              placeholder="Optional context..."
-              className={`h-12 min-w-0 bg-transparent px-4 text-[13px] font-[800] outline-none ${
-                darkMode
-                  ? "text-white placeholder:text-white/32"
-                  : "text-[#666661] placeholder:text-[#666661]/32"
-              }`}
-            />
-
-            <button
-              onClick={addTask}
-              className="mr-1 flex h-10 w-10 items-center justify-center rounded-full text-white shadow-[0_14px_28px_rgba(17,24,39,0.16)]"
-              style={{ backgroundColor: themeColor }}
-            >
-              <Send size={15} />
-            </button>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setIsExtractModalOpen(true)}
-          className="mt-3 rounded-full border px-3 py-1.5 text-[11px] font-[900]"
-          style={{
-            color: themeColor,
-            borderColor: `${themeColor}30`,
-            backgroundColor: `${themeColor}10`,
-          }}
-        >
-          Extract from text ✨
-        </button>
-      </section>
-
-      <section
-        id="Momentuhm-mobile-workspace-anchor"
-        className={`mb-4 flex items-center justify-between border-b pb-3 ${
-          darkMode ? "border-white/[0.08]" : "border-black/[0.07]"
-        }`}
-      >
-        <div>
-          <p
-            className={`text-[10px] font-[850] uppercase tracking-[0.14em] ${
-              darkMode ? "text-white/32" : "text-[#666661]/32"
-            }`}
-          >
-            Workspace
-          </p>
-          <p
-            className={`mt-1 text-[12px] font-[650] ${
-              darkMode ? "text-white/55" : "text-[#666661]/45"
-            }`}
-          >
-            {mobileWorkspaceMode === "tasks"
-              ? "Plan and organize your day."
-              : "Work through what matters now."}
-          </p>
-        </div>
-
-        <div
-          className={`flex rounded-[12px] border p-1 ${
-            darkMode
-              ? "border-white/[0.08] bg-white/[0.04]"
-              : "border-black/[0.06] bg-black/[0.025]"
-          }`}
-        >
-          {[
-            { label: "Tasks", value: "tasks" },
-            { label: "Focus", value: "focus" },
-          ].map((option) => {
-            const isActive = mobileWorkspaceMode === option.value;
-
-            return (
-              <button
-                key={option.value}
-                onClick={() =>
-                  setMobileWorkspaceMode(option.value as "tasks" | "focus")
-                }
-                className={`h-8 rounded-[9px] px-3 text-[11px] font-[850] transition ${
-                  isActive
-                    ? darkMode
-                      ? "bg-white text-black"
-                      : "bg-white text-[#181818] shadow-[0_1px_4px_rgba(0,0,0,0.08)]"
-                    : darkMode
-                    ? "text-white/42"
-                    : "text-[#666661]/42"
-                }`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {mobileWorkspaceMode === "tasks" && (
-      <section
-  id="Momentuhm-mobile-task-list-anchor"
-  className={`mb-4 scroll-mt-5 overflow-hidden rounded-[28px] border p-4 shadow-[0_18px_50px_rgba(17,24,39,0.06)] ${
-    darkMode
-      ? "border-white/[0.08] bg-[#171717]"
-      : "border-black/[0.06] bg-white"
-  }`}
->
-       <div className="mb-4 flex items-start justify-between gap-3">
-  <div className="min-w-0">
-    <h2 className="flex items-center gap-2 text-[20px] font-[900] leading-tight tracking-[-0.055em]">
-      Momentuhm prioritized for You
-      <Sparkles size={16} style={{ color: themeColor }} />
-    </h2>
-
-    <p
-      className={`mt-1.5 text-[13px] font-[750] leading-5 tracking-[-0.02em] ${
-        darkMode ? "text-white/55" : "text-[#666661]/48"
-      }`}
-    >
-      Top moves based on intent, urgency, and priority.
-    </p>
-  </div>
-</div>
-
-<div className="mb-3 flex items-center justify-between gap-3">
-  <span
-    className={`shrink-0 text-[10px] font-[850] uppercase tracking-[0.14em] ${
-      darkMode ? "text-white/32" : "text-[#666661]/32"
-    }`}
-  >
-    Group by
-  </span>
-
-  <div
-    className={`flex shrink-0 rounded-full border p-0.5 ${
-      darkMode
-        ? "border-white/[0.08] bg-white/[0.045]"
-        : "border-black/[0.06] bg-black/[0.025]"
-    }`}
-  >
-    {[
-      { label: "Category", value: "category" },
-      { label: "Priority", value: "priority" },
-      { label: "Due", value: "date" },
-    ].map((option) => {
-      const isActive = mobileGroupMode === option.value;
-
-      return (
-        <button
-          key={option.value}
-          onClick={() => {
-            changeMobileGroupMode(option.value as MobileGroupMode);
-          }}
-          className={`h-7 rounded-full px-3 text-[10px] font-[850] transition active:scale-[0.98] ${
-            isActive
-              ? "text-white"
-              : darkMode
-              ? "text-white/42"
-              : "text-[#666661]/45"
-          }`}
-          style={isActive ? { backgroundColor: themeColor } : undefined}
-        >
-          {option.label}
-        </button>
-      );
-    })}
-  </div>
-</div>
-
-<div className="Momentuhm-mobile-category-tabs -mx-1 mb-3 flex overflow-x-auto px-1 pb-0">
-  {mobileGroupTabs.map((chip: any) => {
-    const isActive = activeChip === chip.key;
-
-    return (
       <button
-        key={chip.key}
-        onClick={() => {
-          setSelectedChip(chip.key);
-          setShowAllMobileTasks(false);
-          anchorTaskListSoon();
-        }}
-        className={`relative flex h-10 shrink-0 items-center gap-1.5 px-3 text-[12px] font-[850] tracking-[-0.025em] transition active:scale-[0.98] ${
-          isActive
-            ? darkMode
-              ? "text-white"
-              : "text-[#666661]"
-            : darkMode
-            ? "text-white/42"
-            : "text-[#666661]/45"
-        }`}
+        type="button"
+        onClick={goToToday}
+        className={getNavigationItemClass(
+          activeMobileTab === "today"
+        )}
+        style={getActiveIndicatorStyle(
+          activeMobileTab === "today"
+        )}
       >
-        <span>{chip.label}</span>
+        <ListChecks
+          size={18}
+          strokeWidth={1.8}
+        />
+        Today
+      </button>
 
-        <span
-          className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-[850] ${
-            isActive
-              ? "text-white"
-              : darkMode
-              ? "bg-white/[0.07] text-white/55"
-              : "bg-black/[0.045] text-[#666661]/45"
-          }`}
-          style={
-            isActive
-              ? {
-                  backgroundColor: themeColor,
-                }
-              : undefined
-          }
-        >
-          {chip.count}
-        </span>
+      <button
+        type="button"
+        onClick={goToFocus}
+        className={getNavigationItemClass(
+          activeMobileTab === "focus"
+        )}
+        style={getActiveIndicatorStyle(
+          activeMobileTab === "focus"
+        )}
+      >
+        <Target
+          size={18}
+          strokeWidth={1.8}
+        />
+        Focus
+      </button>
 
-        <span
-          className={`absolute bottom-0 left-2 right-2 h-[3px] rounded-full transition ${
-            isActive ? "opacity-100" : "opacity-0"
-          }`}
-          style={{ backgroundColor: themeColor }}
+      <button
+        type="button"
+        onClick={goToCapture}
+        aria-label="Add a task"
+        title="Add a task"
+        className="mx-auto flex h-12 w-12 -translate-y-3 items-center justify-center rounded-full text-white shadow-[0_5px_16px_rgba(60,64,67,0.30)] transition active:scale-95"
+        style={{
+          backgroundColor: themeColor,
+        }}
+      >
+        <Plus
+          size={22}
+          strokeWidth={1.9}
         />
       </button>
-    );
-  })}
-</div>
 
-        <div className="space-y-2">
-          {visibleTasks.length === 0 && (
-            <div
-              className={`rounded-[22px] border border-dashed p-6 text-center text-sm font-[700] ${
-                darkMode
-                  ? "border-white/[0.10] text-white/35"
-                  : "border-black/[0.08] text-[#666661]/35"
-              }`}
-            >
-              No tasks here yet.
-            </div>
-          )}
+      <button
+        type="button"
+        onClick={goToInbox}
+        className={`relative ${getNavigationItemClass(
+          activeMobileTab === "inbox"
+        )}`}
+        style={getActiveIndicatorStyle(
+          activeMobileTab === "inbox"
+        )}
+      >
+        <Calendar
+          size={18}
+          strokeWidth={1.8}
+        />
 
-{visibleTasks.map((task: any) => {
-            const visibleDueDate = task.dueDate || task.suggestedDueDate;
-            const priorityColor =
-              task.priority === "High"
-                ? "#ef4444"
-                : task.priority === "Medium"
-                ? "#f97316"
-                : "#10b981";
+        Inbox
 
-            return (
-              <motion.div
-                key={task.id}
-                layout="position"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`rounded-[22px] border p-3 ${
-                  darkMode
-                    ? "border-white/[0.08] bg-white/[0.04]"
-                    : "border-black/[0.055] bg-white shadow-[0_10px_28px_rgba(17,24,39,0.045)]"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <button
-                    onClick={(e) => toggleTaskById(task.id, e)}
-                    className="mt-1 shrink-0"
-                  >
-                    <Circle
-                      size={20}
-                      className={darkMode ? "text-white/30" : "text-[#666661]/30"}
-                    />
-                  </button>
-
-                 
-
-                  <button
-                    onClick={() => {
-                      setSelectedTask(task);
-                      setIsEditModalOpen(true);
-                    }}
-                    className="min-w-0 flex-1 text-left"
-                  >
-               <p
-  className={`text-[15.5px] font-[700] leading-[21px] tracking-[-0.025em] ${
-    darkMode ? "text-white/90" : "text-[#666661]"
-  }`}
->
-  {task.title}
-</p>
-
-<div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-  <span
-    className={
-      darkMode
-        ? "text-[12px] font-[600] text-white/55"
-        : "text-[12px] font-[600] text-slate-500"
-    }
-  >
-    {task.category}
-  </span>
-
-  <span
-    className="h-1.5 w-1.5 rounded-full"
-    style={{ backgroundColor: priorityColor }}
-  />
-
-  <span
-    className="text-[12px] font-[600]"
-    style={{ color: priorityColor }}
-  >
-    {task.priority === "Medium" ? "Mid" : task.priority}
-  </span>
-
-  {visibleDueDate && (
-    <span
-      className={
-        darkMode
-          ? "text-[12px] font-[600] text-white/55"
-          : "text-[12px] font-[600] text-slate-500"
-      }
-    >
-      · {formatDueDate(visibleDueDate)}
-    </span>
-  )}
-</div>
-
-                    {hasFollowUpTag(task) && (
-                      <div className="mt-2">
-                        <FollowUpTag darkMode={darkMode} />
-                      </div>
-                    )}
-                  </button>
-
-                  <div className="flex shrink-0 flex-col gap-2">
-  <button
-    onClick={() => addTaskToFocus(task.id)}
-    className={`flex h-8 w-8 items-center justify-center rounded-full transition active:scale-95 ${
-      manualFocusTaskIds.includes(task.id)
-        ? "text-white"
-        : darkMode
-        ? "bg-white/[0.06] text-white/55"
-        : "bg-black/[0.04] text-[#666661]/45"
-    }`}
-    style={
-      manualFocusTaskIds.includes(task.id)
-        ? { backgroundColor: themeColor }
-        : undefined
-    }
-    title="Add to focus"
-  >
-    <Eye size={15} />
-  </button>
-
-  <button
-    onClick={() => {
-      const confirmed = window.confirm("Delete this task?");
-      if (!confirmed) return;
-
-      deleteTask(task.id);
-    }}
-    className={`flex h-8 w-8 items-center justify-center rounded-full transition active:scale-95 ${
-      darkMode
-        ? "bg-white/[0.06] text-white/38 hover:text-red-300"
-        : "bg-black/[0.04] text-[#666661]/38 hover:text-red-500"
-    }`}
-    title="Delete task"
-  >
-    <Trash2 size={15} />
-  </button>
-</div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {hiddenCount > 0 && (
-          <button
-            onClick={() => setShowAllMobileTasks((prev) => !prev)}
-            className={`mt-3 h-11 w-full rounded-[18px] border text-xs font-[900] ${
+        {inboxCount > 0 && (
+          <span
+            className={`absolute right-2.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[8px] font-[700] ${
               darkMode
-                ? "border-white/[0.08] bg-white/[0.04] text-white/50"
-                : "border-black/[0.06] bg-black/[0.025] text-[#666661]/50"
+                ? "bg-[#F28B82] text-[#202124]"
+                : "bg-[#D93025] text-white"
             }`}
           >
-            {showAllMobileTasks ? "Show less" : `Show ${hiddenCount} more`}
-          </button>
-        )}
-      </section>
-      )}
-
-      {mobileWorkspaceMode === "focus" && (
-      <section
-        id="mobile-focus-card"
-        className={`mb-4 rounded-[28px] border p-4 shadow-[0_18px_50px_rgba(17,24,39,0.06)] ${
-          darkMode
-            ? "border-white/[0.08] bg-[#171717]"
-            : "border-black/[0.06] bg-white"
-        }`}
-      >
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h2 className="flex items-center gap-2 text-[18px] font-[900] tracking-[-0.045em]">
-              Focus Now
-              <Sparkles size={15} style={{ color: themeColor }} />
-            </h2>
-
-            <p className={darkMode ? "mt-1 text-xs font-[700] text-white/42" : "mt-1 text-xs font-[700] text-[#666661]/42"}>
-              Your strongest next moves.
-            </p>
-          </div>
-
-          <span
-            className="rounded-full px-3 py-1.5 text-[10px] font-[900]"
-            style={{
-              color: themeColor,
-              backgroundColor: `${themeColor}12`,
-            }}
-          >
-            AI Mode
+            {inboxCount}
           </span>
-        </div>
+        )}
+      </button>
 
-        <div className="space-y-2">
-          {focusTasks.length === 0 && (
-            <div
-              className={`rounded-[22px] border border-dashed px-4 py-8 text-center ${
-                darkMode
-                  ? "border-white/[0.10] text-white/35"
-                  : "border-black/[0.08] text-[#666661]/35"
-              }`}
-            >
-              <Target size={26} className="mx-auto mb-3 opacity-55" />
-              <p className="text-sm font-[900]">Build your focus stack.</p>
-              <p className="mt-1 text-xs font-[700] opacity-70">
-                Add tasks from the list above.
-              </p>
-            </div>
-          )}
+      <div className="flex min-w-0 flex-col items-center justify-center gap-1 py-1.5">
+        <UserButton
+          afterSignOutUrl="/sign-in"
+          appearance={{
+            elements: {
+              userButtonAvatarBox:
+                "h-6 w-6",
 
-          {focusTasks.map((task: any, index: number) => (
-            <button
-              key={task.id}
-              onClick={() => {
-                setSelectedTask(task);
-                setIsEditModalOpen(true);
-              }}
-              className={`flex w-full items-center gap-3 rounded-[20px] border p-3 text-left ${
-                darkMode
-                  ? "border-white/[0.08] bg-white/[0.04]"
-                  : "border-black/[0.055] bg-black/[0.018]"
-              }`}
-            >
-              <span
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-[800] text-white"
-                style={{ backgroundColor: themeColor }}
-              >
-                {index + 1}
-              </span>
+              userButtonPopoverCard:
+                "w-[280px] rounded-[16px] border border-[#DADCE0] bg-white p-2 text-[#202124] shadow-[0_8px_30px_rgba(60,64,67,0.25)] dark:border-white/[0.10] dark:bg-[#202124] dark:text-[#F1F3F4]",
 
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-[900] tracking-[-0.02em]">
-                  {task.title}
-                </p>
+              userButtonPopoverMain:
+                "bg-transparent",
 
-                <p className={darkMode ? "mt-1 text-[10px] font-[800] text-white/38" : "mt-1 text-[10px] font-[800] text-[#666661]/38"}>
-                  {task.category} ·{" "}
-                  {task.priority === "Medium" ? "Mid" : task.priority}
-                </p>
-              </div>
+              userButtonPopoverActions:
+                "bg-transparent",
 
-              <Eye size={15} className={darkMode ? "text-white/35" : "text-[#666661]/35"} />
-            </button>
-          ))}
-        </div>
-      </section>
-      )}
+              userButtonPopoverActionButton:
+                "h-10 rounded-[10px] px-3 hover:bg-black/[0.04] dark:hover:bg-white/[0.08]",
 
-{mobileWorkspaceMode === "tasks" && (
-  <CompletedTodaySection
-  sectionId="Momentuhm-mobile-completed-anchor"
-  completedToday={completedToday}
-  restoreCompletedTask={restoreCompletedTask}
-  archiveCompletedToday={archiveCompletedToday}
-  darkMode={darkMode}
-  border={border}
-/>
-)}
-    </div>
+              userButtonPopoverActionButtonText:
+                "text-[13px] font-[600]",
+
+              userButtonPopoverActionButtonIcon:
+                "opacity-60",
+
+              userButtonPopoverFooter:
+                "hidden",
+
+              userPreviewMainIdentifier:
+                "text-sm font-[650]",
+
+              userPreviewSecondaryIdentifier:
+                "text-xs font-[500] opacity-55",
+
+              userPreviewAvatarBox:
+                "h-8 w-8",
+            },
+          }}
+        />
+
+        <span
+          className={`truncate text-[9.5px] font-[600] ${
+            darkMode
+              ? "text-white/42"
+              : "text-[#5F6368]"
+          }`}
+        >
+          Account
+        </span>
+      </div>
+    </nav>
   );
 }
 
@@ -8568,164 +7738,1170 @@ function InboxView({
   );
 }
 
-function MobileBottomNav({
-  selectedView,
-  setSelectedView,
-  inboxCount,
+
+function MobileTodayAppView({
   darkMode,
+  setDarkMode,
   themeColor,
+  border,
+  prioritizedTasks,
+  completedToday,
+  completionPercent,
+  newTask,
+  setNewTask,
+  newTaskWhy,
+  setNewTaskWhy,
+  addTask,
+  setIsExtractModalOpen,
+  toggleTaskById,
+  setSelectedTask,
+  setIsEditModalOpen,
+  manualFocusTaskIds = [],
+  archiveCompletedToday,
+  restoreCompletedTask,
+  anchorTaskListSoon = () => {},
+  userFirstName = "",
 }: any) {
-  const goToToday = () => {
-    setSelectedView("today");
-    window.setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 80);
+  const [sortMode, setSortMode] =
+    useState<SortMode>("date");
+
+  const [groupMode, setGroupMode] =
+    useState<MobileGroupMode>("category");
+
+  const [workspaceMode, setWorkspaceMode] =
+    useState<"tasks" | "focus">("tasks");
+
+  const [isCaptureOpen, setIsCaptureOpen] =
+    useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const savedGroupMode =
+      window.localStorage.getItem(
+        MOBILE_GROUP_MODE_KEY
+      );
+
+    if (
+      savedGroupMode === "category" ||
+      savedGroupMode === "priority" ||
+      savedGroupMode === "date"
+    ) {
+      setGroupMode(savedGroupMode);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const openTasks = () => {
+      setWorkspaceMode("tasks");
+    };
+
+    const openFocus = () => {
+      setWorkspaceMode("focus");
+
+      window.setTimeout(() => {
+        document
+          .getElementById(
+            "Momentuhm-mobile-workspace-anchor"
+          )
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+      }, 60);
+    };
+
+    const openCapture = () => {
+      setWorkspaceMode("tasks");
+      setIsCaptureOpen(true);
+
+      window.setTimeout(() => {
+        document
+          .getElementById(
+            "mobile-quick-capture"
+          )
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+      }, 100);
+    };
+
+    window.addEventListener(
+      "momentuhm:open-tasks",
+      openTasks
+    );
+
+    window.addEventListener(
+      "momentuhm:open-focus",
+      openFocus
+    );
+
+    window.addEventListener(
+      "momentuhm:open-capture",
+      openCapture
+    );
+
+    return () => {
+      window.removeEventListener(
+        "momentuhm:open-tasks",
+        openTasks
+      );
+
+      window.removeEventListener(
+        "momentuhm:open-focus",
+        openFocus
+      );
+
+      window.removeEventListener(
+        "momentuhm:open-capture",
+        openCapture
+      );
+    };
+  }, []);
+
+  const changeGroupMode = (
+    nextMode: MobileGroupMode
+  ) => {
+    setGroupMode(nextMode);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(
+        MOBILE_GROUP_MODE_KEY,
+        nextMode
+      );
+    }
+
+    anchorTaskListSoon();
   };
 
-  const goToFocus = () => {
-    setSelectedView("today");
+  const sortedTasks = useMemo(() => {
+    const tasks = [...prioritizedTasks];
 
-    window.setTimeout(() => {
-      window.dispatchEvent(new Event("momentuhm:open-focus"));
-    }, 120);
+    const comparePinned = (
+      taskA: any,
+      taskB: any
+    ) => {
+      const pinnedA = Boolean(taskA.pinned);
+      const pinnedB = Boolean(taskB.pinned);
+
+      if (pinnedA === pinnedB) return 0;
+
+      return pinnedA ? -1 : 1;
+    };
+
+    const compareDates = (
+      taskA: any,
+      taskB: any
+    ) => {
+      const dateA = getTaskDate(taskA);
+      const dateB = getTaskDate(taskB);
+
+      if (!dateA && !dateB) {
+        return (
+          (taskB.score || 0) -
+          (taskA.score || 0)
+        );
+      }
+
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+
+      const dateDifference =
+        dateA.localeCompare(dateB);
+
+      if (dateDifference !== 0) {
+        return dateDifference;
+      }
+
+      return (
+        (taskB.score || 0) -
+        (taskA.score || 0)
+      );
+    };
+
+    if (sortMode === "priority") {
+      const priorityRank: Record<
+        string,
+        number
+      > = {
+        High: 3,
+        Medium: 2,
+        Med: 2,
+        Low: 1,
+      };
+
+      return tasks.sort(
+        (taskA, taskB) => {
+          const pinnedDifference =
+            comparePinned(taskA, taskB);
+
+          if (pinnedDifference !== 0) {
+            return pinnedDifference;
+          }
+
+          const priorityDifference =
+            (priorityRank[
+              taskB.priority
+            ] || 0) -
+            (priorityRank[
+              taskA.priority
+            ] || 0);
+
+          if (priorityDifference !== 0) {
+            return priorityDifference;
+          }
+
+          return compareDates(
+            taskA,
+            taskB
+          );
+        }
+      );
+    }
+
+    return tasks.sort(
+      (taskA, taskB) => {
+        const pinnedDifference =
+          comparePinned(taskA, taskB);
+
+        return pinnedDifference !== 0
+          ? pinnedDifference
+          : compareDates(
+              taskA,
+              taskB
+            );
+      }
+    );
+  }, [prioritizedTasks, sortMode]);
+
+  const groupedTasks = useMemo(() => {
+    if (groupMode === "priority") {
+      return [
+        "High",
+        "Medium",
+        "Low",
+      ]
+        .map((priority) => ({
+          key: `priority:${priority}`,
+          title: priority,
+          tasks: sortedTasks.filter(
+            (task: any) => {
+              const normalizedPriority =
+                task.priority === "Med"
+                  ? "Medium"
+                  : task.priority;
+
+              return (
+                normalizedPriority ===
+                priority
+              );
+            }
+          ),
+        }))
+        .filter(
+          (group) =>
+            group.tasks.length > 0
+        );
+    }
+
+    if (groupMode === "date") {
+      const dateGroups = new Map<
+        string,
+        {
+          key: string;
+          title: string;
+          order: number;
+          tasks: any[];
+        }
+      >();
+
+      sortedTasks.forEach((task: any) => {
+        const date = getTaskDate(task);
+
+        let key = "date:no-date";
+        let title = "No date";
+        let order = 5;
+
+        if (date && isOverdue(date)) {
+          key = "date:overdue";
+          title = "Overdue";
+          order = 1;
+        } else if (date && isToday(date)) {
+          key = "date:today";
+          title = "Today";
+          order = 2;
+        } else if (
+          date &&
+          isTomorrow(date)
+        ) {
+          key = "date:tomorrow";
+          title = "Tomorrow";
+          order = 3;
+        } else if (date) {
+          key = "date:later";
+          title = "Later";
+          order = 4;
+        }
+
+        if (!dateGroups.has(key)) {
+          dateGroups.set(key, {
+            key,
+            title,
+            order,
+            tasks: [],
+          });
+        }
+
+        dateGroups
+          .get(key)
+          ?.tasks.push(task);
+      });
+
+      return Array.from(
+        dateGroups.values()
+      )
+        .sort(
+          (groupA, groupB) =>
+            groupA.order -
+            groupB.order
+        )
+        .map(
+          ({
+            key,
+            title,
+            tasks,
+          }) => ({
+            key,
+            title,
+            tasks,
+          })
+        );
+    }
+
+    const categoryGroups =
+      new Map<string, any[]>();
+
+    sortedTasks.forEach((task: any) => {
+      const category =
+        task.category || "No category";
+
+      const existingTasks =
+        categoryGroups.get(category) || [];
+
+      categoryGroups.set(category, [
+        ...existingTasks,
+        task,
+      ]);
+    });
+
+    return Array.from(
+      categoryGroups.entries()
+    ).map(
+      ([category, tasks]) => ({
+        key: `category:${category}`,
+        title: category,
+        tasks,
+      })
+    );
+  }, [groupMode, sortedTasks]);
+
+  const focusTasks =
+    manualFocusTaskIds.length > 0
+      ? manualFocusTaskIds
+          .map((taskId: string) =>
+            prioritizedTasks.find(
+              (task: any) =>
+                task.id === taskId
+            )
+          )
+          .filter(Boolean)
+      : prioritizedTasks.slice(0, 3);
+
+  const currentHour =
+    new Date().getHours();
+
+  const greeting =
+    currentHour < 12
+      ? "Good morning"
+      : currentHour < 17
+      ? "Good afternoon"
+      : "Good evening";
+
+  const greetingWithName = `${greeting}${
+    userFirstName
+      ? `, ${userFirstName}.`
+      : "."
+  }`;
+
+  const openTask = (task: any) => {
+    setSelectedTask(task);
+    setIsEditModalOpen(true);
   };
 
-  const goToCapture = () => {
-    setSelectedView("today");
-    window.setTimeout(() => {
-      document
-        .getElementById("mobile-quick-capture")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 120);
+  const submitTask = () => {
+    if (!newTask.trim()) return;
+  
+    setIsCaptureOpen(false);
+    void addTask();
   };
+
+  const getStatusMeta = (task: any) => {
+    const confirmedDueDate =
+      task.dueDate || "";
+  
+    const isFocused =
+      manualFocusTaskIds.includes(task.id);
+  
+    if (
+      confirmedDueDate &&
+      isOverdue(confirmedDueDate)
+    ) {
+      return {
+        label: "Overdue",
+        className: darkMode
+          ? "border-[#71312D] bg-[#3C1F1D] text-[#F28B82]"
+          : "border-[#F4C7C3] bg-[#FCE8E6] text-[#C5221F]",
+      };
+    }
+
+    if (isFocused) {
+      return {
+        label: "In progress",
+        className: darkMode
+          ? "border-[#315B3B] bg-[#1D3525] text-[#81C995]"
+          : "border-[#CEEAD6] bg-[#E6F4EA] text-[#137333]",
+      };
+    }
+
+    if (task.status === "Waiting") {
+      return {
+        label: "Waiting",
+        className: darkMode
+          ? "border-[#315577] bg-[#1D344A] text-[#8AB4F8]"
+          : "border-[#D2E3FC] bg-[#E8F0FE] text-[#1967D2]",
+      };
+    }
+
+    if (task.status === "Someday") {
+      return {
+        label: "Someday",
+        className: darkMode
+          ? "border-[#56406C] bg-[#352743] text-[#C58AF9]"
+          : "border-[#E9D5F8] bg-[#F3E8FD] text-[#8430CE]",
+      };
+    }
+
+    return {
+      label: "Not started",
+      className: darkMode
+        ? "border-white/[0.10] bg-white/[0.055] text-white/60"
+        : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368]",
+    };
+  };
+
+  const canvasClass = darkMode
+    ? "bg-[#101114] text-[#F1F3F4]"
+    : "bg-[#F8F9FA] text-[#202124]";
+
+  const panelClass = darkMode
+    ? "border-white/[0.09] bg-[#17181C]"
+    : "border-[#DADCE0] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.08)]";
+
+  const dividerClass = darkMode
+    ? "border-white/[0.075]"
+    : "border-[#E8EAED]";
+
+  const mutedTextClass = darkMode
+    ? "text-white/46"
+    : "text-[#5F6368]";
 
   return (
-    <nav
-      className={`fixed bottom-4 left-4 right-4 z-[180] grid h-[72px] grid-cols-5 items-center rounded-[28px] border px-2 shadow-[0_22px_70px_rgba(17,24,39,0.22)] backdrop-blur-2xl lg:hidden ${
-        darkMode
-          ? "border-white/[0.10] bg-[#0b1113]/92 text-white"
-          : "border-black/[0.07] bg-white/[0.92] text-[#666661]"
-      }`}
+    <div
+      className={`min-h-screen pb-4 sm:hidden ${canvasClass}`}
     >
-      <button
-        onClick={goToToday}
-        className={`flex flex-col items-center justify-center gap-1 rounded-[20px] py-2 text-[10px] font-[900] ${
-          selectedView === "today"
-            ? "text-white"
-            : darkMode
-            ? "text-white/55"
-            : "text-[#666661]/45"
-        }`}
-        style={
-          selectedView === "today"
-            ? {
-                backgroundColor: themeColor,
+    <header className="relative pb-3 pt-1 text-center">
+  <button
+    type="button"
+    role="switch"
+    aria-checked={darkMode}
+    aria-label={
+      darkMode
+        ? "Switch to light mode"
+        : "Switch to dark mode"
+    }
+    title={
+      darkMode
+        ? "Switch to light mode"
+        : "Switch to dark mode"
+    }
+    onClick={() =>
+      setDarkMode(
+        (previous: boolean) => !previous
+      )
+    }
+    className={`absolute right-0 top-0 inline-flex h-8 w-[58px] items-center justify-between rounded-full border p-[3px] transition-colors duration-200 ${
+      darkMode
+        ? "border-white/[0.10] bg-[#17181C]"
+        : "border-[#DADCE0] bg-[#F1F3F4]"
+    }`}
+  >
+    <span
+      aria-hidden="true"
+      className={`absolute left-[3px] top-[3px] h-6 w-6 rounded-full shadow-[0_1px_3px_rgba(60,64,67,0.28)] transition-transform duration-200 ease-out ${
+        darkMode
+          ? "translate-x-[26px] bg-white"
+          : "translate-x-0 bg-[#202124]"
+      }`}
+    />
+
+    <Sun
+      aria-hidden="true"
+      size={13}
+      strokeWidth={1.9}
+      className={`relative z-10 ml-[5px] transition-colors ${
+        darkMode
+          ? "text-white/35"
+          : "text-white"
+      }`}
+    />
+
+    <Moon
+      aria-hidden="true"
+      size={13}
+      strokeWidth={1.9}
+      className={`relative z-10 mr-[5px] transition-colors ${
+        darkMode
+          ? "text-[#202124]"
+          : "text-[#5F6368]"
+      }`}
+    />
+  </button>
+
+  <p
+    className={`px-16 text-[13px] font-[650] tracking-[-0.015em] ${
+      darkMode
+        ? "text-white/88"
+        : "text-[#3C4043]"
+    }`}
+  >
+    Momentuhm.app
+  </p>
+
+        <h1 className="mt-4 text-[22px] font-[720] leading-tight tracking-[-0.042em]">
+          {greetingWithName}
+        </h1>
+
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {[
+            {
+              label: "Tasks",
+              value:
+                prioritizedTasks.length,
+              color: darkMode
+                ? "#8AB4F8"
+                : "#1A73E8",
+            },
+            {
+              label: "Completed",
+              value:
+                completedToday.length,
+              color: darkMode
+                ? "#81C995"
+                : "#188038",
+            },
+            {
+              label: "Progress",
+              value: `${completionPercent}%`,
+              color: darkMode
+                ? "#C58AF9"
+                : "#8430CE",
+            },
+          ].map((metric) => (
+            <div
+              key={metric.label}
+              className={`flex min-h-[62px] flex-col items-center justify-center rounded-[10px] border px-2 ${panelClass}`}
+            >
+              <p
+                className="text-[20px] font-[700] leading-none tracking-[-0.04em]"
+                style={{
+                  color: metric.color,
+                }}
+              >
+                {metric.value}
+              </p>
+
+              <p
+                className={`mt-2 text-[9px] font-[650] uppercase tracking-[0.055em] ${mutedTextClass}`}
+              >
+                {metric.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </header>
+
+      <div
+        id="Momentuhm-mobile-workspace-anchor"
+        className="scroll-mt-4"
+      />
+
+      {workspaceMode === "tasks" ? (
+        <>
+          <section
+            id="Momentuhm-mobile-task-list-anchor"
+            aria-label="Today tasks"
+            className={`mt-1 scroll-mt-4 overflow-hidden rounded-[12px] border ${panelClass}`}
+          >
+            <header
+              className={`border-b px-3 py-3 ${dividerClass}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-[18px] font-[700] leading-none tracking-[-0.032em]">
+                    Today
+                  </h2>
+
+                  <p
+                    className={`mt-1.5 text-[10.5px] font-[500] ${mutedTextClass}`}
+                  >
+                    Your active tasks
+                  </p>
+                </div>
+
+                <label className="relative shrink-0">
+                  <span className="sr-only">
+                    Sort mobile tasks
+                  </span>
+
+                  <select
+                    value={sortMode}
+                    onChange={(event) => {
+                      setSortMode(
+                        event.target
+                          .value as SortMode
+                      );
+
+                      anchorTaskListSoon();
+                    }}
+                    className={`h-8 appearance-none rounded-[7px] border pl-2.5 pr-7 text-[10px] font-[600] outline-none ${
+                      darkMode
+                        ? "border-white/[0.10] bg-[#17181C] text-white/72"
+                        : "border-[#DADCE0] bg-white text-[#3C4043]"
+                    }`}
+                  >
+                    <option value="date">
+                      Sort: Date
+                    </option>
+
+                    <option value="priority">
+                      Sort: Priority
+                    </option>
+                  </select>
+
+                  <ChevronDown
+                    size={12}
+                    className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 ${mutedTextClass}`}
+                  />
+                </label>
+              </div>
+
+              <div
+                className={`mt-3 grid grid-cols-3 rounded-[9px] border p-[3px] ${
+                  darkMode
+                    ? "border-white/[0.08] bg-white/[0.035]"
+                    : "border-[#DADCE0] bg-[#F8F9FA]"
+                }`}
+              >
+                {[
+                  {
+                    value:
+                      "category" as MobileGroupMode,
+                    label: "Category",
+                  },
+                  {
+                    value:
+                      "priority" as MobileGroupMode,
+                    label: "Priority",
+                  },
+                  {
+                    value:
+                      "date" as MobileGroupMode,
+                    label: "Due",
+                  },
+                ].map((option) => {
+                  const isActive =
+                    groupMode === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() =>
+                        changeGroupMode(
+                          option.value
+                        )
+                      }
+                      aria-pressed={isActive}
+                      className={`h-8 rounded-[7px] text-[10px] font-[620] transition active:scale-[0.98] ${
+                        isActive
+                          ? darkMode
+                            ? "bg-[#303134] text-[#F1F3F4] shadow-[0_1px_2px_rgba(0,0,0,0.28)]"
+                            : "bg-white text-[#202124] shadow-[0_1px_2px_rgba(60,64,67,0.18)]"
+                          : darkMode
+                          ? "text-white/44 hover:text-white/72"
+                          : "text-[#5F6368] hover:text-[#202124]"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </header>
+
+            <div
+              className={`p-2 ${
+                darkMode
+                  ? "bg-[#111216]"
+                  : "bg-[#F8F9FA]"
+              }`}
+            >
+              {groupedTasks.length === 0 ? (
+                <div
+                  className={`rounded-[9px] border border-dashed px-5 py-10 text-center text-[12px] font-[500] ${
+                    darkMode
+                      ? "border-white/[0.10] text-white/38"
+                      : "border-[#DADCE0] text-[#5F6368]"
+                  }`}
+                >
+                  No active tasks yet.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {groupedTasks.map(
+                    (group) => (
+                      <section
+                        key={group.key}
+                        aria-label={group.title}
+                        className={`overflow-hidden rounded-[9px] border ${panelClass}`}
+                      >
+                        <header
+                          className={`flex min-h-[32px] items-center justify-between gap-3 border-b px-2.5 ${
+                            darkMode
+                              ? "border-white/[0.075] bg-white/[0.025]"
+                              : "border-[#E8EAED] bg-[#F8F9FA]"
+                          }`}
+                        >
+                          <h3
+                            className={`truncate text-[10px] font-[650] ${
+                              darkMode
+                                ? "text-white/72"
+                                : "text-[#3C4043]"
+                            }`}
+                          >
+                            {group.title}
+                          </h3>
+
+                          <span
+                            className={`text-[9px] font-[600] tabular-nums ${mutedTextClass}`}
+                          >
+                            {group.tasks.length}
+                          </span>
+                        </header>
+
+                        <div>
+                          {group.tasks.map(
+                            (task: any) => {
+                              const status =
+                              getStatusMeta(task);
+                            
+                            const dateMetadata = task.dueDate
+                              ? `Due ${formatDueDate(task.dueDate)}`
+                              : task.suggestedDueDate
+                              ? `Suggested ${formatDueDate(
+                                  task.suggestedDueDate
+                                )}`
+                              : "";
+                            
+                            const metadata = [
+                              groupMode !== "category"
+                                ? task.category || "No category"
+                                : "",
+                              dateMetadata,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ");
+
+                              return (
+                                <motion.div
+                                  key={task.id}
+                                  layout="position"
+                                  initial={{
+                                    opacity: 0,
+                                    y: 4,
+                                  }}
+                                  animate={{
+                                    opacity: 1,
+                                    y: 0,
+                                  }}
+                                  transition={{
+                                    duration: 0.18,
+                                    ease: [
+                                      0.16, 1, 0.3,
+                                      1,
+                                    ],
+                                  }}
+                                  className={`grid min-h-[54px] grid-cols-[30px_minmax(0,1fr)_auto] items-start gap-1.5 border-b px-2.5 py-2.5 last:border-b-0 ${dividerClass}`}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={(
+                                      event
+                                    ) =>
+                                      toggleTaskById(
+                                        task.id,
+                                        event
+                                      )
+                                    }
+                                    aria-label={`Complete ${task.title}`}
+                                    className="flex h-8 w-8 -translate-x-1 -translate-y-1 items-center justify-center rounded-full transition active:scale-95"
+                                  >
+                                    <span
+                                      aria-hidden="true"
+                                      className={`h-[15px] w-[15px] rounded-[3px] border ${
+                                        darkMode
+                                          ? "border-white/38"
+                                          : "border-[#80868B]"
+                                      }`}
+                                    />
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openTask(
+                                        task
+                                      )
+                                    }
+                                    className="min-w-0 text-left"
+                                  >
+                                    <p
+                                      className={`line-clamp-2 text-[12px] font-[560] leading-[16px] tracking-[-0.012em] ${
+                                        darkMode
+                                          ? "text-[#F1F3F4]"
+                                          : "text-[#202124]"
+                                      }`}
+                                    >
+                                      {
+                                        task.title
+                                      }
+                                    </p>
+
+                                    {metadata && (
+                                      <p
+                                        className={`mt-1 truncate text-[9.5px] font-[500] ${mutedTextClass}`}
+                                      >
+                                        {metadata}
+                                      </p>
+                                    )}
+                                  </button>
+
+                                  <span
+                                    className={`mt-0.5 whitespace-nowrap rounded-[5px] border px-2 py-1 text-[8.5px] font-[650] leading-none ${status.className}`}
+                                  >
+                                    {status.label}
+                                  </span>
+                                </motion.div>
+                              );
+                            }
+                          )}
+                        </div>
+                      </section>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section
+            id="mobile-quick-capture"
+            aria-label="Add a task"
+            className={`mt-3 scroll-mt-24 overflow-hidden rounded-[12px] border ${panelClass}`}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                setIsCaptureOpen(
+                  (previous) =>
+                    !previous
+                )
               }
-            : undefined
-        }
-      >
-        <ListChecks size={18} />
-        Today
-      </button>
+              aria-expanded={isCaptureOpen}
+              className="flex min-h-[54px] w-full items-center justify-between gap-4 px-3 text-left"
+            >
+              <div className="min-w-0">
+                <p className="text-[12px] font-[650]">
+                  Add a task
+                </p>
 
-      <button
-        onClick={goToFocus}
-        className={`flex flex-col items-center justify-center gap-1 rounded-[20px] py-2 text-[10px] font-[900] ${
-          darkMode ? "text-white/55" : "text-[#666661]/45"
-        }`}
-      >
-        <Target size={18} />
-        Focus
-      </button>
+                <p
+                  className={`mt-1 text-[9.5px] font-[500] ${mutedTextClass}`}
+                >
+                  Capture something without
+                  leaving Today.
+                </p>
+              </div>
 
-      <button
-        onClick={goToCapture}
-        className="mx-auto flex h-14 w-14 -translate-y-4 items-center justify-center rounded-full text-white shadow-[0_18px_44px_rgba(17,24,39,0.24)] transition active:scale-95"
-        style={{
-          backgroundColor: themeColor,
-        }}
-      >
-        <Plus size={24} />
-      </button>
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition ${
+                  darkMode
+                    ? "bg-white/[0.06] text-white/65"
+                    : "bg-[#F1F3F4] text-[#5F6368]"
+                } ${
+                  isCaptureOpen
+                    ? "rotate-45"
+                    : ""
+                }`}
+              >
+                <Plus
+                  size={17}
+                  strokeWidth={1.8}
+                />
+              </span>
+            </button>
 
-      <button
-        onClick={() => setSelectedView("inbox")}
-        className={`relative flex flex-col items-center justify-center gap-1 rounded-[20px] py-2 text-[10px] font-[900] ${
-          selectedView === "inbox"
-            ? "text-white"
-            : darkMode
-            ? "text-white/55"
-            : "text-[#666661]/45"
-        }`}
-        style={
-          selectedView === "inbox"
-            ? {
-                backgroundColor: themeColor,
+            <AnimatePresence initial={false}>
+              {isCaptureOpen && (
+                <motion.form
+                  initial={{
+                    opacity: 0,
+                    y: -6,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -4,
+                  }}
+                  transition={{
+                    duration: 0.16,
+                  }}
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    submitTask();
+                  }}
+                  className={`border-t p-3 ${dividerClass}`}
+                >
+                  <input
+                    autoFocus
+                    value={newTask}
+                    onChange={(event) =>
+                      setNewTask(
+                        event.target.value
+                      )
+                    }
+                    placeholder="What needs to get done?"
+                    className={`h-10 w-full rounded-[8px] border px-3 text-[11px] font-[520] outline-none ${
+                      darkMode
+                        ? "border-white/[0.12] bg-white/[0.035] text-white placeholder:text-white/30"
+                        : "border-[#DADCE0] bg-white text-[#202124] placeholder:text-[#80868B]"
+                    }`}
+                  />
+
+                  <input
+                    value={newTaskWhy}
+                    onChange={(event) =>
+                      setNewTaskWhy(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Optional context"
+                    className={`mt-2 h-10 w-full rounded-[8px] border px-3 text-[11px] font-[520] outline-none ${
+                      darkMode
+                        ? "border-white/[0.12] bg-white/[0.035] text-white placeholder:text-white/30"
+                        : "border-[#DADCE0] bg-white text-[#202124] placeholder:text-[#80868B]"
+                    }`}
+                  />
+
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setIsExtractModalOpen(
+                          true
+                        )
+                      }
+                      className={`h-9 rounded-[8px] border px-3 text-[10px] font-[600] ${
+                        darkMode
+                          ? "border-white/[0.10] text-white/58"
+                          : "border-[#DADCE0] text-[#5F6368]"
+                      }`}
+                    >
+                      Extract from text
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={
+                        !newTask.trim()
+                      }
+                      className="h-9 rounded-[8px] px-4 text-[10px] font-[650] text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35"
+                      style={{
+                        backgroundColor:
+                          themeColor,
+                      }}
+                    >
+                      Add task
+                    </button>
+                  </div>
+                </motion.form>
+              )}
+            </AnimatePresence>
+          </section>
+
+          {completedToday.length > 0 && (
+            <CompletedTodaySection
+              sectionId="Momentuhm-mobile-completed-anchor"
+              completedToday={
+                completedToday
               }
-            : undefined
-        }
-      >
-        <Calendar size={18} />
-        Inbox
+              restoreCompletedTask={
+                restoreCompletedTask
+              }
+              archiveCompletedToday={
+                archiveCompletedToday
+              }
+              darkMode={darkMode}
+              border={border}
+            />
+          )}
+        </>
+      ) : (
+        <section
+          aria-label="Focus tasks"
+          className={`mt-1 overflow-hidden rounded-[12px] border ${panelClass}`}
+        >
+          <header
+            className={`flex items-start justify-between gap-3 border-b px-3 py-3 ${dividerClass}`}
+          >
+            <div>
+              <h2 className="text-[18px] font-[700] leading-none tracking-[-0.032em]">
+                Focus
+              </h2>
 
-        {inboxCount ? (
-          <span
-            className={`absolute right-3 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-[900] ${
-              selectedView === "inbox"
-                ? "bg-white text-[#666661]"
-                : "bg-red-500 text-white"
+              <p
+                className={`mt-1.5 text-[10.5px] font-[500] ${mutedTextClass}`}
+              >
+                Work through what matters now.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setWorkspaceMode("tasks")
+              }
+              className={`h-8 shrink-0 rounded-[8px] border px-3 text-[10px] font-[600] ${
+                darkMode
+                  ? "border-white/[0.10] text-white/58"
+                  : "border-[#DADCE0] text-[#5F6368]"
+              }`}
+            >
+              Back to Today
+            </button>
+          </header>
+
+          <div
+            className={`p-2 ${
+              darkMode
+                ? "bg-[#111216]"
+                : "bg-[#F8F9FA]"
             }`}
           >
-            {inboxCount}
-          </span>
-        ) : null}
-      </button>
+            {focusTasks.length === 0 ? (
+              <div
+                className={`rounded-[9px] border border-dashed px-5 py-10 text-center ${
+                  darkMode
+                    ? "border-white/[0.10] text-white/38"
+                    : "border-[#DADCE0] text-[#5F6368]"
+                }`}
+              >
+                <Target
+                  size={24}
+                  strokeWidth={1.7}
+                  className="mx-auto mb-3 opacity-60"
+                />
 
-      <div className="flex flex-col items-center justify-center gap-1 rounded-[20px] py-2">
-        <UserButton
-          afterSignOutUrl="/sign-in"
-          appearance={{
-            elements: {
-              userButtonAvatarBox: "h-7 w-7",
+                <p className="text-[12px] font-[600]">
+                  Your focus stack is empty.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {focusTasks.map(
+                  (
+                    task: any,
+                    index: number
+                  ) => (
+                    <button
+                      key={task.id}
+                      type="button"
+                      onClick={() =>
+                        openTask(task)
+                      }
+                      className={`grid w-full grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-[9px] border px-2.5 py-2.5 text-left ${panelClass}`}
+                    >
+                      <span
+                        className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-[650] ${
+                          darkMode
+                            ? "bg-[#303134] text-[#F1F3F4]"
+                            : "bg-[#E8F0FE] text-[#1967D2]"
+                        }`}
+                      >
+                        {index + 1}
+                      </span>
 
-              userButtonPopoverCard:
-                "w-[280px] rounded-[16px] border border-[#05AD98]/35 bg-[#171717] p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
+                      <div className="min-w-0">
+                        <p className="line-clamp-2 text-[12px] font-[560] leading-[16px]">
+                          {task.title}
+                        </p>
 
-              userButtonPopoverMain: "bg-[#171717] text-white",
+                        <p
+                          className={`mt-1 truncate text-[9.5px] font-[500] ${mutedTextClass}`}
+                        >
+                          {task.category ||
+                            "No category"}
+                        </p>
+                      </div>
 
-              userButtonPopoverActions: "bg-[#171717]",
-
-              userButtonPopoverActionButton:
-                "h-10 rounded-[10px] px-3 text-white hover:bg-white/[0.08]",
-
-              userButtonPopoverActionButtonText:
-                "text-[13px] font-[700] text-white",
-
-              userButtonPopoverActionButtonIcon: "text-white/60",
-
-              userButtonPopoverFooter: "hidden",
-
-              userPreviewMainIdentifier: "text-sm font-[800] text-white",
-
-              userPreviewSecondaryIdentifier:
-                "text-xs font-[600] text-white/55",
-
-              userPreviewAvatarBox: "h-8 w-8",
-            },
-          }}
-        />
-
-        <span
-          className={`text-[10px] font-[900] ${
-            darkMode ? "text-white/55" : "text-[#666661]/45"
-          }`}
-        >
-          Account
-        </span>
-      </div>
-    </nav>
+                      <span
+                        className={`whitespace-nowrap rounded-[5px] border px-2 py-1 text-[8.5px] font-[650] leading-none ${
+                          darkMode
+                            ? "border-[#315B3B] bg-[#1D3525] text-[#81C995]"
+                            : "border-[#CEEAD6] bg-[#E6F4EA] text-[#137333]"
+                        }`}
+                      >
+                        In progress
+                      </span>
+                    </button>
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
+
+
 
 function ClipboardAssistPrompt({
   text,
@@ -9222,157 +9398,317 @@ function ClipboardAssistPrompt({
 function DueTasksReminderPopup({
   tasks,
   themeColor,
+  darkMode,
+  timeRemainingLabel,
   onClose,
   onViewAll,
   onOpenTask,
 }: any) {
-  const getPopupPriorityColor = (priority?: string) => {
-    if (priority === "High") return "#ef4444";
-    if (priority === "Medium" || priority === "Med") return "#f97316";
-    return "#10b981";
+  const getPriorityMeta = (
+    priority?: string
+  ) => {
+    if (priority === "High") {
+      return {
+        label: "High",
+        dotClass: darkMode
+          ? "bg-red-300"
+          : "bg-red-500",
+        textClass: darkMode
+          ? "text-red-300"
+          : "text-red-600",
+      };
+    }
+
+    if (
+      priority === "Medium" ||
+      priority === "Med"
+    ) {
+      return {
+        label: "Medium",
+        dotClass: darkMode
+          ? "bg-amber-300"
+          : "bg-amber-500",
+        textClass: darkMode
+          ? "text-amber-300"
+          : "text-amber-700",
+      };
+    }
+
+    return {
+      label: "Low",
+      dotClass: darkMode
+        ? "bg-emerald-300"
+        : "bg-emerald-500",
+      textClass: darkMode
+        ? "text-emerald-300"
+        : "text-emerald-700",
+    };
   };
+
+  const panelSurface = darkMode
+    ? "border-white/[0.11] bg-[#17181C] text-[#F1F3F4]"
+    : "border-[#DADCE0] bg-white text-[#202124]";
+
+  const rowBorder = darkMode
+    ? "border-white/[0.08]"
+    : "border-[#E8EAED]";
+
+  const secondarySurface = darkMode
+    ? "bg-white/[0.025]"
+    : "bg-[#F8F9FA]";
+
+  const iconSurface = darkMode
+    ? "border-white/[0.10] bg-white/[0.055] text-white/72"
+    : "border-[#DADCE0] bg-[#F1F3F4] text-[#3C4043]";
+
+  const mutedText = darkMode
+    ? "text-white/48"
+    : "text-[#5F6368]";
+
+  const primaryTextColor =
+    getAccessibleTextColor(themeColor);
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-[194] flex items-center justify-center bg-black/25 p-4 backdrop-blur-[3px] sm:p-6"
+      initial={{
+        opacity: 0,
+      }}
+      animate={{
+        opacity: 1,
+      }}
+      exit={{
+        opacity: 0,
+      }}
+      transition={{
+        duration: 0.18,
+        ease: [0.16, 1, 0.3, 1],
+      }}
       onClick={onClose}
+      className="fixed inset-0 z-[194] flex items-center justify-center bg-black/30 p-3 backdrop-blur-[4px] sm:p-6"
     >
-      <motion.div
+      <motion.section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="due-reminder-title"
         initial={{
           opacity: 0,
-          scale: 0.92,
-          y: 18,
-          filter: "blur(8px)",
+          y: 14,
+          scale: 0.985,
         }}
         animate={{
           opacity: 1,
-          scale: 1,
           y: 0,
-          filter: "blur(0px)",
+          scale: 1,
         }}
         exit={{
           opacity: 0,
-          scale: 0.94,
-          y: 12,
-          filter: "blur(6px)",
+          y: 10,
+          scale: 0.99,
         }}
         transition={{
           type: "spring",
-          stiffness: 280,
-          damping: 28,
-          mass: 0.9,
+          stiffness: 380,
+          damping: 34,
+          mass: 0.82,
         }}
-        onClick={(event) => event.stopPropagation()}
-        className="relative w-full max-w-[520px] overflow-hidden rounded-[30px] border border-[#BBBFBF]/45 bg-white shadow-[0_30px_100px_rgba(17,24,39,0.18)]"
+        onClick={(event) =>
+          event.stopPropagation()
+        }
+        className={`relative flex max-h-[86vh] w-full max-w-[540px] flex-col overflow-hidden rounded-[18px] border shadow-[0_24px_80px_rgba(0,0,0,0.22)] ${panelSurface}`}
       >
+        {/* Subtle theme accent */}
         <div
-          className="absolute left-0 top-0 h-1.5 w-full"
+          aria-hidden="true"
+          className="h-[3px] w-full shrink-0"
           style={{
-            background: `linear-gradient(90deg, ${themeColor}, ${themeColor}55, transparent)`,
+            backgroundColor: themeColor,
           }}
         />
 
-        <div
-          className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full opacity-[0.12] blur-3xl"
-          style={{ backgroundColor: themeColor }}
-        />
-
-        <div className="relative p-5 sm:p-6">
-          <button
-            onClick={onClose}
-            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/[0.035] text-[#666661]/45 transition hover:scale-105 hover:text-[#666661]"
-          >
-            <X size={17} />
-          </button>
-
-          <div className="flex items-start gap-4 pr-10">
+        {/* Header */}
+        <header
+          className={`flex shrink-0 items-start justify-between gap-4 border-b px-5 py-5 sm:px-6 ${rowBorder}`}
+        >
+          <div className="flex min-w-0 items-start gap-3.5">
             <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
-              style={{
-                color: themeColor,
-                backgroundColor: `${themeColor}14`,
-                boxShadow: `0 16px 34px ${themeColor}18`,
-              }}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border ${iconSurface}`}
             >
-              <Clock3 size={25} strokeWidth={2.4} />
+              <Clock3
+                size={18}
+                strokeWidth={1.8}
+              />
             </div>
 
             <div className="min-w-0">
-              <h2 className="text-[22px] font-[900] leading-tight tracking-[-0.045em] text-[#666661]">
-                2 hours left in your day
+              <p
+                className={`text-[9px] font-[700] uppercase tracking-[0.14em] ${mutedText}`}
+              >
+                Day reminder
+              </p>
+
+              <h2
+                id="due-reminder-title"
+                className="mt-1 text-[20px] font-[730] leading-tight tracking-[-0.04em]"
+              >
+                {timeRemainingLabel
+                  ? `${timeRemainingLabel} in your day`
+                  : "Time is running short"}
               </h2>
 
-              <p className="mt-1 text-sm font-[700] text-[#666661]/48">
-                Here are your tasks due today
+              <p
+                className={`mt-1.5 text-[12px] font-[500] leading-5 ${mutedText}`}
+              >
+                These tasks are still due
+                today.
               </p>
             </div>
           </div>
 
-          <div className="mt-5 max-h-[310px] overflow-y-auto rounded-[22px] border border-black/[0.06] bg-white">
-            {tasks.map((task: any) => {
-              const priorityColor = getPopupPriorityColor(task.priority);
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close due-task reminder"
+            title="Close"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border transition ${
+              darkMode
+                ? "border-white/[0.10] text-white/45 hover:bg-white/[0.06] hover:text-white"
+                : "border-[#DADCE0] text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124]"
+            }`}
+          >
+            <X
+              size={17}
+              strokeWidth={1.7}
+            />
+          </button>
+        </header>
 
-              return (
-                <button
-                  key={task.id}
-                  onClick={() => onOpenTask(task)}
-                  className="flex w-full items-center gap-3 border-b border-black/[0.055] px-4 py-3 text-left transition last:border-b-0 hover:bg-black/[0.018]"
-                >
-                  <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: priorityColor }}
-                  />
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-[850] leading-5 tracking-[-0.018em] text-[#666661]">
-                      {task.title}
-                    </p>
-
-                    <p className="mt-0.5 truncate text-[10.5px] font-[750] text-[#666661]/36">
-                      {task.category} ·{" "}
-                      {task.priority === "Medium" || task.priority === "Med"
-                        ? "Mid"
-                        : task.priority}
-                    </p>
-                  </div>
-
-                  <span
-                    className="shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-[900]"
-                    style={{
-                      color: themeColor,
-                      borderColor: `${themeColor}2B`,
-                      backgroundColor: `${themeColor}10`,
-                    }}
-                  >
-                    Today
-                  </span>
-                </button>
+        {/* Task list */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {tasks.map((task: any) => {
+            const priority =
+              getPriorityMeta(
+                task.priority
               );
-            })}
-          </div>
 
-          <div className="mt-5 flex items-center justify-between gap-4">
-            <p className="text-sm font-[750] text-[#666661]/50">
-              {tasks.length} task{tasks.length === 1 ? "" : "s"} due today
+            return (
+              <button
+                key={task.id}
+                type="button"
+                onClick={() =>
+                  onOpenTask(task)
+                }
+                className={`grid w-full grid-cols-[10px_minmax(0,1fr)_auto_16px] items-center gap-3 border-b px-5 py-3.5 text-left transition last:border-b-0 sm:px-6 ${
+                  darkMode
+                    ? "border-white/[0.08] hover:bg-white/[0.035]"
+                    : "border-[#E8EAED] hover:bg-[#F8F9FA]"
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-2.5 w-2.5 rounded-full ${priority.dotClass}`}
+                />
+
+                <div className="min-w-0">
+                  <p
+                    title={task.title}
+                    className={`truncate text-[12.5px] font-[630] leading-5 tracking-[-0.012em] ${
+                      darkMode
+                        ? "text-white/88"
+                        : "text-[#202124]"
+                    }`}
+                  >
+                    {task.title}
+                  </p>
+
+                  <div
+                    className={`mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-[520] ${mutedText}`}
+                  >
+                    <span className="truncate">
+                      {task.category ||
+                        "No category"}
+                    </span>
+
+                    <span
+                      aria-hidden="true"
+                      className="opacity-45"
+                    >
+                      •
+                    </span>
+
+                    <span
+                      className={`shrink-0 ${priority.textClass}`}
+                    >
+                      {priority.label}
+                    </span>
+                  </div>
+                </div>
+
+                <span
+                  className={`shrink-0 rounded-[6px] border px-2 py-1 text-[9px] font-[650] ${
+                    darkMode
+                      ? "border-white/[0.10] bg-white/[0.045] text-white/58"
+                      : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368]"
+                  }`}
+                >
+                  Today
+                </span>
+
+                <ChevronRight
+                  size={14}
+                  strokeWidth={1.7}
+                  className={mutedText}
+                />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <footer
+          className={`flex shrink-0 items-center justify-between gap-4 border-t px-5 py-4 sm:px-6 ${rowBorder} ${secondarySurface}`}
+        >
+          <div className="min-w-0">
+            <p
+              className={`text-[11px] font-[650] ${
+                darkMode
+                  ? "text-white/70"
+                  : "text-[#3C4043]"
+              }`}
+            >
+              {tasks.length} task
+              {tasks.length === 1
+                ? ""
+                : "s"}{" "}
+              due today
             </p>
 
-            <button
-              onClick={onViewAll}
-              className="h-12 rounded-[18px] px-5 text-sm font-[900] text-white shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] active:scale-[0.98]"
-              style={{
-                backgroundColor: themeColor,
-                boxShadow: `0 18px 38px ${themeColor}30`,
-              }}
+            <p
+              className={`mt-0.5 truncate text-[10px] font-[500] ${mutedText}`}
             >
-              View all tasks
-            </button>
+              Focus on the most important
+              next step.
+            </p>
           </div>
-        </div>
-      </motion.div>
+
+          <button
+            type="button"
+            onClick={onViewAll}
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[9px] px-4 text-[11px] font-[700] shadow-[0_1px_2px_rgba(60,64,67,0.22)] transition hover:brightness-[0.96] active:scale-[0.98]"
+            style={{
+              backgroundColor:
+                themeColor,
+              color: primaryTextColor,
+            }}
+          >
+            View tasks
+
+            <ChevronRight
+              size={14}
+              strokeWidth={1.8}
+            />
+          </button>
+        </footer>
+      </motion.section>
     </motion.div>
   );
 }
