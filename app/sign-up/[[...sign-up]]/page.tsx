@@ -10,7 +10,7 @@ export default function Page() {
           </div>
 
           <h1 className="text-[34px] font-[900] leading-tight tracking-[-0.05em] text-[#1f232b]">
-            Create your Veira account
+            Create your Momentuhm account
           </h1>
 
           <p className="mt-2 text-sm font-[600] text-black/45">
