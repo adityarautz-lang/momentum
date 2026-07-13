@@ -4585,18 +4585,33 @@
                     </div>
 
                     <div className={`flex items-center justify-center border-l ${rowBorder}`}>
-                      <button
-                        type="button"
-                        onClick={() => openTask(task)}
-                        aria-label={`Open ${task.title}`}
-                        title="Open task"
-                        className={`flex h-8 w-7 items-center justify-center transition ${
-                          darkMode ? "text-white/38 hover:text-white" : "text-[#747986] hover:text-[#252933]"
-                        }`}
-                      >
-                        <MoreVertical size={15} strokeWidth={1.8} />
-                      </button>
-                    </div>
+  <button
+    type="button"
+    onClick={() => togglePinTask(task.id)}
+    aria-pressed={Boolean(task.pinned)}
+    aria-label={
+      task.pinned
+        ? `Unpin ${task.title}`
+        : `Pin ${task.title} to top`
+    }
+    title={task.pinned ? "Unpin task" : "Pin to top"}
+    className={`flex h-8 w-7 items-center justify-center transition ${
+      task.pinned
+        ? darkMode
+          ? "text-white"
+          : "text-[#202124]"
+        : darkMode
+        ? "text-white/38 opacity-0 group-hover/task:opacity-100 group-focus-within/task:opacity-100 hover:text-white"
+        : "text-[#747986] opacity-0 group-hover/task:opacity-100 group-focus-within/task:opacity-100 hover:text-[#252933]"
+    }`}
+  >
+    <Star
+      size={15}
+      strokeWidth={1.8}
+      fill={task.pinned ? "currentColor" : "none"}
+    />
+  </button>
+</div>
                   </motion.div>
                 </div>
               );
@@ -6528,28 +6543,38 @@
                       : ""
                   }`}
                 >
-                  <span
-                    className={`text-[11px] font-[700] ${
-                      currentTask?.id === task.id
-                        ? darkMode
-                          ? "text-white"
-                          : "text-[#20232B]"
-                        : mutedText
-                    }`}
-                  >
-                    {index + 1}.
-                  </span>
-
                   <button
-                    type="button"
-                    onClick={() => setFocusIndex(index)}
-                    title={task.title}
-                    className={`min-w-0 truncate text-left text-[12px] font-[600] ${
-                      darkMode ? "text-white/84" : "text-[#282C35]"
-                    }`}
-                  >
-                    {task.title}
-                  </button>
+  type="button"
+  onClick={() => {
+    setFocusIndex(index);
+    openTaskEditor(task);
+  }}
+  aria-label={`Edit ${task.title}`}
+  title={`Open ${task.title}`}
+  className="col-span-2 grid min-w-0 grid-cols-[24px_minmax(0,1fr)] items-center gap-2 self-stretch text-left"
+>
+  <span
+    className={`text-[11px] font-[700] ${
+      currentTask?.id === task.id
+        ? darkMode
+          ? "text-white"
+          : "text-[#20232B]"
+        : mutedText
+    }`}
+  >
+    {index + 1}.
+  </span>
+
+  <span
+    className={`min-w-0 truncate text-[12px] font-[600] transition hover:opacity-70 ${
+      darkMode
+        ? "text-white/84"
+        : "text-[#282C35]"
+    }`}
+  >
+    {task.title}
+  </span>
+</button>
 
                   <span className={`rounded-[6px] border px-2 py-1 text-[10px] font-[650] ${priorityPill}`}>
                     {task.priority === "Medium" || task.priority === "Med" ? "Medium" : task.priority}
@@ -11098,6 +11123,76 @@
     </button>
   </div>
 
+
+{/* Pin task */}
+<div
+  className={`flex items-center justify-between gap-4 rounded-[7px] border px-3 py-3 ${
+    darkMode
+      ? "border-white/[0.24] bg-[#171717]"
+      : "border-[#A8A8A2] bg-white"
+  }`}
+>
+  <div className="min-w-0">
+    <div className="flex items-center gap-2">
+      <Star
+        size={15}
+        strokeWidth={1.7}
+        fill={selectedTask.pinned ? "currentColor" : "none"}
+        className={
+          selectedTask.pinned
+            ? darkMode
+              ? "text-white"
+              : "text-[#181818]"
+            : darkMode
+            ? "text-white/55"
+            : "text-[#6F6F6A]"
+        }
+      />
+
+      <p
+        className={`text-[12px] font-[700] ${
+          darkMode ? "text-white" : "text-[#181818]"
+        }`}
+      >
+        Pin task
+      </p>
+    </div>
+
+    <p
+      className={`mt-1 text-[11px] font-[500] leading-4 ${
+        darkMode
+          ? "text-white/55"
+          : "text-[#6F6F6A]"
+      }`}
+    >
+      {selectedTask.pinned
+        ? "This task will stay above other tasks."
+        : "Keep this task at the top of your list."}
+    </p>
+  </div>
+
+  <button
+    type="button"
+    onClick={() =>
+      setSelectedTask({
+        ...selectedTask,
+        pinned: !selectedTask.pinned,
+      })
+    }
+    aria-pressed={Boolean(selectedTask.pinned)}
+    className={`h-9 shrink-0 rounded-[7px] border px-3 text-[11px] font-[700] transition ${
+      selectedTask.pinned
+        ? darkMode
+          ? "border-white bg-white text-[#181818]"
+          : "border-[#181818] bg-[#181818] text-white"
+        : darkMode
+        ? "border-white/[0.24] text-white/65 hover:bg-white/[0.06] hover:text-white"
+        : "border-[#A8A8A2] text-[#6F6F6A] hover:bg-black/[0.035] hover:text-[#181818]"
+    }`}
+  >
+    {selectedTask.pinned ? "Pinned" : "Pin to top"}
+  </button>
+</div>
                   {/* Date and category */}
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <div>
