@@ -7876,17 +7876,6 @@
 
       const openFocus = () => {
         setWorkspaceMode("focus");
-
-        window.setTimeout(() => {
-          document
-            .getElementById(
-              "Momentuhm-mobile-workspace-anchor"
-            )
-            ?.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-        }, 60);
       };
 
       const openCapture = () => {
