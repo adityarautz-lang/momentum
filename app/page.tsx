@@ -52,6 +52,39 @@
 
   type TaskTag = "follow-up";
 
+  type TaskStatus = "Active" | "Waiting" | "Done";
+  
+  const normalizeTaskStatus = (
+    status: unknown
+  ): TaskStatus => {
+    if (status === "Waiting" || status === "Someday") {
+      return "Waiting";
+    }
+  
+    if (status === "Done" || status === "Complete") {
+      return "Done";
+    }
+  
+    return "Active";
+  };
+  
+  const getTaskStatusLabel = (
+    status: unknown
+  ) => {
+    const normalizedStatus =
+      normalizeTaskStatus(status);
+  
+    if (normalizedStatus === "Waiting") {
+      return "Paused";
+    }
+  
+    if (normalizedStatus === "Done") {
+      return "Done";
+    }
+  
+    return "In progress";
+  };
+  
   type SortMode = "date" | "priority";
   type GroupMode = "none" | "category" | "priority" | "date";
   type MobileGroupMode = "category" | "priority" | "date";
@@ -96,7 +129,7 @@
     suggestedDueDate: string | null;
     category: string;
     notes: string;
-    status: "Active" | "Waiting" | "Complete";
+    status: TaskStatus;
     reason: string;
     confidence: number;
     tags: TaskTag[];
@@ -1620,9 +1653,7 @@
                 categories[0]?.title ||
                 "Small Wins",
               notes: String(task.notes || ""),
-              status: ["Active", "Waiting", "Someday"].includes(task.status)
-                ? task.status
-                : "Active",
+              status: normalizeTaskStatus(task.status),
               reason: String(task.reason || ""),
               confidence:
                 typeof task.confidence === "number" ? task.confidence : 0.7,
@@ -1906,7 +1937,9 @@
                 whyThisMatters: task.whyThisMatters || whyThisMatters,
                 priority: suggestion.priority || task.priority,
                 suggestedDueDate: suggestion.suggestedDueDate || task.suggestedDueDate,
-                status: suggestion.status || task.status || "Active",
+                status: normalizeTaskStatus(
+                  suggestion.status || task.status
+                ),
                 notes: suggestion.notes || task.notes || "",
                 tags: normalizeTaskTags(suggestion.tags || task.tags),
                 aiReason:
@@ -1955,7 +1988,9 @@
                 priority: suggestion.priority || taskToMove.priority,
                 suggestedDueDate:
                   suggestion.suggestedDueDate || taskToMove.suggestedDueDate,
-                status: suggestion.status || taskToMove.status || "Active",
+                  status: normalizeTaskStatus(
+                    suggestion.status || taskToMove.status
+                  ),
                 notes: suggestion.notes || taskToMove.notes || "",
                 tags: normalizeTaskTags(suggestion.tags || taskToMove.tags),
                 aiReason:
@@ -2213,9 +2248,7 @@
               categories[0]?.title ||
               "Small Wins",
             notes: String(task.notes || ""),
-            status: ["Active", "Waiting", "Someday"].includes(task.status)
-              ? task.status
-              : "Active",
+            status: normalizeTaskStatus(task.status),
             reason: String(task.reason || ""),
             confidence:
               typeof task.confidence === "number" ? task.confidence : 0.7,
@@ -2751,7 +2784,9 @@
                   ? suggestDueDate(title)
                   : undefined,
                   notes: updatedTask.notes || "",
-                  status: updatedTask.status || "Active",
+                  status: normalizeTaskStatus(
+                    updatedTask.status
+                  ),
                   aiReason:
                     updatedTask.aiReason ||
                     (enableAppSuggestions
@@ -4400,19 +4435,23 @@
                 task.priority === "Medium" || task.priority === "Med"
                   ? "Medium"
                   : task.priority;
-              const statusLabel = isFocused
-                ? "In progress"
-                : isTaskOverdue
-                ? "Overdue"
-                : task.status === "Active"
-                ? "Not started"
-                : task.status || "Not started";
+                  const normalizedStatus =
+                  normalizeTaskStatus(task.status);
+                
+                const statusLabel =
+                  getTaskStatusLabel(normalizedStatus);
 
-                const dueLabel = visibleDueDate
-                ? formatDueDate(visibleDueDate)
-                : "—";
-
-                const dueClass = mutedText;
+                  const dueLabel = visibleDueDate
+                  ? isTaskOverdue
+                    ? `Overdue ${formatDueDate(visibleDueDate)}`
+                    : formatDueDate(visibleDueDate)
+                  : "—";
+                
+                const dueClass = isTaskOverdue
+                  ? darkMode
+                    ? "text-red-300"
+                    : "text-red-600"
+                  : mutedText;
 
               const priorityPill =
                 task.priority === "High"
@@ -4427,17 +4466,18 @@
                   ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
                   : "border-emerald-200 bg-emerald-50 text-emerald-600";
 
-              const statusPill = isFocused
-                ? darkMode
-                  ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
-                  : "border-emerald-200 bg-emerald-50 text-emerald-600"
-                : isTaskOverdue
-                ? darkMode
-                  ? "border-red-400/20 bg-red-400/10 text-red-300"
-                  : "border-red-200 bg-red-50 text-red-600"
-                : darkMode
-                ? "border-white/[0.10] bg-white/[0.04] text-white/58"
-                : "border-[#DDDDE3] bg-[#F6F7F9] text-[#5F6572]";
+                  const statusPill =
+                  normalizedStatus === "Done"
+                    ? darkMode
+                      ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                      : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : normalizedStatus === "Waiting"
+                    ? darkMode
+                      ? "border-amber-400/20 bg-amber-400/10 text-amber-300"
+                      : "border-amber-200 bg-amber-50 text-amber-700"
+                    : darkMode
+                    ? "border-blue-400/20 bg-blue-400/10 text-blue-300"
+                    : "border-blue-200 bg-blue-50 text-blue-700";
 
               return (
                 <div key={task.id} className="contents">
@@ -4570,14 +4610,8 @@
                     <div className={`flex items-center justify-center border-l px-1 ${rowBorder}`}>
                       <button
                         type="button"
-                        onClick={() => {
-                          if (isFocused) {
-                            openTask(task);
-                          } else {
-                            addTaskToFocus(task.id);
-                          }
-                        }}
-                        title={isFocused ? "Open focused task" : "Add to focus"}
+                        onClick={() => openTask(task)}
+title="Edit task status"
                         className={`max-w-full truncate rounded-[6px] border px-2 py-1 text-[10px] font-[650] ${statusPill}`}
                       >
                         {statusLabel}
@@ -6242,7 +6276,7 @@
               category: task.category,
               score: task.score || 0,
               aiReason: task.aiReason || "",
-              status: task.status || "Active",
+              status: normalizeTaskStatus(task.status),
             })),
           }),
         });
@@ -8239,56 +8273,32 @@
     };
 
     const getStatusMeta = (task: any) => {
-      const confirmedDueDate =
-        task.dueDate || "";
+      const status =
+        normalizeTaskStatus(task.status);
     
-      const isFocused =
-        manualFocusTaskIds.includes(task.id);
-    
-      if (
-        confirmedDueDate &&
-        isOverdue(confirmedDueDate)
-      ) {
+      if (status === "Done") {
         return {
-          label: "Overdue",
-          className: darkMode
-            ? "border-[#71312D] bg-[#3C1F1D] text-[#F28B82]"
-            : "border-[#F4C7C3] bg-[#FCE8E6] text-[#C5221F]",
-        };
-      }
-
-      if (isFocused) {
-        return {
-          label: "In progress",
+          label: "Done",
           className: darkMode
             ? "border-[#315B3B] bg-[#1D3525] text-[#81C995]"
             : "border-[#CEEAD6] bg-[#E6F4EA] text-[#137333]",
         };
       }
-
-      if (task.status === "Waiting") {
+    
+      if (status === "Waiting") {
         return {
-          label: "Waiting",
+          label: "Paused",
           className: darkMode
-            ? "border-[#315577] bg-[#1D344A] text-[#8AB4F8]"
-            : "border-[#D2E3FC] bg-[#E8F0FE] text-[#1967D2]",
+            ? "border-[#765C24] bg-[#3D321B] text-[#FDD663]"
+            : "border-[#FDE293] bg-[#FEF7E0] text-[#B06000]",
         };
       }
-
-      if (task.status === "Someday") {
-        return {
-          label: "Someday",
-          className: darkMode
-            ? "border-[#56406C] bg-[#352743] text-[#C58AF9]"
-            : "border-[#E9D5F8] bg-[#F3E8FD] text-[#8430CE]",
-        };
-      }
-
+    
       return {
-        label: "Not started",
+        label: "In progress",
         className: darkMode
-          ? "border-white/[0.10] bg-white/[0.055] text-white/60"
-          : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368]",
+          ? "border-[#315577] bg-[#1D344A] text-[#8AB4F8]"
+          : "border-[#D2E3FC] bg-[#E8F0FE] text-[#1967D2]",
       };
     };
 
@@ -9004,14 +9014,12 @@
                         </div>
 
                         <span
-                          className={`whitespace-nowrap rounded-[5px] border px-2 py-1 text-[8.5px] font-[650] leading-none ${
-                            darkMode
-                              ? "border-[#315B3B] bg-[#1D3525] text-[#81C995]"
-                              : "border-[#CEEAD6] bg-[#E6F4EA] text-[#137333]"
-                          }`}
-                        >
-                          In progress
-                        </span>
+  className={`whitespace-nowrap rounded-[5px] border px-2 py-1 text-[8.5px] font-[650] leading-none ${
+    getStatusMeta(task).className
+  }`}
+>
+  {getStatusMeta(task).label}
+</span>
                       </button>
                     )
                   )}
@@ -10606,7 +10614,11 @@
     setManualFocusTaskIds = () => {},
   }: any) {
     const priorityOptions: Priority[] = ["Low", "Medium", "High"];
-    const statusOptions = ["Active", "Waiting", "Someday"];
+    const statusOptions: TaskStatus[] = [
+      "Active",
+      "Waiting",
+      "Done",
+    ];
 
     const [newStepTitle, setNewStepTitle] = useState("");
     const [editingStepId, setEditingStepId] = useState<string | null>(null);
@@ -11037,34 +11049,34 @@
                         }`}
                       >
                         {statusOptions.map((status) => {
-                          const isActive =
-                            (selectedTask.status || "Active") === status;
+  const isActive =
+    normalizeTaskStatus(selectedTask.status) === status;
 
-                          return (
-                            <button
-                              key={status}
-                              type="button"
-                              aria-pressed={isActive}
-                              onClick={() =>
-                                setSelectedTask({
-                                  ...selectedTask,
-                                  status,
-                                })
-                              }
-                              className={`border-r text-[11px] font-[700] transition last:border-r-0 ${dividerClass} ${
-                                isActive
-                                  ? darkMode
-                                    ? "bg-white text-[#181818]"
-                                    : "bg-[#181818] text-white"
-                                  : darkMode
-                                  ? "bg-transparent text-white/55 hover:bg-white/[0.05] hover:text-white"
-                                  : "bg-transparent text-[#6F6F6A] hover:bg-black/[0.035] hover:text-[#181818]"
-                              }`}
-                            >
-                              {status}
-                            </button>
-                          );
-                        })}
+  return (
+    <button
+      key={status}
+      type="button"
+      aria-pressed={isActive}
+      onClick={() =>
+        setSelectedTask({
+          ...selectedTask,
+          status,
+        })
+      }
+      className={`border-r text-[11px] font-[700] transition last:border-r-0 ${dividerClass} ${
+        isActive
+          ? darkMode
+            ? "bg-white text-[#181818]"
+            : "bg-[#181818] text-white"
+          : darkMode
+          ? "bg-transparent text-white/55 hover:bg-white/[0.05] hover:text-white"
+          : "bg-transparent text-[#6F6F6A] hover:bg-black/[0.035] hover:text-[#181818]"
+      }`}
+    >
+      {getTaskStatusLabel(status)}
+    </button>
+  );
+})}
                       </div>
                     </fieldset>
                   </div>
@@ -11758,7 +11770,7 @@
                     : "bg-[#181818] text-white hover:bg-[#2A2A2A]"
                 }`}
               >
-                Done
+                 Save changes
               </button>
             </div>
           </footer>
