@@ -596,7 +596,7 @@
     ];
 
     const lowUrgencyWords = [
-      "someday",
+      "Done",
       "maybe",
       "eventually",
       "whenever",
@@ -775,7 +775,7 @@
       "watch",
       "read",
       "maybe",
-      "someday",
+      "Done",
     ];
 
     urgentWords.forEach((word) => {
@@ -1620,7 +1620,7 @@
                 categories[0]?.title ||
                 "Small Wins",
               notes: String(task.notes || ""),
-              status: ["Active", "Waiting", "Someday"].includes(task.status)
+              status: ["Active", "Waiting", "Done"].includes(task.status)
                 ? task.status
                 : "Active",
               reason: String(task.reason || ""),
@@ -2213,7 +2213,7 @@
               categories[0]?.title ||
               "Small Wins",
             notes: String(task.notes || ""),
-            status: ["Active", "Waiting", "Someday"].includes(task.status)
+            status: ["Active", "Waiting", "Done"].includes(task.status)
               ? task.status
               : "Active",
             reason: String(task.reason || ""),
@@ -8275,9 +8275,9 @@
         };
       }
 
-      if (task.status === "Someday") {
+      if (task.status === "Done") {
         return {
-          label: "Someday",
+          label: "Done",
           className: darkMode
             ? "border-[#56406C] bg-[#352743] text-[#C58AF9]"
             : "border-[#E9D5F8] bg-[#F3E8FD] text-[#8430CE]",
@@ -10606,7 +10606,7 @@
     setManualFocusTaskIds = () => {},
   }: any) {
     const priorityOptions: Priority[] = ["Low", "Medium", "High"];
-    const statusOptions = ["Active", "Waiting", "Someday"];
+    const statusOptions = ["Active", "Waiting", "Done"];
 
     const [newStepTitle, setNewStepTitle] = useState("");
     const [editingStepId, setEditingStepId] = useState<string | null>(null);
