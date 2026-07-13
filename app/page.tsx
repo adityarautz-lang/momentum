@@ -10597,6 +10597,7 @@
     setSelectedTask,
     setIsEditModalOpen,
     saveTaskChanges,
+    completeTaskFromModal,
     deleteTaskEverywhere,
     restoreCompletedTask,
     categories,
@@ -10912,19 +10913,38 @@
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={closeWithoutSaving}
-              aria-label="Close edit task"
-              title="Close"
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] transition ${
-                darkMode
-                  ? "text-white/55 hover:bg-white/[0.07] hover:text-white"
-                  : "text-[#6F6F6A] hover:bg-black/[0.04] hover:text-[#181818]"
-              }`}
-            >
-              <X size={18} strokeWidth={1.6} />
-            </button>
+            <div className="flex shrink-0 items-center gap-4">
+  {!selectedTask.completed && (
+    <button
+      type="button"
+      onClick={() =>
+        completeTaskFromModal(selectedTask.id)
+      }
+      className={`inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border bg-transparent px-3 text-[11px] font-[700] transition ${
+        darkMode
+          ? "border-white/[0.20] text-white/72 hover:border-white/40 hover:bg-white/[0.06] hover:text-white"
+          : "border-[#B8B8B2] text-[#555550] hover:border-[#777772] hover:bg-black/[0.035] hover:text-[#181818]"
+      }`}
+    >
+      <Check size={13} strokeWidth={2} />
+      Mark this complete
+    </button>
+  )}
+
+  <button
+    type="button"
+    onClick={closeWithoutSaving}
+    aria-label="Close edit task"
+    title="Close"
+    className={`flex h-9 w-9 items-center justify-center rounded-[6px] transition ${
+      darkMode
+        ? "text-white/55 hover:bg-white/[0.07] hover:text-white"
+        : "text-[#6F6F6A] hover:bg-black/[0.04] hover:text-[#181818]"
+    }`}
+  >
+    <X size={18} strokeWidth={1.6} />
+  </button>
+</div>
           </header>
 
           {/* Scrollable content */}
