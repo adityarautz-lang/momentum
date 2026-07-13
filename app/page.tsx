@@ -96,7 +96,7 @@
     suggestedDueDate: string | null;
     category: string;
     notes: string;
-    status: "Active" | "Waiting" | "Someday";
+    status: "Active" | "Waiting" | "Complete";
     reason: string;
     confidence: number;
     tags: TaskTag[];
