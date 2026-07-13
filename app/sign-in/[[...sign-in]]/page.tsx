@@ -5,9 +5,9 @@ export default function Page() {
     <main className="flex min-h-screen items-center justify-center bg-[#f7f5f1] px-4 py-10">
       <div className="w-full max-w-[410px]">
         <div className="mx-auto mb-5 w-full max-w-[410px] text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[20px] bg-[#A78BFA] text-lg font-black text-white shadow-[0_18px_45px_rgba(124,58,237,0.24)]">
+          {/* <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[20px] bg-[#A78BFA] text-lg font-black text-white shadow-[0_18px_45px_rgba(124,58,237,0.24)]">
             V
-          </div>
+          </div> */}
 
           <h1 className="text-[34px] font-[900] tracking-[-0.05em] text-[#1f232b]">
             Welcome to Momentuhm.app
