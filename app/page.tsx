@@ -187,7 +187,9 @@ const getRestorableTaskStatus = (
       | "focus"
       | "daily-intelligence"
       | "control"
+      | "insights"
       | "help";
+  
     eyebrow: string;
     title: string;
     description: string;
@@ -283,88 +285,170 @@ const getRestorableTaskStatus = (
     },
   ];
   
-  const QUICK_TUTORIAL_STEPS: TutorialStepDefinition[] = [
+  /*
+   * Fixed preview data used only inside the tutorial.
+   *
+   * It lets new users understand Insights before they
+   * have completed enough real work to unlock analytics.
+   */
+  const TUTORIAL_INSIGHT_METRICS = [
     {
-      id: "welcome",
-      eyebrow: "Welcome to Momentuhm",
-      title: "See how Momentuhm helps",
-      description:
-        "This quick walkthrough demonstrates how Momentuhm turns everyday work into clear, prioritized next actions.",
+      label: "Total closed",
+      value: "42",
     },
     {
-      id: "smart-assist",
-      eyebrow: "AI task assistance",
-      title: "Add one task. Get useful structure.",
-      description:
-        "Momentuhm can suggest priority, timing, category, context, and why the task deserves attention.",
-      desktopSelector:
-        "#momentuhm-tour-capture-desktop",
-      mobileSelector:
-        "#mobile-quick-capture",
+      label: "Last 7 days",
+      value: "11",
     },
     {
-      id: "clipboard",
-      eyebrow: "Clipboard Assist",
-      title: "Copied text becomes actionable work",
-      description:
-        "When copied content contains useful actions, Momentuhm can separate it into structured tasks for review.",
+      label: "Average per day",
+      value: "1.6",
     },
     {
-      id: "extract",
-      eyebrow: "Extract from text",
-      title: "Turn notes into a task list",
-      description:
-        "Paste an email, message, or meeting note and review the actions Momentuhm identifies before adding them.",
-      desktopSelector:
-        "#momentuhm-tour-capture-desktop",
-      mobileSelector:
-        "#mobile-quick-capture",
-    },
-    {
-      id: "focus",
-      eyebrow: "AI Focus",
-      title: "Find the strongest next moves",
-      description:
-        "Momentuhm considers urgency, impact, dependencies, and timing when building a suggested Focus stack.",
-      desktopSelector:
-        "#momentuhm-tour-focus-desktop",
-      mobileSelector:
-        "#momentuhm-tour-focus-mobile",
-    },
-    {
-      id: "daily-intelligence",
-      eyebrow: "Daily intelligence",
-      title: "Understand your day quickly",
-      description:
-        "Morning guidance, progress insights, completion metrics, and time awareness help you decide what to do next.",
-      desktopSelector:
-        "#momentuhm-tour-progress-desktop",
-      mobileSelector:
-        "#momentuhm-tour-progress-mobile",
-    },
-    {
-      id: "control",
-      eyebrow: "You remain in control",
-      title: "Every suggestion stays editable",
-      description:
-        "AI prepares a useful first draft. You can change the priority, date, category, reasoning, Focus placement, or any other detail.",
-      desktopSelector:
-        "#Momentuhm-task-list-anchor",
-      mobileSelector:
-        "#Momentuhm-mobile-task-list-anchor",
-    },
-    {
-      id: "help",
-      eyebrow: "You are ready",
-      title: "Return to this tour anytime",
-      description:
-        "Select How it works whenever you want to revisit Momentuhm’s main capabilities.",
-      desktopSelector:
-        "#momentuhm-tour-help-button",
-      mobileSelector:
-        "#momentuhm-tour-help-button",
+      label: "Current streak",
+      value: "4 days",
     },
   ];
+  
+  const TUTORIAL_INSIGHT_CATEGORIES = [
+    {
+      label: "Major Projects",
+      percentage: 42,
+    },
+    {
+      label: "Sustaining",
+      percentage: 27,
+    },
+    {
+      label: "Small Wins",
+      percentage: 19,
+    },
+    {
+      label: "Self Growth",
+      percentage: 12,
+    },
+  ];
+  
+  const TUTORIAL_INSIGHT_RHYTHM = [
+    {
+      label: "6AM",
+      height: 18,
+    },
+    {
+      label: "9AM",
+      height: 68,
+    },
+    {
+      label: "12PM",
+      height: 46,
+    },
+    {
+      label: "3PM",
+      height: 34,
+    },
+    {
+      label: "6PM",
+      height: 25,
+    },
+    {
+      label: "9PM",
+      height: 12,
+    },
+  ];
+  
+  const QUICK_TUTORIAL_STEPS:
+    TutorialStepDefinition[] = [
+      {
+        id: "welcome",
+        eyebrow: "Welcome to Momentuhm",
+        title: "See how Momentuhm helps",
+        description:
+          "This quick walkthrough demonstrates how Momentuhm turns everyday work into clear, prioritized next actions.",
+      },
+      {
+        id: "smart-assist",
+        eyebrow: "AI task assistance",
+        title:
+          "Add one task. Get useful structure.",
+        description:
+          "Momentuhm can suggest priority, timing, category, context, and why the task deserves attention.",
+        desktopSelector:
+          "#momentuhm-tour-capture-desktop",
+        mobileSelector:
+          "#mobile-quick-capture",
+      },
+      {
+        id: "clipboard",
+        eyebrow: "Clipboard Assist",
+        title:
+          "Copied text becomes actionable work",
+        description:
+          "When copied content contains useful actions, Momentuhm can separate it into structured tasks for review.",
+      },
+      {
+        id: "extract",
+        eyebrow: "Extract from text",
+        title: "Turn notes into a task list",
+        description:
+          "Paste an email, message, or meeting note and review the actions Momentuhm identifies before adding them.",
+        desktopSelector:
+          "#momentuhm-tour-capture-desktop",
+        mobileSelector:
+          "#mobile-quick-capture",
+      },
+      {
+        id: "focus",
+        eyebrow: "AI Focus",
+        title: "Find the strongest next moves",
+        description:
+          "Momentuhm considers urgency, impact, dependencies, and timing when building a suggested Focus stack.",
+        desktopSelector:
+          "#momentuhm-tour-focus-desktop",
+        mobileSelector:
+          "#momentuhm-tour-focus-mobile",
+      },
+      {
+        id: "daily-intelligence",
+        eyebrow: "Daily intelligence",
+        title: "Understand your day quickly",
+        description:
+          "Morning guidance, progress insights, completion metrics, and time awareness help you decide what to do next.",
+        desktopSelector:
+          "#momentuhm-tour-progress-desktop",
+        mobileSelector:
+          "#momentuhm-tour-progress-mobile",
+      },
+      {
+        id: "control",
+        eyebrow: "You remain in control",
+        title: "Every suggestion stays editable",
+        description:
+          "AI prepares a useful first draft. You can change the priority, date, category, reasoning, Focus placement, or any other detail.",
+        desktopSelector:
+          "#Momentuhm-task-list-anchor",
+        mobileSelector:
+          "#Momentuhm-mobile-task-list-anchor",
+      },
+      {
+        id: "insights",
+        eyebrow: "Insights",
+        title:
+          "See what your completed work reveals",
+        description:
+          "Momentuhm turns completed work into useful patterns across categories, task types, productivity timing, and momentum. This preview uses sample data.",
+      },
+      {
+        id: "help",
+        eyebrow: "You are ready",
+        title: "Return to this tour anytime",
+        description:
+          "Select How it works whenever you want to revisit Momentuhm’s task assistance, Focus tools, daily guidance, and Insights.",
+        desktopSelector:
+          "#momentuhm-tour-help-button",
+        mobileSelector:
+          "#momentuhm-tour-help-button",
+      },
+    ];
 
   /* ------------------------------------------------ */
   /* Font */
@@ -12651,47 +12735,49 @@ const displayedInsight =
       ? "border-white/[0.10] bg-white/[0.05] text-white/55"
       : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368]";
   
-    const renderStepIcon = () => {
-      if (
-        step.id === "smart-assist" ||
-        step.id === "clipboard" ||
-        step.id === "extract" ||
-        step.id === "focus" ||
-        step.id === "daily-intelligence"
-      ) {
+      const renderStepIcon = () => {
+        if (
+          step.id === "smart-assist" ||
+          step.id === "clipboard" ||
+          step.id === "extract" ||
+          step.id === "focus" ||
+          step.id ===
+            "daily-intelligence" ||
+          step.id === "insights"
+        ) {
+          return (
+            <Sparkles
+              size={18}
+              strokeWidth={1.8}
+            />
+          );
+        }
+      
+        if (step.id === "control") {
+          return (
+            <PencilLine
+              size={18}
+              strokeWidth={1.8}
+            />
+          );
+        }
+      
+        if (step.id === "help") {
+          return (
+            <HelpCircle
+              size={18}
+              strokeWidth={1.8}
+            />
+          );
+        }
+      
         return (
-          <Sparkles
+          <Lightbulb
             size={18}
             strokeWidth={1.8}
           />
         );
-      }
-  
-      if (step.id === "control") {
-        return (
-          <PencilLine
-            size={18}
-            strokeWidth={1.8}
-          />
-        );
-      }
-  
-      if (step.id === "help") {
-        return (
-          <HelpCircle
-            size={18}
-            strokeWidth={1.8}
-          />
-        );
-      }
-  
-      return (
-        <Lightbulb
-          size={18}
-          strokeWidth={1.8}
-        />
-      );
-    };
+      };
   
     const renderStepDemo = () => {
       switch (step.id) {
@@ -13548,6 +13634,334 @@ const displayedInsight =
             </div>
           );
   
+
+          case "insights":
+  return (
+    <div className="space-y-3">
+      {/* Sample-data notice */}
+      <div
+        className={`flex items-start justify-between gap-4 rounded-[11px] border px-3.5 py-3 ${panelClass}`}
+      >
+        <div className="flex min-w-0 items-start gap-2.5">
+          <div
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] border ${previewBadgeClass}`}
+          >
+            <TrendingUp
+              size={14}
+              strokeWidth={1.8}
+            />
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-[11px] font-[700]">
+              Execution overview
+            </p>
+
+            <p
+              className={`mt-1 text-[9px] font-[500] leading-4 ${mutedTextClass}`}
+            >
+              A preview of the patterns
+              Momentuhm can identify after
+              enough work is completed.
+            </p>
+          </div>
+        </div>
+
+        <span
+          className={`shrink-0 rounded-full border px-2 py-1 text-[7.5px] font-[700] uppercase tracking-[0.08em] ${previewBadgeClass}`}
+        >
+          Sample data
+        </span>
+      </div>
+
+      {/* Summary metrics */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {TUTORIAL_INSIGHT_METRICS.map(
+          (metric, index) => (
+            <motion.div
+              key={metric.label}
+              initial={{
+                opacity: 0,
+                y: 6,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                delay:
+                  index * 0.07,
+              }}
+              className={`rounded-[10px] border px-3 py-3 ${elevatedPanelClass}`}
+            >
+              <p
+                className={`truncate text-[7.5px] font-[700] uppercase tracking-[0.07em] ${mutedTextClass}`}
+              >
+                {metric.label}
+              </p>
+
+              <p className="mt-2 truncate text-[17px] font-[730] leading-none tracking-[-0.04em]">
+                {metric.value}
+              </p>
+            </motion.div>
+          )
+        )}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {/* Category patterns */}
+        <div
+          className={`rounded-[12px] border p-3.5 ${elevatedPanelClass}`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10.5px] font-[700]">
+                Where effort goes
+              </p>
+
+              <p
+                className={`mt-0.5 text-[8px] font-[500] ${mutedTextClass}`}
+              >
+                Completed work by category
+              </p>
+            </div>
+
+            <LayoutGrid
+              size={14}
+              strokeWidth={1.7}
+              className={
+                mutedTextClass
+              }
+            />
+          </div>
+
+          <div className="mt-3 space-y-2.5">
+            {TUTORIAL_INSIGHT_CATEGORIES.map(
+              (
+                category,
+                index
+              ) => (
+                <motion.div
+                  key={
+                    category.label
+                  }
+                  initial={{
+                    opacity: 0,
+                    x: -6,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    x: 0,
+                  }}
+                  transition={{
+                    delay:
+                      0.12 +
+                      index * 0.07,
+                  }}
+                >
+                  <div className="mb-1 flex items-center justify-between gap-3">
+                    <span
+                      className={`truncate text-[8.5px] font-[600] ${secondaryTextClass}`}
+                    >
+                      {
+                        category.label
+                      }
+                    </span>
+
+                    <span
+                      className={`shrink-0 text-[8.5px] font-[700] ${secondaryTextClass}`}
+                    >
+                      {
+                        category.percentage
+                      }
+                      %
+                    </span>
+                  </div>
+
+                  <div
+                    className={`h-[5px] overflow-hidden rounded-full ${
+                      darkMode
+                        ? "bg-white/[0.09]"
+                        : "bg-[#E8EAED]"
+                    }`}
+                  >
+                    <motion.div
+                      initial={{
+                        width: 0,
+                      }}
+                      animate={{
+                        width: `${category.percentage}%`,
+                      }}
+                      transition={{
+                        duration: 0.65,
+                        delay:
+                          0.15 +
+                          index *
+                            0.07,
+                        ease: [
+                          0.16,
+                          1,
+                          0.3,
+                          1,
+                        ],
+                      }}
+                      className={`h-full rounded-full ${
+                        darkMode
+                          ? "bg-white/72"
+                          : "bg-[#3C4043]"
+                      }`}
+                    />
+                  </div>
+                </motion.div>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* Productivity timing */}
+        <div
+          className={`rounded-[12px] border p-3.5 ${elevatedPanelClass}`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10.5px] font-[700]">
+                Productivity rhythm
+              </p>
+
+              <p
+                className={`mt-0.5 text-[8px] font-[500] ${mutedTextClass}`}
+              >
+                Completions by time of day
+              </p>
+            </div>
+
+            <Clock3
+              size={14}
+              strokeWidth={1.7}
+              className={
+                mutedTextClass
+              }
+            />
+          </div>
+
+          <div className="mt-4 flex h-[82px] items-end justify-between gap-2">
+            {TUTORIAL_INSIGHT_RHYTHM.map(
+              (
+                bucket,
+                index
+              ) => (
+                <div
+                  key={bucket.label}
+                  className="flex min-w-0 flex-1 flex-col items-center justify-end"
+                >
+                  <div className="flex h-[64px] w-full items-end justify-center">
+                    <motion.div
+                      initial={{
+                        height: 0,
+                      }}
+                      animate={{
+                        height:
+                          bucket.height,
+                      }}
+                      transition={{
+                        duration: 0.65,
+                        delay:
+                          0.1 +
+                          index *
+                            0.06,
+                        ease: [
+                          0.16,
+                          1,
+                          0.3,
+                          1,
+                        ],
+                      }}
+                      className={`w-full max-w-[16px] rounded-t-[4px] ${
+                        index === 1
+                          ? darkMode
+                            ? "bg-violet-300"
+                            : "bg-violet-600"
+                          : darkMode
+                          ? "bg-white/22"
+                          : "bg-[#DADCE0]"
+                      }`}
+                    />
+                  </div>
+
+                  <span
+                    className={`mt-1 text-[6.5px] font-[650] ${mutedTextClass}`}
+                  >
+                    {bucket.label}
+                  </span>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* AI recommendation */}
+      <motion.div
+        initial={{
+          opacity: 0,
+          y: 6,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          delay: 0.42,
+        }}
+        className={`rounded-[12px] border p-3.5 ${
+          darkMode
+            ? "border-violet-300/15 bg-violet-300/[0.065]"
+            : "border-violet-200 bg-violet-50"
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          <div
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] border ${
+              darkMode
+                ? "border-violet-300/15 bg-violet-300/[0.08] text-violet-200"
+                : "border-violet-200 bg-white text-violet-700"
+            }`}
+          >
+            <Sparkles
+              size={14}
+              strokeWidth={1.8}
+            />
+          </div>
+
+          <div className="min-w-0">
+            <p
+              className={`text-[8px] font-[750] uppercase tracking-[0.1em] ${
+                darkMode
+                  ? "text-violet-200/60"
+                  : "text-violet-700/65"
+              }`}
+            >
+              AI recommendation
+            </p>
+
+            <p
+              className={`mt-1.5 text-[10px] font-[600] leading-4 ${
+                darkMode
+                  ? "text-violet-100/90"
+                  : "text-violet-900"
+              }`}
+            >
+              Protect late-morning time
+              for Major Projects. That is
+              where your strongest
+              completion pattern appears.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+
         case "help":
           return (
             <div
@@ -13570,13 +13984,14 @@ const displayedInsight =
                 </p>
   
                 <p
-                  className={`mx-auto mt-1.5 max-w-[320px] text-[9.5px] font-[500] leading-4 ${mutedTextClass}`}
-                >
-                  You have seen task assistance,
-                  Clipboard Assist, extraction, AI
-                  Focus, daily intelligence, and
-                  editable suggestions.
-                </p>
+  className={`mx-auto mt-1.5 max-w-[340px] text-[9.5px] font-[500] leading-4 ${mutedTextClass}`}
+>
+  You have seen task assistance,
+  Clipboard Assist, extraction, AI
+  Focus, daily intelligence,
+  editable suggestions, and
+  performance Insights.
+</p>
   
                 <div
                   className={`mx-auto mt-4 inline-flex h-9 items-center gap-2 rounded-full border px-4 text-[9.5px] font-[650] ${previewBadgeClass}`}
