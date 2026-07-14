@@ -10896,24 +10896,63 @@ title="Edit task status"
       };
     }, [selectedTask]);
 
-    const addStepToSelectedTask = () => {
-      const title = newStepTitle.trim();
-
-      if (!title) return;
-
-      setSelectedTask({
-        ...selectedTask,
+    const parseSubtaskList = (value: string) => {
+      return value
+        .split(/\r\n?|\n/)
+        .map((line) =>
+          line
+            .trim()
+            /*
+             * Removes common bullet and numbered-list prefixes:
+             * - Task
+             * • Task
+             * 1. Task
+             * 1) Task
+             * (1) Task
+             */
+            .replace(
+              /^(?:[-*•‣◦–—]\s*|\d+[.)]\s*|\(\d+\)\s*)/,
+              ""
+            )
+            /*
+             * Also supports checklist formatting:
+             * [ ] Task
+             * [x] Task
+             * - [ ] Task
+             */
+            .replace(/^\[[ xX]\]\s*/, "")
+            .trim()
+        )
+        .filter(Boolean);
+    };
+    
+    const appendSubtasksToSelectedTask = (
+      titles: string[]
+    ) => {
+      if (titles.length === 0) return;
+    
+      setSelectedTask((currentTask: any) => ({
+        ...currentTask,
         subtasks: [
-          ...getTaskSubtasks(selectedTask),
-          {
+          ...getTaskSubtasks(currentTask),
+          ...titles.map((title) => ({
             id: crypto.randomUUID(),
             title,
             completed: false,
             createdAt: new Date().toISOString(),
-          },
+          })),
         ],
-      });
-
+      }));
+    };
+    
+    const addStepToSelectedTask = () => {
+      const titles = parseSubtaskList(
+        newStepTitle
+      );
+    
+      if (titles.length === 0) return;
+    
+      appendSubtasksToSelectedTask(titles);
       setNewStepTitle("");
     };
 
@@ -11724,21 +11763,46 @@ title="Edit task status"
 
                 {/* Add subtask */}
                 <div className="mt-5 grid grid-cols-[minmax(0,1fr)_72px] gap-2">
-                  <input
-                    aria-label="New subtask"
-                    value={newStepTitle}
-                    onChange={(event) =>
-                      setNewStepTitle(event.target.value)
-                    }
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        addStepToSelectedTask();
-                      }
-                    }}
-                    placeholder="Add a subtask..."
-                    className={`h-11 rounded-[7px] ${fieldClass}`}
-                  />
+                <input
+  aria-label="New subtask"
+  value={newStepTitle}
+  onChange={(event) =>
+    setNewStepTitle(event.target.value)
+  }
+  onPaste={(event) => {
+    const pastedText =
+      event.clipboardData.getData("text");
+
+    const pastedSubtasks =
+      parseSubtaskList(pastedText);
+
+    /*
+     * A normal single-line paste continues behaving
+     * like an ordinary input paste.
+     */
+    if (pastedSubtasks.length < 2) {
+      return;
+    }
+
+    /*
+     * Prevent the browser from converting the full list
+     * into one input value.
+     */
+    event.preventDefault();
+
+    appendSubtasksToSelectedTask(
+      pastedSubtasks
+    );
+  }}
+  onKeyDown={(event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addStepToSelectedTask();
+    }
+  }}
+  placeholder="Add or paste a list of subtasks..."
+  className={`h-11 rounded-[7px] ${fieldClass}`}
+/>
 
                   <button
                     type="button"
