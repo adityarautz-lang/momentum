@@ -52,38 +52,80 @@
 
   type TaskTag = "follow-up";
 
-  type TaskStatus = "Active" | "Waiting" | "Done";
-  
-  const normalizeTaskStatus = (
-    status: unknown
-  ): TaskStatus => {
-    if (status === "Waiting" || status === "Someday") {
-      return "Waiting";
-    }
-  
-    if (status === "Done" || status === "Complete") {
-      return "Done";
-    }
-  
-    return "Active";
-  };
-  
-  const getTaskStatusLabel = (
-    status: unknown
-  ) => {
-    const normalizedStatus =
-      normalizeTaskStatus(status);
-  
-    if (normalizedStatus === "Waiting") {
-      return "Paused";
-    }
-  
-    if (normalizedStatus === "Done") {
-      return "Done";
-    }
-  
+  type TaskStatus =
+  | "Not started"
+  | "In progress"
+  | "Waiting"
+  | "Done";
+
+const normalizeTaskStatus = (
+  status: unknown
+): TaskStatus => {
+  const value = String(status || "")
+    .trim()
+    .toLowerCase();
+
+  if (
+    value === "done" ||
+    value === "complete" ||
+    value === "completed"
+  ) {
+    return "Done";
+  }
+
+  if (
+    value === "waiting" ||
+    value === "paused" ||
+    value === "someday"
+  ) {
+    return "Waiting";
+  }
+
+  if (
+    value === "in progress" ||
+    value === "in-progress" ||
+    value === "started"
+  ) {
     return "In progress";
-  };
+  }
+
+  /*
+   * Existing tasks used "Active" as their default value.
+   * Treat those legacy tasks as Not started.
+   */
+  return "Not started";
+};
+
+const getTaskStatusLabel = (
+  status: unknown
+) => {
+  const normalizedStatus =
+    normalizeTaskStatus(status);
+
+  if (normalizedStatus === "Waiting") {
+    return "Paused";
+  }
+
+  return normalizedStatus;
+};
+
+/*
+ * Completion and status are separate.
+ * When a completed task is restored, return it to the
+ * exact status it had before completion.
+ */
+const getRestorableTaskStatus = (
+  status: unknown
+): TaskStatus => {
+  if (
+    typeof status !== "string" ||
+    !status.trim()
+  ) {
+    return "Not started";
+  }
+
+  return normalizeTaskStatus(status);
+};
   
   type SortMode = "date" | "priority";
   type GroupMode = "none" | "category" | "priority" | "date";
@@ -1937,9 +1979,9 @@
                 whyThisMatters: task.whyThisMatters || whyThisMatters,
                 priority: suggestion.priority || task.priority,
                 suggestedDueDate: suggestion.suggestedDueDate || task.suggestedDueDate,
-                status: normalizeTaskStatus(
-                  suggestion.status || task.status
-                ),
+                status: task.completed
+  ? "Done"
+  : normalizeTaskStatus(task.status),
                 notes: suggestion.notes || task.notes || "",
                 tags: normalizeTaskTags(suggestion.tags || task.tags),
                 aiReason:
@@ -1988,9 +2030,11 @@
                 priority: suggestion.priority || taskToMove.priority,
                 suggestedDueDate:
                   suggestion.suggestedDueDate || taskToMove.suggestedDueDate,
-                  status: normalizeTaskStatus(
-                    suggestion.status || taskToMove.status
-                  ),
+                  status: taskToMove.completed
+  ? "Done"
+  : normalizeTaskStatus(
+      taskToMove.status
+    ),
                 notes: suggestion.notes || taskToMove.notes || "",
                 tags: normalizeTaskTags(suggestion.tags || taskToMove.tags),
                 aiReason:
@@ -2089,7 +2133,7 @@
         dueDate: undefined,
         suggestedDueDate,
         notes: "",
-        status: "Active",
+        status: "Not started",
         tags: [],
         subtasks: [],
         aiReason: initialWhy,
@@ -2312,7 +2356,7 @@
         dueDate: undefined,
         suggestedDueDate,
         notes: normalizedText === title ? "" : sourceText,
-        status: "Active",
+        status: "Not started",
         tags: [],
         subtasks: [],
         aiReason: "Added directly from copied text.",
@@ -2508,10 +2552,17 @@
     /* Toggle Task */
     /* ------------------------------------------------ */
 
-    const toggleTaskById = (taskId: string, e: React.MouseEvent) => {
-      const rect = e.currentTarget.getBoundingClientRect();
+    const toggleTaskById = (
+      taskId: string,
+      e: React.MouseEvent
+    ) => {
+      const rect =
+        e.currentTarget.getBoundingClientRect();
     
-      triggerFirecracker(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      triggerFirecracker(
+        rect.left + rect.width / 2,
+        rect.top + rect.height / 2
+      );
     
       const taskWithCategory = categories
         .flatMap((category) =>
@@ -2520,31 +2571,65 @@
             category: category.title,
           }))
         )
-        .find((task: any) => task.id === taskId);
+        .find(
+          (task: any) => task.id === taskId
+        );
     
       if (!taskWithCategory) return;
     
-      const isAlreadyCompleted = Boolean(taskWithCategory.completed);
+      const isAlreadyCompleted =
+        Boolean(taskWithCategory.completed);
+    
+      const completedAt =
+        isAlreadyCompleted
+          ? undefined
+          : new Date().toISOString();
     
       setCategories((prev) =>
         prev.map((category) => ({
           ...category,
-          tasks: category.tasks.map((task: any) =>
-            task.id === taskId
-              ? {
+          tasks: category.tasks.map(
+            (task: any) => {
+              if (task.id !== taskId) {
+                return task;
+              }
+    
+              if (isAlreadyCompleted) {
+                return {
                   ...task,
-                  completed: !isAlreadyCompleted,
-                  completedAt: isAlreadyCompleted
-                    ? undefined
-                    : new Date().toISOString(),
-                }
-              : task
+                  completed: false,
+                  completedAt: undefined,
+                  status:
+                    getRestorableTaskStatus(
+                      task.statusBeforeCompletion
+                    ),
+                  statusBeforeCompletion:
+                    undefined,
+                };
+              }
+    
+              return {
+                ...task,
+                completed: true,
+                completedAt,
+                statusBeforeCompletion:
+                  getRestorableTaskStatus(
+                    task.status
+                  ),
+                status: "Done",
+              };
+            }
           ),
         }))
       );
     
       if (isAlreadyCompleted) {
-        setCompletedToday((prev) => prev.filter((task) => task.id !== taskId));
+        setCompletedToday((prev) =>
+          prev.filter(
+            (task) => task.id !== taskId
+          )
+        );
+    
         anchorTaskListSoon();
         return;
       }
@@ -2553,11 +2638,18 @@
         {
           ...taskWithCategory,
           completed: true,
-          completedAt: new Date().toISOString(),
+          completedAt,
+          statusBeforeCompletion:
+            getRestorableTaskStatus(
+              taskWithCategory.status
+            ),
+          status: "Done",
         },
-        ...prev.filter((task) => task.id !== taskId),
+        ...prev.filter(
+          (task) => task.id !== taskId
+        ),
       ]);
-      
+    
       anchorCompletedSectionSoon();
     };
 
@@ -2565,23 +2657,37 @@
     /* Restore Completed Task */
     /* ------------------------------------------------ */
 
-    const restoreCompletedTask = (taskId: string) => {
+    const restoreCompletedTask = (
+      taskId: string
+    ) => {
       setCategories((prev) =>
         prev.map((category) => ({
           ...category,
-          tasks: category.tasks.map((task: any) =>
-            task.id === taskId
-              ? {
-                  ...task,
-                  completed: false,
-                  completedAt: undefined,
-                }
-              : task
+          tasks: category.tasks.map(
+            (task: any) =>
+              task.id === taskId
+                ? {
+                    ...task,
+                    completed: false,
+                    completedAt: undefined,
+                    status:
+                      getRestorableTaskStatus(
+                        task.statusBeforeCompletion
+                      ),
+                    statusBeforeCompletion:
+                      undefined,
+                  }
+                : task
           ),
         }))
       );
     
-      setCompletedToday((prev) => prev.filter((task) => task.id !== taskId));
+      setCompletedToday((prev) =>
+        prev.filter(
+          (task) => task.id !== taskId
+        )
+      );
+    
       anchorTaskListSoon();
     };
 
@@ -2630,48 +2736,8 @@
       setSelectedTask(null);
     };
     
-    const completeTaskFromModal = (taskId: string) => {
-      const taskWithCategory = categories
-        .flatMap((category) =>
-          category.tasks.map((task: any) => ({
-            ...task,
-            category: category.title,
-          }))
-        )
-        .find((task: any) => task.id === taskId);
-    
-      if (!taskWithCategory) return;
-    
-      const completedAt = new Date().toISOString();
-    
-      setCategories((prev) =>
-        prev.map((category) => ({
-          ...category,
-          tasks: category.tasks.map((task: any) =>
-            task.id === taskId
-              ? {
-                  ...task,
-                  completed: true,
-                  completedAt,
-                }
-              : task
-          ),
-        }))
-      );
-    
-      setCompletedToday((prev) => [
-        {
-          ...taskWithCategory,
-          completed: true,
-          completedAt,
-        },
-        ...prev.filter((task) => task.id !== taskId),
-      ]);
-    
-      setIsEditModalOpen(false);
-      setSelectedTask(null);
-      anchorCompletedSectionSoon();
-    };
+   
+   
 
     /* ------------------------------------------------ */
     /* Schedule Task */
@@ -2727,92 +2793,214 @@
       );
     };
 
-    const acceptAllSuggestedDates = () => {
-      setCategories((prev) =>
-        prev.map((category) => ({
-          ...category,
-          tasks: category.tasks.map((task: any) => {
-            if (task.dueDate || !task.suggestedDueDate) {
+   const acceptAllSuggestedDates = () => {
+  /*
+   * Close the modal first. Updating every suggested task
+   * in the following frame prevents the modal exit animation
+   * and the bulk task re-render from competing.
+   */
+  setIsSuggestionsModalOpen(false);
+
+  window.requestAnimationFrame(() => {
+    setCategories((prev) =>
+      prev.map((category) => {
+        let categoryChanged = false;
+
+        const updatedTasks = category.tasks.map(
+          (task: any) => {
+            if (
+              task.dueDate ||
+              !task.suggestedDueDate
+            ) {
               return task;
             }
-    
+
+            categoryChanged = true;
+
             return {
               ...task,
-              dueDate: task.suggestedDueDate,
-              suggestedDueDate: undefined,
-              aiReason: "You accepted Momentuhm's app-suggested date.",
+              dueDate:
+                task.suggestedDueDate,
+              suggestedDueDate:
+                undefined,
+              aiReason:
+                "You accepted Momentuhm's app-suggested date.",
               aiConfidence: 1,
             };
-          }),
-        }))
-      );
-    
-      setIsSuggestionsModalOpen(false);
-    };
+          }
+        );
+
+        /*
+         * Preserve the original category object when
+         * nothing inside it changed.
+         */
+        return categoryChanged
+          ? {
+              ...category,
+              tasks: updatedTasks,
+            }
+          : category;
+      })
+    );
+  });
+};
 
     /* ------------------------------------------------ */
     /* Save Task Changes */
     /* ------------------------------------------------ */
 
-    const saveTaskChanges = (updatedTask: any) => {
-      if (!updatedTask?.title?.trim()) return;
+    const saveTaskChanges = (
+      updatedTask: any
+    ) => {
+      if (!updatedTask?.title?.trim()) {
+        return;
+      }
+    
+      const title =
+        updatedTask.title.trim();
+    
+      const whyThisMatters = String(
+        updatedTask.whyThisMatters || ""
+      ).trim();
+    
+      const priority: Priority =
+        updatedTask.priority ||
+        inferPriority(title);
+    
+      /*
+ * Status does not determine whether the task is completed.
+ * Only the explicit completed boolean controls completion.
+ */
+const completed =
+Boolean(updatedTask.completed);
 
-      const title = updatedTask.title.trim();
-  const whyThisMatters = String(updatedTask.whyThisMatters || "").trim();
-  const priority: Priority = updatedTask.priority || inferPriority(title);
+const normalizedStatus = completed
+? "Done"
+: normalizeTaskStatus(
+    updatedTask.status
+  );
 
+const completedAt = completed
+? updatedTask.completedAt ||
+  new Date().toISOString()
+: undefined;
+
+const statusBeforeCompletion = completed
+? getRestorableTaskStatus(
+    updatedTask.statusBeforeCompletion
+  )
+: undefined;
+    
+      const savedTask = {
+        id: updatedTask.id,
+        title,
+        whyThisMatters,
+        priority,
+        dueDate:
+          updatedTask.dueDate || undefined,
+        suggestedDueDate:
+          updatedTask.dueDate
+            ? undefined
+            : enableAppSuggestions
+            ? suggestDueDate(title)
+            : undefined,
+        notes: updatedTask.notes || "",
+        status: normalizedStatus,
+        statusBeforeCompletion,
+        aiReason:
+          updatedTask.aiReason ||
+          (enableAppSuggestions
+            ? getAppSuggestionReason(
+                title,
+                priority
+              )
+            : "App suggestions are turned off."),
+        aiConfidence:
+          updatedTask.aiConfidence || 0.72,
+        tags: normalizeTaskTags(
+          updatedTask.tags
+        ),
+        subtasks:
+          getTaskSubtasks(updatedTask),
+        whySuggestions:
+          updatedTask.whySuggestions || [],
+        selectedWhyIndex:
+          updatedTask.selectedWhyIndex || 0,
+        completed,
+        completedAt,
+        pinned: Boolean(
+          updatedTask.pinned
+        ),
+        createdAt:
+          updatedTask.createdAt ||
+          new Date().toISOString(),
+      };
+    
       setCategories((prev) => {
-        const cleanedCategories = prev.map((category) => ({
-          ...category,
-          tasks: category.tasks.filter((task: any) => task.id !== updatedTask.id),
-        }));
-
-        return cleanedCategories.map((category) => {
-          if (category.title === updatedTask.category) {
-            return {
-              ...category,
-              tasks: [
-                {
-                  id: updatedTask.id,
-                  title,
-                  whyThisMatters,
-                  priority,
-                  dueDate: updatedTask.dueDate || undefined,
-                  suggestedDueDate: updatedTask.dueDate
-                  ? undefined
-                  : enableAppSuggestions
-                  ? suggestDueDate(title)
-                  : undefined,
-                  notes: updatedTask.notes || "",
-                  status: normalizeTaskStatus(
-                    updatedTask.status
-                  ),
-                  aiReason:
-                    updatedTask.aiReason ||
-                    (enableAppSuggestions
-                      ? getAppSuggestionReason(title, priority)
-                      : "App suggestions are turned off."),
-                  aiConfidence: updatedTask.aiConfidence || 0.72,
-                  tags: normalizeTaskTags(updatedTask.tags),
-                  subtasks: getTaskSubtasks(updatedTask),
-                  whySuggestions: updatedTask.whySuggestions || [],
-                  selectedWhyIndex: updatedTask.selectedWhyIndex || 0,
-                  completed: Boolean(updatedTask.completed),
-  completedAt: updatedTask.completedAt,
-  pinned: Boolean(updatedTask.pinned),
-  createdAt: updatedTask.createdAt || new Date().toISOString(),
-                },
-                ...category.tasks,
-              ],
-            };
+        const targetCategory =
+          updatedTask.category ||
+          prev[0]?.title;
+    
+        const cleanedCategories =
+          prev.map((category) => ({
+            ...category,
+            tasks: category.tasks.filter(
+              (task: any) =>
+                task.id !== updatedTask.id
+            ),
+          }));
+    
+        return cleanedCategories.map(
+          (category) => {
+            if (
+              category.title ===
+              targetCategory
+            ) {
+              return {
+                ...category,
+                tasks: [
+                  savedTask,
+                  ...category.tasks,
+                ],
+              };
+            }
+    
+            return category;
           }
-
-          return category;
-        });
+        );
       });
-
+    
+      if (completed) {
+        setCompletedToday((prev) => [
+          {
+            ...savedTask,
+            category:
+              updatedTask.category ||
+              categories[0]?.title ||
+              "No category",
+          },
+          ...prev.filter(
+            (task) =>
+              task.id !== updatedTask.id
+          ),
+        ]);
+      } else {
+        setCompletedToday((prev) =>
+          prev.filter(
+            (task) =>
+              task.id !== updatedTask.id
+          )
+        );
+      }
+    
       setIsEditModalOpen(false);
       setSelectedTask(null);
+    
+      if (completed) {
+        anchorCompletedSectionSoon();
+      } else {
+        anchorTaskListSoon();
+      }
     };
 
     /* ------------------------------------------------ */
@@ -3216,38 +3404,41 @@
           themeColor={themeColor}
         />
 
-  <AnimatePresence>
-    {showDueReminderPopup && todayTasks.length > 0 && (
+<AnimatePresence initial={false} mode="sync">
+  {showDueReminderPopup && todayTasks.length > 0 && (
     <DueTasksReminderPopup
-    tasks={todayTasks}
-    themeColor={themeColor}
-    darkMode={darkMode}
-    timeRemainingLabel={dayTimeRemaining.label}
-    onClose={closeDueReminderPopup}
-    onViewAll={viewDueReminderTasks}
-    onOpenTask={openDueReminderTask}
-  />
-    )}
+      key="due-tasks-reminder"
+      tasks={todayTasks}
+      themeColor={themeColor}
+      darkMode={darkMode}
+      timeRemainingLabel={dayTimeRemaining.label}
+      onClose={closeDueReminderPopup}
+      onViewAll={viewDueReminderTasks}
+      onOpenTask={openDueReminderTask}
+    />
+  )}
 
   {CLIPBOARD_ASSIST_ENABLED_FOR_TESTING &&
     showClipboardPrompt &&
     clipboardCandidate && (
       <ClipboardAssistPrompt
-    text={clipboardCandidate}
-    themeColor={themeColor}
-    darkMode={darkMode}
-    loading={clipboardExtractLoading}
-    error={clipboardExtractError}
-    extractedTasks={clipboardExtractedTasks}
-    onClose={dismissClipboardCandidate}
-    onAddAsIs={addClipboardCandidateAsTask}
-    onToggleTask={toggleClipboardExtractedTask}
-    onAddSelected={addSelectedClipboardExtractedTasks}
-  />
+        key="clipboard-assist"
+        text={clipboardCandidate}
+        themeColor={themeColor}
+        darkMode={darkMode}
+        loading={clipboardExtractLoading}
+        error={clipboardExtractError}
+        extractedTasks={clipboardExtractedTasks}
+        onClose={dismissClipboardCandidate}
+        onAddAsIs={addClipboardCandidateAsTask}
+        onToggleTask={toggleClipboardExtractedTask}
+        onAddSelected={addSelectedClipboardExtractedTasks}
+      />
     )}
 
   {isExtractModalOpen && (
     <ExtractTasksModal
+      key="extract-tasks"
       extractInput={extractInput}
       setExtractInput={setExtractInput}
       extractLoading={extractLoading}
@@ -3265,44 +3456,45 @@
     />
   )}
 
-    {isSuggestionsModalOpen && (
-      <SuggestionsReviewModal
-        tasks={suggestionReviewTasks}
-        darkMode={darkMode}
-        themeColor={themeColor}
-        glass={glass}
-        strongerGlass={strongerGlass}
-        border={border}
-        setIsSuggestionsModalOpen={setIsSuggestionsModalOpen}
-        acceptSuggestedDateById={acceptSuggestedDateById}
-        acceptAllSuggestedDates={acceptAllSuggestedDates}
-        setSelectedTask={setSelectedTask}
-        setIsEditModalOpen={setIsEditModalOpen}
-      />
-    )}
+  {isSuggestionsModalOpen && (
+    <SuggestionsReviewModal
+      key="suggestions-review"
+      tasks={suggestionReviewTasks}
+      darkMode={darkMode}
+      themeColor={themeColor}
+      glass={glass}
+      strongerGlass={strongerGlass}
+      border={border}
+      setIsSuggestionsModalOpen={setIsSuggestionsModalOpen}
+      acceptSuggestedDateById={acceptSuggestedDateById}
+      acceptAllSuggestedDates={acceptAllSuggestedDates}
+      setSelectedTask={setSelectedTask}
+      setIsEditModalOpen={setIsEditModalOpen}
+    />
+  )}
 
-    {isEditModalOpen && selectedTask && (
+  {isEditModalOpen && selectedTask && (
     <EditTaskModal
-    selectedTask={selectedTask}
-    setSelectedTask={setSelectedTask}
-    setIsEditModalOpen={setIsEditModalOpen}
-    saveTaskChanges={saveTaskChanges}
-    completeTaskFromModal={completeTaskFromModal}
-    deleteTaskEverywhere={deleteTaskEverywhere}
-    restoreCompletedTask={restoreCompletedTask}
-    categories={categories}
-    themeColor={themeColor}
-    darkMode={darkMode}
-    input={input}
-    modalSelect={modalSelect}
-    glass={glass}
-    strongerGlass={strongerGlass}
-    border={border}
-    manualFocusTaskIds={manualFocusTaskIds}
-    setManualFocusTaskIds={setManualFocusTaskIds}
-  />
-    )}
-  </AnimatePresence>
+      key="edit-task"
+      selectedTask={selectedTask}
+      setSelectedTask={setSelectedTask}
+      setIsEditModalOpen={setIsEditModalOpen}
+      saveTaskChanges={saveTaskChanges}
+      deleteTaskEverywhere={deleteTaskEverywhere}
+      restoreCompletedTask={restoreCompletedTask}
+      categories={categories}
+      themeColor={themeColor}
+      darkMode={darkMode}
+      input={input}
+      modalSelect={modalSelect}
+      glass={glass}
+      strongerGlass={strongerGlass}
+      border={border}
+      manualFocusTaskIds={manualFocusTaskIds}
+      setManualFocusTaskIds={setManualFocusTaskIds}
+    />
+  )}
+</AnimatePresence>
 
 
   <style jsx global>{`
@@ -4475,9 +4667,13 @@
                     ? darkMode
                       ? "border-amber-400/20 bg-amber-400/10 text-amber-300"
                       : "border-amber-200 bg-amber-50 text-amber-700"
+                    : normalizedStatus === "In progress"
+                    ? darkMode
+                      ? "border-blue-400/20 bg-blue-400/10 text-blue-300"
+                      : "border-blue-200 bg-blue-50 text-blue-700"
                     : darkMode
-                    ? "border-blue-400/20 bg-blue-400/10 text-blue-300"
-                    : "border-blue-200 bg-blue-50 text-blue-700";
+                    ? "border-white/[0.12] bg-white/[0.05] text-white/60"
+                    : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368]";
 
               return (
                 <div key={task.id} className="contents">
@@ -8273,8 +8469,11 @@ title="Edit task status"
     };
 
     const getStatusMeta = (task: any) => {
-      const status =
-        normalizeTaskStatus(task.status);
+      const status = normalizeTaskStatus(
+        task.completed
+          ? "Done"
+          : task.status
+      );
     
       if (status === "Done") {
         return {
@@ -8294,11 +8493,20 @@ title="Edit task status"
         };
       }
     
+      if (status === "In progress") {
+        return {
+          label: "In progress",
+          className: darkMode
+            ? "border-[#315577] bg-[#1D344A] text-[#8AB4F8]"
+            : "border-[#D2E3FC] bg-[#E8F0FE] text-[#1967D2]",
+        };
+      }
+    
       return {
-        label: "In progress",
+        label: "Not started",
         className: darkMode
-          ? "border-[#315577] bg-[#1D344A] text-[#8AB4F8]"
-          : "border-[#D2E3FC] bg-[#E8F0FE] text-[#1967D2]",
+          ? "border-white/[0.12] bg-white/[0.05] text-white/58"
+          : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368]",
       };
     };
 
@@ -10251,16 +10459,22 @@ title="Edit task status"
 
     return (
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{
-          duration: 0.18,
-          ease: [0.16, 1, 0.3, 1],
-        }}
-        onClick={closeModal}
-        className="fixed inset-0 z-[190] flex items-center justify-center bg-black/30 p-3 backdrop-blur-[3px] sm:p-6"
-      >
+      initial={{ opacity: 0 }}
+      animate={{
+        opacity: 1,
+        pointerEvents: "auto",
+      }}
+      exit={{
+        opacity: 0,
+        pointerEvents: "none",
+      }}
+      transition={{
+        duration: 0.18,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      onClick={closeModal}
+      className="fixed inset-0 z-[190] flex items-center justify-center bg-black/30 p-3 backdrop-blur-[3px] sm:p-6"
+    >
         <motion.div
           role="dialog"
           aria-modal="true"
@@ -10605,7 +10819,6 @@ title="Edit task status"
     setSelectedTask,
     setIsEditModalOpen,
     saveTaskChanges,
-    completeTaskFromModal,
     deleteTaskEverywhere,
     restoreCompletedTask,
     categories,
@@ -10615,7 +10828,8 @@ title="Edit task status"
   }: any) {
     const priorityOptions: Priority[] = ["Low", "Medium", "High"];
     const statusOptions: TaskStatus[] = [
-      "Active",
+      "Not started",
+      "In progress",
       "Waiting",
       "Done",
     ];
@@ -10930,7 +11144,18 @@ title="Edit task status"
     <button
       type="button"
       onClick={() =>
-        completeTaskFromModal(selectedTask.id)
+        saveTaskChanges({
+          ...selectedTask,
+          statusBeforeCompletion:
+            getRestorableTaskStatus(
+              selectedTask.status
+            ),
+          status: "Done",
+          completed: true,
+          completedAt:
+            selectedTask.completedAt ||
+            new Date().toISOString(),
+        })
       }
       className={`inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border bg-transparent px-3 text-[11px] font-[700] transition ${
         darkMode
@@ -11042,15 +11267,21 @@ title="Edit task status"
                       </legend>
 
                       <div
-                        className={`grid h-11 grid-cols-3 overflow-hidden rounded-[7px] border ${
+                        className={`grid h-11 grid-cols-4 overflow-hidden rounded-[7px] border ${
                           darkMode
                             ? "border-white/[0.24]"
                             : "border-[#A8A8A2]"
                         }`}
                       >
-                        {statusOptions.map((status) => {
+
+{statusOptions.map((status) => {
+  const currentStatus =
+    normalizeTaskStatus(
+      selectedTask.status
+    );
+
   const isActive =
-    normalizeTaskStatus(selectedTask.status) === status;
+    currentStatus === status;
 
   return (
     <button
@@ -11063,7 +11294,7 @@ title="Edit task status"
           status,
         })
       }
-      className={`border-r text-[11px] font-[700] transition last:border-r-0 ${dividerClass} ${
+      className={`border-r px-1 text-[9.5px] font-[700] leading-[12px] transition last:border-r-0 ${dividerClass} ${
         isActive
           ? darkMode
             ? "bg-white text-[#181818]"
@@ -11077,6 +11308,7 @@ title="Edit task status"
     </button>
   );
 })}
+
                       </div>
                     </fieldset>
                   </div>
