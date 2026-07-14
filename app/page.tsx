@@ -1154,7 +1154,18 @@ const getRestorableTaskStatus = (
     const { user, isLoaded: isUserLoaded } = useUser();
     const [categories, setCategories] = useState<Category[]>([]);
     const [archive, setArchive] = useState<any[]>([]);
-    const [completedToday, setCompletedToday] = useState<any[]>([]);
+
+/*
+ * Insights history is intentionally separate from Archive.
+ *
+ * Clearing the visible Archive list will not erase historical
+ * completion patterns, charts, streaks, or AI insights.
+ */
+const [insightsHistory, setInsightsHistory] =
+  useState<any[]>([]);
+
+const [completedToday, setCompletedToday] =
+  useState<any[]>([]);
     const [themeColor, setThemeColor] = useState(DEFAULT_THEME_COLOR);
     const [darkMode, setDarkMode] = useState(false);
   const [selectedView, setSelectedView] = useState("today");
@@ -1461,13 +1472,59 @@ const tutorialAutoOpenedForUserRef =
     
       const loadUserState = async () => {
         if (!user?.id) {
-        setCategories(initialCategories);
-        setSelectedCategory(initialCategories[0].title);
-        setThemeColor(DEFAULT_THEME_COLOR);
-        setHasCompletedTutorial(false);
-        setIsLoaded(true);
-        return;
-      }
+          setCategories(initialCategories);
+          setArchive([]);
+          setInsightsHistory([]);
+          setCompletedToday([]);
+          setManualFocusTaskIds([]);
+        
+          setSelectedCategory(
+            initialCategories[0].title
+          );
+        
+          setSelectedView("today");
+          setThemeColor(
+            DEFAULT_THEME_COLOR
+          );
+          setDarkMode(false);
+        
+          setTodayTaskSortMode(
+            "date"
+          );
+        
+          setTodayTaskGroupMode(
+            "none"
+          );
+        
+          setPriorityViewMode(
+            "list"
+          );
+        
+          setUpcomingViewMode(
+            "calendar"
+          );
+        
+          setEnableAppSuggestions(
+            true
+          );
+        
+          setEnableAutoPriority(
+            true
+          );
+        
+          setEnableClipboardAssist(
+            true
+          );
+        
+          setDayEndTime("18:00");
+          setUserRole("");
+          setHasCompletedTutorial(
+            false
+          );
+        
+          setIsLoaded(true);
+          return;
+        }
     
         const saved = await loadState(user.id);
     
@@ -1504,8 +1561,43 @@ const tutorialAutoOpenedForUserRef =
             parsed.hasCompletedTutorial ?? false
           );
           
-          setArchive(parsed.archive || []);
-          setCompletedToday(parsed.completedToday || []);
+          const loadedArchive =
+  Array.isArray(parsed.archive)
+    ? parsed.archive
+    : [];
+
+setArchive(loadedArchive);
+
+/*
+ * Migration support:
+ *
+ * Existing users will not yet have insightsHistory saved.
+ * In that case, seed it from their existing Archive once.
+ */
+/*
+ * Migration support:
+ *
+ * Older saved states may already contain an empty
+ * insightsHistory array from an earlier implementation.
+ *
+ * When Archive contains completed work but Insights is
+ * still empty, seed Insights from Archive.
+ */
+const loadedInsightsHistory =
+  Array.isArray(parsed.insightsHistory) &&
+  parsed.insightsHistory.length > 0
+    ? parsed.insightsHistory
+    : loadedArchive;
+
+setInsightsHistory(
+  loadedInsightsHistory
+);
+
+setCompletedToday(
+  Array.isArray(parsed.completedToday)
+    ? parsed.completedToday
+    : []
+);
           setDayEndTime(
             normalizeDayEndTime(parsed.dayEndTime)
           );
@@ -1519,9 +1611,54 @@ const tutorialAutoOpenedForUserRef =
           }
         } else {
           setCategories(initialCategories);
-          setSelectedCategory(initialCategories[0].title);
-          setThemeColor(DEFAULT_THEME_COLOR);
-          setHasCompletedTutorial(false);
+          setArchive([]);
+          setInsightsHistory([]);
+          setCompletedToday([]);
+          setManualFocusTaskIds([]);
+        
+          setSelectedCategory(
+            initialCategories[0].title
+          );
+        
+          setSelectedView("today");
+          setThemeColor(
+            DEFAULT_THEME_COLOR
+          );
+          setDarkMode(false);
+        
+          setTodayTaskSortMode(
+            "date"
+          );
+        
+          setTodayTaskGroupMode(
+            "none"
+          );
+        
+          setPriorityViewMode(
+            "list"
+          );
+        
+          setUpcomingViewMode(
+            "calendar"
+          );
+        
+          setEnableAppSuggestions(
+            true
+          );
+        
+          setEnableAutoPriority(
+            true
+          );
+        
+          setEnableClipboardAssist(
+            true
+          );
+        
+          setDayEndTime("18:00");
+          setUserRole("");
+          setHasCompletedTutorial(
+            false
+          );
         }
     
         setIsLoaded(true);
@@ -1633,11 +1770,22 @@ const tutorialAutoOpenedForUserRef =
                 : []
             );
     
-            setArchive(
-              Array.isArray(parsed.archive)
-                ? parsed.archive
-                : []
-            );
+            const refreshedArchive =
+            Array.isArray(parsed.archive)
+              ? parsed.archive
+              : [];
+          
+          setArchive(refreshedArchive);
+          
+          const refreshedInsightsHistory =
+  Array.isArray(parsed.insightsHistory) &&
+  parsed.insightsHistory.length > 0
+    ? parsed.insightsHistory
+    : refreshedArchive;
+
+setInsightsHistory(
+  refreshedInsightsHistory
+);
     
             setManualFocusTaskIds(
               Array.isArray(parsed.manualFocusTaskIds)
@@ -1668,72 +1816,80 @@ const tutorialAutoOpenedForUserRef =
       }
     };
 
-    /* ------------------------------------------------ */
-    /* Persist */
-    /* ------------------------------------------------ */
+ /* ------------------------------------------------ */
+/* Persist */
+/* ------------------------------------------------ */
 
-    useEffect(() => {
-      if (!isLoaded) return;
-    
-      if (!user?.id) return;
-    
-      const hasAnyUserData =
-        categories.some((category) => category.tasks.length > 0) ||
-        completedToday.length > 0 ||
-        archive.length > 0;
-    
-        if (
-          !hasAnyUserData &&
-          themeColor === DEFAULT_THEME_COLOR &&
-          darkMode === false &&
-          todayTaskSortMode === "date" &&
-          todayTaskGroupMode === "none" &&
-          enableAppSuggestions === true &&
-          enableAutoPriority === true &&
-          enableClipboardAssist === true &&
-          dayEndTime === "18:00" &&
-userRole === "" &&
-hasCompletedTutorial === false
-) return;
-    
-      void saveState(user.id, {
-        categories,
-        darkMode,
-        themeColor,
+useEffect(() => {
+  if (!isLoaded) return;
+  if (!user?.id) return;
+
+  /*
+   * Debounce persistence so loading, migrations,
+   * and rapid task edits do not create overlapping
+   * save requests.
+   */
+  const saveTimer = window.setTimeout(() => {
+    const persistState = async () => {
+      try {
+        await saveState(user.id, {
+          categories,
+          darkMode,
+          themeColor,
+          todayTaskSortMode,
+          todayTaskGroupMode,
+          priorityViewMode,
+          upcomingViewMode,
+          enableAppSuggestions,
+          enableAutoPriority,
+          enableClipboardAssist,
+          archive,
+          insightsHistory,
+          completedToday,
+          dayEndTime,
+          userRole,
+          manualFocusTaskIds,
+          hasCompletedTutorial,
+        } as any);
+      } catch (error) {
+        /*
+         * A temporary network or API failure should not
+         * crash the entire application.
+         */
+        console.error(
+          "Failed to save Momentuhm state:",
+          error
+        );
+      }
+    };
+
+    void persistState();
+  }, 500);
+
+  return () => {
+    window.clearTimeout(saveTimer);
+  };
+}, [
+  categories,
+  darkMode,
+  themeColor,
   todayTaskSortMode,
   todayTaskGroupMode,
   priorityViewMode,
   upcomingViewMode,
-        enableAppSuggestions,
-        enableAutoPriority,
-        enableClipboardAssist,
-        archive,
-        completedToday,
-        dayEndTime,
-        userRole,
-        manualFocusTaskIds,
-        hasCompletedTutorial,
-      } as any);
-    }, [
-      categories,
-      darkMode,
-      themeColor,
-  todayTaskSortMode,
-  todayTaskGroupMode,
-  priorityViewMode,
-  upcomingViewMode,
-      enableAppSuggestions,
-      enableAutoPriority,
-      enableClipboardAssist,
-      archive,
-      completedToday,
-      dayEndTime,
-      userRole,
-manualFocusTaskIds,
-hasCompletedTutorial,
-isLoaded,
-user?.id,
-    ]);
+  enableAppSuggestions,
+  enableAutoPriority,
+  enableClipboardAssist,
+  archive,
+  insightsHistory,
+  completedToday,
+  dayEndTime,
+  userRole,
+  manualFocusTaskIds,
+  hasCompletedTutorial,
+  isLoaded,
+  user?.id,
+]);
 
 
     /* ------------------------------------------------ */
@@ -3015,16 +3171,52 @@ if (!enableClipboardAssist) return;
       );
     };
 
-    const deleteTaskEverywhere = (taskId: string) => {
+    const deleteTaskEverywhere = (
+      taskId: string
+    ) => {
       setCategories((prev) =>
         prev.map((category) => ({
           ...category,
-          tasks: category.tasks.filter((task: any) => task.id !== taskId),
+          tasks: category.tasks.filter(
+            (task: any) =>
+              task.id !== taskId
+          ),
         }))
       );
     
-      setCompletedToday((prev) => prev.filter((task) => task.id !== taskId));
-      setArchive((prev) => prev.filter((task) => task.id !== taskId));
+      setCompletedToday((prev) =>
+        prev.filter(
+          (task) => task.id !== taskId
+        )
+      );
+    
+      setArchive((prev) =>
+        prev.filter(
+          (task) => task.id !== taskId
+        )
+      );
+    
+      /*
+       * A task may have multiple completion events
+       * inside Insights history.
+       *
+       * Remove every historical event connected to
+       * the permanently deleted source task.
+       */
+      setInsightsHistory((prev) =>
+        prev.filter((item: any) => {
+          const sourceTaskId = String(
+            item.sourceTaskId ||
+              item.id ||
+              ""
+          ).split(":")[0];
+    
+          return (
+            sourceTaskId !==
+            String(taskId)
+          );
+        })
+      );
     
       setIsEditModalOpen(false);
       setSelectedTask(null);
@@ -3302,18 +3494,149 @@ const statusBeforeCompletion = completed
     /* ------------------------------------------------ */
 
     const archiveCompletedToday = () => {
-      if (completedToday.length === 0) return;
+      if (completedToday.length === 0) {
+        return;
+      }
     
-      const completedIds = completedToday.map((task) => task.id);
+      const completedIds =
+        completedToday.map(
+          (task) => task.id
+        );
     
-      setArchive((prev) => [...completedToday, ...prev]);
+      /*
+       * These remain visible in Archive until the user clears it.
+       */
+      setArchive((previousArchive) => {
+        const existingIds = new Set(
+          previousArchive.map(
+            (task: any) => task.id
+          )
+        );
     
-      setCategories((prev) =>
-        prev.map((category) => ({
+        const newArchiveItems =
+          completedToday.filter(
+            (task) =>
+              !existingIds.has(task.id)
+          );
+    
+        return [
+          ...newArchiveItems,
+          ...previousArchive,
+        ];
+      });
+    
+      /*
+       * Keep a separate historical ledger for Insights.
+       *
+       * Only fields required for analytics and AI interpretation
+       * are retained here.
+       */
+   /*
+ * Store every completion as an independent historical event.
+ *
+ * The same task may be completed more than once in the future,
+ * particularly when recurring and routine tasks are introduced.
+ */
+const completedInsightItems =
+completedToday.map(
+  (task: any) => {
+    const completedAt =
+      task.completedAt ||
+      new Date().toISOString();
+
+    return {
+      /*
+       * Combining the source task ID and completion time
+       * creates a stable ID for this specific completion.
+       *
+       * It prevents duplicate insertion from a repeated click,
+       * while still allowing the same task to count again when
+       * completed at a different time.
+       */
+      id: `${String(
+        task.id
+      )}:${completedAt}`,
+
+      sourceTaskId: String(
+        task.id
+      ),
+
+      title: String(
+        task.title || ""
+      ),
+
+      category: String(
+        task.category ||
+          "No category"
+      ),
+
+      priority: String(
+        task.priority ||
+          "No priority"
+      ),
+
+      completedAt,
+
+      notes: String(
+        task.notes || ""
+      ),
+
+      whyThisMatters: String(
+        task.whyThisMatters || ""
+      ),
+
+      aiReason: String(
+        task.aiReason || ""
+      ),
+    };
+  }
+);
+
+setInsightsHistory(
+(previousHistory) => {
+  const existingEventIds =
+    new Set(
+      previousHistory.map(
+        (item: any) =>
+          String(item.id)
+      )
+    );
+
+  const newHistoryItems =
+    completedInsightItems.filter(
+      (item) =>
+        !existingEventIds.has(
+          String(item.id)
+        )
+    );
+
+  return [
+    ...newHistoryItems,
+    ...previousHistory,
+  ].sort(
+    (taskA, taskB) =>
+      new Date(
+        taskB.completedAt || 0
+      ).getTime() -
+      new Date(
+        taskA.completedAt || 0
+      ).getTime()
+  );
+}
+);
+    
+      
+    
+      setCategories((previous) =>
+        previous.map((category) => ({
           ...category,
-          tasks: category.tasks.filter(
-            (task: any) => !completedIds.includes(task.id)
-          ),
+          tasks:
+            category.tasks.filter(
+              (task: any) =>
+                !completedIds.includes(
+                  task.id
+                )
+            ),
         }))
       );
     
@@ -3321,25 +3644,42 @@ const statusBeforeCompletion = completed
     
       setArchiveToast(
         `${completedToday.length} completed item${
-          completedToday.length > 1 ? "s" : ""
+          completedToday.length > 1
+            ? "s"
+            : ""
         } archived`
       );
     
-      setTimeout(() => {
+      window.setTimeout(() => {
         setArchiveToast("");
       }, 2200);
     };
 
     const clearArchive = () => {
-      if (archive.length === 0) return;
-
-      const confirmed = window.confirm("Clear all archived items permanently?");
-      if (!confirmed) return;
-
+      if (archive.length === 0) {
+        return;
+      }
+    
+      const confirmed =
+        window.confirm(
+          "Clear all archived items? Your Insights history and analytics will be preserved."
+        );
+    
+      if (!confirmed) {
+        return;
+      }
+    
+      /*
+       * Only clear the visible Archive list.
+       * Do not clear insightsHistory.
+       */
       setArchive([]);
-      setArchiveToast("Archived items cleared");
-
-      setTimeout(() => {
+    
+      setArchiveToast(
+        "Archive cleared. Insights preserved."
+      );
+    
+      window.setTimeout(() => {
         setArchiveToast("");
       }, 2200);
     };
@@ -3349,30 +3689,72 @@ const statusBeforeCompletion = completed
     /* ------------------------------------------------ */
 
     const resetAppData = () => {
-      const confirmed = window.confirm(
-        "Reset all Momentuhm data? This will delete active tasks, completed tasks, and archived items."
+      const confirmed =
+        window.confirm(
+          "Reset all Momentuhm data? This will permanently delete active tasks, completed tasks, archived items, and Insights history."
+        );
+    
+      if (!confirmed) {
+        return;
+      }
+    
+      setCategories(
+        initialCategories
       );
-
-      if (!confirmed) return;
-
-      setCategories(initialCategories);
+    
       setArchive([]);
+      setInsightsHistory([]);
       setCompletedToday([]);
       setManualFocusTaskIds([]);
-      setSelectedCategory(initialCategories[0].title);
+    
+      setSelectedCategory(
+        initialCategories[0].title
+      );
+    
       setSelectedView("today");
-      setTodayTaskSortMode("date");
-      setTodayTaskGroupMode("none");
-      setThemeColor(DEFAULT_THEME_COLOR);
+    
+      setTodayTaskSortMode(
+        "date"
+      );
+    
+      setTodayTaskGroupMode(
+        "none"
+      );
+    
+      setPriorityViewMode(
+        "list"
+      );
+    
+      setUpcomingViewMode(
+        "calendar"
+      );
+    
+      setThemeColor(
+        DEFAULT_THEME_COLOR
+      );
+    
       setDarkMode(false);
-      
-      if (typeof window !== "undefined") {
-        window.localStorage.removeItem(MOBILE_GROUP_MODE_KEY);
+      setDayEndTime("18:00");
+      setUserRole("");
+    
+      if (
+        typeof window !==
+        "undefined"
+      ) {
+        window.localStorage.removeItem(
+          MOBILE_GROUP_MODE_KEY
+        );
+    
+        window.localStorage.removeItem(
+          "momentuhm-archive-ai-insight-v1"
+        );
       }
-
-      setArchiveToast("Momentuhm data reset");
-
-      setTimeout(() => {
+    
+      setArchiveToast(
+        "Momentuhm data reset"
+      );
+    
+      window.setTimeout(() => {
         setArchiveToast("");
       }, 2200);
     };
@@ -3421,6 +3803,18 @@ const statusBeforeCompletion = completed
       setCompletedToday((prev) =>
         prev.map((task) =>
           task.category === oldCategory.title
+            ? {
+                ...task,
+                category: newTitle,
+              }
+            : task
+        )
+      );
+
+      setInsightsHistory((previous) =>
+        previous.map((task) =>
+          task.category ===
+          oldCategory.title
             ? {
                 ...task,
                 category: newTitle,
@@ -3656,16 +4050,25 @@ const statusBeforeCompletion = completed
                 />
               )}
 
-              {selectedView === "archive" && (
-              <ArchiveView
-              archive={archive}
-              clearArchive={clearArchive}
-              glass={glass}
-              strongerGlass={strongerGlass}
-              border={border}
-              darkMode={darkMode}
-            />
-              )}
+{selectedView === "archive" && (
+  <ArchiveView
+    key="archive-view"
+    mode="archive"
+    archive={archive}
+    clearArchive={clearArchive}
+    darkMode={darkMode}
+  />
+)}
+
+{selectedView === "insights" && (
+  <ArchiveView
+    key="insights-view"
+    mode="insights"
+    archive={insightsHistory}
+    clearArchive={clearArchive}
+    darkMode={darkMode}
+  />
+)}
 
               {selectedView === "categories" && (
                 <CategoriesView
@@ -5411,237 +5814,1225 @@ title="Edit task status"
     );
   }
 
+ 
   function ArchiveView({
     archive,
     clearArchive,
     darkMode,
-  }: any) {
-    const [groupBy, setGroupBy] = useState<
-      "date" | "priority"
-    >("date");
-
-    const getArchiveDate = (task: any) => {
+    mode = "archive",
+  }: {
+    archive: any[];
+    clearArchive: () => void;
+    darkMode: boolean;
+    mode?: "archive" | "insights";
+  }) {
+    type ArchiveAIInsight = {
+      headline: string;
+      summary: string;
+      recommendation: string;
+    };
+  
+    const isArchiveMode =
+      mode === "archive";
+  
+    const isInsightsMode =
+      mode === "insights";
+  
+    const [groupBy, setGroupBy] =
+      useState<"date" | "priority">(
+        "date"
+      );
+  
+    const [
+      aiInsight,
+      setAiInsight,
+    ] =
+      useState<ArchiveAIInsight | null>(
+        null
+      );
+  
+    const [
+      aiInsightLoading,
+      setAiInsightLoading,
+    ] = useState(false);
+  
+    const [
+      aiInsightError,
+      setAiInsightError,
+    ] = useState("");
+  
+    const safeArchive = useMemo(
+      () =>
+        Array.isArray(archive)
+          ? archive
+          : [],
+      [archive]
+    );
+  
+    const getArchiveDate = (
+      task: any
+    ) => {
       const rawDate =
         task.completedAt ||
         task.archivedAt ||
         task.createdAt;
-
+  
       if (!rawDate) return null;
-
+  
       const date = new Date(rawDate);
-
+  
       return Number.isNaN(date.getTime())
         ? null
         : date;
     };
-
-    const getLocalDateKey = (date: Date) => {
+  
+    const getLocalDateKey = (
+      date: Date
+    ) => {
       const year = date.getFullYear();
+  
       const month = String(
         date.getMonth() + 1
       ).padStart(2, "0");
-      const day = String(date.getDate()).padStart(
-        2,
-        "0"
-      );
-
+  
+      const day = String(
+        date.getDate()
+      ).padStart(2, "0");
+  
       return `${year}-${month}-${day}`;
     };
-
-    const getDateGroupLabel = (date: Date) => {
+  
+    const getDateGroupLabel = (
+      date: Date
+    ) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
-      const comparisonDate = new Date(date);
-      comparisonDate.setHours(0, 0, 0, 0);
-
-      const differenceInDays = Math.round(
-        (today.getTime() -
-          comparisonDate.getTime()) /
-          (1000 * 60 * 60 * 24)
+  
+      const comparisonDate =
+        new Date(date);
+  
+      comparisonDate.setHours(
+        0,
+        0,
+        0,
+        0
       );
-
+  
+      const differenceInDays =
+        Math.round(
+          (today.getTime() -
+            comparisonDate.getTime()) /
+            (1000 * 60 * 60 * 24)
+        );
+  
       if (differenceInDays === 0) {
         return "Today";
       }
-
+  
       if (differenceInDays === 1) {
         return "Yesterday";
       }
-
-      return date.toLocaleDateString(undefined, {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year:
-          date.getFullYear() !==
-          today.getFullYear()
-            ? "numeric"
-            : undefined,
-      });
+  
+      return date.toLocaleDateString(
+        undefined,
+        {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year:
+            date.getFullYear() !==
+            today.getFullYear()
+              ? "numeric"
+              : undefined,
+        }
+      );
     };
-
-    const archiveStats = useMemo(() => {
+  
+    const analytics = useMemo(() => {
+      const totalClosed =
+        safeArchive.length;
+  
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
+  
       /*
-      * Includes today and the previous six days.
-      * This avoids ambiguity around calendar weeks.
-      */
-      const sevenDaysAgo = new Date(today);
+       * Includes today and the previous
+       * six calendar days.
+       */
+      const sevenDaysAgo =
+        new Date(today);
+  
       sevenDaysAgo.setDate(
         sevenDaysAgo.getDate() - 6
       );
+  
+      const closedLastSevenDays =
+        safeArchive.filter(
+          (task: any) => {
+            const date =
+              getArchiveDate(task);
+  
+            return Boolean(
+              date &&
+                date >= sevenDaysAgo
+            );
+          }
+        ).length;
+  
+      /*
+       * Category distribution.
+       */
+      const categoryCounts =
+  safeArchive.reduce<
+    Record<string, number>
+  >(
+    (
+      counts,
+      task: any
+    ) => {
+      const category =
+        String(
+          task.category ||
+            "No category"
+        ).trim() ||
+        "No category";
 
-      const itemsClosedLastSevenDays =
-        archive.filter((task: any) => {
-          const completedDate =
-            getArchiveDate(task);
+      counts[category] =
+        (counts[category] ?? 0) + 1;
 
-          return (
-            completedDate &&
-            completedDate >= sevenDaysAgo
+      return counts;
+    },
+    {}
+  );
+
+const sortedCategories:
+  Array<{
+    label: string;
+    count: number;
+  }> = Object.entries(
+  categoryCounts
+)
+  .map(
+    ([label, count]) => ({
+      label,
+      count: Number(count),
+    })
+  )
+  .sort(
+    (a, b) =>
+      b.count - a.count
+  );
+  
+      /*
+       * Show the strongest four categories
+       * and combine the remainder as Other.
+       */
+      const strongestCategories =
+        sortedCategories.slice(0, 4);
+  
+      const otherCategoryCount =
+        sortedCategories
+          .slice(4)
+          .reduce(
+            (sum, item) =>
+              sum + item.count,
+            0
           );
-        }).length;
-
-        const categoryCounts: Record<string, number> = (
-          Array.isArray(archive) ? archive : []
-        ).reduce(
-          (
-            counts: Record<string, number>,
-            task: any
-          ) => {
-            const category =
-              task.category || "No category";
-        
-            counts[category] =
-              (counts[category] || 0) + 1;
-        
-            return counts;
-          },
-          {} as Record<string, number>
+  
+      const categoryItems =
+        otherCategoryCount > 0
+          ? [
+              ...strongestCategories,
+              {
+                label: "Other",
+                count:
+                  otherCategoryCount,
+              },
+            ]
+          : strongestCategories;
+  
+      const categoryPalette = [
+        "#22C55E",
+        "#3B82F6",
+        "#8B5CF6",
+        "#F97316",
+        "#EAB308",
+      ];
+  
+      const categoryBreakdown =
+        categoryItems.map(
+          (item, index) => ({
+            ...item,
+            percentage:
+              totalClosed === 0
+                ? 0
+                : Math.round(
+                    (item.count /
+                      totalClosed) *
+                      100
+                  ),
+            precisePercentage:
+              totalClosed === 0
+                ? 0
+                : (item.count /
+                    totalClosed) *
+                  100,
+            color:
+              categoryPalette[
+                index %
+                  categoryPalette.length
+              ],
+          })
         );
-        
-        const topCategoryEntry = (
-          Object.entries(categoryCounts) as Array<
-            [string, number]
-          >
-        ).sort(
-          ([, countA], [, countB]) =>
-            countB - countA
-        )[0];
-
-      return {
-        totalClosed: archive.length,
-        itemsClosedLastSevenDays,
-        averagePerDay:
-          itemsClosedLastSevenDays === 0
-            ? "0.0"
-            : (
-                itemsClosedLastSevenDays / 7
-              ).toFixed(1),
-        topCategory:
-          topCategoryEntry?.[0] || "—",
-      };
-    }, [archive]);
-
-    const groupedArchive = useMemo(() => {
-      const sortedArchive = [...archive].sort(
-        (a: any, b: any) => {
-          const dateA = getArchiveDate(a);
-          const dateB = getArchiveDate(b);
-
-          return (
-            (dateB?.getTime() || 0) -
-            (dateA?.getTime() || 0)
-          );
+  
+      let donutCursor = 0;
+  
+      const donutSegments =
+        categoryBreakdown.map(
+          (item) => {
+            const start =
+              donutCursor;
+  
+            donutCursor +=
+              item.precisePercentage;
+  
+            return `${item.color} ${start}% ${donutCursor}%`;
+          }
+        );
+  
+      const donutBackground =
+        donutSegments.length > 0
+          ? `conic-gradient(${donutSegments.join(
+              ", "
+            )})`
+          : darkMode
+          ? "conic-gradient(rgba(255,255,255,0.10) 0 100%)"
+          : "conic-gradient(#E3E5E8 0 100%)";
+  
+      /*
+       * Task-type analysis.
+       * These are execution patterns rather
+       * than user-created categories.
+       */
+      const taskTypeDefinitions = [
+        {
+          label:
+            "Admin / Operations",
+          keywords: [
+            "pay",
+            "payment",
+            "invoice",
+            "passport",
+            "kyc",
+            "form",
+            "application",
+            "document",
+            "submit",
+            "tax",
+            "ticket",
+            "booking",
+            "book ",
+            "schedule",
+            "renew",
+            "verification",
+          ],
+          color: "#22C55E",
+        },
+        {
+          label: "Communication",
+          keywords: [
+            "email",
+            "call",
+            "message",
+            "reply",
+            "respond",
+            "follow up",
+            "follow-up",
+            "meeting",
+            "confirm",
+            "send",
+            "ask ",
+            "reach out",
+          ],
+          color: "#3B82F6",
+        },
+        {
+          label: "Planning",
+          keywords: [
+            "plan",
+            "planning",
+            "review",
+            "strategy",
+            "estimate",
+            "research",
+            "grooming",
+            "design",
+            "roadmap",
+            "outline",
+          ],
+          color: "#8B5CF6",
+        },
+        {
+          label: "Preparation",
+          keywords: [
+            "prepare",
+            "prep",
+            "draft",
+            "readiness",
+            "organize",
+            "create",
+            "build",
+            "complete",
+          ],
+          color: "#F97316",
+        },
+        {
+          label: "Learning",
+          keywords: [
+            "learn",
+            "training",
+            "course",
+            "watch",
+            "read",
+            "study",
+            "practice",
+          ],
+          color: "#EAB308",
+        },
+      ];
+  
+      const taskTypeCounts:
+        Record<string, number> = {};
+  
+      safeArchive.forEach(
+        (task: any) => {
+          const searchableText = [
+            task.title,
+            task.notes,
+            task.whyThisMatters,
+            task.aiReason,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+  
+          const matchedType =
+            taskTypeDefinitions.find(
+              (definition) =>
+                definition.keywords.some(
+                  (keyword) =>
+                    searchableText.includes(
+                      keyword
+                    )
+                )
+            );
+  
+          const typeLabel =
+            matchedType?.label ||
+            "General execution";
+  
+          taskTypeCounts[typeLabel] =
+            (taskTypeCounts[
+              typeLabel
+            ] || 0) + 1;
         }
       );
+  
+      const taskTypeBreakdown =
+        Object.entries(
+          taskTypeCounts
+        )
+          .map(
+            ([label, count]) => {
+              const definition =
+                taskTypeDefinitions.find(
+                  (item) =>
+                    item.label === label
+                );
+  
+              return {
+                label,
+                count,
+                percentage:
+                  totalClosed === 0
+                    ? 0
+                    : Math.round(
+                        (count /
+                          totalClosed) *
+                          100
+                      ),
+                color:
+                  definition?.color ||
+                  "#64748B",
+              };
+            }
+          )
+          .sort(
+            (a, b) =>
+              b.count - a.count
+          )
+          .slice(0, 5);
+  
+      /*
+       * Completion rhythm.
+       */
+      const productivityBuckets = [
+        {
+          label: "6AM",
+          friendlyLabel:
+            "early morning",
+          count: 0,
+        },
+        {
+          label: "9AM",
+          friendlyLabel:
+            "late morning",
+          count: 0,
+        },
+        {
+          label: "12PM",
+          friendlyLabel: "midday",
+          count: 0,
+        },
+        {
+          label: "3PM",
+          friendlyLabel:
+            "the afternoon",
+          count: 0,
+        },
+        {
+          label: "6PM",
+          friendlyLabel:
+            "early evening",
+          count: 0,
+        },
+        {
+          label: "9PM",
+          friendlyLabel:
+            "late evening",
+          count: 0,
+        },
+      ];
+  
+      safeArchive.forEach(
+        (task: any) => {
+          const completedDate =
+            getArchiveDate(task);
+  
+          if (!completedDate) return;
+  
+          const hour =
+            completedDate.getHours();
+  
+          let bucketIndex = 5;
+  
+          if (
+            hour >= 5 &&
+            hour <= 8
+          ) {
+            bucketIndex = 0;
+          } else if (
+            hour >= 9 &&
+            hour <= 11
+          ) {
+            bucketIndex = 1;
+          } else if (
+            hour >= 12 &&
+            hour <= 14
+          ) {
+            bucketIndex = 2;
+          } else if (
+            hour >= 15 &&
+            hour <= 17
+          ) {
+            bucketIndex = 3;
+          } else if (
+            hour >= 18 &&
+            hour <= 20
+          ) {
+            bucketIndex = 4;
+          }
+  
+          productivityBuckets[
+            bucketIndex
+          ].count += 1;
+        }
+      );
+  
+      const peakProductivity =
+        [...productivityBuckets].sort(
+          (a, b) =>
+            b.count - a.count
+        )[0];
+  
+      /*
+       * Build the line-chart coordinates.
+       */
+      const chartWidth = 360;
+      const chartTop = 14;
+      const chartBottom = 112;
+  
+      const maximumBucketCount =
+        Math.max(
+          1,
+          ...productivityBuckets.map(
+            (item) => item.count
+          )
+        );
+  
+      const productivityPoints =
+        productivityBuckets.map(
+          (bucket, index) => {
+            const x =
+              15 +
+              index *
+                ((chartWidth - 30) /
+                  Math.max(
+                    1,
+                    productivityBuckets.length -
+                      1
+                  ));
+  
+            const y =
+              chartBottom -
+              (bucket.count /
+                maximumBucketCount) *
+                (chartBottom -
+                  chartTop);
+  
+            return {
+              x,
+              y,
+              ...bucket,
+            };
+          }
+        );
+  
+      const productivityPath =
+        productivityPoints
+          .map(
+            (point, index) =>
+              `${
+                index === 0
+                  ? "M"
+                  : "L"
+              } ${point.x} ${point.y}`
+          )
+          .join(" ");
+  
+      const productivityAreaPath =
+        productivityPoints.length > 0
+          ? `${productivityPath} L ${
+              productivityPoints[
+                productivityPoints.length -
+                  1
+              ].x
+            } ${chartBottom} L ${
+              productivityPoints[0].x
+            } ${chartBottom} Z`
+          : "";
+  
+      /*
+       * Completion streaks.
+       */
+      const completedDateKeys =
+        Array.from(
+          new Set(
+            safeArchive
+              .map((task: any) => {
+                const date =
+                  getArchiveDate(task);
+  
+                return date
+                  ? getLocalDateKey(date)
+                  : null;
+              })
+              .filter(Boolean) as string[]
+          )
+        ).sort();
+  
+      let longestStreak = 0;
+      let runningStreak = 0;
+      let previousDate:
+        | Date
+        | null = null;
+  
+      completedDateKeys.forEach(
+        (dateKey) => {
+          const date = new Date(
+            `${dateKey}T00:00:00`
+          );
+  
+          if (!previousDate) {
+            runningStreak = 1;
+          } else {
+            const expectedDate =
+              new Date(previousDate);
+  
+            expectedDate.setDate(
+              expectedDate.getDate() + 1
+            );
+  
+            runningStreak =
+              getLocalDateKey(
+                expectedDate
+              ) === dateKey
+                ? runningStreak + 1
+                : 1;
+          }
+  
+          longestStreak = Math.max(
+            longestStreak,
+            runningStreak
+          );
+  
+          previousDate = date;
+        }
+      );
+  
+      const completedDateSet =
+        new Set(completedDateKeys);
+  
+      const streakCursor =
+        new Date(today);
+  
+      /*
+       * A streak remains current when the
+       * most recent completion was yesterday.
+       */
+      if (
+        !completedDateSet.has(
+          getLocalDateKey(
+            streakCursor
+          )
+        )
+      ) {
+        streakCursor.setDate(
+          streakCursor.getDate() - 1
+        );
+      }
+  
+      let currentStreak = 0;
+  
+      while (
+        completedDateSet.has(
+          getLocalDateKey(
+            streakCursor
+          )
+        )
+      ) {
+        currentStreak += 1;
+  
+        streakCursor.setDate(
+          streakCursor.getDate() - 1
+        );
+      }
+  
+      return {
+        totalClosed,
+        closedLastSevenDays,
+        averagePerDay:
+          closedLastSevenDays === 0
+            ? "0.0"
+            : (
+                closedLastSevenDays / 7
+              ).toFixed(1),
+        topCategory:
+          categoryBreakdown[0]
+            ?.label || "—",
+        topCategoryPercentage:
+          categoryBreakdown[0]
+            ?.percentage || 0,
+        categoryBreakdown,
+        donutBackground,
+        taskTypeBreakdown,
+        topTaskType:
+          taskTypeBreakdown[0]
+            ?.label ||
+          "General execution",
+        productivityBuckets,
+        productivityPoints,
+        productivityPath,
+        productivityAreaPath,
+        peakProductivityLabel:
+          peakProductivity
+            ?.friendlyLabel ||
+          "your working day",
+        currentStreak,
+        longestStreak,
+        activeCompletionDays:
+          completedDateKeys.length,
+      };
+    }, [safeArchive, darkMode]);
+  
+    /*
+     * Group the history beneath the
+     * analytics section.
+     */
+    const groupedArchive = useMemo(
+      () => {
+        const sortedArchive = [
+          ...safeArchive,
+        ].sort(
+          (a: any, b: any) => {
+            const dateA =
+              getArchiveDate(a);
+  
+            const dateB =
+              getArchiveDate(b);
+  
+            return (
+              (dateB?.getTime() ||
+                0) -
+              (dateA?.getTime() ||
+                0)
+            );
+          }
+        );
+  
+        if (
+          groupBy === "priority"
+        ) {
+          const priorityOrder = [
+            "High",
+            "Medium",
+            "Low",
+            "No priority",
+          ];
+  
+          return priorityOrder
+            .map((priority) => {
+              const items =
+                sortedArchive.filter(
+                  (task: any) => {
+                    const taskPriority =
+                      task.priority ||
+                      "No priority";
+  
+                    return (
+                      taskPriority ===
+                      priority
+                    );
+                  }
+                );
+  
+              return {
+                key: `priority:${priority}`,
+                title: priority,
+                items,
+              };
+            })
+            .filter(
+              (group) =>
+                group.items.length > 0
+            );
+        }
+  
+        const dateGroups = new Map<
+          string,
+          {
+            key: string;
+            title: string;
+            items: any[];
+          }
+        >();
+  
+        sortedArchive.forEach(
+          (task: any) => {
+            const completedDate =
+              getArchiveDate(task);
+  
+            const key = completedDate
+              ? getLocalDateKey(
+                  completedDate
+                )
+              : "unknown-date";
+  
+            const title = completedDate
+              ? getDateGroupLabel(
+                  completedDate
+                )
+              : "Date unavailable";
+  
+            if (
+              !dateGroups.has(key)
+            ) {
+              dateGroups.set(key, {
+                key: `date:${key}`,
+                title,
+                items: [],
+              });
+            }
+  
+            dateGroups
+              .get(key)
+              ?.items.push(task);
+          }
+        );
+  
+        return Array.from(
+          dateGroups.values()
+        );
+      },
+      [safeArchive, groupBy]
+    );
+  
+    /*
+     * Create a compact signature so the AI
+     * is called only when archived work changes.
+     */
+    const archiveSignature =
+      useMemo(() => {
+        const signatureSource =
+          safeArchive
+            .map((task: any) =>
+              [
+                task.id,
+                task.title,
+                task.category,
+                task.completedAt,
+              ].join(":")
+            )
+            .sort()
+            .join("|");
+  
+        let hash = 2166136261;
+  
+        for (
+          let index = 0;
+          index <
+          signatureSource.length;
+          index += 1
+        ) {
+          hash ^=
+            signatureSource.charCodeAt(
+              index
+            );
+  
+          hash = Math.imul(
+            hash,
+            16777619
+          );
+        }
+  
+        return `${safeArchive.length}-${(
+          hash >>> 0
+        ).toString(36)}`;
+      }, [safeArchive]);
+  
+    const archiveInsightPayload =
+      useMemo(
+        () => ({
+          totalClosed:
+            analytics.totalClosed,
+          closedLastSevenDays:
+            analytics.closedLastSevenDays,
+          averagePerDay:
+            analytics.averagePerDay,
+          topCategory:
+            analytics.topCategory,
+          categoryBreakdown:
+            analytics.categoryBreakdown.map(
+              (item) => ({
+                label: item.label,
+                count: item.count,
+                percentage:
+                  item.percentage,
+              })
+            ),
+          taskTypeBreakdown:
+            analytics.taskTypeBreakdown.map(
+              (item) => ({
+                label: item.label,
+                count: item.count,
+                percentage:
+                  item.percentage,
+              })
+            ),
+          productivityRhythm:
+            analytics.productivityBuckets.map(
+              (item) => ({
+                label: item.label,
+                count: item.count,
+              })
+            ),
+          peakProductivityPeriod:
+            analytics.peakProductivityLabel,
+          currentStreak:
+            analytics.currentStreak,
+          longestStreak:
+            analytics.longestStreak,
+          recentTasks: safeArchive
+            .slice(0, 40)
+            .map((task: any) => ({
+              title:
+                task.title || "",
+              category:
+                task.category ||
+                "No category",
+              priority:
+                task.priority ||
+                "No priority",
+              completedAt:
+                task.completedAt ||
+                null,
+            })),
+        }),
+        [analytics, safeArchive]
+      );
+  
+   /*
+ * Load AI interpretation only while the
+ * dedicated Insights view is open.
+ *
+ * Archive remains a lightweight historical list
+ * and does not trigger an AI request.
+ */
+useEffect(() => {
+  const cacheKey =
+    "momentuhm-archive-ai-insight-v1";
 
-      if (groupBy === "priority") {
-        const priorityOrder = [
-          "High",
-          "Medium",
-          "Low",
-          "No priority",
-        ];
+  if (!isInsightsMode) {
+    return;
+  }
 
-        return priorityOrder
-          .map((priority) => {
-            const items = sortedArchive.filter(
-              (task: any) => {
-                const taskPriority =
-                  task.priority || "No priority";
+  if (safeArchive.length < 5) {
+    setAiInsight(null);
+    setAiInsightLoading(false);
+    setAiInsightError("");
+    return;
+  }
 
-                return taskPriority === priority;
+  try {
+    const cachedValue =
+      localStorage.getItem(
+        cacheKey
+      );
+
+    if (cachedValue) {
+      const parsedCache =
+        JSON.parse(cachedValue);
+
+      if (
+        parsedCache?.signature ===
+          archiveSignature &&
+        parsedCache?.insight
+      ) {
+        setAiInsight(
+          parsedCache.insight
+        );
+
+        setAiInsightLoading(
+          false
+        );
+
+        setAiInsightError("");
+        return;
+      }
+    }
+  } catch {
+    localStorage.removeItem(
+      cacheKey
+    );
+  }
+
+  const controller =
+    new AbortController();
+
+  const timer =
+    window.setTimeout(
+      async () => {
+        setAiInsightLoading(
+          true
+        );
+
+        setAiInsightError("");
+
+        try {
+          const response =
+            await fetch(
+              "/api/archive-insights",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+                body: JSON.stringify(
+                  archiveInsightPayload
+                ),
+                signal:
+                  controller.signal,
               }
             );
 
-            return {
-              key: `priority:${priority}`,
-              title: priority,
-              items,
-            };
-          })
-          .filter((group) => group.items.length > 0);
+          const data =
+            await response.json();
+
+          if (!response.ok) {
+            throw new Error(
+              data?.error ||
+                "Could not create archive insight."
+            );
+          }
+
+          const nextInsight =
+            data?.insight;
+
+          if (
+            !nextInsight?.headline ||
+            !nextInsight?.summary ||
+            !nextInsight?.recommendation
+          ) {
+            throw new Error(
+              "The archive insight was incomplete."
+            );
+          }
+
+          setAiInsight(
+            nextInsight
+          );
+
+          localStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              signature:
+                archiveSignature,
+              insight:
+                nextInsight,
+              generatedAt:
+                new Date().toISOString(),
+            })
+          );
+        } catch (error) {
+          if (
+            controller.signal
+              .aborted
+          ) {
+            return;
+          }
+
+          console.error(
+            "Archive AI insight failed:",
+            error
+          );
+
+          setAiInsightError(
+            "AI interpretation is temporarily unavailable. Your calculated analytics are still shown."
+          );
+        } finally {
+          if (
+            !controller.signal
+              .aborted
+          ) {
+            setAiInsightLoading(
+              false
+            );
+          }
+        }
+      },
+      700
+    );
+
+  return () => {
+    controller.abort();
+    window.clearTimeout(timer);
+  };
+}, [
+  isInsightsMode,
+  archiveSignature,
+  archiveInsightPayload,
+  safeArchive.length,
+]);
+  
+/*
+ * Insights should only make pattern-based claims
+ * after enough completed work has been collected.
+ */
+const minimumTasksForInsights = 5;
+
+const hasEnoughInsightsData =
+  safeArchive.length >=
+  minimumTasksForInsights;
+
+const tasksNeededForInsights =
+  Math.max(
+    0,
+    minimumTasksForInsights -
+      safeArchive.length
+  );
+
+const insightsProgressPercent =
+  Math.min(
+    100,
+    Math.round(
+      (safeArchive.length /
+        minimumTasksForInsights) *
+        100
+    )
+  );
+
+const fallbackInsight:
+  ArchiveAIInsight =
+  !hasEnoughInsightsData
+    ? {
+        headline:
+          "Complete more tasks to unlock insights",
+
+        summary:
+          tasksNeededForInsights === 1
+            ? "Momentuhm needs one more archived task before identifying a meaningful execution pattern."
+            : `Momentuhm needs ${tasksNeededForInsights} more archived tasks before identifying a meaningful execution pattern.`,
+
+        recommendation:
+          "Keep archiving completed work to build a clearer picture of your focus and productivity.",
       }
+    : {
+        headline: `${analytics.topCategory} leads your completed work`,
 
-      const dateGroups = new Map<
-        string,
-        {
-          key: string;
-          title: string;
-          items: any[];
-        }
-      >();
+        summary: `Your strongest recorded pattern is ${analytics.topTaskType.toLowerCase()} work, with most completions happening during ${analytics.peakProductivityLabel}.`,
 
-      sortedArchive.forEach((task: any) => {
-        const completedDate =
-          getArchiveDate(task);
+        recommendation: `Protect time for ${analytics.topCategory} work during ${analytics.peakProductivityLabel}.`,
+      };
 
-        const key = completedDate
-          ? getLocalDateKey(completedDate)
-          : "unknown-date";
-
-        const title = completedDate
-          ? getDateGroupLabel(completedDate)
-          : "Date unavailable";
-
-        if (!dateGroups.has(key)) {
-          dateGroups.set(key, {
-            key: `date:${key}`,
-            title,
-            items: [],
-          });
-        }
-
-        dateGroups.get(key)?.items.push(task);
-      });
-
-      return Array.from(dateGroups.values());
-    }, [archive, groupBy]);
-
+const displayedInsight =
+  aiInsight ||
+  fallbackInsight;
+  
     const panelBorder = darkMode
       ? "border-white/[0.10]"
       : "border-[#DDDDE3]";
-
+  
     const rowBorder = darkMode
       ? "border-white/[0.08]"
       : "border-[#E8E9ED]";
-
+  
     const panelSurface = darkMode
       ? "bg-[#14171B]"
       : "bg-white";
-
-    const secondarySurface = darkMode
-      ? "bg-white/[0.025]"
-      : "bg-[#FAFAFB]";
-
+  
+    const secondarySurface =
+      darkMode
+        ? "bg-white/[0.025]"
+        : "bg-[#FAFAFB]";
+  
+    const insetSurface = darkMode
+      ? "bg-[#101317]"
+      : "bg-[#F8F9FA]";
+  
+    const primaryText = darkMode
+      ? "text-white"
+      : "text-[#17191F]";
+  
+    const secondaryText =
+      darkMode
+        ? "text-white/82"
+        : "text-[#303540]";
+  
     const mutedText = darkMode
       ? "text-white/48"
       : "text-[#6B6F7B]";
-
+  
     const getPriorityPill = (
       priority?: string
     ) => {
@@ -5650,7 +7041,7 @@ title="Edit task status"
           ? "border-red-400/20 bg-red-400/10 text-red-300"
           : "border-red-200 bg-red-50 text-red-600";
       }
-
+  
       if (
         priority === "Medium" ||
         priority === "Med"
@@ -5659,104 +7050,134 @@ title="Edit task status"
           ? "border-orange-400/20 bg-orange-400/10 text-orange-300"
           : "border-orange-200 bg-orange-50 text-orange-600";
       }
-
+  
       if (priority === "Low") {
         return darkMode
           ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
           : "border-emerald-200 bg-emerald-50 text-emerald-600";
       }
-
+  
       return darkMode
         ? "border-white/[0.10] bg-white/[0.04] text-white/55"
         : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]";
     };
-
+  
     return (
       <div className="mx-auto w-full max-w-[1500px]">
-        {/* Header */}
-        <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1
-                className={`text-[28px] font-[760] leading-none tracking-[-0.045em] ${
-                  darkMode
-                    ? "text-white"
-                    : "text-[#17191F]"
-                }`}
-              >
-                Archived items
-              </h1>
+       {/* Page header */}
+<header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+  <div>
+    <div className="flex items-center gap-3">
+      <h1
+        className={`text-[28px] font-[760] leading-none tracking-[-0.045em] ${primaryText}`}
+      >
+        {isInsightsMode
+          ? "Insights"
+          : "Archived items"}
+      </h1>
 
-              <span
-                className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[11px] font-[700] ${
-                  darkMode
-                    ? "bg-white/[0.08] text-white/62"
-                    : "bg-[#F0F1F4] text-[#59606C]"
-                }`}
-              >
-                {archive.length}
-              </span>
-            </div>
+      {isArchiveMode && (
+        <span
+          className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[11px] font-[700] ${
+            darkMode
+              ? "bg-white/[0.08] text-white/62"
+              : "bg-[#F0F1F4] text-[#59606C]"
+          }`}
+        >
+          {safeArchive.length}
+        </span>
+      )}
+    </div>
 
-            <p
-              className={`mt-2 text-[13px] font-[500] ${mutedText}`}
-            >
-              Review completed work and understand
-              your execution patterns.
-            </p>
-          </div>
+    <p
+      className={`mt-2 max-w-[680px] text-[13px] font-[500] leading-5 ${mutedText}`}
+    >
+      {isInsightsMode
+        ? "Understand where your effort goes and identify your strongest execution patterns."
+        : "Review and manage the work you have completed and archived."}
+    </p>
+  </div>
 
-          <button
-            type="button"
-            onClick={clearArchive}
-            disabled={archive.length === 0}
-            className={`h-10 shrink-0 rounded-[9px] border px-4 text-[12px] font-[650] transition ${
-              archive.length === 0
-                ? "cursor-not-allowed opacity-30"
-                : darkMode
-                ? "border-white/[0.10] text-white/62 hover:bg-white/[0.06] hover:text-white"
-                : "border-[#DDDDE3] bg-white text-[#555B67] hover:bg-[#F4F5F7] hover:text-[#252933]"
-            }`}
-          >
-            Clear archive
-          </button>
-        </header>
-
-        {/* Completion statistics */}
-        <section className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
-          {[
-            {
-              label: "Total closed",
-              value: archiveStats.totalClosed,
-              description:
-                "All archived tasks",
-              icon: CheckCircle2,
-            },
-            {
-              label: "Closed last 7 days",
-              value:
-                archiveStats.itemsClosedLastSevenDays,
-              description:
-                "Recent completion volume",
-              icon: Calendar,
-            },
-            {
-              label: "Average per day",
-              value: archiveStats.averagePerDay,
-              description:
-                "Across the last 7 days",
-              icon: TrendingUp,
-            },
-            {
-              label: "Top category",
-              value: archiveStats.topCategory,
-              description:
-                "Most completed work",
-              icon: LayoutGrid,
-            },
-          ].map((stat) => {
+  {isArchiveMode && (
+    <button
+      type="button"
+      onClick={clearArchive}
+      disabled={
+        safeArchive.length === 0
+      }
+      className={`h-10 shrink-0 rounded-[9px] border px-4 text-[12px] font-[650] transition ${
+        safeArchive.length === 0
+          ? "cursor-not-allowed opacity-30"
+          : darkMode
+          ? "border-white/[0.10] text-white/62 hover:bg-white/[0.06] hover:text-white"
+          : "border-[#DDDDE3] bg-white text-[#555B67] hover:bg-[#F4F5F7] hover:text-[#252933]"
+      }`}
+    >
+      Clear archive
+    </button>
+  )}
+</header>
+  
+      {/* Summary statistics — Insights only */}
+<section
+  className={
+    isInsightsMode
+      ? `mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 ${
+          hasEnoughInsightsData
+            ? "xl:grid-cols-4"
+            : ""
+        }`
+      : "hidden"
+  }
+>
+  {[
+    {
+      label: "Total closed",
+      value:
+        analytics.totalClosed,
+      description:
+        "All archived tasks",
+      icon: CheckCircle2,
+      requiresPatternData: false,
+    },
+    {
+      label:
+        "Closed last 7 days",
+      value:
+        analytics.closedLastSevenDays,
+      description:
+        "Recent completion volume",
+      icon: Calendar,
+      requiresPatternData: false,
+    },
+    {
+      label:
+        "Average per day",
+      value:
+        analytics.averagePerDay,
+      description:
+        "Across the last 7 days",
+      icon: TrendingUp,
+      requiresPatternData: true,
+    },
+    {
+      label: "Top category",
+      value:
+        analytics.topCategory,
+      description:
+        "Most completed work",
+      icon: LayoutGrid,
+      requiresPatternData: true,
+    },
+  ]
+    .filter(
+      (stat) =>
+        hasEnoughInsightsData ||
+        !stat.requiresPatternData
+    )
+    .map((stat) => {
             const Icon = stat.icon;
-
+  
             return (
               <div
                 key={stat.label}
@@ -5769,25 +7190,23 @@ title="Edit task status"
                     >
                       {stat.label}
                     </p>
-
+  
                     <p
-                      title={String(stat.value)}
-                      className={`mt-3 truncate text-[24px] font-[740] leading-none tracking-[-0.045em] ${
-                        darkMode
-                          ? "text-white"
-                          : "text-[#17191F]"
-                      }`}
+                      title={String(
+                        stat.value
+                      )}
+                      className={`mt-3 truncate text-[24px] font-[740] leading-none tracking-[-0.045em] ${primaryText}`}
                     >
                       {stat.value}
                     </p>
-
+  
                     <p
                       className={`mt-2 text-[10.5px] font-[500] ${mutedText}`}
                     >
                       {stat.description}
                     </p>
                   </div>
-
+  
                   <div
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${
                       darkMode
@@ -5805,43 +7224,853 @@ title="Edit task status"
             );
           })}
         </section>
+  
+      {/* AI analytics — Insights only */}
+<section
+  className={
+    isInsightsMode
+      ? `mb-4 overflow-hidden rounded-[14px] border ${panelBorder} ${panelSurface}`
+      : "hidden"
+  }
+>
+          <header
+            className={`border-b px-4 py-4 sm:px-5 ${rowBorder}`}
+          >
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex items-start gap-3">
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${
+                    darkMode
+                      ? "border-amber-300/15 bg-amber-300/[0.07] text-amber-200"
+                      : "border-amber-200 bg-amber-50 text-amber-700"
+                  }`}
+                >
+                  <Sparkles
+                    size={16}
+                    strokeWidth={1.8}
+                  />
+                </div>
+  
+                <div>
+                  <h2
+                    className={`text-[17px] font-[720] tracking-[-0.025em] ${primaryText}`}
+                  >
+                    AI focus insights
+                  </h2>
+  
+                  <p
+                    className={`mt-1 text-[11px] font-[500] ${mutedText}`}
+                  >
+                    Discover where your
+                    effort goes and which
+                    execution patterns are
+                    strongest.
+                  </p>
+                </div>
+              </div>
+  
+              <div
+                className={`inline-flex h-8 shrink-0 items-center gap-2 self-start rounded-full border px-3 text-[9.5px] font-[650] ${
+                  darkMode
+                    ? "border-white/[0.09] bg-white/[0.03] text-white/48"
+                    : "border-[#E1E2E6] bg-[#F8F9FA] text-[#6B6F7B]"
+                }`}
+              >
+              {!hasEnoughInsightsData ? (
+  <>
+    <Clock3
+      size={12}
+      strokeWidth={1.8}
+    />
 
-        {/* Archive history */}
-        <section
-          className={`overflow-hidden rounded-[14px] border ${panelBorder} ${panelSurface}`}
+    {tasksNeededForInsights} more task
+    {tasksNeededForInsights === 1
+      ? ""
+      : "s"}{" "}
+    needed
+  </>
+) : aiInsightLoading ? (
+  <>
+    <Sparkles
+      size={12}
+      className="animate-pulse"
+    />
+    Analyzing archive
+  </>
+) : aiInsight ? (
+  <>
+    <Check
+      size={12}
+    />
+    AI analysis ready
+  </>
+) : (
+  <>
+    <LayoutGrid
+      size={12}
+    />
+    Based on archived tasks
+  </>
+)}
+              </div>
+            </div>
+  
+            <div
+              className={`mt-4 flex flex-col gap-3 rounded-[11px] border p-3.5 sm:flex-row sm:items-start ${panelBorder} ${insetSurface}`}
+            >
+              <Sparkles
+                size={17}
+                strokeWidth={1.8}
+                className={
+                  darkMode
+                    ? "mt-0.5 shrink-0 text-violet-300"
+                    : "mt-0.5 shrink-0 text-violet-600"
+                }
+              />
+  
+              <div className="min-w-0 flex-1">
+                <p
+                  className={`text-[12.5px] font-[700] leading-5 ${primaryText}`}
+                >
+                  {
+                    displayedInsight.headline
+                  }
+                </p>
+  
+                <p
+                  className={`mt-1 text-[11px] font-[500] leading-5 ${mutedText}`}
+                >
+                  {
+                    displayedInsight.summary
+                  }
+                </p>
+              </div>
+            </div>
+  
+            {aiInsightError && (
+              <p
+                className={`mt-2 text-[9.5px] font-[500] ${mutedText}`}
+              >
+                {aiInsightError}
+              </p>
+            )}
+          </header>
+  
+          {hasEnoughInsightsData ? (
+  <div className="grid gap-3 p-3 lg:grid-cols-2 xl:grid-cols-[1.12fr_1fr_1fr_0.78fr]">
+            {/* Category distribution */}
+            <article
+              className={`flex min-w-0 flex-col rounded-[12px] border p-4 ${panelBorder} ${insetSurface}`}
+            >
+              <div>
+                <h3
+                  className={`text-[14px] font-[700] ${primaryText}`}
+                >
+                  Where you focus most
+                </h3>
+  
+                <p
+                  className={`mt-1 text-[10px] font-[500] ${mutedText}`}
+                >
+                  By category
+                </p>
+              </div>
+  
+              <div className="mt-5 grid flex-1 items-center gap-5 sm:grid-cols-[150px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[145px_minmax(0,1fr)]">
+                <div
+                  role="img"
+                  aria-label="Archived tasks by category"
+                  className="relative mx-auto h-[145px] w-[145px] rounded-full"
+                  style={{
+                    background:
+                      analytics.donutBackground,
+                  }}
+                >
+                  <div
+                    className={`absolute inset-[23px] flex flex-col items-center justify-center rounded-full border ${panelBorder} ${panelSurface}`}
+                  >
+                    <span
+                      className={`text-[22px] font-[740] leading-none ${primaryText}`}
+                    >
+                      {
+                        analytics.totalClosed
+                      }
+                    </span>
+  
+                    <span
+                      className={`mt-1 text-[9px] font-[600] ${mutedText}`}
+                    >
+                      Total
+                    </span>
+                  </div>
+                </div>
+  
+                <div className="min-w-0 space-y-2.5">
+                  {analytics.categoryBreakdown.map(
+                    (item) => (
+                      <div
+                        key={
+                          item.label
+                        }
+                        className="grid grid-cols-[10px_minmax(0,1fr)_auto] items-center gap-2"
+                      >
+                        <span
+                          className="h-2.5 w-2.5 rounded-full"
+                          style={{
+                            backgroundColor:
+                              item.color,
+                          }}
+                        />
+  
+                        <span
+                          title={
+                            item.label
+                          }
+                          className={`truncate text-[10px] font-[600] ${secondaryText}`}
+                        >
+                          {item.label}
+                        </span>
+  
+                        <span
+                          className={`text-[10px] font-[700] tabular-nums ${primaryText}`}
+                        >
+                          {
+                            item.percentage
+                          }
+                          %
+                        </span>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+  
+              <div
+                className={`mt-4 rounded-[9px] border px-3 py-2.5 ${
+                  darkMode
+                    ? "border-amber-300/10 bg-amber-300/[0.05]"
+                    : "border-amber-200 bg-amber-50"
+                }`}
+              >
+                <p
+                  className={`text-[9.5px] font-[600] leading-4 ${
+                    darkMode
+                      ? "text-amber-100/80"
+                      : "text-amber-800"
+                  }`}
+                >
+                  You focus most on{" "}
+                  {
+                    analytics.topCategory
+                  }{" "}
+                  work.
+                </p>
+              </div>
+            </article>
+  
+            {/* Work type */}
+            <article
+              className={`flex min-w-0 flex-col rounded-[12px] border p-4 ${panelBorder} ${insetSurface}`}
+            >
+              <div>
+                <h3
+                  className={`text-[14px] font-[700] ${primaryText}`}
+                >
+                  What you complete most
+                </h3>
+  
+                <p
+                  className={`mt-1 text-[10px] font-[500] ${mutedText}`}
+                >
+                  By task type
+                </p>
+              </div>
+  
+              <div className="mt-5 flex-1 space-y-4">
+                {analytics.taskTypeBreakdown.map(
+                  (item) => (
+                    <div
+                      key={item.label}
+                    >
+                      <div className="mb-1.5 flex items-center justify-between gap-3">
+                        <span
+                          className={`truncate text-[10px] font-[600] ${secondaryText}`}
+                        >
+                          {item.label}
+                        </span>
+  
+                        <span
+                          className={`text-[10px] font-[700] tabular-nums ${primaryText}`}
+                        >
+                          {
+                            item.percentage
+                          }
+                          %
+                        </span>
+                      </div>
+  
+                      <div
+                        className={`h-2 overflow-hidden rounded-full ${
+                          darkMode
+                            ? "bg-white/[0.07]"
+                            : "bg-[#E8E9ED]"
+                        }`}
+                      >
+                        <motion.div
+                          initial={{
+                            width: 0,
+                          }}
+                          animate={{
+                            width: `${Math.max(
+                              item.percentage,
+                              item.count >
+                                0
+                                ? 4
+                                : 0
+                            )}%`,
+                          }}
+                          transition={{
+                            duration: 0.7,
+                            ease: [
+                              0.16,
+                              1,
+                              0.3,
+                              1,
+                            ],
+                          }}
+                          className="h-full rounded-full"
+                          style={{
+                            backgroundColor:
+                              item.color,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )
+                )}
+  
+                {analytics.taskTypeBreakdown
+                  .length === 0 && (
+                  <p
+                    className={`text-[11px] font-[500] ${mutedText}`}
+                  >
+                    More completed tasks
+                    are needed to identify
+                    work types.
+                  </p>
+                )}
+              </div>
+  
+              <div
+                className={`mt-4 rounded-[9px] border px-3 py-2.5 ${
+                  darkMode
+                    ? "border-emerald-300/10 bg-emerald-300/[0.05]"
+                    : "border-emerald-200 bg-emerald-50"
+                }`}
+              >
+                <p
+                  className={`text-[9.5px] font-[600] leading-4 ${
+                    darkMode
+                      ? "text-emerald-100/80"
+                      : "text-emerald-800"
+                  }`}
+                >
+                  {
+                    analytics.topTaskType
+                  }{" "}
+                  tasks lead your
+                  completions.
+                </p>
+              </div>
+            </article>
+  
+            {/* Productivity rhythm */}
+            <article
+              className={`flex min-w-0 flex-col rounded-[12px] border p-4 ${panelBorder} ${insetSurface}`}
+            >
+              <div>
+                <h3
+                  className={`text-[14px] font-[700] ${primaryText}`}
+                >
+                  Your productivity rhythm
+                </h3>
+  
+                <p
+                  className={`mt-1 text-[10px] font-[500] ${mutedText}`}
+                >
+                  By time of day
+                </p>
+              </div>
+  
+              <div className="mt-4 flex-1">
+                <svg
+                  viewBox="0 0 360 125"
+                  className="h-[145px] w-full overflow-visible"
+                  aria-label="Task completion rhythm by time of day"
+                  role="img"
+                >
+                  <defs>
+                    <linearGradient
+                      id="archive-productivity-area"
+                      x1="0"
+                      x2="0"
+                      y1="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="#8B5CF6"
+                        stopOpacity="0.28"
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="#8B5CF6"
+                        stopOpacity="0"
+                      />
+                    </linearGradient>
+                  </defs>
+  
+                  {[20, 50, 80, 110].map(
+                    (y) => (
+                      <line
+                        key={y}
+                        x1="15"
+                        x2="345"
+                        y1={y}
+                        y2={y}
+                        stroke={
+                          darkMode
+                            ? "rgba(255,255,255,0.07)"
+                            : "rgba(23,25,31,0.08)"
+                        }
+                        strokeWidth="1"
+                      />
+                    )
+                  )}
+  
+                  {analytics.productivityAreaPath && (
+                    <path
+                      d={
+                        analytics.productivityAreaPath
+                      }
+                      fill="url(#archive-productivity-area)"
+                    />
+                  )}
+  
+                  {analytics.productivityPath && (
+                    <motion.path
+                      initial={{
+                        pathLength: 0,
+                        opacity: 0,
+                      }}
+                      animate={{
+                        pathLength: 1,
+                        opacity: 1,
+                      }}
+                      transition={{
+                        duration: 0.8,
+                      }}
+                      d={
+                        analytics.productivityPath
+                      }
+                      fill="none"
+                      stroke="#8B5CF6"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+  
+                  {analytics.productivityPoints.map(
+                    (point) => (
+                      <circle
+                        key={
+                          point.label
+                        }
+                        cx={point.x}
+                        cy={point.y}
+                        r="4"
+                        fill="#8B5CF6"
+                        stroke={
+                          darkMode
+                            ? "#14171B"
+                            : "#FFFFFF"
+                        }
+                        strokeWidth="2"
+                      />
+                    )
+                  )}
+                </svg>
+  
+                <div className="grid grid-cols-6 gap-1">
+                  {analytics.productivityBuckets.map(
+                    (bucket) => (
+                      <div
+                        key={
+                          bucket.label
+                        }
+                        className="text-center"
+                      >
+                        <p
+                          className={`text-[8px] font-[600] ${mutedText}`}
+                        >
+                          {bucket.label}
+                        </p>
+  
+                        <p
+                          className={`mt-1 text-[9px] font-[700] ${secondaryText}`}
+                        >
+                          {bucket.count}
+                        </p>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+  
+              <div
+                className={`mt-4 rounded-[9px] border px-3 py-2.5 ${
+                  darkMode
+                    ? "border-violet-300/10 bg-violet-300/[0.05]"
+                    : "border-violet-200 bg-violet-50"
+                }`}
+              >
+                <p
+                  className={`text-[9.5px] font-[600] leading-4 ${
+                    darkMode
+                      ? "text-violet-100/80"
+                      : "text-violet-800"
+                  }`}
+                >
+                  You complete the most
+                  work during{" "}
+                  {
+                    analytics.peakProductivityLabel
+                  }.
+                </p>
+              </div>
+            </article>
+  
+            {/* Streaks */}
+            <article
+              className={`flex min-w-0 flex-col rounded-[12px] border p-4 ${panelBorder} ${insetSurface}`}
+            >
+              <div>
+                <h3
+                  className={`text-[14px] font-[700] ${primaryText}`}
+                >
+                  Streaks & momentum
+                </h3>
+  
+                <p
+                  className={`mt-1 text-[10px] font-[500] ${mutedText}`}
+                >
+                  By completion day
+                </p>
+              </div>
+  
+              <div className="mt-5 flex-1 space-y-3">
+                <div
+                  className={`rounded-[10px] border p-3 ${panelBorder} ${panelSurface}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                        darkMode
+                          ? "bg-emerald-400/10 text-emerald-300"
+                          : "bg-emerald-50 text-emerald-600"
+                      }`}
+                    >
+                      <Flame
+                        size={18}
+                        strokeWidth={1.8}
+                      />
+                    </div>
+  
+                    <div>
+                      <p
+                        className={`text-[9px] font-[600] ${mutedText}`}
+                      >
+                        Longest streak
+                      </p>
+  
+                      <p
+                        className={`mt-1 text-[21px] font-[740] leading-none ${primaryText}`}
+                      >
+                        {
+                          analytics.longestStreak
+                        }{" "}
+                        day
+                        {analytics.longestStreak ===
+                        1
+                          ? ""
+                          : "s"}
+                      </p>
+  
+                      <p
+                        className={`mt-2 text-[8.5px] font-[500] ${mutedText}`}
+                      >
+                        Completed at least
+                        one task
+                      </p>
+                    </div>
+                  </div>
+                </div>
+  
+                <div
+                  className={`rounded-[10px] border p-3 ${panelBorder} ${panelSurface}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                        darkMode
+                          ? "bg-blue-400/10 text-blue-300"
+                          : "bg-blue-50 text-blue-600"
+                      }`}
+                    >
+                      <TrendingUp
+                        size={18}
+                        strokeWidth={1.8}
+                      />
+                    </div>
+  
+                    <div>
+                      <p
+                        className={`text-[9px] font-[600] ${mutedText}`}
+                      >
+                        Current streak
+                      </p>
+  
+                      <p
+                        className={`mt-1 text-[21px] font-[740] leading-none ${primaryText}`}
+                      >
+                        {
+                          analytics.currentStreak
+                        }{" "}
+                        day
+                        {analytics.currentStreak ===
+                        1
+                          ? ""
+                          : "s"}
+                      </p>
+  
+                      <p
+                        className={`mt-2 text-[8.5px] font-[500] ${mutedText}`}
+                      >
+                        {analytics.currentStreak >
+                        0
+                          ? "Keep it going"
+                          : "Complete a task today"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+  
+                <div
+                  className={`rounded-[10px] border p-3 ${panelBorder} ${panelSurface}`}
+                >
+                  <p
+                    className={`text-[9px] font-[600] ${mutedText}`}
+                  >
+                    Active completion days
+                  </p>
+  
+                  <p
+                    className={`mt-1 text-[17px] font-[720] ${primaryText}`}
+                  >
+                    {
+                      analytics.activeCompletionDays
+                    }
+                  </p>
+                </div>
+              </div>
+  
+              <div
+  className={`mt-4 rounded-[9px] border px-3 py-2.5 ${
+    darkMode
+      ? "border-blue-300/10 bg-blue-300/[0.05]"
+      : "border-blue-200 bg-blue-50"
+  }`}
+>
+  <p
+    className={`text-[9.5px] font-[600] leading-4 ${
+      darkMode
+        ? "text-blue-100/80"
+        : "text-blue-800"
+    }`}
+  >
+    {
+      displayedInsight.recommendation
+    }
+  </p>
+</div>
+</article>
+</div>
+) : (
+  /* Low-data unlock state */
+  <div className="p-3">
+    <div
+      className={`flex min-h-[300px] items-center justify-center rounded-[12px] border px-5 py-10 text-center sm:px-8 ${panelBorder} ${insetSurface}`}
+    >
+      <div className="w-full max-w-[520px]">
+        <div
+          className={`mx-auto flex h-12 w-12 items-center justify-center rounded-[12px] border ${
+            darkMode
+              ? "border-white/[0.10] bg-white/[0.04] text-white/60"
+              : "border-[#DDDDE3] bg-white text-[#5F6572]"
+          }`}
         >
+          <Sparkles
+            size={20}
+            strokeWidth={1.7}
+          />
+        </div>
+
+        <h3
+          className={`mt-5 text-[18px] font-[720] tracking-[-0.025em] ${primaryText}`}
+        >
+          Complete{" "}
+          {tasksNeededForInsights} more{" "}
+          task
+          {tasksNeededForInsights === 1
+            ? ""
+            : "s"}{" "}
+          to unlock insights
+        </h3>
+
+        <p
+          className={`mx-auto mt-2 max-w-[430px] text-[12px] font-[500] leading-5 ${mutedText}`}
+        >
+          Momentuhm needs at least five
+          archived tasks before showing
+          focus patterns, task-type
+          analysis, productivity rhythms,
+          or recommendations.
+        </p>
+
+        <div className="mx-auto mt-6 max-w-[360px]">
+          <div className="flex items-center justify-between gap-4">
+            <span
+              className={`text-[10px] font-[650] ${mutedText}`}
+            >
+              Building your data
+            </span>
+
+            <span
+              className={`text-[10px] font-[700] tabular-nums ${secondaryText}`}
+            >
+              {safeArchive.length} /{" "}
+              {minimumTasksForInsights}
+            </span>
+          </div>
+
+          <div
+            className={`mt-2 h-2 overflow-hidden rounded-full ${
+              darkMode
+                ? "bg-white/[0.08]"
+                : "bg-[#E5E7EB]"
+            }`}
+          >
+            <motion.div
+              initial={{
+                width: 0,
+              }}
+              animate={{
+                width: `${insightsProgressPercent}%`,
+              }}
+              transition={{
+                duration: 0.6,
+                ease: [
+                  0.16,
+                  1,
+                  0.3,
+                  1,
+                ],
+              }}
+              className={`h-full rounded-full ${
+                darkMode
+                  ? "bg-white/70"
+                  : "bg-[#252933]"
+              }`}
+            />
+          </div>
+        </div>
+
+        <div
+          className={`mx-auto mt-6 grid max-w-[430px] gap-2 text-left sm:grid-cols-2 ${
+            darkMode
+              ? "text-white/52"
+              : "text-[#666C78]"
+          }`}
+        >
+          {[
+            "Category patterns",
+            "Task-type analysis",
+            "Productivity rhythm",
+            "AI recommendations",
+          ].map((feature) => (
+            <div
+              key={feature}
+              className={`flex min-h-[38px] items-center gap-2 rounded-[8px] border px-3 text-[10px] font-[600] ${
+                darkMode
+                  ? "border-white/[0.08] bg-white/[0.025]"
+                  : "border-[#E1E2E6] bg-white"
+              }`}
+            >
+              <Clock3
+                size={12}
+                strokeWidth={1.7}
+                className="shrink-0 opacity-60"
+              />
+
+              <span>{feature}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+</section>
+  
+      {/* Completion history — Archive only */}
+<section
+  className={
+    isArchiveMode
+      ? `overflow-hidden rounded-[14px] border ${panelBorder} ${panelSurface}`
+      : "hidden"
+  }
+>
           <div
             className={`flex min-h-[68px] flex-col gap-3 border-b px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${rowBorder}`}
           >
             <div>
               <h2
-                className={`text-[17px] font-[720] tracking-[-0.025em] ${
-                  darkMode
-                    ? "text-white"
-                    : "text-[#17191F]"
-                }`}
+                className={`text-[17px] font-[720] tracking-[-0.025em] ${primaryText}`}
               >
                 Completion history
               </h2>
-
+  
               <p
                 className={`mt-1 text-[11px] font-[500] ${mutedText}`}
               >
-                Group completed work by completion
-                date or task priority.
+                Group completed work by
+                completion date or task
+                priority.
               </p>
             </div>
-
+  
             <label className="relative shrink-0">
               <span className="sr-only">
                 Group archived tasks
               </span>
-
+  
               <select
                 value={groupBy}
                 onChange={(event) =>
                   setGroupBy(
-                    event.target.value as
+                    event.target
+                      .value as
                       | "date"
                       | "priority"
                   )
@@ -5855,19 +8084,21 @@ title="Edit task status"
                 <option value="date">
                   Group: Date
                 </option>
+  
                 <option value="priority">
                   Group: Priority
                 </option>
               </select>
-
+  
               <ChevronDown
                 size={13}
                 className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 ${mutedText}`}
               />
             </label>
           </div>
-
-          {archive.length === 0 ? (
+  
+          {safeArchive.length ===
+          0 ? (
             <div className="flex min-h-[300px] items-center justify-center px-6 py-12 text-center">
               <div className="max-w-[360px]">
                 <div
@@ -5882,194 +8113,215 @@ title="Edit task status"
                     strokeWidth={1.7}
                   />
                 </div>
-
+  
                 <h3
-                  className={`mt-4 text-[16px] font-[700] ${
-                    darkMode
-                      ? "text-white"
-                      : "text-[#17191F]"
-                  }`}
+                  className={`mt-4 text-[16px] font-[700] ${primaryText}`}
                 >
                   No archived work yet
                 </h3>
-
+  
                 <p
                   className={`mt-2 text-[12px] font-[500] leading-5 ${mutedText}`}
                 >
-                  Completed tasks will appear here
-                  after they are archived.
+                  Completed tasks will
+                  appear here after they
+                  are archived.
                 </p>
               </div>
             </div>
           ) : (
             <div>
-              {groupedArchive.map((group) => (
-                <section key={group.key}>
-                  <div
-                    className={`flex min-h-[38px] items-center gap-2 border-b px-4 sm:px-5 ${rowBorder} ${secondarySurface}`}
+              {groupedArchive.map(
+                (group) => (
+                  <section
+                    key={group.key}
                   >
-                    <h3
-                      className={`text-[11px] font-[700] ${
-                        darkMode
-                          ? "text-white/68"
-                          : "text-[#565C68]"
-                      }`}
+                    <div
+                      className={`flex min-h-[38px] items-center gap-2 border-b px-4 sm:px-5 ${rowBorder} ${secondarySurface}`}
                     >
-                      {group.title}
-                    </h3>
-
-                    <span
-                      className={`text-[10px] font-[650] ${mutedText}`}
+                      <h3
+                        className={`text-[11px] font-[700] ${
+                          darkMode
+                            ? "text-white/68"
+                            : "text-[#565C68]"
+                        }`}
+                      >
+                        {group.title}
+                      </h3>
+  
+                      <span
+                        className={`text-[10px] font-[650] ${mutedText}`}
+                      >
+                        {
+                          group.items
+                            .length
+                        }
+                      </span>
+                    </div>
+  
+                    <AnimatePresence
+                      initial={false}
+                      mode="popLayout"
                     >
-                      {group.items.length}
-                    </span>
-                  </div>
-
-                  <AnimatePresence
-                    initial={false}
-                    mode="popLayout"
-                  >
-                    {group.items.map(
-                      (task: any) => {
-                        const completedDate =
-                          getArchiveDate(task);
-
-                        const priorityLabel =
-                          task.priority === "Medium" ||
-                          task.priority === "Med"
-                            ? "Medium"
-                            : task.priority ||
-                              "No priority";
-
-                        return (
-                          <motion.div
-                            key={task.id}
-                            layout
-                            initial={{
-                              opacity: 0,
-                              y: 4,
-                            }}
-                            animate={{
-                              opacity: 1,
-                              y: 0,
-                            }}
-                            exit={{
-                              opacity: 0,
-                              y: -4,
-                            }}
-                            transition={{
-                              duration: 0.18,
-                              ease: [
-                                0.16, 1, 0.3, 1,
-                              ],
-                            }}
-                            className={`grid min-h-[68px] grid-cols-1 gap-3 border-b px-4 py-3.5 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 ${rowBorder}`}
-                          >
-                            <div className="min-w-0">
-                              <p
-                                title={task.title}
-                                className={`truncate text-[13px] font-[650] tracking-[-0.015em] ${
-                                  darkMode
-                                    ? "text-white/88"
-                                    : "text-[#20232B]"
-                                }`}
-                              >
-                                {task.title}
-                              </p>
-
-                              <div
-                                className={`mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-[500] ${mutedText}`}
-                              >
-                                <span>
-                                  {task.category ||
-                                    "No category"}
+                      {group.items.map(
+                        (task: any) => {
+                          const completedDate =
+                            getArchiveDate(
+                              task
+                            );
+  
+                          const priorityLabel =
+                            task.priority ===
+                              "Medium" ||
+                            task.priority ===
+                              "Med"
+                              ? "Medium"
+                              : task.priority ||
+                                "No priority";
+  
+                          return (
+                            <motion.div
+                              key={
+                                task.id
+                              }
+                              layout
+                              initial={{
+                                opacity: 0,
+                                y: 4,
+                              }}
+                              animate={{
+                                opacity: 1,
+                                y: 0,
+                              }}
+                              exit={{
+                                opacity: 0,
+                                y: -4,
+                              }}
+                              transition={{
+                                duration: 0.18,
+                                ease: [
+                                  0.16,
+                                  1,
+                                  0.3,
+                                  1,
+                                ],
+                              }}
+                              className={`grid min-h-[68px] grid-cols-1 gap-3 border-b px-4 py-3.5 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 ${rowBorder}`}
+                            >
+                              <div className="min-w-0">
+                                <p
+                                  title={
+                                    task.title
+                                  }
+                                  className={`truncate text-[13px] font-[650] tracking-[-0.015em] ${
+                                    darkMode
+                                      ? "text-white/88"
+                                      : "text-[#20232B]"
+                                  }`}
+                                >
+                                  {
+                                    task.title
+                                  }
+                                </p>
+  
+                                <div
+                                  className={`mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-[500] ${mutedText}`}
+                                >
+                                  <span>
+                                    {task.category ||
+                                      "No category"}
+                                  </span>
+  
+                                  {task.dueDate && (
+                                    <>
+                                      <span
+                                        aria-hidden="true"
+                                        className="opacity-40"
+                                      >
+                                        •
+                                      </span>
+  
+                                      <span>
+                                        Due{" "}
+                                        {formatDueDate(
+                                          task.dueDate
+                                        )}
+                                      </span>
+                                    </>
+                                  )}
+  
+                                  {completedDate && (
+                                    <>
+                                      <span
+                                        aria-hidden="true"
+                                        className="opacity-40"
+                                      >
+                                        •
+                                      </span>
+  
+                                      <span>
+                                        Closed{" "}
+                                        {completedDate.toLocaleTimeString(
+                                          undefined,
+                                          {
+                                            hour:
+                                              "2-digit",
+                                            minute:
+                                              "2-digit",
+                                          }
+                                        )}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+  
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className={`rounded-[6px] border px-2 py-1 text-[10px] font-[650] ${getPriorityPill(
+                                    task.priority
+                                  )}`}
+                                >
+                                  {
+                                    priorityLabel
+                                  }
                                 </span>
-
-                                {task.dueDate && (
-                                  <>
-                                    <span
-                                      aria-hidden="true"
-                                      className="opacity-40"
+  
+                                {groupBy ===
+                                  "priority" &&
+                                  completedDate && (
+                                    <time
+                                      dateTime={
+                                        task.completedAt
+                                      }
+                                      className={`whitespace-nowrap text-[10.5px] font-[500] ${mutedText}`}
                                     >
-                                      •
-                                    </span>
-
-                                    <span>
-                                      Due{" "}
-                                      {formatDueDate(
-                                        task.dueDate
-                                      )}
-                                    </span>
-                                  </>
-                                )}
-
-                                {completedDate && (
-                                  <>
-                                    <span
-                                      aria-hidden="true"
-                                      className="opacity-40"
-                                    >
-                                      •
-                                    </span>
-
-                                    <span>
-                                      Closed{" "}
-                                      {completedDate.toLocaleTimeString(
+                                      {completedDate.toLocaleDateString(
                                         undefined,
                                         {
-                                          hour:
-                                            "2-digit",
-                                          minute:
-                                            "2-digit",
+                                          month:
+                                            "short",
+                                          day: "numeric",
                                         }
                                       )}
-                                    </span>
-                                  </>
-                                )}
+                                    </time>
+                                  )}
                               </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={`rounded-[6px] border px-2 py-1 text-[10px] font-[650] ${getPriorityPill(
-                                  task.priority
-                                )}`}
-                              >
-                                {priorityLabel}
-                              </span>
-
-                              {groupBy ===
-                                "priority" &&
-                                completedDate && (
-                                  <time
-                                    dateTime={
-                                      task.completedAt
-                                    }
-                                    className={`whitespace-nowrap text-[10.5px] font-[500] ${mutedText}`}
-                                  >
-                                    {completedDate.toLocaleDateString(
-                                      undefined,
-                                      {
-                                        month: "short",
-                                        day: "numeric",
-                                      }
-                                    )}
-                                  </time>
-                                )}
-                            </div>
-                          </motion.div>
-                        );
-                      }
-                    )}
-                  </AnimatePresence>
-                </section>
-              ))}
+                            </motion.div>
+                          );
+                        }
+                      )}
+                    </AnimatePresence>
+                  </section>
+                )
+              )}
             </div>
           )}
         </section>
       </div>
     );
   }
+
 
   function CategoriesView({
     darkMode,
@@ -6083,118 +8335,352 @@ title="Edit task status"
     setEditingCategoryTitle,
     renameCategory,
     deleteCategory,
-    themeColor,
-    input,
-    glass,
-    strongerGlass,
-    border,
   }: any) {
+    const panelBorder = darkMode
+      ? "border-white/[0.10]"
+      : "border-[#DDDDE3]";
+  
+    const rowBorder = darkMode
+      ? "border-white/[0.08]"
+      : "border-[#E8E9ED]";
+  
+    const panelSurface = darkMode
+      ? "bg-[#14171B]"
+      : "bg-white";
+  
+    const secondarySurface = darkMode
+      ? "bg-white/[0.025]"
+      : "bg-[#FAFAFB]";
+  
+    const primaryText = darkMode
+      ? "text-white"
+      : "text-[#17191F]";
+  
+    const secondaryText = darkMode
+      ? "text-white/82"
+      : "text-[#252933]";
+  
+    const mutedText = darkMode
+      ? "text-white/48"
+      : "text-[#6B6F7B]";
+  
+    const inputClass = darkMode
+      ? "border-white/[0.16] bg-white/[0.035] text-white placeholder:text-white/35 focus:border-white/[0.32]"
+      : "border-[#C9CBD1] bg-white text-[#252933] placeholder:text-[#80868B] focus:border-[#8F939C]";
+  
+    const beginEditingCategory = (
+      category: any
+    ) => {
+      setEditingCategoryId(category.id);
+      setEditingCategoryTitle(
+        category.title
+      );
+    };
+  
+    const cancelEditingCategory = () => {
+      setEditingCategoryId(null);
+      setEditingCategoryTitle("");
+    };
+  
     return (
-      <div>
-        <PageHeader
-    title="Categories"
-    description="Organize your tasks into working areas."
-    darkMode={darkMode}
-  />
-
-        <div className={`mb-8 rounded-3xl border p-4 sm:p-5 ${strongerGlass} ${border}`}>
+      <div className="mx-auto w-full max-w-[1500px]">
+        {/* Page header */}
+        <header className="mb-5">
+          <h1
+            className={`text-[28px] font-[760] leading-none tracking-[-0.045em] ${primaryText}`}
+          >
+            Categories
+          </h1>
+  
+          <p
+            className={`mt-2 text-[13px] font-[500] leading-5 ${mutedText}`}
+          >
+            Organize tasks into clear working
+            areas.
+          </p>
+        </header>
+  
+        {/* Create category */}
+        <section
+          aria-label="Create category"
+          className={`mb-5 rounded-[14px] border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.02)] sm:p-5 ${panelBorder} ${panelSurface}`}
+        >
           <div className="flex flex-col gap-3 sm:flex-row">
             <input
               value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") addCategory();
+              onChange={(event) =>
+                setNewCategory(
+                  event.target.value
+                )
+              }
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  newCategory.trim()
+                ) {
+                  event.preventDefault();
+                  addCategory();
+                }
               }}
               placeholder="Create new category"
-              className={`h-12 flex-1 rounded-2xl px-4 outline-none ${input}`}
+              aria-label="New category name"
+              className={`h-11 min-w-0 flex-1 rounded-[9px] border px-3.5 text-[13px] font-[520] outline-none transition ${inputClass}`}
             />
-
+  
             <button
+              type="button"
               onClick={addCategory}
-              className="flex h-12 items-center justify-center gap-2 rounded-2xl px-5 font-[700] text-white"
-              style={{ backgroundColor: themeColor }}
+              disabled={!newCategory.trim()}
+              className={`inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[9px] px-5 text-[12px] font-[700] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35 ${
+                darkMode
+                  ? "bg-white text-[#181818] hover:bg-white/90"
+                  : "bg-[#20232B] text-white hover:bg-[#30343D]"
+              }`}
             >
-              <Plus size={18} />
-              Add
+              <Plus
+                size={15}
+                strokeWidth={1.9}
+              />
+              Add category
             </button>
           </div>
-        </div>
-
-        <div className={`overflow-hidden rounded-[24px] border sm:rounded-3xl ${strongerGlass} ${border}`}>
-          {categories.map((category: any) => (
-            <div
-              key={category.id}
-              className={`flex min-h-[72px] flex-col items-start justify-between gap-3 border-b px-5 py-3 last:border-none sm:flex-row sm:items-center sm:gap-4 sm:px-6 ${border}`}
+        </section>
+  
+        {/* Category list */}
+        <section
+          aria-label="Category list"
+          className={`overflow-hidden rounded-[14px] border shadow-[0_1px_2px_rgba(15,23,42,0.02)] ${panelBorder} ${panelSurface}`}
+        >
+          <header
+            className={`flex min-h-[66px] items-center justify-between gap-4 border-b px-4 sm:px-5 ${rowBorder} ${secondarySurface}`}
+          >
+            <div>
+              <h2
+                className={`text-[17px] font-[720] tracking-[-0.025em] ${primaryText}`}
+              >
+                Working areas
+              </h2>
+  
+              <p
+                className={`mt-1 text-[11px] font-[500] ${mutedText}`}
+              >
+                Select a name to rename the
+                category.
+              </p>
+            </div>
+  
+            <span
+              className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2.5 text-[10px] font-[700] ${
+                darkMode
+                  ? "bg-white/[0.07] text-white/60"
+                  : "bg-[#F0F1F4] text-[#59606C]"
+              }`}
             >
-              <div className="flex min-w-0 flex-1 items-center gap-4">
-                <LayoutGrid size={18} className="shrink-0" />
-
-                {editingCategoryId === category.id ? (
-                  <input
-                    autoFocus
-                    value={editingCategoryTitle}
-                    onChange={(e) => setEditingCategoryTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") renameCategory(category.id);
-                      if (e.key === "Escape") {
-                        setEditingCategoryId(null);
-                        setEditingCategoryTitle("");
-                      }
-                    }}
-                    className={`h-10 max-w-[320px] flex-1 rounded-xl px-3 outline-none ${input}`}
+              {categories.length}
+            </span>
+          </header>
+  
+          {categories.length === 0 ? (
+            <div className="flex min-h-[260px] items-center justify-center px-6 py-12 text-center">
+              <div className="max-w-[340px]">
+                <div
+                  className={`mx-auto flex h-11 w-11 items-center justify-center rounded-[10px] border ${
+                    darkMode
+                      ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+                      : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                  }`}
+                >
+                  <LayoutGrid
+                    size={19}
+                    strokeWidth={1.7}
                   />
-                ) : (
-                  <div className="min-w-0">
-                    <p
-                      onClick={() => {
-                        setEditingCategoryId(category.id);
-                        setEditingCategoryTitle(category.title);
-                      }}
-                      className="cursor-pointer truncate text-[15px] font-[700] transition hover:opacity-70"
-                    >
-                      {category.title}
-                    </p>
-
-                    <p className="mt-1 text-xs opacity-40">
-                      {category.tasks.length} tasks
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
-                {editingCategoryId === category.id ? (
-                  <>
-                    <button
-                      onClick={() => renameCategory(category.id)}
-                      className="h-9 rounded-xl px-4 text-sm font-[700] text-white"
-                      style={{ backgroundColor: themeColor }}
-                    >
-                      Save
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setEditingCategoryId(null);
-                        setEditingCategoryTitle("");
-                      }}
-                      className={`h-9 rounded-xl px-4 text-sm font-[700] ${glass}`}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => deleteCategory(category.id)}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl opacity-35 transition hover:bg-red-500/10 hover:text-red-500 hover:opacity-100"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
+                </div>
+  
+                <h3
+                  className={`mt-4 text-[16px] font-[700] ${primaryText}`}
+                >
+                  No categories yet
+                </h3>
+  
+                <p
+                  className={`mt-2 text-[12px] font-[500] leading-5 ${mutedText}`}
+                >
+                  Create a working area to start
+                  organizing your tasks.
+                </p>
               </div>
             </div>
-          ))}
-        </div>
+          ) : (
+            <div>
+              {categories.map(
+                (category: any) => {
+                  const isEditing =
+                    editingCategoryId ===
+                    category.id;
+  
+                  const taskCount =
+                    Array.isArray(
+                      category.tasks
+                    )
+                      ? category.tasks.length
+                      : 0;
+  
+                  return (
+                    <div
+                      key={category.id}
+                      className={`flex min-h-[68px] items-center gap-3 border-b px-4 py-3 last:border-b-0 sm:px-5 ${rowBorder} ${
+                        darkMode
+                          ? "hover:bg-white/[0.025]"
+                          : "hover:bg-[#FBFBFC]"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${
+                          darkMode
+                            ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+                            : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                        }`}
+                      >
+                        <LayoutGrid
+                          size={15}
+                          strokeWidth={1.7}
+                        />
+                      </div>
+  
+                      <div className="min-w-0 flex-1">
+                        {isEditing ? (
+                          <input
+                            autoFocus
+                            value={
+                              editingCategoryTitle
+                            }
+                            onChange={(event) =>
+                              setEditingCategoryTitle(
+                                event.target.value
+                              )
+                            }
+                            onKeyDown={(
+                              event
+                            ) => {
+                              if (
+                                event.key ===
+                                  "Enter" &&
+                                editingCategoryTitle.trim()
+                              ) {
+                                event.preventDefault();
+                                renameCategory(
+                                  category.id
+                                );
+                              }
+  
+                              if (
+                                event.key ===
+                                "Escape"
+                              ) {
+                                event.preventDefault();
+                                cancelEditingCategory();
+                              }
+                            }}
+                            aria-label={`Rename ${category.title}`}
+                            className={`h-10 w-full rounded-[8px] border px-3 text-[12px] font-[600] outline-none transition ${inputClass}`}
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              beginEditingCategory(
+                                category
+                              )
+                            }
+                            className="block max-w-full text-left"
+                          >
+                            <p
+                              title={
+                                category.title
+                              }
+                              className={`truncate text-[13px] font-[650] tracking-[-0.015em] transition hover:opacity-70 ${secondaryText}`}
+                            >
+                              {category.title}
+                            </p>
+  
+                            <p
+                              className={`mt-1 text-[10px] font-[500] ${mutedText}`}
+                            >
+                              {taskCount} task
+                              {taskCount === 1
+                                ? ""
+                                : "s"}
+                            </p>
+                          </button>
+                        )}
+                      </div>
+  
+                      <div className="flex shrink-0 items-center gap-2">
+                        {isEditing ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                renameCategory(
+                                  category.id
+                                )
+                              }
+                              disabled={
+                                !editingCategoryTitle.trim()
+                              }
+                              className={`h-9 rounded-[8px] px-3 text-[10px] font-[700] transition disabled:cursor-not-allowed disabled:opacity-35 ${
+                                darkMode
+                                  ? "bg-white text-[#181818] hover:bg-white/90"
+                                  : "bg-[#20232B] text-white hover:bg-[#30343D]"
+                              }`}
+                            >
+                              Save
+                            </button>
+  
+                            <button
+                              type="button"
+                              onClick={
+                                cancelEditingCategory
+                              }
+                              className={`h-9 rounded-[8px] border px-3 text-[10px] font-[650] transition ${
+                                darkMode
+                                  ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
+                                  : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                              }`}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              deleteCategory(
+                                category.id
+                              )
+                            }
+                            aria-label={`Delete ${category.title}`}
+                            title="Delete category"
+                            className={`flex h-9 w-9 items-center justify-center rounded-[8px] border transition ${
+                              darkMode
+                                ? "border-white/[0.08] text-white/35 hover:border-red-400/20 hover:bg-red-400/10 hover:text-red-300"
+                                : "border-[#E1E2E6] text-[#8A8F99] hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                            }`}
+                          >
+                            <Trash2
+                              size={14}
+                              strokeWidth={1.7}
+                            />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </div>
+          )}
+        </section>
       </div>
     );
   }
@@ -8224,9 +10710,6 @@ title="Edit task status"
 
   function InboxView({
     darkMode,
-    border,
-    className,
-    themeColor,
     inboxTasks,
     enableAppSuggestions,
     toggleTaskById,
@@ -8235,185 +10718,364 @@ title="Edit task status"
     setSelectedTask,
     setIsEditModalOpen,
   }: any) {
+    const panelBorder = darkMode
+      ? "border-white/[0.10]"
+      : "border-[#DDDDE3]";
+  
+    const rowBorder = darkMode
+      ? "border-white/[0.08]"
+      : "border-[#E8E9ED]";
+  
+    const panelSurface = darkMode
+      ? "bg-[#14171B]"
+      : "bg-white";
+  
+    const secondarySurface = darkMode
+      ? "bg-white/[0.025]"
+      : "bg-[#FAFAFB]";
+  
+    const primaryText = darkMode
+      ? "text-white"
+      : "text-[#17191F]";
+  
+    const secondaryText = darkMode
+      ? "text-white/86"
+      : "text-[#252933]";
+  
+    const mutedText = darkMode
+      ? "text-white/48"
+      : "text-[#6B6F7B]";
+  
+    const openTaskEditor = (task: any) => {
+      setSelectedTask(task);
+      setIsEditModalOpen(true);
+    };
+  
+    const getPriorityMeta = (
+      priority?: string
+    ) => {
+      if (priority === "High") {
+        return {
+          label: "High",
+          className: darkMode
+            ? "border-red-400/20 bg-red-400/10 text-red-300"
+            : "border-red-200 bg-red-50 text-red-600",
+        };
+      }
+  
+      if (
+        priority === "Medium" ||
+        priority === "Med"
+      ) {
+        return {
+          label: "Medium",
+          className: darkMode
+            ? "border-orange-400/20 bg-orange-400/10 text-orange-300"
+            : "border-orange-200 bg-orange-50 text-orange-600",
+        };
+      }
+  
+      return {
+        label: "Low",
+        className: darkMode
+          ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+          : "border-emerald-200 bg-emerald-50 text-emerald-600",
+      };
+    };
+  
     return (
-      <div>
-        <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
+      <div className="mx-auto w-full max-w-[1500px]">
+        {/* Page header */}
+        <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-[28px] font-[700] tracking-[-0.04em] sm:text-[32px]">
-              Inbox
-            </h2>
-
-            <p
-              className={`mt-2 text-sm ${
-                darkMode ? "text-white/55" : "text-[#666661]/45"
-              }`}
+            <h1
+              className={`text-[28px] font-[760] leading-none tracking-[-0.045em] ${primaryText}`}
             >
-              Captured tasks that still need a clear date or review.
+              Inbox
+            </h1>
+  
+            <p
+              className={`mt-2 text-[13px] font-[500] leading-5 ${mutedText}`}
+            >
+              Captured tasks that still need a
+              clear date or review.
             </p>
           </div>
-
+  
           <div
-            className={`rounded-2xl border px-4 py-3 text-xs font-[700] ${className} ${border}`}
+            className={`inline-flex h-10 shrink-0 items-center rounded-[9px] border px-3.5 text-[11px] font-[650] ${panelBorder} ${panelSurface} ${secondaryText}`}
           >
-            {inboxTasks.length} item{inboxTasks.length === 1 ? "" : "s"} to review
+            {inboxTasks.length} item
+            {inboxTasks.length === 1
+              ? ""
+              : "s"}{" "}
+            to review
           </div>
-        </div>
-
-        <section className={`rounded-[28px] border shadow-sm ${className} ${border}`}>
-          <div
-            className={`flex items-center justify-between gap-4 border-b px-5 py-4 ${border}`}
+        </header>
+  
+        {/* Inbox panel */}
+        <section
+          aria-label="Tasks needing review"
+          className={`overflow-hidden rounded-[14px] border shadow-[0_1px_2px_rgba(15,23,42,0.02)] ${panelBorder} ${panelSurface}`}
+        >
+          <header
+            className={`flex min-h-[68px] items-center justify-between gap-4 border-b px-4 py-3.5 sm:px-5 ${rowBorder} ${secondarySurface}`}
           >
-            <div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{
-                    backgroundColor: themeColor,
-                  }}
-                />
-
-                <h3 className="text-[15px] font-[700]">Needs Review</h3>
-              </div>
-
-              <p
-                className={`mt-1 text-xs ${
-                  darkMode ? "text-white/40" : "text-[#666661]/40"
+            <div className="flex min-w-0 items-center gap-3">
+              <div
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${
+                  darkMode
+                    ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+                    : "border-[#DDDDE3] bg-white text-[#5F6572]"
                 }`}
               >
-                These tasks do not have a manual or suggested date yet.
-              </p>
+                <Calendar
+                  size={16}
+                  strokeWidth={1.7}
+                />
+              </div>
+  
+              <div className="min-w-0">
+                <h2
+                  className={`text-[17px] font-[720] tracking-[-0.025em] ${primaryText}`}
+                >
+                  Needs review
+                </h2>
+  
+                <p
+                  className={`mt-1 text-[11px] font-[500] ${mutedText}`}
+                >
+                  These tasks do not yet have a
+                  confirmed or suggested date.
+                </p>
+              </div>
             </div>
-
+  
             <span
-              className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
+              className={`flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-2.5 text-[10px] font-[700] ${
                 darkMode
-                  ? "bg-white/[0.06] text-white/50"
-                  : "bg-black/[0.04] text-[#666661]/50"
+                  ? "bg-white/[0.07] text-white/60"
+                  : "bg-[#F0F1F4] text-[#59606C]"
               }`}
             >
               {inboxTasks.length}
             </span>
-          </div>
-
-          <div>
-            {inboxTasks.length === 0 && (
-              <div
-                className={`p-8 text-sm ${
-                  darkMode ? "text-white/35" : "text-[#666661]/35"
-                }`}
-              >
-                Your inbox is clear. Every active task has either a date or a
-                Momentuhm suggestion.
+          </header>
+  
+          {inboxTasks.length === 0 ? (
+            <div className="flex min-h-[280px] items-center justify-center px-6 py-12 text-center">
+              <div className="max-w-[360px]">
+                <div
+                  className={`mx-auto flex h-11 w-11 items-center justify-center rounded-[10px] border ${
+                    darkMode
+                      ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+                      : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                  }`}
+                >
+                  <CheckCircle2
+                    size={19}
+                    strokeWidth={1.7}
+                  />
+                </div>
+  
+                <h3
+                  className={`mt-4 text-[16px] font-[700] ${primaryText}`}
+                >
+                  Your inbox is clear
+                </h3>
+  
+                <p
+                  className={`mt-2 text-[12px] font-[500] leading-5 ${mutedText}`}
+                >
+                  Every active task has either a
+                  confirmed date or a Momentuhm
+                  suggestion.
+                </p>
               </div>
-            )}
-
-            {inboxTasks.map((task: any) => (
-              <motion.div
-                key={task.id}
-                initial={{
-                  opacity: 0,
-                  y: 8,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                className={`flex min-h-[82px] flex-col items-start gap-3 border-b px-5 py-4 last:border-none sm:flex-row sm:items-center sm:gap-4 ${border} ${
-                  darkMode ? "hover:bg-white/[0.04]" : "hover:bg-black/[0.02]"
-                }`}
-              >
-                <div className="flex w-full min-w-0 items-start gap-3 sm:w-auto sm:flex-1 sm:items-center">
-                  <button
-                    onClick={(e) => toggleTaskById(task.id, e)}
-                    className="mt-0.5 shrink-0 opacity-70 transition hover:opacity-100 sm:mt-0"
-                  >
-                    <Circle
-                      size={18}
-                      className={darkMode ? "text-white/25" : "text-[#666661]/25"}
-                    />
-                  </button>
-
-                  <div className="min-w-0 flex-1">
-                    <p
-                      onClick={() => {
-                        setSelectedTask(task);
-                        setIsEditModalOpen(true);
+            </div>
+          ) : (
+            <div>
+              {inboxTasks.map(
+                (task: any) => {
+                  const priority =
+                    getPriorityMeta(
+                      task.priority
+                    );
+  
+                  return (
+                    <motion.div
+                      key={task.id}
+                      layout="position"
+                      initial={{
+                        opacity: 0,
+                        y: 5,
                       }}
-                      className="cursor-pointer text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70 sm:truncate"
-                    >
-                      {task.title}
-                    </p>
-
-                    <p
-                      className={`mt-1 truncate text-[11px] ${
-                        darkMode ? "text-white/38" : "text-[#666661]/38"
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      transition={{
+                        duration: 0.18,
+                        ease: [
+                          0.16, 1, 0.3, 1,
+                        ],
+                      }}
+                      className={`grid grid-cols-1 gap-4 border-b px-4 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 ${rowBorder} ${
+                        darkMode
+                          ? "hover:bg-white/[0.025]"
+                          : "hover:bg-[#FBFBFC]"
                       }`}
                     >
-                      {task.category} · Needs date
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-                  {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
-
-                  <span
-                  className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[700] tracking-[-0.01em] ${getPriorityClass(
-                    task.priority
-                  )}`}
-                  >
-                    {task.priority}
-                  </span>
-
-                  {enableAppSuggestions && (
-                    <>
-                      <button
-                        onClick={() => scheduleTaskById(task.id, getTodayDate())}
-                        className={`h-9 rounded-xl px-3 text-xs font-[700] transition hover:scale-[1.02] ${
-                          darkMode
-                            ? "bg-white/[0.06] text-white/55 hover:text-white"
-                            : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
-                        }`}
-                      >
-                        Today
-                      </button>
-
-                      <button
-                        onClick={() => scheduleTaskById(task.id, getTomorrowDate())}
-                        className={`h-9 rounded-xl px-3 text-xs font-[700] transition hover:scale-[1.02] ${
-                          darkMode
-                            ? "bg-white/[0.06] text-white/55 hover:text-white"
-                            : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
-                        }`}
-                      >
-                        Tomorrow
-                      </button>
-                    </>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      setSelectedTask(task);
-                      setIsEditModalOpen(true);
-                    }}
-                    className="h-9 rounded-xl px-3 text-xs font-[700] text-white transition hover:scale-[1.02]"
-                    style={{
-                      backgroundColor: themeColor,
-                    }}
-                  >
-                    Review
-                  </button>
-
-                  <button
-                    onClick={() => deleteTask(task.id)}
-                    className="opacity-35 transition hover:text-red-500 hover:opacity-100"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                      <div className="flex min-w-0 items-start gap-3">
+                        <button
+                          type="button"
+                          onClick={(event) =>
+                            toggleTaskById(
+                              task.id,
+                              event
+                            )
+                          }
+                          aria-label={`Complete ${task.title}`}
+                          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition active:scale-95"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`h-4 w-4 rounded-[4px] border ${
+                              darkMode
+                                ? "border-white/42"
+                                : "border-[#9297A1]"
+                            }`}
+                          />
+                        </button>
+  
+                        <div className="min-w-0 flex-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openTaskEditor(task)
+                            }
+                            title={task.title}
+                            className={`block max-w-full text-left text-[13px] font-[650] leading-5 tracking-[-0.015em] transition hover:opacity-70 ${secondaryText}`}
+                          >
+                            {task.title}
+                          </button>
+  
+                          <p
+                            className={`mt-1 text-[10px] font-[500] ${mutedText}`}
+                          >
+                            {task.category ||
+                              "No category"}{" "}
+                            <span
+                              aria-hidden="true"
+                              className="mx-1 opacity-45"
+                            >
+                              •
+                            </span>
+                            Needs a date
+                          </p>
+  
+                          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                            <span
+                              className={`rounded-[6px] border px-2 py-1 text-[9.5px] font-[650] ${priority.className}`}
+                            >
+                              {priority.label}
+                            </span>
+  
+                            {hasFollowUpTag(
+                              task
+                            ) && (
+                              <span
+                                className={`rounded-[6px] border px-2 py-1 text-[9.5px] font-[600] ${
+                                  darkMode
+                                    ? "border-amber-300/15 bg-amber-300/[0.07] text-amber-200/80"
+                                    : "border-amber-200 bg-amber-50 text-amber-700"
+                                }`}
+                              >
+                                Follow-up
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+  
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {enableAppSuggestions && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                scheduleTaskById(
+                                  task.id,
+                                  getTodayDate()
+                                )
+                              }
+                              className={`h-9 rounded-[8px] border px-3 text-[10px] font-[650] transition ${
+                                darkMode
+                                  ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
+                                  : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                              }`}
+                            >
+                              Today
+                            </button>
+  
+                            <button
+                              type="button"
+                              onClick={() =>
+                                scheduleTaskById(
+                                  task.id,
+                                  getTomorrowDate()
+                                )
+                              }
+                              className={`h-9 rounded-[8px] border px-3 text-[10px] font-[650] transition ${
+                                darkMode
+                                  ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
+                                  : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                              }`}
+                            >
+                              Tomorrow
+                            </button>
+                          </>
+                        )}
+  
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openTaskEditor(task)
+                          }
+                          className={`h-9 rounded-[8px] px-3.5 text-[10px] font-[700] transition active:scale-[0.98] ${
+                            darkMode
+                              ? "bg-white text-[#181818] hover:bg-white/90"
+                              : "bg-[#20232B] text-white hover:bg-[#30343D]"
+                          }`}
+                        >
+                          Review
+                        </button>
+  
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deleteTask(task.id)
+                          }
+                          aria-label={`Delete ${task.title}`}
+                          title="Delete task"
+                          className={`flex h-9 w-9 items-center justify-center rounded-[8px] border transition ${
+                            darkMode
+                              ? "border-white/[0.08] text-white/35 hover:border-red-400/20 hover:bg-red-400/10 hover:text-red-300"
+                              : "border-[#E1E2E6] text-[#8A8F99] hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                          }`}
+                        >
+                          <Trash2
+                            size={14}
+                            strokeWidth={1.7}
+                          />
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                }
+              )}
+            </div>
+          )}
         </section>
       </div>
     );

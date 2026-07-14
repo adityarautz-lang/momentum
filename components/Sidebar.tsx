@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, type ComponentType } from "react";
+import {
+  useState,
+  type ComponentType,
+} from "react";
+
 import {
   Archive,
+  BarChart3,
   Bell,
   CalendarDays,
   Inbox,
@@ -13,8 +18,20 @@ import {
   Tag,
   X,
 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import { UserButton, useUser } from "@clerk/nextjs";
+
+import {
+  AnimatePresence,
+  motion,
+} from "framer-motion";
+
+import {
+  UserButton,
+  useUser,
+} from "@clerk/nextjs";
+
+/* ------------------------------------------------ */
+/* Navigation configuration */
+/* ------------------------------------------------ */
 
 const mainNavItems = [
   {
@@ -40,13 +57,26 @@ const libraryNavItems = [
     label: "Archive",
     icon: Archive,
   },
+  {
+    key: "insights",
+    label: "Insights",
+    icon: BarChart3,
+  },
 ];
+
+/* ------------------------------------------------ */
+/* Types */
+/* ------------------------------------------------ */
 
 type SidebarProps = {
   darkMode: boolean;
-  setDarkMode: (value: boolean) => void;
+  setDarkMode: (
+    value: boolean
+  ) => void;
   selectedView: string;
-  setSelectedView: (value: string) => void;
+  setSelectedView: (
+    value: string
+  ) => void;
   themeColor: string;
   inboxCount?: number;
   pendingSuggestionCount?: number;
@@ -70,8 +100,14 @@ type SidebarContentProps = {
   secondaryIdentity: string;
   inboxCount: number;
   selectedView: string;
-  onSelect: (view: string) => void;
+  onSelect: (
+    view: string
+  ) => void;
 };
+
+/* ------------------------------------------------ */
+/* Sidebar */
+/* ------------------------------------------------ */
 
 export default function Sidebar({
   darkMode,
@@ -82,167 +118,227 @@ export default function Sidebar({
   pendingSuggestionCount = 0,
   onOpenSuggestedDates,
 }: SidebarProps) {
-  const { user, isLoaded } = useUser();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const {
+    user,
+    isLoaded,
+  } = useUser();
+
+  const [
+    isDrawerOpen,
+    setIsDrawerOpen,
+  ] = useState(false);
 
   const displayName =
     isLoaded && user
       ? user.fullName ||
         user.firstName ||
-        user.primaryEmailAddress?.emailAddress ||
+        user
+          .primaryEmailAddress
+          ?.emailAddress ||
         "Account"
       : "Account";
 
   const secondaryIdentity =
     isLoaded && user
-      ? user.primaryEmailAddress?.emailAddress || "View profile"
+      ? user
+          .primaryEmailAddress
+          ?.emailAddress ||
+        "View profile"
       : "View profile";
 
   const surfaceClass = darkMode
     ? "border-white/[0.09] bg-[#111317] text-white"
     : "border-[#E3E4E8] bg-white text-[#15171C]";
 
-  const iconButtonClass = darkMode
-    ? "border-white/[0.08] bg-white/[0.035] text-white/62 hover:bg-white/[0.07] hover:text-white"
-    : "border-black/[0.06] bg-white text-[#4F535E] hover:bg-black/[0.025] hover:text-[#15171C]";
+  const iconButtonClass =
+    darkMode
+      ? "border-white/[0.08] bg-white/[0.035] text-white/62 hover:bg-white/[0.07] hover:text-white"
+      : "border-black/[0.06] bg-white text-[#4F535E] hover:bg-black/[0.025] hover:text-[#15171C]";
 
-  const selectView = (view: string) => {
+  const selectView = (
+    view: string
+  ) => {
     setSelectedView(view);
     setIsDrawerOpen(false);
   };
 
-  const sidebarContentProps: SidebarContentProps = {
-    darkMode,
-    displayName,
-    secondaryIdentity,
-    inboxCount,
-    selectedView,
-    onSelect: selectView,
-  };
+  const sidebarContentProps: SidebarContentProps =
+    {
+      darkMode,
+      displayName,
+      secondaryIdentity,
+      inboxCount,
+      selectedView,
+      onSelect: selectView,
+    };
 
   return (
     <>
-      {/* Fixed top bar */}
+      {/* Desktop and tablet top bar */}
       <header
         className={`fixed inset-x-0 top-0 z-[150] hidden h-[68px] items-center justify-between border-b px-5 shadow-[0_1px_0_rgba(15,23,42,0.02)] sm:flex lg:px-6 ${surfaceClass}`}
       >
         <div className="flex min-w-0 items-center gap-4">
-          {/* Only shown below laptop width */}
+          {/* Tablet navigation toggle */}
           <button
             type="button"
             onClick={() =>
-              setIsDrawerOpen((previous) => !previous)
+              setIsDrawerOpen(
+                (previous) =>
+                  !previous
+              )
             }
             aria-label={
               isDrawerOpen
                 ? "Close navigation"
                 : "Open navigation"
             }
-            aria-expanded={isDrawerOpen}
+            aria-expanded={
+              isDrawerOpen
+            }
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border transition lg:hidden ${iconButtonClass}`}
           >
             {isDrawerOpen ? (
-              <X size={18} strokeWidth={1.8} />
+              <X
+                size={18}
+                strokeWidth={1.8}
+              />
             ) : (
-              <Menu size={19} strokeWidth={1.8} />
+              <Menu
+                size={19}
+                strokeWidth={1.8}
+              />
+            )}
+          </button>
+
+          {/* Logo */}
+          <button
+            type="button"
+            onClick={() =>
+              selectView("today")
+            }
+            aria-label="Open Today"
+            className="min-w-0 text-left"
+          >
+            <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
+              <span className="text-[24px] font-[600] leading-none tracking-[-0.045em]">
+                <span
+                  className={
+                    darkMode
+                      ? "text-white"
+                      : "text-[#181818]"
+                  }
+                >
+                  Moment
+                </span>
+
+                <span
+                  className={
+                    darkMode
+                      ? "text-white/38"
+                      : "text-[#A8A8A2]"
+                  }
+                >
+                  uhm
+                </span>
+
+                <span
+                  className={
+                    darkMode
+                      ? "text-white"
+                      : "text-[#181818]"
+                  }
+                >
+                  .app
+                </span>
+              </span>
+            </span>
+          </button>
+        </div>
+
+        {/* Header controls */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={
+              onOpenSuggestedDates
+            }
+            aria-label={
+              pendingSuggestionCount >
+              0
+                ? `Review ${pendingSuggestionCount} pending date suggestion${
+                    pendingSuggestionCount ===
+                    1
+                      ? ""
+                      : "s"
+                  }`
+                : "Review suggested dates"
+            }
+            title={
+              pendingSuggestionCount >
+              0
+                ? `${pendingSuggestionCount} suggested date${
+                    pendingSuggestionCount ===
+                    1
+                      ? ""
+                      : "s"
+                  } pending`
+                : "No pending suggested dates"
+            }
+            className={`relative flex h-9 w-9 items-center justify-center rounded-[9px] border transition ${iconButtonClass}`}
+          >
+            <Bell
+              size={17}
+              strokeWidth={1.7}
+            />
+
+            {pendingSuggestionCount >
+              0 && (
+              <span
+                aria-hidden="true"
+                className={`absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 px-1 text-[9px] font-[800] leading-none ${
+                  darkMode
+                    ? "border-[#111317] bg-white text-[#111317]"
+                    : "border-white bg-[#181818] text-white"
+                }`}
+              >
+                {pendingSuggestionCount >
+                99
+                  ? "99+"
+                  : pendingSuggestionCount}
+              </span>
             )}
           </button>
 
           <button
             type="button"
-            onClick={() => selectView("today")}
-            aria-label="Open Today"
-            className="min-w-0 text-left"
-          >
-          <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
-        
-
-       
-
-  <span className="text-[24px] font-[600] leading-none tracking-[-0.045em]">
-    <span
-      className={
-        darkMode ? "text-white" : "text-[#181818]"
-      }
-    >
-      Moment
-    </span>
-
-    <span
-      className={
-        darkMode
-          ? "text-white/38"
-          : "text-[#A8A8A2]"
-      }
-    >
-      uhm
-    </span>
-
-    <span
-      className={
-        darkMode ? "text-white" : "text-[#181818]"
-      }
-    >
-      .app
-    </span>
-  </span>
-</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-  <button
-    type="button"
-    onClick={onOpenSuggestedDates}
-    aria-label={
-      pendingSuggestionCount > 0
-        ? `Review ${pendingSuggestionCount} pending date suggestion${
-            pendingSuggestionCount === 1 ? "" : "s"
-          }`
-        : "Review suggested dates"
-    }
-    title={
-      pendingSuggestionCount > 0
-        ? `${pendingSuggestionCount} suggested date${
-            pendingSuggestionCount === 1 ? "" : "s"
-          } pending`
-        : "No pending suggested dates"
-    }
-    className={`relative flex h-9 w-9 items-center justify-center rounded-[9px] border transition ${iconButtonClass}`}
-  >
-    <Bell size={17} strokeWidth={1.7} />
-
-    {pendingSuggestionCount > 0 && (
-      <span
-        aria-hidden="true"
-        className={`absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 px-1 text-[9px] font-[800] leading-none ${
-          darkMode
-            ? "border-[#111317] bg-white text-[#111317]"
-            : "border-white bg-[#181818] text-white"
-        }`}
-      >
-        {pendingSuggestionCount > 99
-          ? "99+"
-          : pendingSuggestionCount}
-      </span>
-    )}
-  </button>
-
-          <button
-            type="button"
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={() =>
+              setDarkMode(
+                !darkMode
+              )
+            }
             aria-label={
               darkMode
                 ? "Switch to light mode"
                 : "Switch to dark mode"
             }
-            title={darkMode ? "Light mode" : "Dark mode"}
+            title={
+              darkMode
+                ? "Light mode"
+                : "Dark mode"
+            }
             className={`flex h-9 w-9 items-center justify-center rounded-[9px] border transition ${iconButtonClass}`}
           >
             {darkMode ? (
-              <Sun size={17} strokeWidth={1.7} />
+              <Sun
+                size={17}
+                strokeWidth={1.7}
+              />
             ) : (
-              <Moon size={17} strokeWidth={1.7} />
+              <Moon
+                size={17}
+                strokeWidth={1.7}
+              />
             )}
           </button>
 
@@ -251,7 +347,8 @@ export default function Sidebar({
               afterSignOutUrl="/sign-in"
               appearance={{
                 elements: {
-                  userButtonAvatarBox: "h-9 w-9",
+                  userButtonAvatarBox:
+                    "h-9 w-9",
                 },
               }}
             />
@@ -259,32 +356,52 @@ export default function Sidebar({
         </div>
       </header>
 
-      {/* Permanent laptop and desktop sidebar */}
+      {/* Permanent desktop sidebar */}
       <aside
         className={`fixed bottom-0 left-0 top-[68px] z-[140] hidden w-[252px] flex-col border-r px-5 py-6 shadow-[8px_0_30px_rgba(15,23,42,0.025)] lg:flex ${surfaceClass}`}
       >
-        <SidebarContent {...sidebarContentProps} />
+        <SidebarContent
+          {...sidebarContentProps}
+        />
       </aside>
 
-      {/* Tablet drawer only */}
+      {/* Tablet navigation drawer */}
       <AnimatePresence>
         {isDrawerOpen && (
           <div className="lg:hidden">
             <motion.button
               type="button"
               aria-label="Close navigation"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.16 }}
-              onClick={() => setIsDrawerOpen(false)}
+              initial={{
+                opacity: 0,
+              }}
+              animate={{
+                opacity: 1,
+              }}
+              exit={{
+                opacity: 0,
+              }}
+              transition={{
+                duration: 0.16,
+              }}
+              onClick={() =>
+                setIsDrawerOpen(
+                  false
+                )
+              }
               className="fixed inset-0 z-[140] hidden bg-black/18 backdrop-blur-[2px] sm:block"
             />
 
             <motion.aside
-              initial={{ x: -274 }}
-              animate={{ x: 0 }}
-              exit={{ x: -274 }}
+              initial={{
+                x: -274,
+              }}
+              animate={{
+                x: 0,
+              }}
+              exit={{
+                x: -274,
+              }}
               transition={{
                 type: "spring",
                 stiffness: 310,
@@ -293,7 +410,9 @@ export default function Sidebar({
               }}
               className={`fixed bottom-0 left-0 top-[68px] z-[145] hidden w-[252px] flex-col border-r px-5 py-6 shadow-[18px_0_60px_rgba(15,23,42,0.10)] sm:flex lg:hidden ${surfaceClass}`}
             >
-              <SidebarContent {...sidebarContentProps} />
+              <SidebarContent
+                {...sidebarContentProps}
+              />
             </motion.aside>
           </div>
         )}
@@ -301,6 +420,10 @@ export default function Sidebar({
     </>
   );
 }
+
+/* ------------------------------------------------ */
+/* Sidebar content */
+/* ------------------------------------------------ */
 
 function SidebarContent({
   darkMode,
@@ -318,41 +441,61 @@ function SidebarContent({
           darkMode={darkMode}
         />
 
+        {/* Main navigation */}
         <div className="mb-9 space-y-1">
-          {mainNavItems.map((item) => (
-            <SidebarNavButton
-              key={item.key}
-              item={{
-                ...item,
-                count:
-                  item.key === "inbox"
-                    ? inboxCount
-                    : undefined,
-              }}
-              darkMode={darkMode}
-              selectedView={selectedView}
-              onSelect={onSelect}
-            />
-          ))}
+          {mainNavItems.map(
+            (item) => (
+              <SidebarNavButton
+                key={item.key}
+                item={{
+                  ...item,
+                  count:
+                    item.key ===
+                    "inbox"
+                      ? inboxCount
+                      : undefined,
+                }}
+                darkMode={
+                  darkMode
+                }
+                selectedView={
+                  selectedView
+                }
+                onSelect={
+                  onSelect
+                }
+              />
+            )
+          )}
         </div>
 
+        {/* Library */}
         <SidebarSectionLabel
           label="Library"
           darkMode={darkMode}
         />
 
         <div className="mb-9 space-y-1">
-          {libraryNavItems.map((item) => (
-            <SidebarNavButton
-              key={item.key}
-              item={item}
-              darkMode={darkMode}
-              selectedView={selectedView}
-              onSelect={onSelect}
-            />
-          ))}
+          {libraryNavItems.map(
+            (item) => (
+              <SidebarNavButton
+                key={item.key}
+                item={item}
+                darkMode={
+                  darkMode
+                }
+                selectedView={
+                  selectedView
+                }
+                onSelect={
+                  onSelect
+                }
+              />
+            )
+          )}
         </div>
 
+        {/* System */}
         <SidebarSectionLabel
           label="System"
           darkMode={darkMode}
@@ -366,8 +509,12 @@ function SidebarContent({
               icon: Settings,
             }}
             darkMode={darkMode}
-            selectedView={selectedView}
-            onSelect={onSelect}
+            selectedView={
+              selectedView
+            }
+            onSelect={
+              onSelect
+            }
           />
         </div>
       </nav>
@@ -392,7 +539,8 @@ function SidebarContent({
               afterSignOutUrl="/sign-in"
               appearance={{
                 elements: {
-                  userButtonAvatarBox: "h-9 w-9",
+                  userButtonAvatarBox:
+                    "h-9 w-9",
                 },
               }}
             />
@@ -416,7 +564,9 @@ function SidebarContent({
                   : "text-black/38"
               }`}
             >
-              {secondaryIdentity}
+              {
+                secondaryIdentity
+              }
             </p>
           </div>
         </div>
@@ -424,6 +574,10 @@ function SidebarContent({
     </>
   );
 }
+
+/* ------------------------------------------------ */
+/* Section label */
+/* ------------------------------------------------ */
 
 function SidebarSectionLabel({
   label,
@@ -445,6 +599,10 @@ function SidebarSectionLabel({
   );
 }
 
+/* ------------------------------------------------ */
+/* Navigation button */
+/* ------------------------------------------------ */
+
 function SidebarNavButton({
   item,
   darkMode,
@@ -454,18 +612,32 @@ function SidebarNavButton({
   item: SidebarItem;
   darkMode: boolean;
   selectedView: string;
-  onSelect: (view: string) => void;
+  onSelect: (
+    view: string
+  ) => void;
 }) {
   const Icon = item.icon;
-  const isActive = selectedView === item.key;
+
+  const isActive =
+    selectedView === item.key;
 
   return (
     <motion.button
       type="button"
-      whileHover={{ x: 2 }}
-      whileTap={{ scale: 0.985 }}
-      onClick={() => onSelect(item.key)}
-      aria-current={isActive ? "page" : undefined}
+      whileHover={{
+        x: 2,
+      }}
+      whileTap={{
+        scale: 0.985,
+      }}
+      onClick={() =>
+        onSelect(item.key)
+      }
+      aria-current={
+        isActive
+          ? "page"
+          : undefined
+      }
       className={`relative flex h-11 w-full items-center justify-between rounded-[10px] px-3 text-[13px] transition ${
         isActive
           ? darkMode
@@ -480,7 +652,9 @@ function SidebarNavButton({
         <span
           aria-hidden="true"
           className={`absolute bottom-2 left-0 top-2 w-[3px] rounded-full ${
-            darkMode ? "bg-white" : "bg-black"
+            darkMode
+              ? "bg-white"
+              : "bg-black"
           }`}
         />
       )}
@@ -488,7 +662,11 @@ function SidebarNavButton({
       <div className="flex items-center gap-3">
         <Icon
           size={17}
-          strokeWidth={isActive ? 2.1 : 1.75}
+          strokeWidth={
+            isActive
+              ? 2.1
+              : 1.75
+          }
           className={
             isActive
               ? darkMode
