@@ -1752,11 +1752,13 @@ const getRestorableTaskStatus = (
 
   useEffect(() => {
     if (enableClipboardAssist) return;
-
+  
     setClipboardCandidate("");
     setShowClipboardPrompt(false);
+    setClipboardExtractedTasks([]);
+    setClipboardExtractError("");
+    setClipboardExtractLoading(false);
   }, [enableClipboardAssist]);
-
   const completedBoostTaskKey = completedToday
   .map((task) => task.id)
   .sort()
@@ -3264,6 +3266,7 @@ const statusBeforeCompletion = completed
               setIsSuggestionsModalOpen={setIsSuggestionsModalOpen}
               setIsExtractModalOpen={setIsExtractModalOpen}
               setExtractInput={setExtractInput}
+              enableClipboardAssist={enableClipboardAssist}
               archiveCompletedToday={archiveCompletedToday}
               restoreCompletedTask={restoreCompletedTask}
               suggestingTaskIds={suggestingTaskIds}
@@ -3418,9 +3421,10 @@ const statusBeforeCompletion = completed
     />
   )}
 
-  {CLIPBOARD_ASSIST_ENABLED_FOR_TESTING &&
-    showClipboardPrompt &&
-    clipboardCandidate && (
+{CLIPBOARD_ASSIST_ENABLED_FOR_TESTING &&
+  enableClipboardAssist &&
+  showClipboardPrompt &&
+  clipboardCandidate && (
       <ClipboardAssistPrompt
         key="clipboard-assist"
         text={clipboardCandidate}
@@ -3613,12 +3617,13 @@ const statusBeforeCompletion = completed
     toggleTaskById,
     deleteTask,
     acceptSuggestedDateById,
-    setSelectedTask,
-    setIsEditModalOpen,
-    setIsSuggestionsModalOpen,
-    setIsExtractModalOpen,
-    setExtractInput,
-    archiveCompletedToday,
+setSelectedTask,
+setIsEditModalOpen,
+setIsSuggestionsModalOpen,
+setIsExtractModalOpen,
+setExtractInput,
+enableClipboardAssist,
+archiveCompletedToday,
     restoreCompletedTask,
     suggestingTaskIds,
     manualFocusTaskIds,
@@ -3659,11 +3664,22 @@ const statusBeforeCompletion = completed
     const handleTaskInputPaste = (
       event: React.ClipboardEvent<HTMLInputElement>
     ) => {
-      const pastedText = event.clipboardData.getData("text").trim();
-      const shouldExtract = pastedText.includes("\n") || pastedText.length >= 120;
-
+      /*
+       * When Clipboard Assist is disabled, allow the browser
+       * to paste normally without opening the extraction modal.
+       */
+      if (!enableClipboardAssist) return;
+    
+      const pastedText = event.clipboardData
+        .getData("text")
+        .trim();
+    
+      const shouldExtract =
+        pastedText.includes("\n") ||
+        pastedText.length >= 120;
+    
       if (!shouldExtract) return;
-
+    
       event.preventDefault();
       setExtractInput(pastedText);
       setIsExtractModalOpen(true);
