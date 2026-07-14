@@ -47,6 +47,7 @@
   MoreVertical,
   Play,
   Settings2,
+  HelpCircle,
   } from "lucide-react";
 
 
@@ -176,6 +177,194 @@ const getRestorableTaskStatus = (
     confidence: number;
     tags: TaskTag[];
   };
+
+  type TutorialStepDefinition = {
+    id:
+      | "welcome"
+      | "smart-assist"
+      | "clipboard"
+      | "extract"
+      | "focus"
+      | "daily-intelligence"
+      | "control"
+      | "help";
+    eyebrow: string;
+    title: string;
+    description: string;
+    desktopSelector?: string;
+    mobileSelector?: string;
+  };
+  
+  type TutorialSpotlightRect = {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  };
+  
+  const TUTORIAL_SMART_TASK =
+    "Prepare the quarterly client review";
+  
+  const TUTORIAL_CLIPBOARD_TEXT =
+    "Please send the revised budget by Thursday, book the vendor review, and follow up with Maya next week.";
+  
+  const TUTORIAL_CLIPBOARD_TASKS = [
+    {
+      title: "Send the revised budget",
+      meta: "High · Thursday · Major Projects",
+    },
+    {
+      title: "Book the vendor review",
+      meta: "Medium · Tomorrow · Sustaining",
+    },
+    {
+      title: "Follow up with Maya",
+      meta: "Medium · Next week · Follow-up",
+    },
+  ];
+  
+  const TUTORIAL_EXTRACT_SOURCE_LINES = [
+    "Finance needs the final estimate",
+    "Schedule the design review",
+    "Confirm the launch owner",
+  ];
+  
+  const TUTORIAL_EXTRACTED_TASKS = [
+    {
+      title: "Send the final estimate to Finance",
+      meta: "High · Tomorrow",
+    },
+    {
+      title: "Schedule the design review",
+      meta: "Medium · Major Projects",
+    },
+    {
+      title: "Confirm the launch owner",
+      meta: "High · Follow-up",
+    },
+  ];
+  
+  const TUTORIAL_FOCUS_TASKS = [
+    {
+      title: "Send revised client budget",
+      reason: "Deadline and external dependency",
+    },
+    {
+      title: "Review launch risks",
+      reason: "Could block the release",
+    },
+    {
+      title: "Book vendor review",
+      reason:
+        "Depends on another person’s availability",
+    },
+  ];
+  
+  const TUTORIAL_CONTROL_FIELDS = [
+    {
+      label: "Priority",
+      value: "High",
+    },
+    {
+      label: "Due date",
+      value: "Tomorrow",
+    },
+    {
+      label: "Category",
+      value: "Major Projects",
+    },
+    {
+      label: "Why it matters",
+      value: "Client decision dependency",
+    },
+    {
+      label: "Focus",
+      value: "Included",
+    },
+  ];
+  
+  const QUICK_TUTORIAL_STEPS: TutorialStepDefinition[] = [
+    {
+      id: "welcome",
+      eyebrow: "Welcome to Momentuhm",
+      title: "See how Momentuhm helps",
+      description:
+        "This quick walkthrough demonstrates how Momentuhm turns everyday work into clear, prioritized next actions.",
+    },
+    {
+      id: "smart-assist",
+      eyebrow: "AI task assistance",
+      title: "Add one task. Get useful structure.",
+      description:
+        "Momentuhm can suggest priority, timing, category, context, and why the task deserves attention.",
+      desktopSelector:
+        "#momentuhm-tour-capture-desktop",
+      mobileSelector:
+        "#mobile-quick-capture",
+    },
+    {
+      id: "clipboard",
+      eyebrow: "Clipboard Assist",
+      title: "Copied text becomes actionable work",
+      description:
+        "When copied content contains useful actions, Momentuhm can separate it into structured tasks for review.",
+    },
+    {
+      id: "extract",
+      eyebrow: "Extract from text",
+      title: "Turn notes into a task list",
+      description:
+        "Paste an email, message, or meeting note and review the actions Momentuhm identifies before adding them.",
+      desktopSelector:
+        "#momentuhm-tour-capture-desktop",
+      mobileSelector:
+        "#mobile-quick-capture",
+    },
+    {
+      id: "focus",
+      eyebrow: "AI Focus",
+      title: "Find the strongest next moves",
+      description:
+        "Momentuhm considers urgency, impact, dependencies, and timing when building a suggested Focus stack.",
+      desktopSelector:
+        "#momentuhm-tour-focus-desktop",
+      mobileSelector:
+        "#momentuhm-tour-focus-mobile",
+    },
+    {
+      id: "daily-intelligence",
+      eyebrow: "Daily intelligence",
+      title: "Understand your day quickly",
+      description:
+        "Morning guidance, progress insights, completion metrics, and time awareness help you decide what to do next.",
+      desktopSelector:
+        "#momentuhm-tour-progress-desktop",
+      mobileSelector:
+        "#momentuhm-tour-progress-mobile",
+    },
+    {
+      id: "control",
+      eyebrow: "You remain in control",
+      title: "Every suggestion stays editable",
+      description:
+        "AI prepares a useful first draft. You can change the priority, date, category, reasoning, Focus placement, or any other detail.",
+      desktopSelector:
+        "#Momentuhm-task-list-anchor",
+      mobileSelector:
+        "#Momentuhm-mobile-task-list-anchor",
+    },
+    {
+      id: "help",
+      eyebrow: "You are ready",
+      title: "Return to this tour anytime",
+      description:
+        "Select How it works whenever you want to revisit Momentuhm’s main capabilities.",
+      desktopSelector:
+        "#momentuhm-tour-help-button",
+      mobileSelector:
+        "#momentuhm-tour-help-button",
+    },
+  ];
 
   /* ------------------------------------------------ */
   /* Font */
@@ -1000,8 +1189,13 @@ const getRestorableTaskStatus = (
     const [editingCategoryTitle, setEditingCategoryTitle] = useState("");
     const [selectedTask, setSelectedTask] = useState<any>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isSuggestionsModalOpen, setIsSuggestionsModalOpen] = useState(false);
-  const [isExtractModalOpen, setIsExtractModalOpen] = useState(false);
+    const [isSuggestionsModalOpen, setIsSuggestionsModalOpen] = useState(false);
+    const [isExtractModalOpen, setIsExtractModalOpen] = useState(false);
+    
+    const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+    const [tutorialStep, setTutorialStep] = useState(0);
+    const [hasCompletedTutorial, setHasCompletedTutorial] =
+      useState(false);
   const [showDueReminderPopup, setShowDueReminderPopup] = useState(false);
   const [extractInput, setExtractInput] = useState("");
   const [extractLoading, setExtractLoading] = useState(false);
@@ -1022,8 +1216,11 @@ const getRestorableTaskStatus = (
   const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
   
   const taskListRef = useRef<HTMLElement | null>(null);
-  const lastClipboardTextRef = useRef("");
-  const clipboardCheckInFlightRef = useRef(false);
+const lastClipboardTextRef = useRef("");
+const clipboardCheckInFlightRef = useRef(false);
+
+const tutorialAutoOpenedForUserRef =
+  useRef<string | null>(null);
   const anchorScrollAnimationRef = useRef<number | null>(null);
   const anchorRequestIdRef = useRef(0);
   const completedAnchorRequestIdRef = useRef(0);
@@ -1259,14 +1456,18 @@ const getRestorableTaskStatus = (
     useEffect(() => {
       if (!isUserLoaded) return;
     
+      setIsLoaded(false);
+      tutorialAutoOpenedForUserRef.current = null;
+    
       const loadUserState = async () => {
         if (!user?.id) {
-          setCategories(initialCategories);
-          setSelectedCategory(initialCategories[0].title);
-          setThemeColor(DEFAULT_THEME_COLOR);
-          setIsLoaded(true);
-          return;
-        }
+        setCategories(initialCategories);
+        setSelectedCategory(initialCategories[0].title);
+        setThemeColor(DEFAULT_THEME_COLOR);
+        setHasCompletedTutorial(false);
+        setIsLoaded(true);
+        return;
+      }
     
         const saved = await loadState(user.id);
     
@@ -1295,7 +1496,14 @@ const getRestorableTaskStatus = (
           setUpcomingViewMode(parsed.upcomingViewMode || "calendar");
           setEnableAppSuggestions(parsed.enableAppSuggestions ?? true);
           setEnableAutoPriority(parsed.enableAutoPriority ?? true);
-          setEnableClipboardAssist(parsed.enableClipboardAssist ?? true);
+          setEnableClipboardAssist(
+            parsed.enableClipboardAssist ?? true
+          );
+          
+          setHasCompletedTutorial(
+            parsed.hasCompletedTutorial ?? false
+          );
+          
           setArchive(parsed.archive || []);
           setCompletedToday(parsed.completedToday || []);
           setDayEndTime(
@@ -1313,6 +1521,7 @@ const getRestorableTaskStatus = (
           setCategories(initialCategories);
           setSelectedCategory(initialCategories[0].title);
           setThemeColor(DEFAULT_THEME_COLOR);
+          setHasCompletedTutorial(false);
         }
     
         setIsLoaded(true);
@@ -1320,6 +1529,78 @@ const getRestorableTaskStatus = (
     
       void loadUserState();
     }, [isUserLoaded, user?.id]);
+
+    /*
+     * Automatically open the tutorial once for a
+     * first-time signed-in user.
+     */
+    useEffect(() => {
+      if (!isLoaded) return;
+      if (!isUserLoaded) return;
+      if (!user?.id) return;
+
+      /*
+       * Only perform the automatic onboarding check once
+       * for the currently loaded user.
+       */
+      if (
+        tutorialAutoOpenedForUserRef.current ===
+        user.id
+      ) {
+        return;
+      }
+
+      tutorialAutoOpenedForUserRef.current =
+        user.id;
+
+      if (hasCompletedTutorial) return;
+
+      setSelectedView("today");
+      setTutorialStep(0);
+      setIsTutorialOpen(true);
+    }, [
+      isLoaded,
+      isUserLoaded,
+      user?.id,
+      hasCompletedTutorial,
+    ]);
+
+    /*
+     * Opens the tutorial manually through
+     * the "How it works" button.
+     */
+    const openQuickTutorial = () => {
+      /*
+       * Close competing overlays before opening the tour.
+       */
+      setShowDueReminderPopup(false);
+      setShowClipboardPrompt(false);
+      setClipboardCandidate("");
+
+      setIsExtractModalOpen(false);
+      setIsSuggestionsModalOpen(false);
+      setIsEditModalOpen(false);
+      setSelectedTask(null);
+
+      setSelectedView("today");
+      setTutorialStep(0);
+      setIsTutorialOpen(true);
+    };
+
+    /*
+     * Used for both completing and skipping the tour.
+     */
+    const finishQuickTutorial = () => {
+      setHasCompletedTutorial(true);
+      setIsTutorialOpen(false);
+      setTutorialStep(0);
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new Event("momentuhm:open-tasks")
+        );
+      }
+    };
 
 
     const refreshLatestStatus = async () => {
@@ -1411,8 +1692,9 @@ const getRestorableTaskStatus = (
           enableAutoPriority === true &&
           enableClipboardAssist === true &&
           dayEndTime === "18:00" &&
-          userRole === ""
-        ) return;
+userRole === "" &&
+hasCompletedTutorial === false
+) return;
     
       void saveState(user.id, {
         categories,
@@ -1430,6 +1712,7 @@ const getRestorableTaskStatus = (
         dayEndTime,
         userRole,
         manualFocusTaskIds,
+        hasCompletedTutorial,
       } as any);
     }, [
       categories,
@@ -1446,9 +1729,10 @@ const getRestorableTaskStatus = (
       completedToday,
       dayEndTime,
       userRole,
-      manualFocusTaskIds,
-      isLoaded,
-      user?.id,
+manualFocusTaskIds,
+hasCompletedTutorial,
+isLoaded,
+user?.id,
     ]);
 
 
@@ -1580,7 +1864,9 @@ const getRestorableTaskStatus = (
 
   useEffect(() => {
     if (!isLoaded) return;
-    if (todayTasks.length === 0) return;
+if (!hasCompletedTutorial) return;
+if (isTutorialOpen) return;
+if (todayTasks.length === 0) return;
     if (dayTimeRemaining.isOver) return;
     if (dayTimeRemaining.minutesLeft > 120 || dayTimeRemaining.minutesLeft <= 0) return;
 
@@ -1591,6 +1877,8 @@ const getRestorableTaskStatus = (
     setShowDueReminderPopup(true);
   }, [
     isLoaded,
+    hasCompletedTutorial,
+    isTutorialOpen,
     todayTasks.length,
     dayTimeRemaining.minutesLeft,
     dayTimeRemaining.isOver,
@@ -1622,8 +1910,10 @@ const getRestorableTaskStatus = (
 
   useEffect(() => {
     if (!CLIPBOARD_ASSIST_ENABLED_FOR_TESTING) return;
-    if (!isLoaded) return;
-    if (!enableClipboardAssist) return;
+if (!isLoaded) return;
+if (!hasCompletedTutorial) return;
+if (isTutorialOpen) return;
+if (!enableClipboardAssist) return;
     if (typeof window === "undefined") return;
     if (!navigator.clipboard?.readText) return;
 
@@ -1744,6 +2034,8 @@ const getRestorableTaskStatus = (
     };
   }, [
     isLoaded,
+    hasCompletedTutorial,
+    isTutorialOpen,
     enableClipboardAssist,
     isExtractModalOpen,
     isEditModalOpen,
@@ -3226,6 +3518,28 @@ const statusBeforeCompletion = completed
     }
   />
 
+<button
+  id="momentuhm-tour-help-button"
+  type="button"
+  onClick={openQuickTutorial}
+  aria-label="Open quick tutorial"
+  title="How Momentuhm works"
+  className={`fixed right-[76px] top-5 z-[175] inline-flex h-9 items-center justify-center gap-2 rounded-full border px-2.5 text-[11px] font-[650] shadow-[0_2px_10px_rgba(0,0,0,0.08)] transition active:scale-[0.97] sm:right-[170px] sm:top-[14px] sm:h-10 sm:px-3.5 ${
+    darkMode
+      ? "border-white/[0.12] bg-[#202124]/95 text-white/72 hover:bg-[#292A2E] hover:text-white"
+      : "border-[#DADCE0] bg-white/95 text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124]"
+  }`}
+>
+  <HelpCircle
+    size={16}
+    strokeWidth={1.8}
+  />
+
+  <span className="hidden sm:inline">
+    How it works
+  </span>
+</button>
+
   <div className="relative z-10 min-h-screen w-full overflow-x-hidden">
     <div className="w-full min-w-0 overflow-x-hidden px-3 pb-28 pt-5 sm:px-5 sm:pb-28 sm:pt-[96px] md:px-6 lg:pl-[276px] lg:pr-6 2xl:pb-16 2xl:pr-8">
       <div className="w-full min-w-0 overflow-x-hidden">
@@ -3408,7 +3722,21 @@ const statusBeforeCompletion = completed
         />
 
 <AnimatePresence initial={false} mode="sync">
-  {showDueReminderPopup && todayTasks.length > 0 && (
+  {isTutorialOpen && (
+    <QuickTutorial
+      key="quick-tutorial"
+      isOpen={isTutorialOpen}
+      stepIndex={tutorialStep}
+      setStepIndex={setTutorialStep}
+      darkMode={darkMode}
+      onSkip={finishQuickTutorial}
+      onFinish={finishQuickTutorial}
+    />
+  )}
+
+  {!isTutorialOpen &&
+    showDueReminderPopup &&
+    todayTasks.length > 0 && (
     <DueTasksReminderPopup
       key="due-tasks-reminder"
       tasks={todayTasks}
@@ -3421,7 +3749,8 @@ const statusBeforeCompletion = completed
     />
   )}
 
-{CLIPBOARD_ASSIST_ENABLED_FOR_TESTING &&
+{!isTutorialOpen &&
+  CLIPBOARD_ASSIST_ENABLED_FOR_TESTING &&
   enableClipboardAssist &&
   showClipboardPrompt &&
   clipboardCandidate && (
@@ -3843,7 +4172,10 @@ archiveCompletedToday,
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
+                    <div
+  id="momentuhm-tour-progress-desktop"
+  className="grid grid-cols-3 gap-3"
+>
                       {[
                         {
                           label: "Tasks",
@@ -3897,7 +4229,10 @@ archiveCompletedToday,
                 </header>
 
                 {/* Add task */}
-                <section className="relative mb-5">
+                <section
+  id="momentuhm-tour-capture-desktop"
+  className="relative mb-5"
+>
                   <div
                     role="group"
                     aria-label="Create a new task"
@@ -4027,7 +4362,8 @@ archiveCompletedToday,
 
               {/* Right: focus execution */}
               <aside
-    aria-label="Focus workspace"
+  id="momentuhm-tour-focus-desktop"
+  aria-label="Focus workspace"
     className={`min-w-0 self-start rounded-[14px] border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02)] xl:p-6 ${dashboardBorder} ${dashboardSurface}`}
   >
                 <FocusModePanel
@@ -8651,7 +8987,10 @@ title="Edit task status"
             {greetingWithName}
           </h1>
 
-          <div className="mt-3 grid grid-cols-3 gap-2">
+          <div
+  id="momentuhm-tour-progress-mobile"
+  className="mt-3 grid grid-cols-3 gap-2"
+>
             {[
               {
                 label: "Tasks",
@@ -9141,9 +9480,10 @@ title="Edit task status"
           </>
         ) : (
           <section
-            aria-label="Focus tasks"
-            className={`mt-1 overflow-hidden rounded-[12px] border ${panelClass}`}
-          >
+  id="momentuhm-tour-focus-mobile"
+  aria-label="Focus tasks"
+  className={`mt-1 overflow-hidden rounded-[12px] border ${panelClass}`}
+>
             <header
               className={`flex items-start justify-between gap-3 border-b px-3 py-3 ${dividerClass}`}
             >
@@ -9256,7 +9596,1582 @@ title="Edit task status"
     );
   }
 
+  function QuickTutorial({
+    isOpen,
+    stepIndex,
+    setStepIndex,
+    darkMode,
+    onSkip,
+    onFinish,
+  }: {
+    isOpen: boolean;
+    stepIndex: number;
+    setStepIndex: React.Dispatch<
+      React.SetStateAction<number>
+    >;
+    darkMode: boolean;
+    onSkip: () => void;
+    onFinish: () => void;
+  }) {
+    const [
+      spotlightRect,
+      setSpotlightRect,
+    ] = useState<TutorialSpotlightRect | null>(
+      null
+    );
+  
+    const [
+      typedTaskTitle,
+      setTypedTaskTitle,
+    ] = useState("");
+  
+    const [
+      showSmartSuggestions,
+      setShowSmartSuggestions,
+    ] = useState(false);
+  
+    const step =
+      QUICK_TUTORIAL_STEPS[stepIndex] ||
+      QUICK_TUTORIAL_STEPS[0];
+  
+    const isFirstStep = stepIndex === 0;
+  
+    const isLastStep =
+      stepIndex ===
+      QUICK_TUTORIAL_STEPS.length - 1;
 
+      const shouldPlaceTutorialOnLeft =
+  step.id === "focus" ||
+  step.id === "help";
+  
+    const goToPreviousStep = () => {
+      setStepIndex((currentStep) =>
+        Math.max(0, currentStep - 1)
+      );
+    };
+  
+    const goToNextStep = () => {
+      if (isLastStep) {
+        onFinish();
+        return;
+      }
+  
+      setStepIndex((currentStep) =>
+        Math.min(
+          QUICK_TUTORIAL_STEPS.length - 1,
+          currentStep + 1
+        )
+      );
+    };
+  
+    /*
+     * Simulate a task being typed and then analyzed.
+     * This is fixed preview data and does not call AI.
+     */
+    useEffect(() => {
+      if (
+        !isOpen ||
+        step.id !== "smart-assist"
+      ) {
+        setTypedTaskTitle("");
+        setShowSmartSuggestions(false);
+        return;
+      }
+  
+      let currentCharacter = 0;
+      let suggestionTimer:
+        | number
+        | undefined;
+  
+      setTypedTaskTitle("");
+      setShowSmartSuggestions(false);
+  
+      const typingTimer =
+        window.setInterval(() => {
+          currentCharacter += 1;
+  
+          setTypedTaskTitle(
+            TUTORIAL_SMART_TASK.slice(
+              0,
+              currentCharacter
+            )
+          );
+  
+          if (
+            currentCharacter >=
+            TUTORIAL_SMART_TASK.length
+          ) {
+            window.clearInterval(typingTimer);
+  
+            suggestionTimer =
+              window.setTimeout(() => {
+                setShowSmartSuggestions(true);
+              }, 350);
+          }
+        }, 32);
+  
+      return () => {
+        window.clearInterval(typingTimer);
+  
+        if (
+          suggestionTimer !== undefined
+        ) {
+          window.clearTimeout(
+            suggestionTimer
+          );
+        }
+      };
+    }, [isOpen, step.id]);
+  
+    /*
+     * Keyboard navigation.
+     */
+    useEffect(() => {
+      if (!isOpen) return;
+  
+      const handleKeyDown = (
+        event: KeyboardEvent
+      ) => {
+        if (event.key === "Escape") {
+          onSkip();
+          return;
+        }
+  
+        if (
+          event.key === "ArrowLeft" &&
+          !isFirstStep
+        ) {
+          goToPreviousStep();
+          return;
+        }
+  
+        if (event.key === "ArrowRight") {
+          goToNextStep();
+        }
+      };
+  
+      window.addEventListener(
+        "keydown",
+        handleKeyDown
+      );
+  
+      return () => {
+        window.removeEventListener(
+          "keydown",
+          handleKeyDown
+        );
+      };
+    }, [
+      isOpen,
+      isFirstStep,
+      isLastStep,
+      stepIndex,
+      onSkip,
+      onFinish,
+    ]);
+  
+    /*
+     * Open the correct mobile workspace and spotlight
+     * the real interface element connected to the step.
+     */
+    useEffect(() => {
+      if (!isOpen) return;
+      if (typeof window === "undefined") {
+        return;
+      }
+  
+      let revealTimer:
+        | number
+        | undefined;
+  
+      let measureTimer:
+        | number
+        | undefined;
+  
+      const isMobile =
+        window.matchMedia(
+          "(max-width: 639px)"
+        ).matches;
+  
+      const selector = isMobile
+        ? step.mobileSelector
+        : step.desktopSelector;
+  
+      const prepareMobileWorkspace = () => {
+        if (!isMobile) return;
+  
+        if (step.id === "focus") {
+          window.dispatchEvent(
+            new Event(
+              "momentuhm:open-focus"
+            )
+          );
+  
+          return;
+        }
+  
+        if (step.id !== "welcome") {
+          window.dispatchEvent(
+            new Event(
+              "momentuhm:open-tasks"
+            )
+          );
+        }
+      };
+  
+      const measureSpotlight = () => {
+        if (!selector) {
+          setSpotlightRect(null);
+          return;
+        }
+  
+        const target =
+          document.querySelector<HTMLElement>(
+            selector
+          );
+  
+        if (!target) {
+          setSpotlightRect(null);
+          return;
+        }
+  
+        const targetRect =
+          target.getBoundingClientRect();
+  
+        if (
+          targetRect.width <= 0 ||
+          targetRect.height <= 0
+        ) {
+          setSpotlightRect(null);
+          return;
+        }
+  
+        const padding = isMobile ? 6 : 10;
+  
+        const left = Math.max(
+          8,
+          targetRect.left - padding
+        );
+  
+        const top = Math.max(
+          8,
+          targetRect.top - padding
+        );
+  
+        const right = Math.min(
+          window.innerWidth - 8,
+          targetRect.right + padding
+        );
+  
+        const bottom = Math.min(
+          window.innerHeight - 8,
+          targetRect.bottom + padding
+        );
+  
+        setSpotlightRect({
+          top,
+          left,
+          width: Math.max(
+            0,
+            right - left
+          ),
+          height: Math.max(
+            0,
+            bottom - top
+          ),
+        });
+      };
+  
+      const revealTarget = () => {
+        prepareMobileWorkspace();
+  
+        revealTimer =
+          window.setTimeout(() => {
+            if (!selector) {
+              setSpotlightRect(null);
+              return;
+            }
+  
+            const target =
+              document.querySelector<HTMLElement>(
+                selector
+              );
+  
+            if (!target) {
+              setSpotlightRect(null);
+              return;
+            }
+  
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+              inline: "nearest",
+            });
+  
+            measureSpotlight();
+  
+            measureTimer =
+              window.setTimeout(
+                measureSpotlight,
+                420
+              );
+          }, isMobile ? 120 : 40);
+      };
+  
+      setSpotlightRect(null);
+      revealTarget();
+  
+      window.addEventListener(
+        "resize",
+        measureSpotlight
+      );
+  
+      window.addEventListener(
+        "scroll",
+        measureSpotlight,
+        true
+      );
+  
+      return () => {
+        if (revealTimer !== undefined) {
+          window.clearTimeout(
+            revealTimer
+          );
+        }
+  
+        if (measureTimer !== undefined) {
+          window.clearTimeout(
+            measureTimer
+          );
+        }
+  
+        window.removeEventListener(
+          "resize",
+          measureSpotlight
+        );
+  
+        window.removeEventListener(
+          "scroll",
+          measureSpotlight,
+          true
+        );
+      };
+    }, [
+      isOpen,
+      step.id,
+      step.desktopSelector,
+      step.mobileSelector,
+    ]);
+  
+    if (!isOpen) return null;
+  
+    const surfaceClass = darkMode
+      ? "border-white/[0.13] bg-[#202124] text-[#F1F3F4]"
+      : "border-[#DADCE0] bg-white text-[#202124]";
+  
+    const panelClass = darkMode
+      ? "border-white/[0.10] bg-white/[0.035]"
+      : "border-[#DADCE0] bg-[#F8F9FA]";
+  
+    const elevatedPanelClass = darkMode
+      ? "border-white/[0.11] bg-[#17181C]"
+      : "border-[#DADCE0] bg-white";
+  
+    const mutedTextClass = darkMode
+      ? "text-white/48"
+      : "text-[#5F6368]";
+  
+    const secondaryTextClass = darkMode
+      ? "text-white/68"
+      : "text-[#3C4043]";
+  
+    const previewBadgeClass = darkMode
+      ? "border-white/[0.10] bg-white/[0.05] text-white/55"
+      : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368]";
+  
+    const renderStepIcon = () => {
+      if (
+        step.id === "smart-assist" ||
+        step.id === "clipboard" ||
+        step.id === "extract" ||
+        step.id === "focus" ||
+        step.id === "daily-intelligence"
+      ) {
+        return (
+          <Sparkles
+            size={18}
+            strokeWidth={1.8}
+          />
+        );
+      }
+  
+      if (step.id === "control") {
+        return (
+          <PencilLine
+            size={18}
+            strokeWidth={1.8}
+          />
+        );
+      }
+  
+      if (step.id === "help") {
+        return (
+          <HelpCircle
+            size={18}
+            strokeWidth={1.8}
+          />
+        );
+      }
+  
+      return (
+        <Lightbulb
+          size={18}
+          strokeWidth={1.8}
+        />
+      );
+    };
+  
+    const renderStepDemo = () => {
+      switch (step.id) {
+        case "welcome":
+          return (
+            <div
+              className={`rounded-[14px] border p-4 ${panelClass}`}
+            >
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {[
+                  {
+                    label: "Capture",
+                    description:
+                      "Add tasks naturally",
+                    icon: Plus,
+                  },
+                  {
+                    label: "Clarify",
+                    description:
+                      "Get AI suggestions",
+                    icon: Sparkles,
+                  },
+                  {
+                    label: "Focus",
+                    description:
+                      "Choose next moves",
+                    icon: Target,
+                  },
+                  {
+                    label: "Complete",
+                    description:
+                      "Track progress",
+                    icon: Check,
+                  },
+                ].map((item, index) => {
+                  const Icon = item.icon;
+  
+                  return (
+                    <motion.div
+                      key={item.label}
+                      initial={{
+                        opacity: 0,
+                        y: 8,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      transition={{
+                        delay:
+                          index * 0.08,
+                      }}
+                      className={`rounded-[10px] border p-3 ${elevatedPanelClass}`}
+                    >
+                      <Icon
+                        size={16}
+                        strokeWidth={1.8}
+                        className={
+                          mutedTextClass
+                        }
+                      />
+  
+                      <p className="mt-3 text-[11px] font-[700]">
+                        {item.label}
+                      </p>
+  
+                      <p
+                        className={`mt-1 text-[9.5px] font-[500] leading-4 ${mutedTextClass}`}
+                      >
+                        {item.description}
+                      </p>
+                    </motion.div>
+                  );
+                })}
+              </div>
+  
+              <div
+                className={`mt-3 flex items-start gap-3 rounded-[10px] border px-3 py-3 ${elevatedPanelClass}`}
+              >
+                <Sparkles
+                  size={16}
+                  strokeWidth={1.8}
+                  className="mt-0.5 shrink-0"
+                />
+  
+                <p
+                  className={`text-[11px] font-[500] leading-5 ${secondaryTextClass}`}
+                >
+                  Momentuhm helps at each stage,
+                  while keeping every decision
+                  editable.
+                </p>
+              </div>
+            </div>
+          );
+  
+        case "smart-assist":
+          return (
+            <div
+              className={`overflow-hidden rounded-[14px] border ${elevatedPanelClass}`}
+            >
+              <div
+                className={`flex items-center justify-between border-b px-4 py-3 ${
+                  darkMode
+                    ? "border-white/[0.08]"
+                    : "border-[#E8EAED]"
+                }`}
+              >
+                <div>
+                  <p className="text-[11px] font-[700]">
+                    New task
+                  </p>
+  
+                  <p
+                    className={`mt-0.5 text-[9.5px] font-[500] ${mutedTextClass}`}
+                  >
+                    AI task assistance
+                  </p>
+                </div>
+  
+                <span
+                  className={`rounded-full border px-2 py-1 text-[8.5px] font-[700] uppercase tracking-[0.08em] ${previewBadgeClass}`}
+                >
+                  Preview
+                </span>
+              </div>
+  
+              <div className="p-4">
+                <div
+                  className={`flex min-h-[50px] items-center gap-3 rounded-[10px] border px-3 ${panelClass}`}
+                >
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${previewBadgeClass}`}
+                  >
+                    <Plus
+                      size={15}
+                      strokeWidth={1.8}
+                    />
+                  </span>
+  
+                  <p
+                    className={`min-w-0 text-[12px] font-[550] ${secondaryTextClass}`}
+                  >
+                    {typedTaskTitle}
+  
+                    {!showSmartSuggestions && (
+                      <motion.span
+                        animate={{
+                          opacity: [1, 0],
+                        }}
+                        transition={{
+                          duration: 0.65,
+                          repeat: Infinity,
+                        }}
+                        className="ml-0.5"
+                      >
+                        |
+                      </motion.span>
+                    )}
+                  </p>
+                </div>
+  
+                <AnimatePresence mode="wait">
+                  {!showSmartSuggestions ? (
+                    <motion.div
+                      key="analyzing"
+                      initial={{
+                        opacity: 0,
+                      }}
+                      animate={{
+                        opacity: 1,
+                      }}
+                      exit={{
+                        opacity: 0,
+                      }}
+                      className={`mt-3 flex items-center gap-2 rounded-[9px] border px-3 py-2.5 ${panelClass}`}
+                    >
+                      <Sparkles
+                        size={13}
+                        strokeWidth={1.8}
+                        className="animate-pulse"
+                      />
+  
+                      <p
+                        className={`text-[10px] font-[600] ${mutedTextClass}`}
+                      >
+                        Momentuhm is organizing
+                        this task…
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="suggestions"
+                      initial={{
+                        opacity: 0,
+                        y: 6,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      className="mt-3"
+                    >
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          "High priority",
+                          "Due tomorrow",
+                          "Major Projects",
+                        ].map(
+                          (
+                            suggestion,
+                            index
+                          ) => (
+                            <motion.span
+                              key={
+                                suggestion
+                              }
+                              initial={{
+                                opacity: 0,
+                                scale: 0.94,
+                              }}
+                              animate={{
+                                opacity: 1,
+                                scale: 1,
+                              }}
+                              transition={{
+                                delay:
+                                  index *
+                                  0.09,
+                              }}
+                              className={`inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1.5 text-[9.5px] font-[650] ${previewBadgeClass}`}
+                            >
+                              <Sparkles
+                                size={10}
+                                strokeWidth={1.8}
+                                className="opacity-60"
+                              />
+  
+                              {suggestion}
+                            </motion.span>
+                          )
+                        )}
+                      </div>
+  
+                      <motion.div
+                        initial={{
+                          opacity: 0,
+                          y: 5,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                        }}
+                        transition={{
+                          delay: 0.3,
+                        }}
+                        className={`mt-3 rounded-[10px] border px-3 py-3 ${panelClass}`}
+                      >
+                        <p
+                          className={`text-[8.5px] font-[750] uppercase tracking-[0.11em] ${mutedTextClass}`}
+                        >
+                          Why it matters
+                        </p>
+  
+                        <p
+                          className={`mt-1.5 text-[10.5px] font-[550] leading-4 ${secondaryTextClass}`}
+                        >
+                          Completing this early keeps
+                          the client decision from
+                          being blocked.
+                        </p>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          );
+  
+        case "clipboard":
+          return (
+            <div
+              className={`overflow-hidden rounded-[14px] border shadow-[0_14px_40px_rgba(0,0,0,0.14)] ${elevatedPanelClass}`}
+            >
+              <div
+                className={`flex items-start justify-between gap-4 border-b px-4 py-4 ${
+                  darkMode
+                    ? "border-white/[0.08]"
+                    : "border-[#E8EAED]"
+                }`}
+              >
+                <div className="flex min-w-0 items-start gap-3">
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${previewBadgeClass}`}
+                  >
+                    <Sparkles
+                      size={15}
+                      strokeWidth={1.8}
+                    />
+                  </div>
+  
+                  <div className="min-w-0">
+                    <p
+                      className={`text-[8.5px] font-[750] uppercase tracking-[0.12em] ${mutedTextClass}`}
+                    >
+                      Clipboard Assist
+                    </p>
+  
+                    <p className="mt-1 text-[15px] font-[720] tracking-[-0.025em]">
+                      3 possible tasks found
+                    </p>
+  
+                    <p
+                      className={`mt-1 text-[9.5px] font-[500] ${mutedTextClass}`}
+                    >
+                      Review before anything is added.
+                    </p>
+                  </div>
+                </div>
+  
+                <span
+                  className={`rounded-full border px-2 py-1 text-[8px] font-[700] uppercase tracking-[0.08em] ${previewBadgeClass}`}
+                >
+                  Demo
+                </span>
+              </div>
+  
+              <div
+                className={`border-b px-4 py-3 ${
+                  darkMode
+                    ? "border-white/[0.08] bg-white/[0.02]"
+                    : "border-[#E8EAED] bg-[#F8F9FA]"
+                }`}
+              >
+                <p
+                  className={`text-[8.5px] font-[700] uppercase tracking-[0.1em] ${mutedTextClass}`}
+                >
+                  Copied text
+                </p>
+  
+                <p
+                  className={`mt-1.5 line-clamp-2 text-[9.5px] font-[500] leading-4 ${secondaryTextClass}`}
+                >
+                  {TUTORIAL_CLIPBOARD_TEXT}
+                </p>
+              </div>
+  
+              <div>
+                {TUTORIAL_CLIPBOARD_TASKS.map(
+                  (task, index) => (
+                    <motion.div
+                      key={task.title}
+                      initial={{
+                        opacity: 0,
+                        x: -8,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        x: 0,
+                      }}
+                      transition={{
+                        delay:
+                          0.08 +
+                          index * 0.08,
+                      }}
+                      className={`flex items-start gap-3 border-b px-4 py-3 last:border-b-0 ${
+                        darkMode
+                          ? "border-white/[0.08]"
+                          : "border-[#E8EAED]"
+                      }`}
+                    >
+                      <span
+                        className={`mt-0.5 flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[4px] border ${
+                          darkMode
+                            ? "border-white bg-white text-[#202124]"
+                            : "border-[#202124] bg-[#202124] text-white"
+                        }`}
+                      >
+                        <Check
+                          size={11}
+                          strokeWidth={2.4}
+                        />
+                      </span>
+  
+                      <div className="min-w-0">
+                        <p
+                          className={`text-[10.5px] font-[650] leading-4 ${secondaryTextClass}`}
+                        >
+                          {task.title}
+                        </p>
+  
+                        <p
+                          className={`mt-1 text-[8.5px] font-[550] ${mutedTextClass}`}
+                        >
+                          {task.meta}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )
+                )}
+              </div>
+  
+              <div
+                className={`flex items-center justify-between gap-3 border-t px-4 py-3 ${
+                  darkMode
+                    ? "border-white/[0.08] bg-white/[0.02]"
+                    : "border-[#E8EAED] bg-[#F8F9FA]"
+                }`}
+              >
+                <p
+                  className={`text-[8.5px] font-[500] ${mutedTextClass}`}
+                >
+                  3 of 3 selected
+                </p>
+  
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled
+                    className={`h-8 rounded-[7px] border px-3 text-[9px] font-[650] ${previewBadgeClass}`}
+                  >
+                    Dismiss
+                  </button>
+  
+                  <button
+                    type="button"
+                    disabled
+                    className={`h-8 rounded-[7px] px-3 text-[9px] font-[700] ${
+                      darkMode
+                        ? "bg-white text-[#202124]"
+                        : "bg-[#202124] text-white"
+                    }`}
+                  >
+                    Add selected (3)
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+  
+        case "extract":
+          return (
+            <div
+              className={`rounded-[14px] border p-3 sm:p-4 ${panelClass}`}
+            >
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,0.9fr)_30px_minmax(0,1.1fr)] sm:items-center">
+                <div
+                  className={`rounded-[11px] border p-3 ${elevatedPanelClass}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-[700]">
+                      Meeting notes
+                    </p>
+  
+                    <span
+                      className={`rounded-full border px-2 py-1 text-[7.5px] font-[700] uppercase tracking-[0.08em] ${previewBadgeClass}`}
+                    >
+                      Source
+                    </span>
+                  </div>
+  
+                  <div className="mt-3 space-y-2">
+                    {TUTORIAL_EXTRACT_SOURCE_LINES.map(
+                      (line) => (
+                        <div
+                          key={line}
+                          className={`flex items-start gap-2 text-[9.5px] font-[500] leading-4 ${secondaryTextClass}`}
+                        >
+                          <span className="mt-[6px] h-1 w-1 shrink-0 rounded-full bg-current opacity-45" />
+  
+                          <span>{line}</span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+  
+                <div className="hidden items-center justify-center sm:flex">
+                  <ChevronRight
+                    size={18}
+                    strokeWidth={1.8}
+                    className={
+                      mutedTextClass
+                    }
+                  />
+                </div>
+  
+                <div className="space-y-2">
+                  {TUTORIAL_EXTRACTED_TASKS.map(
+                    (task, index) => (
+                      <motion.div
+                        key={task.title}
+                        initial={{
+                          opacity: 0,
+                          x: 8,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          x: 0,
+                        }}
+                        transition={{
+                          delay:
+                            index * 0.1,
+                        }}
+                        className={`flex items-start gap-2.5 rounded-[9px] border px-3 py-2.5 ${elevatedPanelClass}`}
+                      >
+                        <span
+                          className={`mt-0.5 flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full ${
+                            darkMode
+                              ? "bg-white text-[#202124]"
+                              : "bg-[#202124] text-white"
+                          }`}
+                        >
+                          <Check
+                            size={10}
+                            strokeWidth={2.3}
+                          />
+                        </span>
+  
+                        <div className="min-w-0">
+                          <p
+                            className={`text-[9.5px] font-[650] leading-4 ${secondaryTextClass}`}
+                          >
+                            {task.title}
+                          </p>
+  
+                          <p
+                            className={`mt-0.5 text-[8px] font-[550] ${mutedTextClass}`}
+                          >
+                            {task.meta}
+                          </p>
+                        </div>
+                      </motion.div>
+                    )
+                  )}
+                </div>
+              </div>
+  
+              <div
+                className={`mt-3 flex items-center gap-2 rounded-[9px] border px-3 py-2.5 ${elevatedPanelClass}`}
+              >
+                <Sparkles
+                  size={13}
+                  strokeWidth={1.8}
+                />
+  
+                <p
+                  className={`text-[9px] font-[550] leading-4 ${mutedTextClass}`}
+                >
+                  Nothing is added until the user
+                  reviews and confirms the extracted
+                  tasks.
+                </p>
+              </div>
+            </div>
+          );
+  
+        case "focus":
+          return (
+            <div
+              className={`overflow-hidden rounded-[14px] border ${elevatedPanelClass}`}
+            >
+              <div
+                className={`flex items-center justify-between border-b px-4 py-3 ${
+                  darkMode
+                    ? "border-white/[0.08]"
+                    : "border-[#E8EAED]"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Target
+                    size={15}
+                    strokeWidth={1.8}
+                  />
+  
+                  <div>
+                    <p className="text-[11px] font-[700]">
+                      AI Focus stack
+                    </p>
+  
+                    <p
+                      className={`mt-0.5 text-[8.5px] font-[500] ${mutedTextClass}`}
+                    >
+                      Strongest next actions
+                    </p>
+                  </div>
+                </div>
+  
+                <span
+                  className={`rounded-full border px-2 py-1 text-[8px] font-[700] uppercase tracking-[0.08em] ${previewBadgeClass}`}
+                >
+                  AI Mode
+                </span>
+              </div>
+  
+              <div className="p-3">
+                {TUTORIAL_FOCUS_TASKS.map(
+                  (task, index) => (
+                    <motion.div
+                      key={task.title}
+                      initial={{
+                        opacity: 0,
+                        y: 7,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      transition={{
+                        delay:
+                          index * 0.1,
+                      }}
+                      className={`mb-2 grid grid-cols-[28px_minmax(0,1fr)] gap-2 rounded-[10px] border px-3 py-3 last:mb-0 ${panelClass}`}
+                    >
+                      <span
+                        className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-[700] ${
+                          darkMode
+                            ? "bg-white text-[#202124]"
+                            : "bg-[#202124] text-white"
+                        }`}
+                      >
+                        {index + 1}
+                      </span>
+  
+                      <div className="min-w-0">
+                        <p
+                          className={`text-[10.5px] font-[650] leading-4 ${secondaryTextClass}`}
+                        >
+                          {task.title}
+                        </p>
+  
+                        <p
+                          className={`mt-1 text-[8.5px] font-[550] leading-4 ${mutedTextClass}`}
+                        >
+                          {task.reason}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )
+                )}
+              </div>
+  
+              <div
+                className={`border-t px-4 py-3 ${
+                  darkMode
+                    ? "border-white/[0.08] bg-white/[0.02]"
+                    : "border-[#E8EAED] bg-[#F8F9FA]"
+                }`}
+              >
+                <p
+                  className={`text-[9px] font-[550] leading-4 ${mutedTextClass}`}
+                >
+                  Momentuhm considers priority,
+                  deadlines, dependencies, and impact.
+                  The Focus stack can still be changed
+                  manually.
+                </p>
+              </div>
+            </div>
+          );
+  
+        case "daily-intelligence":
+          return (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  {
+                    label: "Tasks",
+                    value: "12",
+                  },
+                  {
+                    label: "Completed",
+                    value: "5",
+                  },
+                  {
+                    label: "Progress",
+                    value: "42%",
+                  },
+                ].map((metric) => (
+                  <div
+                    key={metric.label}
+                    className={`rounded-[10px] border px-2 py-3 text-center ${elevatedPanelClass}`}
+                  >
+                    <p className="text-[17px] font-[720] leading-none">
+                      {metric.value}
+                    </p>
+  
+                    <p
+                      className={`mt-2 text-[7.5px] font-[700] uppercase tracking-[0.06em] ${mutedTextClass}`}
+                    >
+                      {metric.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+  
+              <div
+                className={`rounded-[12px] border p-3 ${elevatedPanelClass}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] border ${previewBadgeClass}`}
+                  >
+                    <Sunrise
+                      size={14}
+                      strokeWidth={1.8}
+                    />
+                  </div>
+  
+                  <div>
+                    <p
+                      className={`text-[8px] font-[750] uppercase tracking-[0.1em] ${mutedTextClass}`}
+                    >
+                      Morning brief
+                    </p>
+  
+                    <p
+                      className={`mt-1.5 text-[10px] font-[600] leading-4 ${secondaryTextClass}`}
+                    >
+                      Start with the client budget.
+                      It has the clearest deadline and
+                      external dependency.
+                    </p>
+                  </div>
+                </div>
+              </div>
+  
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div
+                  className={`rounded-[11px] border p-3 ${panelClass}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles
+                      size={13}
+                      strokeWidth={1.8}
+                    />
+  
+                    <p
+                      className={`text-[8px] font-[750] uppercase tracking-[0.09em] ${mutedTextClass}`}
+                    >
+                      Progress insight
+                    </p>
+                  </div>
+  
+                  <p
+                    className={`mt-2 text-[10px] font-[650] ${secondaryTextClass}`}
+                  >
+                    Strong momentum. Keep moving.
+                  </p>
+                </div>
+  
+                <div
+                  className={`rounded-[11px] border p-3 ${panelClass}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Clock3
+                      size={13}
+                      strokeWidth={1.8}
+                    />
+  
+                    <p
+                      className={`text-[8px] font-[750] uppercase tracking-[0.09em] ${mutedTextClass}`}
+                    >
+                      Time awareness
+                    </p>
+                  </div>
+  
+                  <p
+                    className={`mt-2 text-[10px] font-[650] ${secondaryTextClass}`}
+                  >
+                    4h 20m left in your day
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+  
+        case "control":
+          return (
+            <div
+              className={`overflow-hidden rounded-[14px] border ${elevatedPanelClass}`}
+            >
+              <div
+                className={`border-b px-4 py-3 ${
+                  darkMode
+                    ? "border-white/[0.08]"
+                    : "border-[#E8EAED]"
+                }`}
+              >
+                <p
+                  className={`text-[8px] font-[750] uppercase tracking-[0.11em] ${mutedTextClass}`}
+                >
+                  Example task
+                </p>
+  
+                <p className="mt-1.5 text-[13px] font-[700] tracking-[-0.02em]">
+                  Prepare the quarterly client review
+                </p>
+              </div>
+  
+              <div>
+                {TUTORIAL_CONTROL_FIELDS.map(
+                  (field) => (
+                    <div
+                      key={field.label}
+                      className={`grid grid-cols-[96px_minmax(0,1fr)_36px] items-center gap-2 border-b px-4 py-2.5 last:border-b-0 ${
+                        darkMode
+                          ? "border-white/[0.08]"
+                          : "border-[#E8EAED]"
+                      }`}
+                    >
+                      <p
+                        className={`text-[8.5px] font-[600] ${mutedTextClass}`}
+                      >
+                        {field.label}
+                      </p>
+  
+                      <p
+                        className={`truncate text-[9.5px] font-[650] ${secondaryTextClass}`}
+                      >
+                        {field.value}
+                      </p>
+  
+                      <span
+                        className={`text-right text-[8px] font-[700] ${mutedTextClass}`}
+                      >
+                        Edit
+                      </span>
+                    </div>
+                  )
+                )}
+              </div>
+  
+              <div
+                className={`flex items-start gap-3 border-t px-4 py-3 ${
+                  darkMode
+                    ? "border-white/[0.08] bg-white/[0.02]"
+                    : "border-[#E8EAED] bg-[#F8F9FA]"
+                }`}
+              >
+                <PencilLine
+                  size={14}
+                  strokeWidth={1.8}
+                  className="mt-0.5 shrink-0"
+                />
+  
+                <p
+                  className={`text-[9px] font-[550] leading-4 ${mutedTextClass}`}
+                >
+                  AI organizes the first draft. The
+                  user makes the final decision.
+                </p>
+              </div>
+            </div>
+          );
+  
+        case "help":
+          return (
+            <div
+              className={`rounded-[14px] border p-4 ${panelClass}`}
+            >
+              <div
+                className={`rounded-[12px] border p-4 text-center ${elevatedPanelClass}`}
+              >
+                <div
+                  className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full border ${previewBadgeClass}`}
+                >
+                  <Check
+                    size={18}
+                    strokeWidth={2}
+                  />
+                </div>
+  
+                <p className="mt-3 text-[13px] font-[700]">
+                  Tour complete
+                </p>
+  
+                <p
+                  className={`mx-auto mt-1.5 max-w-[320px] text-[9.5px] font-[500] leading-4 ${mutedTextClass}`}
+                >
+                  You have seen task assistance,
+                  Clipboard Assist, extraction, AI
+                  Focus, daily intelligence, and
+                  editable suggestions.
+                </p>
+  
+                <div
+                  className={`mx-auto mt-4 inline-flex h-9 items-center gap-2 rounded-full border px-4 text-[9.5px] font-[650] ${previewBadgeClass}`}
+                >
+                  <HelpCircle
+                    size={13}
+                    strokeWidth={1.8}
+                  />
+  
+                  How it works
+                </div>
+              </div>
+            </div>
+          );
+  
+        default:
+          return null;
+      }
+    };
+  
+    return (
+      <motion.div
+        initial={{
+          opacity: 0,
+        }}
+        animate={{
+          opacity: 1,
+        }}
+        exit={{
+          opacity: 0,
+        }}
+        transition={{
+          duration: 0.2,
+        }}
+        className="fixed inset-0 z-[260]"
+      >
+        {/* Dimmed backdrop and spotlight */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+        >
+          {!spotlightRect && (
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px]" />
+          )}
+  
+          {spotlightRect && (
+            <motion.div
+              initial={false}
+              animate={{
+                top: spotlightRect.top,
+                left: spotlightRect.left,
+                width: spotlightRect.width,
+                height: spotlightRect.height,
+              }}
+              transition={{
+                duration: 0.28,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+              className="pointer-events-none absolute rounded-[16px] border-2 border-white"
+              style={{
+                boxShadow:
+                  "0 0 0 9999px rgba(0, 0, 0, 0.64), 0 12px 46px rgba(0, 0, 0, 0.22)",
+              }}
+            />
+          )}
+        </div>
+  
+        <motion.section
+          key={step.id}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="quick-tutorial-title"
+          aria-describedby="quick-tutorial-description"
+          initial={{
+            opacity: 0,
+            y: 14,
+            scale: 0.985,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+          }}
+          exit={{
+            opacity: 0,
+            y: 8,
+            scale: 0.99,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 350,
+            damping: 32,
+            mass: 0.86,
+          }}
+          className={`absolute bottom-[88px] left-1/2 z-10 flex max-h-[calc(100vh-112px)] w-[calc(100%_-_24px)] max-w-[720px] -translate-x-1/2 flex-col overflow-hidden rounded-[18px] border shadow-[0_28px_90px_rgba(0,0,0,0.34)] sm:bottom-6 sm:max-h-[calc(100vh-48px)] sm:w-[calc(100vw-48px)] sm:translate-x-0 ${
+            shouldPlaceTutorialOnLeft
+              ? "sm:left-6 sm:right-auto"
+              : "sm:left-auto sm:right-6"
+          } ${surfaceClass}`}
+        >
+          {/* Header */}
+          <header
+            className={`flex shrink-0 items-center justify-between border-b px-5 py-3.5 ${
+              darkMode
+                ? "border-white/[0.09]"
+                : "border-[#E8EAED]"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className={`text-[9px] font-[700] uppercase tracking-[0.12em] ${mutedTextClass}`}
+              >
+                {stepIndex + 1} of{" "}
+                {QUICK_TUTORIAL_STEPS.length}
+              </span>
+  
+              {stepIndex > 0 &&
+                stepIndex <
+                  QUICK_TUTORIAL_STEPS.length -
+                    1 && (
+                  <span
+                    className={`rounded-full border px-2 py-1 text-[7.5px] font-[700] uppercase tracking-[0.08em] ${previewBadgeClass}`}
+                  >
+                    Interactive preview
+                  </span>
+                )}
+            </div>
+  
+            <button
+              type="button"
+              onClick={onSkip}
+              className={`text-[10px] font-[650] transition ${
+                darkMode
+                  ? "text-white/48 hover:text-white"
+                  : "text-[#5F6368] hover:text-[#202124]"
+              }`}
+            >
+              Skip tour
+            </button>
+          </header>
+  
+          {/* Scrollable tutorial body */}
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+            <div className="grid gap-5 md:grid-cols-[210px_minmax(0,1fr)] md:items-start">
+              <div>
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-[10px] border ${
+                    darkMode
+                      ? "border-white/[0.10] bg-white/[0.05] text-white/72"
+                      : "border-[#DADCE0] bg-[#F1F3F4] text-[#3C4043]"
+                  }`}
+                >
+                  {renderStepIcon()}
+                </div>
+  
+                <p
+                  className={`mt-4 text-[9px] font-[700] uppercase tracking-[0.13em] ${mutedTextClass}`}
+                >
+                  {step.eyebrow}
+                </p>
+  
+                <h2
+                  id="quick-tutorial-title"
+                  className="mt-1.5 text-[21px] font-[740] leading-[27px] tracking-[-0.04em]"
+                >
+                  {step.title}
+                </h2>
+  
+                <p
+                  id="quick-tutorial-description"
+                  className={`mt-2 text-[11.5px] font-[500] leading-5 ${mutedTextClass}`}
+                >
+                  {step.description}
+                </p>
+              </div>
+  
+              <div className="min-w-0">
+                {renderStepDemo()}
+              </div>
+            </div>
+  
+            {/* Progress */}
+            <div className="mt-5 flex gap-1.5">
+              {QUICK_TUTORIAL_STEPS.map(
+                (
+                  tutorialStep,
+                  index
+                ) => (
+                  <span
+                    key={tutorialStep.id}
+                    aria-hidden="true"
+                    className={`h-1.5 flex-1 rounded-full transition ${
+                      index <= stepIndex
+                        ? darkMode
+                          ? "bg-white"
+                          : "bg-[#202124]"
+                        : darkMode
+                        ? "bg-white/[0.12]"
+                        : "bg-[#DADCE0]"
+                    }`}
+                  />
+                )
+              )}
+            </div>
+          </div>
+  
+          {/* Footer */}
+          <footer
+            className={`flex shrink-0 items-center justify-between gap-3 border-t px-5 py-3.5 ${
+              darkMode
+                ? "border-white/[0.09] bg-white/[0.025]"
+                : "border-[#E8EAED] bg-[#F8F9FA]"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={goToPreviousStep}
+              disabled={isFirstStep}
+              className={`h-9 rounded-[8px] border px-3.5 text-[10px] font-[650] transition ${
+                isFirstStep
+                  ? "invisible"
+                  : darkMode
+                  ? "border-white/[0.10] text-white/62 hover:bg-white/[0.06] hover:text-white"
+                  : "border-[#DADCE0] bg-white text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124]"
+              }`}
+            >
+              Back
+            </button>
+  
+            <button
+              type="button"
+              autoFocus
+              onClick={goToNextStep}
+              className={`inline-flex h-9 items-center justify-center gap-2 rounded-[8px] px-4 text-[10px] font-[700] transition active:scale-[0.98] ${
+                darkMode
+                  ? "bg-white text-[#202124] hover:bg-white/90"
+                  : "bg-[#202124] text-white hover:bg-[#303134]"
+              }`}
+            >
+              {isLastStep
+                ? "Start using Momentuhm"
+                : isFirstStep
+                ? "Show me how"
+                : "Next"}
+  
+              {!isLastStep && (
+                <ChevronRight
+                  size={14}
+                  strokeWidth={1.9}
+                />
+              )}
+            </button>
+          </footer>
+        </motion.section>
+      </motion.div>
+    );
+  }
 
   function ClipboardAssistPrompt({
     text,
