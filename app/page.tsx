@@ -4529,6 +4529,7 @@ setInsightsHistory(
               {selectedView === "today" && (
               <TodayView
               darkMode={darkMode}
+              insightsHistory={insightsHistory}
               setDarkMode={setDarkMode}
               themeColor={themeColor}
               glass={glass}
@@ -4959,6 +4960,7 @@ setInsightsHistory(
 
   function TodayView({
     darkMode,
+    insightsHistory,
     setDarkMode,
     themeColor,
     glass,
@@ -5409,8 +5411,9 @@ archiveCompletedToday,
     className={`min-w-0 self-start rounded-[14px] border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02)] xl:p-6 ${dashboardBorder} ${dashboardSurface}`}
   >
                 <FocusModePanel
-                  prioritizedTasks={prioritizedTasks}
-                  completedToday={completedToday}
+  prioritizedTasks={prioritizedTasks}
+  completedToday={completedToday}
+  insightsHistory={insightsHistory}
                   darkMode={darkMode}
                   border={border}
                   strongerGlass={strongerGlass}
@@ -9955,10 +9958,10 @@ const displayedInsight =
   }
 
 
-
   function FocusModePanel({
     prioritizedTasks,
     completedToday,
+    insightsHistory = [],
     darkMode,
     border,
     strongerGlass,
@@ -9974,6 +9977,12 @@ const displayedInsight =
     const [focusError, setFocusError] = useState("");
     const [focusPlan, setFocusPlan] = useState<any>(null);
     const [isDragOver, setIsDragOver] = useState(false);
+
+const [
+  isMomentumOpen,
+  setIsMomentumOpen,
+] = useState(false);
+
 
     const focusCacheDate = getTodayDate();
     const focusCacheKey = `momentum-focus-plan-${focusCacheDate}`;
@@ -10188,11 +10197,511 @@ const displayedInsight =
       openTaskEditor(currentTask);
     };
 
-    const dayProgress = Math.round(
-      (completedToday.length /
-        Math.max(1, completedToday.length + prioritizedTasks.length)) *
-        100
+    const totalTrackedToday =
+  completedToday.length +
+  prioritizedTasks.length;
+
+const dayProgress = Math.round(
+  (completedToday.length /
+    Math.max(
+      1,
+      totalTrackedToday
+    )) *
+    100
+);
+
+const tasksRemaining =
+  prioritizedTasks.length;
+
+const completedFocusTaskIds =
+  new Set(
+    completedToday.map(
+      (task: any) =>
+        String(task.id)
+    )
+  );
+
+const allFocusTaskIds = Array.from(
+  new Set([
+    ...manualFocusTaskIds.map(
+      (taskId: string) =>
+        String(taskId)
+    ),
+    ...(
+      focusPlan?.focusTaskIds ||
+      []
+    ).map(
+      (taskId: string) =>
+        String(taskId)
+    ),
+  ])
+);
+
+const focusTasksCompletedToday =
+  allFocusTaskIds.filter(
+    (taskId) =>
+      completedFocusTaskIds.has(
+        taskId
+      )
+  ).length;
+
+const totalFocusTasks = Math.max(
+  activeFocusTasks.length,
+  focusTasksCompletedToday
+);
+
+const focusCompletionPercent =
+  totalFocusTasks === 0
+    ? 0
+    : Math.round(
+        (focusTasksCompletedToday /
+          totalFocusTasks) *
+          100
+      );
+
+const momentumTimeline = useMemo(
+  () => {
+    const timelinePoints = [
+      {
+        label: "6 AM",
+        hour: 6,
+        count: 0,
+      },
+      {
+        label: "8 AM",
+        hour: 8,
+        count: 0,
+      },
+      {
+        label: "10 AM",
+        hour: 10,
+        count: 0,
+      },
+      {
+        label: "12 PM",
+        hour: 12,
+        count: 0,
+      },
+      {
+        label: "2 PM",
+        hour: 14,
+        count: 0,
+      },
+      {
+        label: "4 PM",
+        hour: 16,
+        count: 0,
+      },
+      {
+        label: "6 PM",
+        hour: 18,
+        count: 0,
+      },
+      {
+        label: "8 PM",
+        hour: 20,
+        count: 0,
+      },
+      {
+        label: "10 PM",
+        hour: 22,
+        count: 0,
+      },
+    ];
+
+    completedToday.forEach(
+      (task: any) => {
+        if (!task.completedAt) {
+          return;
+        }
+
+        const completedDate =
+          new Date(
+            task.completedAt
+          );
+
+        if (
+          Number.isNaN(
+            completedDate.getTime()
+          )
+        ) {
+          return;
+        }
+
+        const hour =
+          completedDate.getHours();
+
+        const closestPoint =
+          timelinePoints.reduce(
+            (
+              closest,
+              point
+            ) => {
+              const closestDifference =
+                Math.abs(
+                  closest.hour -
+                    hour
+                );
+
+              const pointDifference =
+                Math.abs(
+                  point.hour -
+                    hour
+                );
+
+              return pointDifference <
+                closestDifference
+                ? point
+                : closest;
+            },
+            timelinePoints[0]
+          );
+
+        closestPoint.count += 1;
+      }
     );
+
+    let cumulativeCount = 0;
+
+    return timelinePoints.map(
+      (point) => {
+        cumulativeCount +=
+          point.count;
+
+        return {
+          ...point,
+          cumulativeCount,
+        };
+      }
+    );
+  },
+  [completedToday]
+);
+
+const timelineMaximum =
+  Math.max(
+    1,
+    ...momentumTimeline.map(
+      (point) =>
+        point.cumulativeCount
+    )
+  );
+
+const timelineCoordinates =
+  momentumTimeline.map(
+    (point, index) => {
+      const chartWidth = 760;
+      const chartHeight = 155;
+      const chartLeft = 24;
+      const chartRight = 736;
+      const chartTop = 20;
+      const chartBottom = 132;
+
+      const x =
+        chartLeft +
+        index *
+          ((chartRight -
+            chartLeft) /
+            Math.max(
+              1,
+              momentumTimeline.length -
+                1
+            ));
+
+      const y =
+        chartBottom -
+        (point.cumulativeCount /
+          timelineMaximum) *
+          (chartBottom -
+            chartTop);
+
+      return {
+        ...point,
+        x,
+        y,
+      };
+    }
+  );
+
+const timelinePath =
+  timelineCoordinates.length > 0
+    ? timelineCoordinates
+        .map(
+          (
+            point,
+            index
+          ) =>
+            `${
+              index === 0
+                ? "M"
+                : "L"
+            } ${point.x} ${point.y}`
+        )
+        .join(" ")
+    : "";
+
+const timelineAreaPath =
+  timelineCoordinates.length > 0
+    ? `${timelinePath} L ${
+        timelineCoordinates[
+          timelineCoordinates.length -
+            1
+        ].x
+      } 132 L ${
+        timelineCoordinates[0].x
+      } 132 Z`
+    : "";
+
+const currentHour =
+  new Date().getHours();
+
+const currentTimelineIndex =
+  momentumTimeline.reduce(
+    (
+      closestIndex,
+      point,
+      index
+    ) => {
+      const currentClosest =
+        momentumTimeline[
+          closestIndex
+        ];
+
+      return Math.abs(
+        point.hour -
+          currentHour
+      ) <
+        Math.abs(
+          currentClosest.hour -
+            currentHour
+        )
+        ? index
+        : closestIndex;
+    },
+    0
+  );
+
+const currentTimelinePoint =
+  timelineCoordinates[
+    currentTimelineIndex
+  ];
+
+const completedTodayTimes =
+  completedToday
+    .map((task: any) => {
+      if (!task.completedAt) {
+        return null;
+      }
+
+      const date = new Date(
+        task.completedAt
+      );
+
+      return Number.isNaN(
+        date.getTime()
+      )
+        ? null
+        : date;
+    })
+    .filter(Boolean) as Date[];
+
+const productiveWindow =
+  useMemo(() => {
+    if (
+      completedTodayTimes.length ===
+      0
+    ) {
+      return {
+        startLabel: "No completions yet",
+        endLabel: "",
+        count: 0,
+      };
+    }
+
+    const sortedTimes = [
+      ...completedTodayTimes,
+    ].sort(
+      (dateA, dateB) =>
+        dateA.getTime() -
+        dateB.getTime()
+    );
+
+    const firstCompletion =
+      sortedTimes[0];
+
+    const lastCompletion =
+      sortedTimes[
+        sortedTimes.length - 1
+      ];
+
+    const formatTime = (
+      date: Date
+    ) =>
+      date.toLocaleTimeString(
+        undefined,
+        {
+          hour: "numeric",
+          minute: "2-digit",
+        }
+      );
+
+    return {
+      startLabel:
+        formatTime(
+          firstCompletion
+        ),
+      endLabel:
+        formatTime(
+          lastCompletion
+        ),
+      count:
+        sortedTimes.length,
+    };
+  }, [completedToday]);
+
+const getLocalDateKey = (
+  date: Date
+) => {
+  const year =
+    date.getFullYear();
+
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const dayStreak = useMemo(() => {
+  const completionDates =
+    new Set<string>();
+
+  [
+    ...insightsHistory,
+    ...completedToday,
+  ].forEach((task: any) => {
+    if (!task.completedAt) {
+      return;
+    }
+
+    const completedDate =
+      new Date(
+        task.completedAt
+      );
+
+    if (
+      Number.isNaN(
+        completedDate.getTime()
+      )
+    ) {
+      return;
+    }
+
+    completionDates.add(
+      getLocalDateKey(
+        completedDate
+      )
+    );
+  });
+
+  const cursor =
+    new Date();
+
+  if (
+    !completionDates.has(
+      getLocalDateKey(cursor)
+    )
+  ) {
+    cursor.setDate(
+      cursor.getDate() - 1
+    );
+  }
+
+  let streak = 0;
+
+  while (
+    completionDates.has(
+      getLocalDateKey(cursor)
+    )
+  ) {
+    streak += 1;
+
+    cursor.setDate(
+      cursor.getDate() - 1
+    );
+  }
+
+  return streak;
+}, [
+  insightsHistory,
+  completedToday,
+]);
+
+const paceStatus =
+  tasksRemaining === 0
+    ? {
+        label: "Complete",
+        message:
+          "You have closed all currently active work.",
+      }
+    : dayProgress >= 60
+    ? {
+        label: "Strong pace",
+        message:
+          "You are ahead of the pace suggested by your current workload.",
+      }
+    : dayProgress >= 30
+    ? {
+        label: "On track",
+        message:
+          "You are on a steady pace for the rest of the day.",
+      }
+    : completedToday.length > 0
+    ? {
+        label: "Building",
+        message:
+          "Your day has started moving. Protect the next meaningful completion.",
+      }
+    : {
+        label: "Ready",
+        message:
+          "Complete one meaningful task to establish today’s pace.",
+      };
+
+const momentumInsight =
+  completedToday.length === 0
+    ? {
+        headline:
+          "Your first win is still ahead.",
+        message:
+          "Start with the clearest Focus task and create momentum with one meaningful completion.",
+      }
+    : completedToday.length >= 5
+    ? {
+        headline: `You closed ${completedToday.length} important tasks today.`,
+        message:
+          productiveWindow.endLabel
+            ? `Your strongest visible progress occurred between ${productiveWindow.startLabel} and ${productiveWindow.endLabel}.`
+            : "You have built strong momentum across the day.",
+      }
+    : {
+        headline: `You closed ${completedToday.length} ${
+          completedToday.length ===
+          1
+            ? "task"
+            : "tasks"
+        } so far.`,
+        message:
+          productiveWindow.endLabel
+            ? `Your visible progress currently spans ${productiveWindow.startLabel} to ${productiveWindow.endLabel}.`
+            : "Keep protecting the pace you have started.",
+      };
+    
+  
 
     const cardBorder = darkMode
       ? "border-white/[0.10]"
@@ -10500,44 +11009,1045 @@ const displayedInsight =
             </button>
 
             <button
-              type="button"
-              disabled={!currentTask}
-              onClick={openCurrentTask}
-              className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-[10px] border px-2 text-center text-[11px] font-[600] transition disabled:cursor-not-allowed disabled:opacity-35 ${cardBorder} ${
-                darkMode ? "hover:bg-white/[0.04]" : "hover:bg-[#FAFAFB]"
-              }`}
-            >
-              <Calendar size={21} className="text-violet-500" strokeWidth={1.9} />
-              <span>Schedule focus time</span>
-            </button>
+  type="button"
+  onClick={() =>
+    setIsMomentumOpen(true)
+  }
+  className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-[10px] border px-2 text-center text-[11px] font-[600] transition ${cardBorder} ${
+    darkMode
+      ? "hover:bg-white/[0.04]"
+      : "hover:bg-[#FAFAFB]"
+  }`}
+>
+  <TrendingUp
+    size={21}
+    className="text-violet-500"
+    strokeWidth={1.9}
+  />
+
+  <span>
+    See today&apos;s momentum
+  </span>
+</button>
           </div>
         </section>
 
+     
         <section
-          className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5 ${
-            darkMode
-              ? "border-violet-400/20 bg-violet-400/[0.06]"
-              : "border-violet-200 bg-[linear-gradient(135deg,#FBF8FF,#F7F2FF)]"
-          }`}
-        >
-          <Sparkles
-            size={30}
-            className={darkMode ? "shrink-0 text-violet-300" : "shrink-0 text-violet-600"}
-            strokeWidth={1.7}
-          />
-          <div className="min-w-0">
-            <h3
-              className={`text-[15px] font-[700] ${
-                darkMode ? "text-white" : "text-[#20232B]"
+  className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5 ${
+    darkMode
+      ? "border-violet-400/20 bg-violet-400/[0.06]"
+      : "border-violet-200 bg-[linear-gradient(135deg,#FBF8FF,#F7F2FF)]"
+  }`}
+>
+  <Sparkles
+    size={30}
+    className={
+      darkMode
+        ? "shrink-0 text-violet-300"
+        : "shrink-0 text-violet-600"
+    }
+    strokeWidth={1.7}
+  />
+
+  <div className="min-w-0">
+    <h3
+      className={`text-[15px] font-[700] ${
+        darkMode
+          ? "text-white"
+          : "text-[#20232B]"
+      }`}
+    >
+      {completedToday.length > 0
+        ? "Keep the momentum going"
+        : "Start with one meaningful task"}
+    </h3>
+
+    <p
+      className={`mt-1.5 text-[12px] font-[500] ${mutedText}`}
+    >
+      {prioritizedTasks.length} active task
+      {prioritizedTasks.length === 1
+        ? ""
+        : "s"}{" "}
+      remain today.
+    </p>
+  </div>
+</section>
+
+
+
+<AnimatePresence>
+  {isMomentumOpen && (
+    <motion.div
+      initial={{
+        opacity: 0,
+      }}
+      animate={{
+        opacity: 1,
+      }}
+      exit={{
+        opacity: 0,
+      }}
+      transition={{
+        duration: 0.18,
+      }}
+      onClick={() =>
+        setIsMomentumOpen(false)
+      }
+      className="fixed inset-x-0 bottom-0 top-[72px] z-[9999] flex items-center justify-center bg-black/55 p-3 backdrop-blur-[3px] sm:top-[80px] sm:p-6"
+    >
+      <motion.section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="momentum-modal-title"
+        initial={{
+          opacity: 0,
+          y: 16,
+          scale: 0.985,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          scale: 1,
+        }}
+        exit={{
+          opacity: 0,
+          y: 10,
+          scale: 0.99,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 360,
+          damping: 32,
+          mass: 0.84,
+        }}
+        onClick={(event) =>
+          event.stopPropagation()
+        }
+        className={`relative z-[10000] flex max-h-[calc(100vh-104px)] w-full max-w-[980px] flex-col overflow-hidden rounded-[18px] border shadow-[0_30px_100px_rgba(0,0,0,0.34)] sm:max-h-[calc(100vh-120px)] ${
+          darkMode
+            ? "border-white/[0.12] bg-[#17181C] text-[#F1F3F4]"
+            : "border-[#DADCE0] bg-[#FFFDFB] text-[#202124]"
+        }`}
+      >
+        {/* Modal header */}
+        <header className="flex shrink-0 items-start justify-between gap-5 px-5 pb-3 pt-5 sm:px-6 sm:pt-6">
+          <div className="flex min-w-0 items-start gap-3">
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                darkMode
+                  ? "bg-violet-400/12 text-violet-300"
+                  : "bg-violet-100 text-violet-600"
               }`}
             >
-              Keep going{completedToday.length > 0 ? " — you’re moving! 💪" : "! 💪"}
-            </h3>
-            <p className={`mt-1.5 text-[12px] font-[500] ${mutedText}`}>
-              You’ve got {prioritizedTasks.length} more task{prioritizedTasks.length === 1 ? "" : "s"} to complete today.
-            </p>
+              <TrendingUp
+                size={19}
+                strokeWidth={2}
+              />
+            </div>
+
+            <div className="min-w-0">
+              <h2
+                id="momentum-modal-title"
+                className="text-[22px] font-[760] leading-none tracking-[-0.04em]"
+              >
+                Today&apos;s Momentum
+              </h2>
+
+              <p
+                className={`mt-2 text-[12px] font-[500] ${
+                  darkMode
+                    ? "text-white/48"
+                    : "text-[#5F6368]"
+                }`}
+              >
+                How your day is unfolding so far
+              </p>
+            </div>
           </div>
-        </section>
+
+          <button
+            type="button"
+            onClick={() =>
+              setIsMomentumOpen(false)
+            }
+            aria-label="Close today's momentum"
+            title="Close"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] transition ${
+              darkMode
+                ? "text-white/52 hover:bg-white/[0.07] hover:text-white"
+                : "text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124]"
+            }`}
+          >
+            <X
+              size={20}
+              strokeWidth={1.7}
+            />
+          </button>
+        </header>
+
+        {/* Scrollable modal body */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-5 sm:pb-5">
+          {/* Top metrics */}
+          <section className="grid grid-cols-1 gap-0 overflow-hidden rounded-[13px] border sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                label:
+                  "Tasks completed",
+                value:
+                  completedToday.length,
+                detail: `of ${totalTrackedToday} total`,
+                icon:
+                  CheckCircle2,
+                iconClass:
+                  darkMode
+                    ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-600",
+              },
+              {
+                label:
+                  "Day progress",
+                value: `${dayProgress}%`,
+                detail:
+                  "of tracked work",
+                icon:
+                  TrendingUp,
+                iconClass:
+                  darkMode
+                    ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-600",
+              },
+              {
+                label:
+                  "Tasks remaining",
+                value:
+                  tasksRemaining,
+                detail:
+                  "active tasks",
+                icon:
+                  Clock3,
+                iconClass:
+                  darkMode
+                    ? "border-violet-400/20 bg-violet-400/10 text-violet-300"
+                    : "border-violet-200 bg-violet-50 text-violet-600",
+              },
+              {
+                label:
+                  "Day streak",
+                value:
+                  dayStreak,
+                detail:
+                  dayStreak === 1
+                    ? "day"
+                    : "days",
+                icon:
+                  Flame,
+                iconClass:
+                  darkMode
+                    ? "border-orange-400/20 bg-orange-400/10 text-orange-300"
+                    : "border-orange-200 bg-orange-50 text-orange-600",
+              },
+            ].map(
+              (
+                metric,
+                index
+              ) => {
+                const Icon =
+                  metric.icon;
+
+                return (
+                  <article
+                    key={
+                      metric.label
+                    }
+                    className={`flex min-h-[112px] items-center gap-3 border-b p-4 sm:border-b lg:border-b-0 ${
+                      index > 0
+                        ? darkMode
+                          ? "lg:border-l lg:border-white/[0.09]"
+                          : "lg:border-l lg:border-[#E8EAED]"
+                        : ""
+                    } ${
+                      darkMode
+                        ? "border-white/[0.09] bg-white/[0.018]"
+                        : "border-[#E8EAED] bg-white"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${metric.iconClass}`}
+                    >
+                      <Icon
+                        size={19}
+                        strokeWidth={1.9}
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-[25px] font-[760] leading-none tracking-[-0.045em]">
+                          {metric.value}
+                        </p>
+                      </div>
+
+                      <p className="mt-1.5 text-[11px] font-[650]">
+                        {metric.label}
+                      </p>
+
+                      <p
+                        className={`mt-0.5 text-[9.5px] font-[500] ${
+                          darkMode
+                            ? "text-white/40"
+                            : "text-[#6B6F7B]"
+                        }`}
+                      >
+                        {metric.detail}
+                      </p>
+                    </div>
+                  </article>
+                );
+              }
+            )}
+          </section>
+
+          {/* Progress timeline */}
+          <section
+            className={`mt-3 overflow-hidden rounded-[13px] border p-4 sm:p-5 ${
+              darkMode
+                ? "border-white/[0.10] bg-white/[0.018]"
+                : "border-[#DADCE0] bg-white"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-[14px] font-[720]">
+                  Progress timeline
+                </h3>
+
+                <p
+                  className={`mt-1 text-[10.5px] font-[500] ${
+                    darkMode
+                      ? "text-white/42"
+                      : "text-[#6B6F7B]"
+                  }`}
+                >
+                  Tasks completed throughout the day
+                </p>
+              </div>
+
+              <div
+                className={`flex shrink-0 items-center gap-2 text-[9.5px] font-[550] ${
+                  darkMode
+                    ? "text-white/52"
+                    : "text-[#4F5562]"
+                }`}
+              >
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+                  <Check
+                    size={10}
+                    strokeWidth={2.4}
+                  />
+                </span>
+
+                Completed task
+              </div>
+            </div>
+
+            <div className="mt-4 overflow-x-auto">
+              <svg
+                viewBox="0 0 760 175"
+                className="h-[190px] min-w-[700px] w-full overflow-visible"
+                role="img"
+                aria-label="Cumulative task completion timeline"
+              >
+                <defs>
+                  <linearGradient
+                    id="momentum-timeline-area"
+                    x1="0"
+                    x2="0"
+                    y1="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor="#34A853"
+                      stopOpacity="0.22"
+                    />
+
+                    <stop
+                      offset="100%"
+                      stopColor="#34A853"
+                      stopOpacity="0"
+                    />
+                  </linearGradient>
+                </defs>
+
+                {timelineCoordinates.map(
+                  (point) => (
+                    <line
+                      key={`grid-${point.label}`}
+                      x1={point.x}
+                      x2={point.x}
+                      y1="18"
+                      y2="132"
+                      stroke={
+                        darkMode
+                          ? "rgba(255,255,255,0.055)"
+                          : "rgba(32,33,36,0.07)"
+                      }
+                      strokeWidth="1"
+                    />
+                  )
+                )}
+
+                <line
+                  x1="24"
+                  x2="736"
+                  y1="132"
+                  y2="132"
+                  stroke={
+                    darkMode
+                      ? "rgba(255,255,255,0.10)"
+                      : "rgba(32,33,36,0.10)"
+                  }
+                  strokeWidth="1"
+                />
+
+                {timelineAreaPath && (
+                  <path
+                    d={
+                      timelineAreaPath
+                    }
+                    fill="url(#momentum-timeline-area)"
+                  />
+                )}
+
+                {timelinePath && (
+                  <motion.path
+                    initial={{
+                      pathLength: 0,
+                      opacity: 0,
+                    }}
+                    animate={{
+                      pathLength: 1,
+                      opacity: 1,
+                    }}
+                    transition={{
+                      duration: 0.75,
+                      ease: [
+                        0.16,
+                        1,
+                        0.3,
+                        1,
+                      ],
+                    }}
+                    d={timelinePath}
+                    fill="none"
+                    stroke="#34A853"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                )}
+
+                {currentTimelinePoint && (
+                  <>
+                   <line
+  x1={
+    currentTimelinePoint.x
+  }
+  x2={
+    currentTimelinePoint.x
+  }
+  y1="21"
+  y2="132"
+  stroke="#8B5CF6"
+  strokeDasharray="4 4"
+  strokeWidth="1.5"
+/>
+
+<rect
+  x={
+    currentTimelinePoint.x -
+    23
+  }
+  y="-1"
+  width="46"
+  height="22"
+  rx="6"
+  fill="#7C3AED"
+/>
+
+<text
+  x={
+    currentTimelinePoint.x
+  }
+  y="12"
+  textAnchor="middle"
+  fill="white"
+  fontSize="10"
+  fontWeight="700"
+>
+  Now
+</text>
+                  </>
+                )}
+
+                {timelineCoordinates.map(
+                  (
+                    point,
+                    index
+                  ) => {
+                    const isPast =
+                      index <=
+                      currentTimelineIndex;
+
+                    return (
+                      <g
+                        key={
+                          point.label
+                        }
+                      >
+                        <circle
+                          cx={point.x}
+                          cy={
+                            index === currentTimelineIndex
+                              ? point.y + 10
+                              : isPast
+                              ? point.y
+                              : timelineCoordinates[
+                                  currentTimelineIndex
+                                ]?.y || 90
+                          }
+                          r="6"
+                          fill={
+                            isPast
+                              ? "#34A853"
+                              : darkMode
+                              ? "#17181C"
+                              : "#FFFFFF"
+                          }
+                          stroke={
+                            isPast
+                              ? "#34A853"
+                              : darkMode
+                              ? "rgba(255,255,255,0.40)"
+                              : "#9AA0A6"
+                          }
+                          strokeWidth="2"
+                        />
+
+                        {isPast &&
+                          point.cumulativeCount >
+                            0 && (
+                            <path
+                            d={`M ${
+                              point.x - 2.5
+                            } ${
+                              index === currentTimelineIndex
+                                ? point.y + 10
+                                : point.y
+                            } l 2 2.2 l 4 -5`}
+                              fill="none"
+                              stroke="white"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          )}
+
+                        <text
+                          x={point.x}
+                          y="158"
+                          textAnchor="middle"
+                          fill={
+                            darkMode
+                              ? "rgba(255,255,255,0.48)"
+                              : "#6B6F7B"
+                          }
+                          fontSize="9"
+                          fontWeight="600"
+                        >
+                          {point.label}
+                        </text>
+                      </g>
+                    );
+                  }
+                )}
+              </svg>
+            </div>
+          </section>
+
+          {/* Three secondary panels */}
+          <section className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[1.12fr_0.92fr_0.92fr]">
+            {/* Focus time */}
+            <article
+              className={`rounded-[13px] border p-4 ${
+                darkMode
+                  ? "border-white/[0.10] bg-white/[0.018]"
+                  : "border-[#DADCE0] bg-white"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Clock3
+                  size={15}
+                  strokeWidth={1.8}
+                  className={
+                    darkMode
+                      ? "text-white/55"
+                      : "text-[#5F6368]"
+                  }
+                />
+
+                <h3 className="text-[13px] font-[700]">
+                  Focus time
+                </h3>
+              </div>
+
+              <div className="mt-4 flex items-end justify-between gap-4">
+                <div>
+                  <p
+                    className={`text-[9.5px] font-[550] ${
+                      darkMode
+                        ? "text-white/42"
+                        : "text-[#6B6F7B]"
+                    }`}
+                  >
+                    Most productive
+                  </p>
+
+                  <p className="mt-1.5 text-[16px] font-[730] tracking-[-0.025em]">
+                    {productiveWindow.count >
+                    0
+                      ? `${productiveWindow.startLabel}${
+                          productiveWindow.endLabel
+                            ? ` – ${productiveWindow.endLabel}`
+                            : ""
+                        }`
+                      : "Not enough data yet"}
+                  </p>
+
+                  <p
+                    className={`mt-2 text-[9.5px] font-[500] ${
+                      darkMode
+                        ? "text-white/40"
+                        : "text-[#6B6F7B]"
+                    }`}
+                  >
+                    {productiveWindow.count >
+                    0
+                      ? `You completed ${productiveWindow.count} task${
+                          productiveWindow.count ===
+                          1
+                            ? ""
+                            : "s"
+                        } in this visible window.`
+                      : "Complete tasks to reveal your strongest window."}
+                  </p>
+                </div>
+
+                <div className="flex h-[52px] shrink-0 items-end gap-1">
+                  {[
+                    18,
+                    24,
+                    31,
+                    46,
+                    29,
+                    37,
+                  ].map(
+                    (
+                      height,
+                      index
+                    ) => (
+                      <span
+                        key={
+                          index
+                        }
+                        className={`w-[8px] rounded-t-[3px] ${
+                          index === 3
+                            ? "bg-emerald-500"
+                            : darkMode
+                            ? "bg-white/[0.13]"
+                            : "bg-[#E1E3E7]"
+                        }`}
+                        style={{
+                          height,
+                        }}
+                      />
+                    )
+                  )}
+                </div>
+              </div>
+            </article>
+
+            {/* Pace */}
+            <article
+              className={`rounded-[13px] border p-4 ${
+                darkMode
+                  ? "border-white/[0.10] bg-white/[0.018]"
+                  : "border-[#DADCE0] bg-white"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <TrendingUp
+                  size={15}
+                  strokeWidth={1.8}
+                  className={
+                    darkMode
+                      ? "text-white/55"
+                      : "text-[#5F6368]"
+                  }
+                />
+
+                <h3 className="text-[13px] font-[700]">
+                  Pace
+                </h3>
+              </div>
+
+              <span
+                className={`mt-4 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9.5px] font-[650] ${
+                  darkMode
+                    ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                <Check
+                  size={11}
+                  strokeWidth={2.1}
+                />
+
+                {paceStatus.label}
+              </span>
+
+              <p
+                className={`mt-3 text-[11px] font-[550] leading-5 ${
+                  darkMode
+                    ? "text-white/62"
+                    : "text-[#3C4043]"
+                }`}
+              >
+                {paceStatus.message}
+              </p>
+            </article>
+
+            {/* Focus tasks */}
+            <article
+              className={`rounded-[13px] border p-4 ${
+                darkMode
+                  ? "border-white/[0.10] bg-white/[0.018]"
+                  : "border-[#DADCE0] bg-white"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Target
+                  size={15}
+                  strokeWidth={1.8}
+                  className={
+                    darkMode
+                      ? "text-white/55"
+                      : "text-[#5F6368]"
+                  }
+                />
+
+                <h3 className="text-[13px] font-[700]">
+                  Focus tasks
+                </h3>
+              </div>
+
+              <p className="mt-4 text-[25px] font-[760] leading-none tracking-[-0.045em]">
+                {focusTasksCompletedToday}{" "}
+                /{" "}
+                {totalFocusTasks}
+              </p>
+
+              <p
+                className={`mt-2 text-[10.5px] font-[550] ${
+                  darkMode
+                    ? "text-white/52"
+                    : "text-[#4F5562]"
+                }`}
+              >
+                Focus tasks completed
+              </p>
+
+              <div
+                className={`mt-4 h-2 overflow-hidden rounded-full ${
+                  darkMode
+                    ? "bg-white/[0.09]"
+                    : "bg-[#E8EAED]"
+                }`}
+              >
+                <motion.div
+                  initial={{
+                    width: 0,
+                  }}
+                  animate={{
+                    width: `${focusCompletionPercent}%`,
+                  }}
+                  transition={{
+                    duration: 0.6,
+                    ease: [
+                      0.16,
+                      1,
+                      0.3,
+                      1,
+                    ],
+                  }}
+                  className="h-full rounded-full bg-violet-600"
+                />
+              </div>
+            </article>
+          </section>
+
+          {/* AI insight */}
+          <section
+            className={`relative mt-3 min-h-[145px] overflow-hidden rounded-[13px] border px-5 py-5 ${
+              darkMode
+                ? "border-violet-400/20 bg-[linear-gradient(110deg,rgba(139,92,246,0.12),rgba(124,58,237,0.05))]"
+                : "border-violet-200 bg-[linear-gradient(110deg,#FCF8FF_0%,#F7F0FF_58%,#E9DDFC_100%)]"
+            }`}
+          >
+            <div className="relative z-10 max-w-[58%]">
+              <div className="flex items-center gap-2">
+                <Sparkles
+                  size={16}
+                  strokeWidth={1.8}
+                  className={
+                    darkMode
+                      ? "text-violet-300"
+                      : "text-violet-600"
+                  }
+                />
+
+                <h3 className="text-[13px] font-[720]">
+                  AI insight
+                </h3>
+              </div>
+
+              <p
+                className={`mt-3 text-[11.5px] font-[600] leading-5 ${
+                  darkMode
+                    ? "text-white/82"
+                    : "text-[#2F243E]"
+                }`}
+              >
+                {momentumInsight.headline}
+              </p>
+
+              <p
+                className={`mt-1 text-[11px] font-[520] leading-5 ${
+                  darkMode
+                    ? "text-white/60"
+                    : "text-[#51455F]"
+                }`}
+              >
+                {momentumInsight.message}
+              </p>
+
+              <p
+                className={`mt-3 text-[11.5px] font-[720] ${
+                  darkMode
+                    ? "text-violet-200"
+                    : "text-[#352346]"
+                }`}
+              >
+                Keep this momentum going.
+              </p>
+            </div>
+
+            {/* Decorative mountain artwork */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 420 180"
+              className="pointer-events-none absolute bottom-0 right-0 h-[145px] w-[44%] opacity-95"
+              preserveAspectRatio="xMidYMax meet"
+            >
+              <defs>
+                <linearGradient
+                  id="momentum-mountain-back"
+                  x1="0"
+                  x2="0"
+                  y1="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor="#C4B5FD"
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="#8B5CF6"
+                  />
+                </linearGradient>
+
+                <linearGradient
+                  id="momentum-mountain-front"
+                  x1="0"
+                  x2="0"
+                  y1="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor="#8B5CF6"
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="#4C1D95"
+                  />
+                </linearGradient>
+
+                <linearGradient
+                  id="momentum-sun"
+                  x1="0"
+                  x2="0"
+                  y1="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor="#FDBA74"
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="#F97316"
+                  />
+                </linearGradient>
+              </defs>
+
+              <circle
+                cx="205"
+                cy="118"
+                r="30"
+                fill="url(#momentum-sun)"
+                opacity="0.9"
+              />
+
+              <path
+                d="M 0 170 L 68 100 L 112 140 L 170 82 L 235 150 L 296 92 L 352 145 L 420 105 L 420 180 L 0 180 Z"
+                fill="url(#momentum-mountain-back)"
+                opacity="0.88"
+              />
+
+              <path
+                d="M 0 180 L 92 125 L 135 157 L 218 74 L 274 145 L 338 96 L 420 155 L 420 180 Z"
+                fill="url(#momentum-mountain-front)"
+                opacity="0.95"
+              />
+
+              <path
+                d="M 206 180 C 230 160, 212 147, 244 133 C 270 121, 253 104, 281 88"
+                fill="none"
+                stroke="#FDBA74"
+                strokeWidth="5"
+                strokeLinecap="round"
+              />
+
+              <line
+                x1="281"
+                x2="281"
+                y1="88"
+                y2="53"
+                stroke="#F8FAFC"
+                strokeWidth="3"
+              />
+
+              <path
+                d="M 284 54 L 321 65 L 284 76 Z"
+                fill="#7C3AED"
+              />
+
+              {[
+                [58, 46],
+                [118, 68],
+                [347, 45],
+                [380, 74],
+              ].map(
+                (
+                  sparkle,
+                  index
+                ) => (
+                  <g
+                    key={
+                      index
+                    }
+                    transform={`translate(${sparkle[0]} ${sparkle[1]})`}
+                    opacity="0.7"
+                  >
+                    <path
+                      d="M 0 -6 L 2 -2 L 6 0 L 2 2 L 0 6 L -2 2 L -6 0 L -2 -2 Z"
+                      fill="#A78BFA"
+                    />
+                  </g>
+                )
+              )}
+            </svg>
+          </section>
+        </div>
+
+        {/* Footer */}
+        <footer
+          className={`flex shrink-0 flex-col gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${
+            darkMode
+              ? "border-white/[0.09] bg-white/[0.018]"
+              : "border-[#E8EAED] bg-[#FFFDFB]"
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setIsMomentumOpen(false);
+
+              window.setTimeout(
+                () => {
+                  window.dispatchEvent(
+                    new Event(
+                      "momentuhm:open-tasks"
+                    )
+                  );
+
+                  document
+                    .getElementById(
+                      "Momentuhm-desktop-completed-anchor"
+                    )
+                    ?.scrollIntoView({
+                      behavior:
+                        "smooth",
+                      block:
+                        "start",
+                    });
+                },
+                100
+              );
+            }}
+            className={`inline-flex h-10 items-center justify-center gap-2 rounded-[9px] border px-4 text-[11px] font-[650] transition ${
+              darkMode
+                ? "border-white/[0.10] text-white/62 hover:bg-white/[0.06] hover:text-white"
+                : "border-[#DADCE0] bg-white text-[#4F5562] hover:bg-[#F1F3F4] hover:text-[#202124]"
+            }`}
+          >
+            <ListChecks
+              size={14}
+              strokeWidth={1.8}
+            />
+
+            View full day breakdown
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setIsMomentumOpen(false)
+            }
+            className="h-10 rounded-[9px] bg-violet-600 px-8 text-[11px] font-[700] text-white transition hover:bg-violet-700 active:scale-[0.98]"
+          >
+            Close
+          </button>
+        </footer>
+      </motion.section>
+    </motion.div>
+  )}
+</AnimatePresence>
+
       </section>
     );
   }
