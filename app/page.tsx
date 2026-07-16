@@ -17022,11 +17022,7 @@ const displayedInsight =
                       <div className="relative">
                       <select
   id="task-category"
-  value={
-    selectedTask.category === "-"
-      ? "-"
-      : selectedTask.category || ""
-  }
+  value={selectedTask.category || "-"}
   onChange={(event) =>
     setSelectedTask({
       ...selectedTask,
@@ -17035,7 +17031,15 @@ const displayedInsight =
   }
   className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
 >
-  <option value="-">-</option>
+  {selectedTask.category === "-" && (
+    <option
+      value="-"
+      disabled
+      hidden
+    >
+      -
+    </option>
+  )}
 
   {categories
     .filter(
