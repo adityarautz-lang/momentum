@@ -17007,6 +17007,11 @@ const displayedInsight =
                             aiConfidence: event.target.value ? 1 : 0,
                           })
                         }
+                        style={{
+                          colorScheme: darkMode
+                            ? "dark"
+                            : "light",
+                        }}
                         className={`h-11 rounded-[7px] ${fieldClass}`}
                       />
                     </div>
