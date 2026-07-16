@@ -4184,29 +4184,116 @@ setInsightsHistory(
       const categoryToDelete = categories.find(
         (category) => category.id === categoryId
       );
-
+    
       if (!categoryToDelete) return;
-
+    
+      const taskCount = categoryToDelete.tasks.length;
+    
       const confirmed = window.confirm(
-        `Delete "${categoryToDelete.title}" and all tasks inside it?`
+        taskCount > 0
+          ? `Delete "${categoryToDelete.title}"? Its ${taskCount} task${
+              taskCount === 1 ? "" : "s"
+            } will be moved to Uncategorized.`
+          : `Delete "${categoryToDelete.title}"?`
       );
-
+    
       if (!confirmed) return;
-
-      const remainingCategories = categories.filter(
-        (category) => category.id !== categoryId
+    
+      const fallbackCategoryTitle = "Uncategorized";
+    
+      setCategories((prev) => {
+        const categoryBeingDeleted = prev.find(
+          (category) => category.id === categoryId
+        );
+    
+        if (!categoryBeingDeleted) return prev;
+    
+        const tasksToMove = categoryBeingDeleted.tasks;
+    
+        const remainingCategories = prev.filter(
+          (category) => category.id !== categoryId
+        );
+    
+        const existingFallbackCategory = remainingCategories.find(
+          (category) => category.title === fallbackCategoryTitle
+        );
+    
+        if (existingFallbackCategory) {
+          return remainingCategories.map((category) =>
+            category.id === existingFallbackCategory.id
+              ? {
+                  ...category,
+                  tasks: [...tasksToMove, ...category.tasks],
+                }
+              : category
+          );
+        }
+    
+        return [
+          ...remainingCategories,
+          {
+            id: crypto.randomUUID(),
+            title: fallbackCategoryTitle,
+            tasks: tasksToMove,
+          },
+        ];
+      });
+    
+      /*
+       * These collections store the category as text,
+       * so update their category label as well.
+       */
+      setCompletedToday((prev) =>
+        prev.map((task) =>
+          task.category === categoryToDelete.title
+            ? {
+                ...task,
+                category: fallbackCategoryTitle,
+              }
+            : task
+        )
       );
-
-      setCategories(remainingCategories);
-
+    
+      setArchive((prev) =>
+        prev.map((task) =>
+          task.category === categoryToDelete.title
+            ? {
+                ...task,
+                category: fallbackCategoryTitle,
+              }
+            : task
+        )
+      );
+    
+      setInsightsHistory((prev) =>
+        prev.map((task) =>
+          task.category === categoryToDelete.title
+            ? {
+                ...task,
+                category: fallbackCategoryTitle,
+              }
+            : task
+        )
+      );
+    
       if (selectedCategory === categoryToDelete.title) {
-        setSelectedCategory(remainingCategories[0]?.title || "");
+        setSelectedCategory(fallbackCategoryTitle);
       }
-
+    
       if (editingCategoryId === categoryId) {
         setEditingCategoryId(null);
         setEditingCategoryTitle("");
       }
+    
+      setArchiveToast(
+        taskCount > 0
+          ? `${taskCount} task${taskCount === 1 ? "" : "s"} moved to Uncategorized`
+          : `"${categoryToDelete.title}" deleted`
+      );
+    
+      window.setTimeout(() => {
+        setArchiveToast("");
+      }, 2500);
     };
 
     /* ------------------------------------------------ */
