@@ -3500,6 +3500,51 @@ if (!enableClipboardAssist) return;
       );
     };
 
+    const toggleFocusTask = (
+      taskId: string
+    ) => {
+      setManualFocusTaskIds(
+        (previousTaskIds) => {
+          /*
+           * Clicking "In focus" removes the task.
+           */
+          if (
+            previousTaskIds.includes(
+              taskId
+            )
+          ) {
+            return previousTaskIds.filter(
+              (existingTaskId) =>
+                existingTaskId !== taskId
+            );
+          }
+    
+          /*
+           * Focus supports a maximum of three
+           * manually selected tasks.
+           */
+          if (
+            previousTaskIds.length >= 3
+          ) {
+            setArchiveToast(
+              "Your Focus stack already has three tasks"
+            );
+    
+            window.setTimeout(() => {
+              setArchiveToast("");
+            }, 2500);
+    
+            return previousTaskIds;
+          }
+    
+          return [
+            ...previousTaskIds,
+            taskId,
+          ];
+        }
+      );
+    };
+
     /* ------------------------------------------------ */
     /* Delete Task */
     /* ------------------------------------------------ */
@@ -4535,64 +4580,114 @@ setInsightsHistory(
               />
               )}
 
-              {selectedView === "priorities" && (
-              <PrioritiesView
-              darkMode={darkMode}
-              border={border}
-              className={strongerGlass}
-              glass={glass}
-              strongerGlass={strongerGlass}
-              themeColor={themeColor}
-              viewMode={priorityViewMode}
-              setViewMode={setPriorityViewMode}
-              highPriorityTasks={highPriorityTasks}
-              mediumPriorityTasks={mediumPriorityTasks}
-              lowPriorityTasks={lowPriorityTasks}
-              completedToday={completedToday}
-              archiveCompletedToday={archiveCompletedToday}
-              restoreCompletedTask={restoreCompletedTask}
-              toggleTaskById={toggleTaskById}
-              deleteTask={deleteTask}
-              setSelectedTask={setSelectedTask}
-              setIsEditModalOpen={setIsEditModalOpen}
-            />
-              )}
+{selectedView === "priorities" && (
+  <PrioritiesView
+    darkMode={darkMode}
+    border={border}
+    className={strongerGlass}
+    glass={glass}
+    strongerGlass={strongerGlass}
+    themeColor={themeColor}
+    viewMode={priorityViewMode}
+    setViewMode={setPriorityViewMode}
+    highPriorityTasks={highPriorityTasks}
+    mediumPriorityTasks={mediumPriorityTasks}
+    lowPriorityTasks={lowPriorityTasks}
+    completedToday={completedToday}
+    archiveCompletedToday={
+      archiveCompletedToday
+    }
+    restoreCompletedTask={
+      restoreCompletedTask
+    }
+    toggleTaskById={
+      toggleTaskById
+    }
+    deleteTask={deleteTask}
+    setSelectedTask={
+      setSelectedTask
+    }
+    setIsEditModalOpen={
+      setIsEditModalOpen
+    }
+    manualFocusTaskIds={
+      manualFocusTaskIds
+    }
+    toggleFocusTask={
+      toggleFocusTask
+    }
+  />
+)}
 
-              {selectedView === "upcoming" && (
-                <UpcomingView
-                  darkMode={darkMode}
-                  border={border}
-                  className={strongerGlass}
-                  themeColor={themeColor}
-                  viewMode={upcomingViewMode}
-                  setViewMode={setUpcomingViewMode}
-                  todayTasks={todayTasks}
-                  tomorrowTasks={tomorrowTasks}
-                  laterTasks={laterTasks}
-                  noDateTasks={noDateTasks}
-                  toggleTaskById={toggleTaskById}
-                  deleteTask={deleteTask}
-                  acceptSuggestedDateById={acceptSuggestedDateById}
-                  setSelectedTask={setSelectedTask}
-                  setIsEditModalOpen={setIsEditModalOpen}
-                />
-              )}
+{selectedView === "upcoming" && (
+  <UpcomingView
+    darkMode={darkMode}
+    border={border}
+    className={strongerGlass}
+    themeColor={themeColor}
+    viewMode={upcomingViewMode}
+    setViewMode={
+      setUpcomingViewMode
+    }
+    todayTasks={todayTasks}
+    tomorrowTasks={
+      tomorrowTasks
+    }
+    laterTasks={laterTasks}
+    noDateTasks={noDateTasks}
+    toggleTaskById={
+      toggleTaskById
+    }
+    deleteTask={deleteTask}
+    acceptSuggestedDateById={
+      acceptSuggestedDateById
+    }
+    setSelectedTask={
+      setSelectedTask
+    }
+    setIsEditModalOpen={
+      setIsEditModalOpen
+    }
+    manualFocusTaskIds={
+      manualFocusTaskIds
+    }
+    toggleFocusTask={
+      toggleFocusTask
+    }
+  />
+)}
 
-              {selectedView === "inbox" && (
-                <InboxView
-                  darkMode={darkMode}
-                  border={border}
-                  className={strongerGlass}
-                  themeColor={themeColor}
-                  inboxTasks={inboxTasks}
-                  enableAppSuggestions={enableAppSuggestions}
-                  toggleTaskById={toggleTaskById}
-                  deleteTask={deleteTask}
-                  scheduleTaskById={scheduleTaskById}
-                  setSelectedTask={setSelectedTask}
-                  setIsEditModalOpen={setIsEditModalOpen}
-                />
-              )}
+{selectedView === "inbox" && (
+  <InboxView
+    darkMode={darkMode}
+    border={border}
+    className={strongerGlass}
+    themeColor={themeColor}
+    inboxTasks={inboxTasks}
+    enableAppSuggestions={
+      enableAppSuggestions
+    }
+    toggleTaskById={
+      toggleTaskById
+    }
+    deleteTask={deleteTask}
+    scheduleTaskById={
+      scheduleTaskById
+    }
+    setSelectedTask={
+      setSelectedTask
+    }
+    setIsEditModalOpen={
+      setIsEditModalOpen
+    }
+    manualFocusTaskIds={
+      manualFocusTaskIds
+    }
+    toggleFocusTask={
+      toggleFocusTask
+    }
+  />
+)}
 
 {selectedView === "archive" && (
   <ArchiveView
@@ -5590,6 +5685,85 @@ archiveCompletedToday,
     );
   }
 
+  function InlineFocusAction({
+    taskId,
+    manualFocusTaskIds = [],
+    toggleFocusTask,
+    darkMode,
+    showSeparator = true,
+  }: {
+    taskId: string;
+    manualFocusTaskIds?: string[];
+    toggleFocusTask?: (
+      taskId: string
+    ) => void;
+    darkMode: boolean;
+    showSeparator?: boolean;
+  }) {
+    const isInFocus =
+      manualFocusTaskIds.includes(
+        taskId
+      );
+  
+    const isFocusStackFull =
+      !isInFocus &&
+      manualFocusTaskIds.length >= 3;
+  
+    if (!toggleFocusTask) {
+      return null;
+    }
+  
+    return (
+      <span
+        className={`inline-flex shrink-0 items-center gap-1.5 transition ${
+          isInFocus
+            ? "opacity-100"
+            : "opacity-0 group-hover/task:opacity-100 group-focus-within/task:opacity-100"
+        }`}
+      >
+        {showSeparator && (
+          <span
+            aria-hidden="true"
+            className="opacity-40"
+          >
+            ·
+          </span>
+        )}
+  
+        <button
+          type="button"
+          disabled={isFocusStackFull}
+          onClick={(event) => {
+            event.stopPropagation();
+            toggleFocusTask(taskId);
+          }}
+          aria-pressed={isInFocus}
+          title={
+            isInFocus
+              ? "Remove from Focus"
+              : isFocusStackFull
+              ? "Focus stack is full"
+              : "Add to Focus"
+          }
+          className={`shrink-0 font-[650] transition disabled:cursor-not-allowed disabled:opacity-35 ${
+            isInFocus
+              ? darkMode
+                ? "text-emerald-300 hover:text-emerald-200"
+                : "text-emerald-700 hover:text-emerald-800"
+              : darkMode
+              ? "text-white/48 hover:text-white"
+              : "text-[#6B6F7B] hover:text-[#252933]"
+          }`}
+        >
+          {isInFocus
+            ? "In focus"
+            : "Add to focus"}
+        </button>
+      </span>
+    );
+  }
+
+
 
   function TaskListPanel({
     title,
@@ -5773,13 +5947,38 @@ archiveCompletedToday,
       setIsEditModalOpen(true);
     };
 
-    const addTaskToFocus = (taskId: string) => {
-      if (!setManualFocusTaskIds) return;
-
-      setManualFocusTaskIds((previous: string[]) => {
-        if (previous.includes(taskId) || previous.length >= 3) return previous;
-        return [...previous, taskId];
-      });
+    const toggleTaskFocusFromList = (
+      taskId: string
+    ) => {
+      if (!setManualFocusTaskIds) {
+        return;
+      }
+    
+      setManualFocusTaskIds(
+        (previousTaskIds: string[]) => {
+          if (
+            previousTaskIds.includes(
+              taskId
+            )
+          ) {
+            return previousTaskIds.filter(
+              (existingTaskId) =>
+                existingTaskId !== taskId
+            );
+          }
+    
+          if (
+            previousTaskIds.length >= 3
+          ) {
+            return previousTaskIds;
+          }
+    
+          return [
+            ...previousTaskIds,
+            taskId,
+          ];
+        }
+      );
     };
 
     return (
@@ -6052,44 +6251,90 @@ archiveCompletedToday,
   </button>
 
     {groupMode !== "category" && (
-      <div
-        className={`mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-[500] ${mutedText}`}
-      >
-        <span className="truncate">
-          {task.category || "No category"}
+    <div
+    className={`mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-[500] ${mutedText}`}
+  >
+    <span className="truncate">
+      {task.category === "-"
+        ? "-"
+        : task.category ||
+          "No category"}
+    </span>
+  
+    <InlineFocusAction
+      taskId={task.id}
+      manualFocusTaskIds={
+        manualFocusTaskIds
+      }
+      toggleFocusTask={
+        toggleTaskFocusFromList
+      }
+      darkMode={darkMode}
+    />
+  
+    {task.pinned && (
+      <>
+        <span
+          aria-hidden="true"
+          className="opacity-40"
+        >
+          ·
         </span>
-
-        {task.pinned && (
-          <>
-            <span aria-hidden="true">•</span>
-            <span>Pinned</span>
-          </>
-        )}
-
-        {suggestingTaskIds.includes(task.id) && (
-          <Sparkles
-            size={9}
-            className="shrink-0 animate-pulse"
-          />
-        )}
-      </div>
+  
+        <span>Pinned</span>
+      </>
+    )}
+  
+    {suggestingTaskIds.includes(
+      task.id
+    ) && (
+      <Sparkles
+        size={9}
+        className="shrink-0 animate-pulse"
+      />
+    )}
+  </div>
     )}
 
-    {groupMode === "category" &&
-      (task.pinned || suggestingTaskIds.includes(task.id)) && (
-        <div
-          className={`mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-[500] ${mutedText}`}
-        >
-          {task.pinned && <span>Pinned</span>}
+{groupMode === "category" && (
+  <div
+    className={`mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-[500] ${mutedText}`}
+  >
+    <InlineFocusAction
+      taskId={task.id}
+      manualFocusTaskIds={
+        manualFocusTaskIds
+      }
+      toggleFocusTask={
+        toggleTaskFocusFromList
+      }
+      darkMode={darkMode}
+      showSeparator={false}
+    />
 
-          {suggestingTaskIds.includes(task.id) && (
-            <Sparkles
-              size={9}
-              className="shrink-0 animate-pulse"
-            />
-          )}
-        </div>
-      )}
+    {task.pinned && (
+      <>
+        <span
+          aria-hidden="true"
+          className="opacity-40"
+        >
+          ·
+        </span>
+
+        <span>Pinned</span>
+      </>
+    )}
+
+    {suggestingTaskIds.includes(
+      task.id
+    ) && (
+      <Sparkles
+        size={9}
+        className="shrink-0 animate-pulse"
+      />
+    )}
+  </div>
+)}
   </div>
 
                     <div className={`flex items-center justify-center border-l px-1 text-center text-[12px] font-[600] ${rowBorder} ${dueClass}`}>
@@ -10342,57 +10587,48 @@ const displayedInsight =
     darkMode,
     border,
     className,
-    glass,
-    strongerGlass,
-    themeColor,
-    viewMode,
-    setViewMode,
     highPriorityTasks,
     mediumPriorityTasks,
     lowPriorityTasks,
-    completedToday,
-    archiveCompletedToday,
-    restoreCompletedTask,
     toggleTaskById,
     deleteTask,
     setSelectedTask,
     setIsEditModalOpen,
+    manualFocusTaskIds = [],
+    toggleFocusTask,
   }: any) {
     const totalTasks =
-      highPriorityTasks.length + mediumPriorityTasks.length + lowPriorityTasks.length;
-
+      highPriorityTasks.length +
+      mediumPriorityTasks.length +
+      lowPriorityTasks.length;
+  
     const priorityGroups = [
       {
         key: "high",
         title: "High",
-        description: "Handle these first.",
+        description:
+          "Handle these first.",
         tasks: highPriorityTasks,
-        emptyMessage: "No high-priority tasks.",
-        badgeClass: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-300",
         dotColor: "#ef4444",
       },
       {
         key: "medium",
         title: "Medium",
-        description: "Useful work, but less urgent.",
+        description:
+          "Useful work, but less urgent.",
         tasks: mediumPriorityTasks,
-        emptyMessage: "No medium-priority tasks.",
-        badgeClass:
-          "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
         dotColor: "#f59e0b",
       },
       {
         key: "low",
         title: "Low",
-        description: "Keep visible, but do later.",
+        description:
+          "Keep visible, but do later.",
         tasks: lowPriorityTasks,
-        emptyMessage: "No low-priority tasks.",
-        badgeClass:
-          "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
         dotColor: "#10b981",
       },
     ];
-
+  
     return (
       <div>
         <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
@@ -10400,42 +10636,191 @@ const displayedInsight =
             <h2 className="text-[28px] font-[700] tracking-[-0.04em] sm:text-[32px]">
               Priority
             </h2>
+  
             <p
               className={`mt-2 text-sm ${
-                darkMode ? "text-white/55" : "text-[#666661]/45"
+                darkMode
+                  ? "text-white/55"
+                  : "text-[#666661]/45"
               }`}
             >
-              Your active tasks grouped by importance.
+              Your active tasks grouped by
+              importance.
             </p>
           </div>
-
-          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
-            <div
-              className={`rounded-2xl border px-4 py-3 text-xs font-[700] ${className} ${border}`}
-            >
-              {totalTasks} active task{totalTasks === 1 ? "" : "s"}
-            </div>
-
-        
+  
+          <div
+            className={`rounded-2xl border px-4 py-3 text-xs font-[700] ${className} ${border}`}
+          >
+            {totalTasks} active task
+            {totalTasks === 1
+              ? ""
+              : "s"}
           </div>
         </div>
-
+  
         <div className="space-y-6">
-    {priorityGroups.map((group) => (
-      <AirtablePriorityGroup
-        key={group.key}
-        {...group}
-        darkMode={darkMode}
-        border={border}
-        toggleTaskById={toggleTaskById}
-        deleteTask={deleteTask}
-        setSelectedTask={setSelectedTask}
-        setIsEditModalOpen={setIsEditModalOpen}
-      />
-    ))}
-  </div>
-
-
+          {priorityGroups.map(
+            (group) => (
+              <section
+                key={group.key}
+                className={`overflow-hidden rounded-[20px] border border-l-[3px] shadow-sm ${
+                  group.title === "High"
+                    ? "border-l-red-500"
+                    : group.title ===
+                      "Medium"
+                    ? "border-l-orange-500"
+                    : "border-l-emerald-500"
+                } ${
+                  darkMode
+                    ? "border-y-white/[0.09] border-r-white/[0.09] bg-[#171717]"
+                    : "border-y-black/[0.07] border-r-black/[0.07] bg-white"
+                }`}
+              >
+                <div
+                  className={`flex items-center justify-between border-b px-6 py-5 ${border}`}
+                >
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="h-3 w-3 rounded-full"
+                        style={{
+                          backgroundColor:
+                            group.dotColor,
+                        }}
+                      />
+  
+                      <h3 className="text-[15px] font-[700] sm:text-[16px]">
+                        {group.title}
+                      </h3>
+                    </div>
+  
+                    <p
+                      className={`mt-1 text-[11px] sm:text-[12px] ${
+                        darkMode
+                          ? "text-white/55"
+                          : "text-[#666661]/45"
+                      }`}
+                    >
+                      {group.description}
+                    </p>
+                  </div>
+  
+                  <div
+                    className={`flex h-8 min-w-8 items-center justify-center rounded-full px-3 text-xs font-[700] ${
+                      darkMode
+                        ? "bg-white/10 text-white/70"
+                        : "bg-black/[0.04] text-[#666661]/60"
+                    }`}
+                  >
+                    {group.tasks.length}
+                  </div>
+                </div>
+  
+                {group.tasks.map(
+                  (task: any) => (
+                    <div
+                      key={task.id}
+                      className={`group/task flex min-h-[64px] flex-col items-start gap-3 border-b px-5 py-3.5 last:border-b-0 sm:flex-row sm:items-center sm:gap-4 sm:px-6 ${border}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={(event) =>
+                          toggleTaskById(
+                            task.id,
+                            event
+                          )
+                        }
+                        className="opacity-60 hover:opacity-100"
+                      >
+                        <Circle size={22} />
+                      </button>
+  
+                      <div className="min-w-0 flex-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedTask(
+                              task
+                            );
+  
+                            setIsEditModalOpen(
+                              true
+                            );
+                          }}
+                          className={`block max-w-full truncate text-left text-[13px] font-[700] sm:text-[14px] ${
+                            darkMode
+                              ? "text-white"
+                              : "text-[#252933]"
+                          }`}
+                        >
+                          {task.title}
+                        </button>
+  
+                        <div
+                          className={`mt-1 flex min-w-0 items-center gap-1.5 text-[11px] ${
+                            darkMode
+                              ? "text-white/48"
+                              : "text-[#666661]/55"
+                          }`}
+                        >
+                          <span className="truncate">
+                            {task.category ===
+                            "-"
+                              ? "-"
+                              : task.category ||
+                                "No category"}
+                          </span>
+  
+                          <InlineFocusAction
+                            taskId={
+                              task.id
+                            }
+                            manualFocusTaskIds={
+                              manualFocusTaskIds
+                            }
+                            toggleFocusTask={
+                              toggleFocusTask
+                            }
+                            darkMode={
+                              darkMode
+                            }
+                          />
+                        </div>
+                      </div>
+  
+                      <span
+                        className={`text-[12px] font-[700] ${
+                          task.priority ===
+                          "High"
+                            ? "text-red-500"
+                            : task.priority ===
+                              "Medium"
+                            ? "text-orange-500"
+                            : "text-emerald-500"
+                        }`}
+                      >
+                        {task.priority}
+                      </span>
+  
+                      <button
+                        type="button"
+                        onClick={() =>
+                          deleteTask(
+                            task.id
+                          )
+                        }
+                        className="opacity-30 transition hover:text-red-500 hover:opacity-100"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )
+                )}
+              </section>
+            )
+          )}
+        </div>
       </div>
     );
   }
@@ -10775,41 +11160,53 @@ const displayedInsight =
     acceptSuggestedDateById,
     setSelectedTask,
     setIsEditModalOpen,
+    manualFocusTaskIds = [],
+    toggleFocusTask,
   }: any) {
     const totalScheduled =
-      todayTasks.length + tomorrowTasks.length + laterTasks.length;
-
+      todayTasks.length +
+      tomorrowTasks.length +
+      laterTasks.length;
+  
     const groups = [
       {
         title: "Today",
-        description: "Work that needs attention now.",
+        description:
+          "Work that needs attention now.",
         tasks: todayTasks,
-        emptyMessage: "Nothing due today.",
+        emptyMessage:
+          "Nothing due today.",
         dotColor: themeColor,
       },
       {
         title: "Tomorrow",
-        description: "Tasks coming up next.",
+        description:
+          "Tasks coming up next.",
         tasks: tomorrowTasks,
-        emptyMessage: "Nothing scheduled for tomorrow.",
+        emptyMessage:
+          "Nothing scheduled for tomorrow.",
         dotColor: "#f59e0b",
       },
       {
         title: "Later",
-        description: "Future scheduled work.",
+        description:
+          "Future scheduled work.",
         tasks: laterTasks,
-        emptyMessage: "No later tasks yet.",
+        emptyMessage:
+          "No later tasks yet.",
         dotColor: "#3b82f6",
       },
       {
         title: "No Date",
-        description: "Tasks that still need a date.",
+        description:
+          "Tasks that still need a date.",
         tasks: noDateTasks,
-        emptyMessage: "Every task has a date.",
+        emptyMessage:
+          "Every task has a date.",
         dotColor: "#71717a",
       },
     ];
-
+  
     return (
       <div>
         <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
@@ -10817,22 +11214,37 @@ const displayedInsight =
             <h2 className="text-[28px] font-[700] tracking-[-0.04em] sm:text-[32px]">
               Upcoming
             </h2>
-
-            <p className={`mt-2 text-[13px] sm:text-sm ${darkMode ? "text-white/55" : "text-[#666661]/45"}`}>
-              Tasks grouped by manual due dates and Momentuhm-suggested dates.
+  
+            <p
+              className={`mt-2 text-[13px] sm:text-sm ${
+                darkMode
+                  ? "text-white/55"
+                  : "text-[#666661]/45"
+              }`}
+            >
+              Tasks grouped by manual due dates and
+              Momentuhm-suggested dates.
             </p>
           </div>
-
+  
           <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
             <div
               className={`rounded-2xl border px-4 py-3 text-xs font-[700] ${className} ${border}`}
             >
-              {totalScheduled} scheduled task{totalScheduled === 1 ? "" : "s"}
+              {totalScheduled} scheduled task
+              {totalScheduled === 1
+                ? ""
+                : "s"}
             </div>
-
-            <div className={`flex rounded-2xl border p-1 ${className} ${border}`}>
+  
+            <div
+              className={`flex rounded-2xl border p-1 ${className} ${border}`}
+            >
               <button
-                onClick={() => setViewMode("calendar")}
+                type="button"
+                onClick={() =>
+                  setViewMode("calendar")
+                }
                 className={`h-9 rounded-xl px-4 text-xs font-[700] transition ${
                   viewMode === "calendar"
                     ? "text-white"
@@ -10840,13 +11252,23 @@ const displayedInsight =
                     ? "text-white/55 hover:text-white"
                     : "text-[#666661]/45 hover:text-[#666661]"
                 }`}
-                style={viewMode === "calendar" ? { backgroundColor: themeColor } : undefined}
+                style={
+                  viewMode === "calendar"
+                    ? {
+                        backgroundColor:
+                          themeColor,
+                      }
+                    : undefined
+                }
               >
                 Calendar
               </button>
-
+  
               <button
-                onClick={() => setViewMode("list")}
+                type="button"
+                onClick={() =>
+                  setViewMode("list")
+                }
                 className={`h-9 rounded-xl px-4 text-xs font-[700] transition ${
                   viewMode === "list"
                     ? "text-white"
@@ -10854,14 +11276,21 @@ const displayedInsight =
                     ? "text-white/55 hover:text-white"
                     : "text-[#666661]/45 hover:text-[#666661]"
                 }`}
-                style={viewMode === "list" ? { backgroundColor: themeColor } : undefined}
+                style={
+                  viewMode === "list"
+                    ? {
+                        backgroundColor:
+                          themeColor,
+                      }
+                    : undefined
+                }
               >
                 List
               </button>
             </div>
           </div>
         </div>
-
+  
         {viewMode === "calendar" ? (
           <UpcomingCalendarView
             darkMode={darkMode}
@@ -10874,9 +11303,21 @@ const displayedInsight =
             noDateTasks={noDateTasks}
             toggleTaskById={toggleTaskById}
             deleteTask={deleteTask}
-            acceptSuggestedDateById={acceptSuggestedDateById}
-            setSelectedTask={setSelectedTask}
-            setIsEditModalOpen={setIsEditModalOpen}
+            acceptSuggestedDateById={
+              acceptSuggestedDateById
+            }
+            setSelectedTask={
+              setSelectedTask
+            }
+            setIsEditModalOpen={
+              setIsEditModalOpen
+            }
+            manualFocusTaskIds={
+              manualFocusTaskIds
+            }
+            toggleFocusTask={
+              toggleFocusTask
+            }
           />
         ) : (
           <div className="space-y-5">
@@ -10887,11 +11328,27 @@ const displayedInsight =
                 darkMode={darkMode}
                 border={border}
                 className={className}
-                toggleTaskById={toggleTaskById}
-                deleteTask={deleteTask}
-                acceptSuggestedDateById={acceptSuggestedDateById}
-                setSelectedTask={setSelectedTask}
-                setIsEditModalOpen={setIsEditModalOpen}
+                toggleTaskById={
+                  toggleTaskById
+                }
+                deleteTask={
+                  deleteTask
+                }
+                acceptSuggestedDateById={
+                  acceptSuggestedDateById
+                }
+                setSelectedTask={
+                  setSelectedTask
+                }
+                setIsEditModalOpen={
+                  setIsEditModalOpen
+                }
+                manualFocusTaskIds={
+                  manualFocusTaskIds
+                }
+                toggleFocusTask={
+                  toggleFocusTask
+                }
               />
             ))}
           </div>
@@ -10899,7 +11356,7 @@ const displayedInsight =
       </div>
     );
   }
-
+  
   function UpcomingCalendarView({
     darkMode,
     border,
@@ -10914,38 +11371,50 @@ const displayedInsight =
     acceptSuggestedDateById,
     setSelectedTask,
     setIsEditModalOpen,
+    manualFocusTaskIds = [],
+    toggleFocusTask,
   }: any) {
     const calendarDays = [
       {
         title: "Today",
-        dateLabel: formatDueDate(getTodayDate()),
+        dateLabel:
+          formatDueDate(
+            getTodayDate()
+          ),
         tasks: todayTasks,
         dotColor: themeColor,
-        emptyMessage: "No tasks today.",
+        emptyMessage:
+          "No tasks today.",
       },
       {
         title: "Tomorrow",
-        dateLabel: formatDueDate(getTomorrowDate()),
+        dateLabel:
+          formatDueDate(
+            getTomorrowDate()
+          ),
         tasks: tomorrowTasks,
         dotColor: "#f59e0b",
-        emptyMessage: "Nothing tomorrow.",
+        emptyMessage:
+          "Nothing tomorrow.",
       },
       {
         title: "Later",
         dateLabel: "Future",
         tasks: laterTasks,
         dotColor: "#3b82f6",
-        emptyMessage: "No future tasks.",
+        emptyMessage:
+          "No future tasks.",
       },
       {
         title: "No Date",
         dateLabel: "Unscheduled",
         tasks: noDateTasks,
         dotColor: "#71717a",
-        emptyMessage: "Everything is scheduled.",
+        emptyMessage:
+          "Everything is scheduled.",
       },
     ];
-
+  
     return (
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-4">
         {calendarDays.map((day) => (
@@ -10959,18 +11428,27 @@ const displayedInsight =
                   <span
                     className="h-2.5 w-2.5 rounded-full"
                     style={{
-                      backgroundColor: day.dotColor,
+                      backgroundColor:
+                        day.dotColor,
                     }}
                   />
-
-                  <h3 className="text-[15px] font-[700]">{day.title}</h3>
+  
+                  <h3 className="text-[15px] font-[700]">
+                    {day.title}
+                  </h3>
                 </div>
-
-                <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#666661]/40"}`}>
+  
+                <p
+                  className={`mt-1 text-xs ${
+                    darkMode
+                      ? "text-white/40"
+                      : "text-[#666661]/40"
+                  }`}
+                >
                   {day.dateLabel}
                 </p>
               </div>
-
+  
               <span
                 className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
                   darkMode
@@ -10981,7 +11459,7 @@ const displayedInsight =
                 {day.tasks.length}
               </span>
             </div>
-
+  
             <div className="space-y-2">
               {day.tasks.length === 0 && (
                 <div
@@ -10994,27 +11472,45 @@ const displayedInsight =
                   {day.emptyMessage}
                 </div>
               )}
-
-              {day.tasks.map((task: any) => (
-                <UpcomingCalendarTaskCard
-                  key={task.id}
-                  task={task}
-                  darkMode={darkMode}
-                  border={border}
-                  toggleTaskById={toggleTaskById}
-                  deleteTask={deleteTask}
-                  acceptSuggestedDateById={acceptSuggestedDateById}
-                  setSelectedTask={setSelectedTask}
-                  setIsEditModalOpen={setIsEditModalOpen}
-                />
-              ))}
+  
+              {day.tasks.map(
+                (task: any) => (
+                  <UpcomingCalendarTaskCard
+                    key={task.id}
+                    task={task}
+                    darkMode={darkMode}
+                    border={border}
+                    toggleTaskById={
+                      toggleTaskById
+                    }
+                    deleteTask={
+                      deleteTask
+                    }
+                    acceptSuggestedDateById={
+                      acceptSuggestedDateById
+                    }
+                    setSelectedTask={
+                      setSelectedTask
+                    }
+                    setIsEditModalOpen={
+                      setIsEditModalOpen
+                    }
+                    manualFocusTaskIds={
+                      manualFocusTaskIds
+                    }
+                    toggleFocusTask={
+                      toggleFocusTask
+                    }
+                  />
+                )
+              )}
             </div>
           </section>
         ))}
       </div>
     );
   }
-
+  
   function UpcomingCalendarTaskCard({
     task,
     darkMode,
@@ -11024,9 +11520,13 @@ const displayedInsight =
     acceptSuggestedDateById,
     setSelectedTask,
     setIsEditModalOpen,
+    manualFocusTaskIds = [],
+    toggleFocusTask,
   }: any) {
-    const visibleDueDate = task.dueDate || task.suggestedDueDate;
-
+    const visibleDueDate =
+      task.dueDate ||
+      task.suggestedDueDate;
+  
     return (
       <motion.div
         initial={{
@@ -11037,79 +11537,130 @@ const displayedInsight =
           opacity: 1,
           y: 0,
         }}
-        className={`rounded-2xl border p-3 transition hover:scale-[1.01] ${border} ${
-          darkMode ? "hover:bg-white/[0.04]" : "hover:bg-black/[0.02]"
+        className={`group/task rounded-2xl border p-3 transition hover:scale-[1.01] ${border} ${
+          darkMode
+            ? "hover:bg-white/[0.04]"
+            : "hover:bg-black/[0.02]"
         }`}
       >
         <div className="mb-3 flex items-start gap-2">
           <button
-            onClick={(e) => toggleTaskById(task.id, e)}
+            type="button"
+            onClick={(event) =>
+              toggleTaskById(
+                task.id,
+                event
+              )
+            }
             className="mt-0.5 opacity-70 transition hover:opacity-100"
           >
             <Circle
               size={17}
-              className={darkMode ? "text-white/25" : "text-[#666661]/25"}
+              className={
+                darkMode
+                  ? "text-white/25"
+                  : "text-[#666661]/25"
+              }
             />
           </button>
-
+  
           <div className="min-w-0 flex-1">
-            <p
+            <button
+              type="button"
               onClick={() => {
                 setSelectedTask(task);
                 setIsEditModalOpen(true);
               }}
-              className="cursor-pointer text-sm font-[700] leading-5 hover:opacity-70"
+              className="block w-full text-left text-sm font-[700] leading-5 hover:opacity-70"
             >
               {task.title}
-            </p>
-
-            <p
-              className={`mt-1 text-[11px] ${
-                darkMode ? "text-white/38" : "text-[#666661]/38"
+            </button>
+  
+            <div
+              className={`mt-1 flex min-w-0 items-center gap-1.5 text-[11px] ${
+                darkMode
+                  ? "text-white/38"
+                  : "text-[#666661]/38"
               }`}
             >
-              {task.category}
-            </p>
+              <span className="truncate">
+                {task.category === "-"
+                  ? "-"
+                  : task.category ||
+                    "No category"}
+              </span>
+  
+              <InlineFocusAction
+                taskId={task.id}
+                manualFocusTaskIds={
+                  manualFocusTaskIds
+                }
+                toggleFocusTask={
+                  toggleFocusTask
+                }
+                darkMode={darkMode}
+              />
+            </div>
           </div>
-
+  
           <button
-            onClick={() => deleteTask(task.id)}
+            type="button"
+            onClick={() =>
+              deleteTask(task.id)
+            }
             className="opacity-25 transition hover:text-red-500 hover:opacity-100"
           >
             <Trash2 size={15} />
           </button>
         </div>
-
+  
         <div className="flex flex-wrap gap-2">
           <span
-        className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[700] tracking-[-0.01em] ${getPriorityClass(
-          task.priority
-        )}`}
+            className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[700] tracking-[-0.01em] ${getPriorityClass(
+              task.priority
+            )}`}
           >
             {task.priority}
           </span>
-
-          <DateBadge task={task} visibleDueDate={visibleDueDate} darkMode={darkMode} />
-
-          {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
-
-          {task.suggestedDueDate && !task.dueDate && acceptSuggestedDateById && (
-            <button
-              onClick={() => acceptSuggestedDateById(task.id)}
-              className={`rounded-full px-2.5 py-1 text-[10px] font-[700] transition hover:scale-[1.03] ${
-                darkMode
-                  ? "bg-white/[0.06] text-white/55 hover:text-white"
-                  : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
-              }`}
-            >
-              Accept
-            </button>
+  
+          <DateBadge
+            task={task}
+            visibleDueDate={
+              visibleDueDate
+            }
+            darkMode={darkMode}
+          />
+  
+          {hasFollowUpTag(task) && (
+            <FollowUpTag
+              darkMode={darkMode}
+            />
           )}
+  
+          {task.suggestedDueDate &&
+            !task.dueDate &&
+            acceptSuggestedDateById && (
+              <button
+                type="button"
+                onClick={() =>
+                  acceptSuggestedDateById(
+                    task.id
+                  )
+                }
+                className={`rounded-full px-2.5 py-1 text-[10px] font-[700] transition hover:scale-[1.03] ${
+                  darkMode
+                    ? "bg-white/[0.06] text-white/55 hover:text-white"
+                    : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
+                }`}
+              >
+                Accept
+              </button>
+            )}
         </div>
       </motion.div>
     );
   }
-
+  
   function UpcomingGroup({
     title,
     description,
@@ -11124,21 +11675,42 @@ const displayedInsight =
     acceptSuggestedDateById,
     setSelectedTask,
     setIsEditModalOpen,
+    manualFocusTaskIds = [],
+    toggleFocusTask,
   }: any) {
     return (
-      <section className={`rounded-[28px] border shadow-sm ${className} ${border}`}>
-        <div className={`flex items-center justify-between border-b px-5 py-4 ${border}`}>
+      <section
+        className={`rounded-[28px] border shadow-sm ${className} ${border}`}
+      >
+        <div
+          className={`flex items-center justify-between border-b px-5 py-4 ${border}`}
+        >
           <div>
             <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
-              <h3 className="text-[15px] font-[700]">{title}</h3>
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{
+                  backgroundColor:
+                    dotColor,
+                }}
+              />
+  
+              <h3 className="text-[15px] font-[700]">
+                {title}
+              </h3>
             </div>
-
-            <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#666661]/40"}`}>
+  
+            <p
+              className={`mt-1 text-xs ${
+                darkMode
+                  ? "text-white/40"
+                  : "text-[#666661]/40"
+              }`}
+            >
               {description}
             </p>
           </div>
-
+  
           <span
             className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
               darkMode
@@ -11149,22 +11721,40 @@ const displayedInsight =
             {tasks.length}
           </span>
         </div>
-
+  
         <TaskRows
           tasks={tasks}
-          emptyMessage={emptyMessage}
+          emptyMessage={
+            emptyMessage
+          }
           darkMode={darkMode}
           border={border}
-          toggleTaskById={toggleTaskById}
-          deleteTask={deleteTask}
-          acceptSuggestedDateById={acceptSuggestedDateById}
-          setSelectedTask={setSelectedTask}
-          setIsEditModalOpen={setIsEditModalOpen}
+          toggleTaskById={
+            toggleTaskById
+          }
+          deleteTask={
+            deleteTask
+          }
+          acceptSuggestedDateById={
+            acceptSuggestedDateById
+          }
+          setSelectedTask={
+            setSelectedTask
+          }
+          setIsEditModalOpen={
+            setIsEditModalOpen
+          }
+          manualFocusTaskIds={
+            manualFocusTaskIds
+          }
+          toggleFocusTask={
+            toggleFocusTask
+          }
         />
       </section>
     );
   }
-
+  
   function TaskRows({
     tasks,
     emptyMessage,
@@ -11175,88 +11765,178 @@ const displayedInsight =
     acceptSuggestedDateById,
     setSelectedTask,
     setIsEditModalOpen,
+    manualFocusTaskIds = [],
+    toggleFocusTask,
   }: any) {
     return (
       <div>
         {tasks.length === 0 && (
-          <div className={`p-5 text-sm ${darkMode ? "text-white/35" : "text-[#666661]/35"}`}>
+          <div
+            className={`p-5 text-sm ${
+              darkMode
+                ? "text-white/35"
+                : "text-[#666661]/35"
+            }`}
+          >
             {emptyMessage}
           </div>
         )}
-
+  
         {tasks.map((task: any) => {
-        const visibleDueDate = task.dueDate || task.suggestedDueDate;
-
+          const visibleDueDate =
+            task.dueDate ||
+            task.suggestedDueDate;
+  
           return (
             <motion.div
               key={task.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex min-h-[72px] flex-col items-start gap-3 border-b px-5 py-4 transition-colors last:border-none sm:flex-row sm:items-center sm:gap-4 ${border} ${getPriorityRowClass(
+              initial={{
+                opacity: 0,
+                y: 8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              className={`group/task flex min-h-[72px] flex-col items-start gap-3 border-b px-5 py-4 transition-colors last:border-none sm:flex-row sm:items-center sm:gap-4 ${border} ${getPriorityRowClass(
                 task.priority,
                 darkMode
               )}`}
             >
               <div className="flex w-full min-w-0 items-start gap-3 sm:w-auto sm:flex-1 sm:items-center">
                 <button
-                  onClick={(e) => toggleTaskById(task.id, e)}
+                  type="button"
+                  onClick={(event) =>
+                    toggleTaskById(
+                      task.id,
+                      event
+                    )
+                  }
                   className="mt-0.5 shrink-0 opacity-70 transition hover:opacity-100 sm:mt-0"
                 >
-                  <Circle size={18} className={darkMode ? "text-white/25" : "text-[#666661]/25"} />
+                  <Circle
+                    size={18}
+                    className={
+                      darkMode
+                        ? "text-white/25"
+                        : "text-[#666661]/25"
+                    }
+                  />
                 </button>
-
+  
                 <div className="min-w-0 flex-1">
-                  <p
+                  <button
+                    type="button"
                     onClick={() => {
-                      setSelectedTask(task);
-                      setIsEditModalOpen(true);
+                      setSelectedTask(
+                        task
+                      );
+  
+                      setIsEditModalOpen(
+                        true
+                      );
                     }}
-                    className="cursor-pointer text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70 sm:truncate"
+                    className="block w-full text-left text-[15px] font-[700] leading-5 tracking-[-0.015em] hover:opacity-70 sm:truncate"
                   >
                     {task.title}
-                  </p>
-
-                  <p
-                    className={`mt-1 truncate text-[10.5px] font-[700] sm:mt-1.5 sm:text-[11px] sm:font-[650] ${
-                      darkMode ? "text-white/38" : "text-[#666661]/38"
+                  </button>
+  
+                  <div
+                    className={`mt-1 flex min-w-0 items-center gap-1.5 text-[10.5px] font-[650] sm:mt-1.5 sm:text-[11px] ${
+                      darkMode
+                        ? "text-white/38"
+                        : "text-[#666661]/38"
                     }`}
                   >
-                    {task.category} · {task.priority}
-                  </p>
+                    <span className="truncate">
+                      {task.category === "-"
+                        ? "-"
+                        : task.category ||
+                          "No category"}
+                    </span>
+  
+                    <InlineFocusAction
+                      taskId={task.id}
+                      manualFocusTaskIds={
+                        manualFocusTaskIds
+                      }
+                      toggleFocusTask={
+                        toggleFocusTask
+                      }
+                      darkMode={darkMode}
+                    />
+  
+                    <span
+                      aria-hidden="true"
+                      className="opacity-40"
+                    >
+                      ·
+                    </span>
+  
+                    <span className="shrink-0">
+                      {task.priority}
+                    </span>
+                  </div>
                 </div>
               </div>
-
+  
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-                <DateBadge task={task} visibleDueDate={visibleDueDate} darkMode={darkMode} />
-
-                {hasFollowUpTag(task) && <FollowUpTag darkMode={darkMode} />}
-
-                {task.suggestedDueDate && !task.dueDate && acceptSuggestedDateById && (
-                  <button
-                    onClick={() => acceptSuggestedDateById(task.id)}
-                    className={`rounded-full px-3 py-1 text-[11px] font-[700] transition hover:scale-[1.03] ${
+                <DateBadge
+                  task={task}
+                  visibleDueDate={
+                    visibleDueDate
+                  }
+                  darkMode={darkMode}
+                />
+  
+                {hasFollowUpTag(task) && (
+                  <FollowUpTag
+                    darkMode={
                       darkMode
-                        ? "bg-white/[0.06] text-white/55 hover:text-white"
-                        : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
-                    }`}
-                  >
-                    Accept
-                  </button>
+                    }
+                  />
                 )}
-
+  
+                {task.suggestedDueDate &&
+                  !task.dueDate &&
+                  acceptSuggestedDateById && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        acceptSuggestedDateById(
+                          task.id
+                        )
+                      }
+                      className={`rounded-full px-3 py-1 text-[11px] font-[700] transition hover:scale-[1.03] ${
+                        darkMode
+                          ? "bg-white/[0.06] text-white/55 hover:text-white"
+                          : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
+                      }`}
+                    >
+                      Accept
+                    </button>
+                  )}
+  
                 <span
-                className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[700] tracking-[-0.01em] ${getPriorityClass(
-                  task.priority
-                )}`}
+                  className={`inline-flex h-7 items-center rounded-full px-3 text-[11px] font-[700] tracking-[-0.01em] ${getPriorityClass(
+                    task.priority
+                  )}`}
                 >
                   {task.priority}
                 </span>
-
+  
                 <button
-                  onClick={() => deleteTask(task.id)}
+                  type="button"
+                  onClick={() =>
+                    deleteTask(
+                      task.id
+                    )
+                  }
                   className="opacity-35 transition hover:text-red-500 hover:opacity-100"
                 >
-                  <Trash2 size={16} />
+                  <Trash2
+                    size={16}
+                  />
                 </button>
               </div>
             </motion.div>
@@ -11275,6 +11955,8 @@ const displayedInsight =
     scheduleTaskById,
     setSelectedTask,
     setIsEditModalOpen,
+    manualFocusTaskIds = [],
+    toggleFocusTask,
   }: any) {
     const panelBorder = darkMode
       ? "border-white/[0.10]"
@@ -11288,9 +11970,10 @@ const displayedInsight =
       ? "bg-[#14171B]"
       : "bg-white";
   
-    const secondarySurface = darkMode
-      ? "bg-white/[0.025]"
-      : "bg-[#FAFAFB]";
+    const secondarySurface =
+      darkMode
+        ? "bg-white/[0.025]"
+        : "bg-[#FAFAFB]";
   
     const primaryText = darkMode
       ? "text-white"
@@ -11304,7 +11987,9 @@ const displayedInsight =
       ? "text-white/48"
       : "text-[#6B6F7B]";
   
-    const openTaskEditor = (task: any) => {
+    const openTaskEditor = (
+      task: any
+    ) => {
       setSelectedTask(task);
       setIsEditModalOpen(true);
     };
@@ -11343,7 +12028,6 @@ const displayedInsight =
   
     return (
       <div className="mx-auto w-full max-w-[1500px]">
-        {/* Page header */}
         <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1
@@ -11355,8 +12039,8 @@ const displayedInsight =
             <p
               className={`mt-2 text-[13px] font-[500] leading-5 ${mutedText}`}
             >
-              Captured tasks that still need a
-              clear date or review.
+              Captured tasks that still
+              need a clear date or review.
             </p>
           </div>
   
@@ -11371,7 +12055,6 @@ const displayedInsight =
           </div>
         </header>
   
-        {/* Inbox panel */}
         <section
           aria-label="Tasks needing review"
           className={`overflow-hidden rounded-[14px] border shadow-[0_1px_2px_rgba(15,23,42,0.02)] ${panelBorder} ${panelSurface}`}
@@ -11403,8 +12086,9 @@ const displayedInsight =
                 <p
                   className={`mt-1 text-[11px] font-[500] ${mutedText}`}
                 >
-                  These tasks do not yet have a
-                  confirmed or suggested date.
+                  These tasks do not yet have
+                  a confirmed or suggested
+                  date.
                 </p>
               </div>
             </div>
@@ -11475,10 +12159,13 @@ const displayedInsight =
                       transition={{
                         duration: 0.18,
                         ease: [
-                          0.16, 1, 0.3, 1,
+                          0.16,
+                          1,
+                          0.3,
+                          1,
                         ],
                       }}
-                      className={`grid grid-cols-1 gap-4 border-b px-4 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 ${rowBorder} ${
+                      className={`group/task grid grid-cols-1 gap-4 border-b px-4 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 ${rowBorder} ${
                         darkMode
                           ? "hover:bg-white/[0.025]"
                           : "hover:bg-[#FBFBFC]"
@@ -11510,7 +12197,9 @@ const displayedInsight =
                           <button
                             type="button"
                             onClick={() =>
-                              openTaskEditor(task)
+                              openTaskEditor(
+                                task
+                              )
                             }
                             title={task.title}
                             className={`block max-w-full text-left text-[13px] font-[650] leading-5 tracking-[-0.015em] transition hover:opacity-70 ${secondaryText}`}
@@ -11518,19 +12207,42 @@ const displayedInsight =
                             {task.title}
                           </button>
   
-                          <p
-                            className={`mt-1 text-[10px] font-[500] ${mutedText}`}
+                          <div
+                            className={`mt-1 flex min-w-0 items-center gap-1.5 text-[10px] font-[500] ${mutedText}`}
                           >
-                            {task.category ||
-                              "No category"}{" "}
+                            <span className="truncate">
+                              {task.category === "-"
+                                ? "-"
+                                : task.category ||
+                                  "No category"}
+                            </span>
+  
+                            <InlineFocusAction
+                              taskId={
+                                task.id
+                              }
+                              manualFocusTaskIds={
+                                manualFocusTaskIds
+                              }
+                              toggleFocusTask={
+                                toggleFocusTask
+                              }
+                              darkMode={
+                                darkMode
+                              }
+                            />
+  
                             <span
                               aria-hidden="true"
-                              className="mx-1 opacity-45"
+                              className="opacity-45"
                             >
-                              •
+                              ·
                             </span>
-                            Needs a date
-                          </p>
+  
+                            <span className="shrink-0">
+                              Needs a date
+                            </span>
+                          </div>
   
                           <div className="mt-2 flex flex-wrap items-center gap-1.5">
                             <span
@@ -11598,7 +12310,9 @@ const displayedInsight =
                         <button
                           type="button"
                           onClick={() =>
-                            openTaskEditor(task)
+                            openTaskEditor(
+                              task
+                            )
                           }
                           className={`h-9 rounded-[8px] px-3.5 text-[10px] font-[700] transition active:scale-[0.98] ${
                             darkMode
@@ -11612,7 +12326,9 @@ const displayedInsight =
                         <button
                           type="button"
                           onClick={() =>
-                            deleteTask(task.id)
+                            deleteTask(
+                              task.id
+                            )
                           }
                           aria-label={`Delete ${task.title}`}
                           title="Delete task"
@@ -11638,7 +12354,6 @@ const displayedInsight =
       </div>
     );
   }
-
 
   function MobileTodayAppView({
     darkMode,
