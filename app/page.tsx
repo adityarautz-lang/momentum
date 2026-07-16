@@ -3765,10 +3765,17 @@ const statusBeforeCompletion = completed
       };
     
       setCategories((prev) => {
+        const visibleCategories =
+          prev.filter(
+            (category) =>
+              category.title !== "-"
+          );
+      
         const targetCategory =
           updatedTask.category ||
-          prev[0]?.title;
-    
+          visibleCategories[0]?.title ||
+          "-";
+      
         const cleanedCategories =
           prev.map((category) => ({
             ...category,
@@ -3777,24 +3784,35 @@ const statusBeforeCompletion = completed
                 task.id !== updatedTask.id
             ),
           }));
-    
+      
+        const targetExists =
+          cleanedCategories.some(
+            (category) =>
+              category.title === targetCategory
+          );
+      
+        if (!targetExists) {
+          return [
+            ...cleanedCategories,
+            {
+              id: crypto.randomUUID(),
+              title: "-",
+              tasks: [savedTask],
+            },
+          ];
+        }
+      
         return cleanedCategories.map(
-          (category) => {
-            if (
-              category.title ===
-              targetCategory
-            ) {
-              return {
-                ...category,
-                tasks: [
-                  savedTask,
-                  ...category.tasks,
-                ],
-              };
-            }
-    
-            return category;
-          }
+          (category) =>
+            category.title === targetCategory
+              ? {
+                  ...category,
+                  tasks: [
+                    savedTask,
+                    ...category.tasks,
+                  ],
+                }
+              : category
         );
       });
     
@@ -4105,12 +4123,28 @@ setInsightsHistory(
     /* Category Actions */
     /* ------------------------------------------------ */
 
-    const addCategory = () => {
-      if (!newCategory.trim()) return;
+  
 
+    const addCategory = () => {
+      const categoryTitle = newCategory.trim();
+    
+      if (!categoryTitle) return;
+    
+      if (categoryTitle === "-") {
+        setArchiveToast(
+          '"-" is reserved for tasks without a category'
+        );
+    
+        window.setTimeout(() => {
+          setArchiveToast("");
+        }, 2500);
+    
+        return;
+      }
+    
       const categoryToAdd: Category = {
         id: crypto.randomUUID(),
-        title: newCategory.trim(),
+        title: categoryTitle,
         tasks: [],
       };
 
@@ -4126,6 +4160,18 @@ setInsightsHistory(
       if (!oldCategory) return;
 
       const newTitle = editingCategoryTitle.trim();
+
+      if (newTitle === "-") {
+        setArchiveToast(
+          '"-" is reserved for tasks without a category'
+        );
+      
+        window.setTimeout(() => {
+          setArchiveToast("");
+        }, 2500);
+      
+        return;
+      }
 
       setCategories((prev) =>
         prev.map((category) =>
@@ -4187,107 +4233,176 @@ setInsightsHistory(
     
       if (!categoryToDelete) return;
     
-      const taskCount = categoryToDelete.tasks.length;
+      /*
+       * "-" is an internal storage bucket for tasks that no
+       * longer belong to a visible category.
+       *
+       * It is hidden from the Categories page.
+       */
+      if (categoryToDelete.title === "-") {
+        return;
+      }
+    
+      const taskCount = Array.isArray(categoryToDelete.tasks)
+        ? categoryToDelete.tasks.length
+        : 0;
     
       const confirmed = window.confirm(
         taskCount > 0
           ? `Delete "${categoryToDelete.title}"? Its ${taskCount} task${
               taskCount === 1 ? "" : "s"
-            } will be moved to Uncategorized.`
+            } will remain without a category.`
           : `Delete "${categoryToDelete.title}"?`
       );
     
       if (!confirmed) return;
     
-      const fallbackCategoryTitle = "Uncategorized";
+      setCategories((previousCategories) => {
+        const categoryBeingDeleted =
+          previousCategories.find(
+            (category) =>
+              category.id === categoryId
+          );
     
-      setCategories((prev) => {
-        const categoryBeingDeleted = prev.find(
-          (category) => category.id === categoryId
-        );
+        if (!categoryBeingDeleted) {
+          return previousCategories;
+        }
     
-        if (!categoryBeingDeleted) return prev;
+        const tasksToKeep = Array.isArray(
+          categoryBeingDeleted.tasks
+        )
+          ? categoryBeingDeleted.tasks
+          : [];
     
-        const tasksToMove = categoryBeingDeleted.tasks;
+        const remainingCategories =
+          previousCategories.filter(
+            (category) =>
+              category.id !== categoryId
+          );
     
-        const remainingCategories = prev.filter(
-          (category) => category.id !== categoryId
-        );
+        const existingNoCategoryBucket =
+          remainingCategories.find(
+            (category) =>
+              category.title === "-"
+          );
     
-        const existingFallbackCategory = remainingCategories.find(
-          (category) => category.title === fallbackCategoryTitle
-        );
+        /*
+         * If the deleted category has no tasks, simply remove it.
+         */
+        if (tasksToKeep.length === 0) {
+          return remainingCategories;
+        }
     
-        if (existingFallbackCategory) {
-          return remainingCategories.map((category) =>
-            category.id === existingFallbackCategory.id
-              ? {
-                  ...category,
-                  tasks: [...tasksToMove, ...category.tasks],
-                }
-              : category
+        /*
+         * Reuse the existing hidden bucket when one already exists.
+         */
+        if (existingNoCategoryBucket) {
+          return remainingCategories.map(
+            (category) => {
+              if (
+                category.id !==
+                existingNoCategoryBucket.id
+              ) {
+                return category;
+              }
+    
+              return {
+                ...category,
+                tasks: [
+                  ...tasksToKeep,
+                  ...category.tasks,
+                ],
+              };
+            }
           );
         }
     
+        /*
+         * Create the hidden bucket only when it is first needed.
+         */
         return [
           ...remainingCategories,
           {
             id: crypto.randomUUID(),
-            title: fallbackCategoryTitle,
-            tasks: tasksToMove,
+            title: "-",
+            tasks: tasksToKeep,
           },
         ];
       });
     
       /*
-       * These collections store the category as text,
-       * so update their category label as well.
+       * Completed, archived and Insights records store their
+       * category separately, so update those values too.
        */
-      setCompletedToday((prev) =>
-        prev.map((task) =>
-          task.category === categoryToDelete.title
+      setCompletedToday((previousTasks) =>
+        previousTasks.map((task) =>
+          task.category ===
+          categoryToDelete.title
             ? {
                 ...task,
-                category: fallbackCategoryTitle,
+                category: "-",
               }
             : task
         )
       );
     
-      setArchive((prev) =>
-        prev.map((task) =>
-          task.category === categoryToDelete.title
+      setArchive((previousTasks) =>
+        previousTasks.map((task) =>
+          task.category ===
+          categoryToDelete.title
             ? {
                 ...task,
-                category: fallbackCategoryTitle,
+                category: "-",
               }
             : task
         )
       );
     
-      setInsightsHistory((prev) =>
-        prev.map((task) =>
-          task.category === categoryToDelete.title
+      setInsightsHistory((previousTasks) =>
+        previousTasks.map((task) =>
+          task.category ===
+          categoryToDelete.title
             ? {
                 ...task,
-                category: fallbackCategoryTitle,
+                category: "-",
               }
             : task
         )
       );
     
-      if (selectedCategory === categoryToDelete.title) {
-        setSelectedCategory(fallbackCategoryTitle);
+      /*
+       * Do not make the hidden "-" bucket the active category
+       * for newly created tasks.
+       */
+      if (
+        selectedCategory ===
+        categoryToDelete.title
+      ) {
+        const nextVisibleCategory =
+          categories.find(
+            (category) =>
+              category.id !== categoryId &&
+              category.title !== "-"
+          );
+    
+        setSelectedCategory(
+          nextVisibleCategory?.title || ""
+        );
       }
     
-      if (editingCategoryId === categoryId) {
+      if (
+        editingCategoryId ===
+        categoryId
+      ) {
         setEditingCategoryId(null);
         setEditingCategoryTitle("");
       }
     
       setArchiveToast(
         taskCount > 0
-          ? `${taskCount} task${taskCount === 1 ? "" : "s"} moved to Uncategorized`
+          ? `${taskCount} task${
+              taskCount === 1 ? "" : "s"
+            } now have no category`
           : `"${categoryToDelete.title}" deleted`
       );
     
@@ -8875,241 +8990,255 @@ const displayedInsight =
           </div>
         </section>
   
-        {/* Category list */}
-        <section
-          aria-label="Category list"
-          className={`overflow-hidden rounded-[14px] border shadow-[0_1px_2px_rgba(15,23,42,0.02)] ${panelBorder} ${panelSurface}`}
+{/* Category list */}
+<section
+  aria-label="Category list"
+  className={`overflow-hidden rounded-[14px] border shadow-[0_1px_2px_rgba(15,23,42,0.02)] ${panelBorder} ${panelSurface}`}
+>
+  <header
+    className={`flex min-h-[66px] items-center justify-between gap-4 border-b px-4 sm:px-5 ${rowBorder} ${secondarySurface}`}
+  >
+    <div>
+      <h2
+        className={`text-[17px] font-[720] tracking-[-0.025em] ${primaryText}`}
+      >
+        Working areas
+      </h2>
+
+      <p
+        className={`mt-1 text-[11px] font-[500] ${mutedText}`}
+      >
+        Select a name to rename the
+        category.
+      </p>
+    </div>
+
+    <span
+      className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2.5 text-[10px] font-[700] ${
+        darkMode
+          ? "bg-white/[0.07] text-white/60"
+          : "bg-[#F0F1F4] text-[#59606C]"
+      }`}
+    >
+      {
+        categories.filter(
+          (category: any) =>
+            category.title !== "-"
+        ).length
+      }
+    </span>
+  </header>
+
+  {categories.filter(
+    (category: any) =>
+      category.title !== "-"
+  ).length === 0 ? (
+    <div className="flex min-h-[260px] items-center justify-center px-6 py-12 text-center">
+      <div className="max-w-[340px]">
+        <div
+          className={`mx-auto flex h-11 w-11 items-center justify-center rounded-[10px] border ${
+            darkMode
+              ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+              : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+          }`}
         >
-          <header
-            className={`flex min-h-[66px] items-center justify-between gap-4 border-b px-4 sm:px-5 ${rowBorder} ${secondarySurface}`}
-          >
-            <div>
-              <h2
-                className={`text-[17px] font-[720] tracking-[-0.025em] ${primaryText}`}
-              >
-                Working areas
-              </h2>
-  
-              <p
-                className={`mt-1 text-[11px] font-[500] ${mutedText}`}
-              >
-                Select a name to rename the
-                category.
-              </p>
-            </div>
-  
-            <span
-              className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2.5 text-[10px] font-[700] ${
+          <LayoutGrid
+            size={19}
+            strokeWidth={1.7}
+          />
+        </div>
+
+        <h3
+          className={`mt-4 text-[16px] font-[700] ${primaryText}`}
+        >
+          No categories yet
+        </h3>
+
+        <p
+          className={`mt-2 text-[12px] font-[500] leading-5 ${mutedText}`}
+        >
+          Create a working area to start
+          organizing your tasks.
+        </p>
+      </div>
+    </div>
+  ) : (
+    <div>
+      {categories
+        /*
+         * Hide the internal no-category storage bucket.
+         */
+        .filter(
+          (category: any) =>
+            category.title !== "-"
+        )
+        .map((category: any) => {
+          const isEditing =
+            editingCategoryId ===
+            category.id;
+
+          const taskCount =
+            Array.isArray(
+              category.tasks
+            )
+              ? category.tasks.length
+              : 0;
+
+          return (
+            <div
+              key={category.id}
+              className={`flex min-h-[68px] items-center gap-3 border-b px-4 py-3 last:border-b-0 sm:px-5 ${rowBorder} ${
                 darkMode
-                  ? "bg-white/[0.07] text-white/60"
-                  : "bg-[#F0F1F4] text-[#59606C]"
+                  ? "hover:bg-white/[0.025]"
+                  : "hover:bg-[#FBFBFC]"
               }`}
             >
-              {categories.length}
-            </span>
-          </header>
-  
-          {categories.length === 0 ? (
-            <div className="flex min-h-[260px] items-center justify-center px-6 py-12 text-center">
-              <div className="max-w-[340px]">
-                <div
-                  className={`mx-auto flex h-11 w-11 items-center justify-center rounded-[10px] border ${
-                    darkMode
-                      ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-                      : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
-                  }`}
-                >
-                  <LayoutGrid
-                    size={19}
-                    strokeWidth={1.7}
-                  />
-                </div>
-  
-                <h3
-                  className={`mt-4 text-[16px] font-[700] ${primaryText}`}
-                >
-                  No categories yet
-                </h3>
-  
-                <p
-                  className={`mt-2 text-[12px] font-[500] leading-5 ${mutedText}`}
-                >
-                  Create a working area to start
-                  organizing your tasks.
-                </p>
+              <div
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${
+                  darkMode
+                    ? "border-white/[0.10] bg-white/[0.04] text-white/55"
+                    : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                }`}
+              >
+                <LayoutGrid
+                  size={15}
+                  strokeWidth={1.7}
+                />
               </div>
-            </div>
-          ) : (
-            <div>
-              {categories.map(
-                (category: any) => {
-                  const isEditing =
-                    editingCategoryId ===
-                    category.id;
-  
-                  const taskCount =
-                    Array.isArray(
-                      category.tasks
-                    )
-                      ? category.tasks.length
-                      : 0;
-  
-                  return (
-                    <div
-                      key={category.id}
-                      className={`flex min-h-[68px] items-center gap-3 border-b px-4 py-3 last:border-b-0 sm:px-5 ${rowBorder} ${
+
+              <div className="min-w-0 flex-1">
+                {isEditing ? (
+                  <input
+                    autoFocus
+                    value={
+                      editingCategoryTitle
+                    }
+                    onChange={(event) =>
+                      setEditingCategoryTitle(
+                        event.target.value
+                      )
+                    }
+                    onKeyDown={(event) => {
+                      if (
+                        event.key ===
+                          "Enter" &&
+                        editingCategoryTitle.trim()
+                      ) {
+                        event.preventDefault();
+
+                        renameCategory(
+                          category.id
+                        );
+                      }
+
+                      if (
+                        event.key ===
+                        "Escape"
+                      ) {
+                        event.preventDefault();
+                        cancelEditingCategory();
+                      }
+                    }}
+                    aria-label={`Rename ${category.title}`}
+                    className={`h-10 w-full rounded-[8px] border px-3 text-[12px] font-[600] outline-none transition ${inputClass}`}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      beginEditingCategory(
+                        category
+                      )
+                    }
+                    className="block max-w-full text-left"
+                  >
+                    <p
+                      title={
+                        category.title
+                      }
+                      className={`truncate text-[13px] font-[650] tracking-[-0.015em] transition hover:opacity-70 ${secondaryText}`}
+                    >
+                      {category.title}
+                    </p>
+
+                    <p
+                      className={`mt-1 text-[10px] font-[500] ${mutedText}`}
+                    >
+                      {taskCount} task
+                      {taskCount === 1
+                        ? ""
+                        : "s"}
+                    </p>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                {isEditing ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        renameCategory(
+                          category.id
+                        )
+                      }
+                      disabled={
+                        !editingCategoryTitle.trim()
+                      }
+                      className={`h-9 rounded-[8px] px-3 text-[10px] font-[700] transition disabled:cursor-not-allowed disabled:opacity-35 ${
                         darkMode
-                          ? "hover:bg-white/[0.025]"
-                          : "hover:bg-[#FBFBFC]"
+                          ? "bg-white text-[#181818] hover:bg-white/90"
+                          : "bg-[#20232B] text-white hover:bg-[#30343D]"
                       }`}
                     >
-                      <div
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${
-                          darkMode
-                            ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-                            : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
-                        }`}
-                      >
-                        <LayoutGrid
-                          size={15}
-                          strokeWidth={1.7}
-                        />
-                      </div>
-  
-                      <div className="min-w-0 flex-1">
-                        {isEditing ? (
-                          <input
-                            autoFocus
-                            value={
-                              editingCategoryTitle
-                            }
-                            onChange={(event) =>
-                              setEditingCategoryTitle(
-                                event.target.value
-                              )
-                            }
-                            onKeyDown={(
-                              event
-                            ) => {
-                              if (
-                                event.key ===
-                                  "Enter" &&
-                                editingCategoryTitle.trim()
-                              ) {
-                                event.preventDefault();
-                                renameCategory(
-                                  category.id
-                                );
-                              }
-  
-                              if (
-                                event.key ===
-                                "Escape"
-                              ) {
-                                event.preventDefault();
-                                cancelEditingCategory();
-                              }
-                            }}
-                            aria-label={`Rename ${category.title}`}
-                            className={`h-10 w-full rounded-[8px] border px-3 text-[12px] font-[600] outline-none transition ${inputClass}`}
-                          />
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              beginEditingCategory(
-                                category
-                              )
-                            }
-                            className="block max-w-full text-left"
-                          >
-                            <p
-                              title={
-                                category.title
-                              }
-                              className={`truncate text-[13px] font-[650] tracking-[-0.015em] transition hover:opacity-70 ${secondaryText}`}
-                            >
-                              {category.title}
-                            </p>
-  
-                            <p
-                              className={`mt-1 text-[10px] font-[500] ${mutedText}`}
-                            >
-                              {taskCount} task
-                              {taskCount === 1
-                                ? ""
-                                : "s"}
-                            </p>
-                          </button>
-                        )}
-                      </div>
-  
-                      <div className="flex shrink-0 items-center gap-2">
-                        {isEditing ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                renameCategory(
-                                  category.id
-                                )
-                              }
-                              disabled={
-                                !editingCategoryTitle.trim()
-                              }
-                              className={`h-9 rounded-[8px] px-3 text-[10px] font-[700] transition disabled:cursor-not-allowed disabled:opacity-35 ${
-                                darkMode
-                                  ? "bg-white text-[#181818] hover:bg-white/90"
-                                  : "bg-[#20232B] text-white hover:bg-[#30343D]"
-                              }`}
-                            >
-                              Save
-                            </button>
-  
-                            <button
-                              type="button"
-                              onClick={
-                                cancelEditingCategory
-                              }
-                              className={`h-9 rounded-[8px] border px-3 text-[10px] font-[650] transition ${
-                                darkMode
-                                  ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
-                                  : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
-                              }`}
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              deleteCategory(
-                                category.id
-                              )
-                            }
-                            aria-label={`Delete ${category.title}`}
-                            title="Delete category"
-                            className={`flex h-9 w-9 items-center justify-center rounded-[8px] border transition ${
-                              darkMode
-                                ? "border-white/[0.08] text-white/35 hover:border-red-400/20 hover:bg-red-400/10 hover:text-red-300"
-                                : "border-[#E1E2E6] text-[#8A8F99] hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                            }`}
-                          >
-                            <Trash2
-                              size={14}
-                              strokeWidth={1.7}
-                            />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                }
-              )}
+                      Save
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={
+                        cancelEditingCategory
+                      }
+                      className={`h-9 rounded-[8px] border px-3 text-[10px] font-[650] transition ${
+                        darkMode
+                          ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
+                          : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                      }`}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      deleteCategory(
+                        category.id
+                      )
+                    }
+                    aria-label={`Delete ${category.title}`}
+                    title="Delete category"
+                    className={`flex h-9 w-9 items-center justify-center rounded-[8px] border transition ${
+                      darkMode
+                        ? "border-white/[0.08] text-white/35 hover:border-red-400/20 hover:bg-red-400/10 hover:text-red-300"
+                        : "border-[#E1E2E6] text-[#8A8F99] hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                    }`}
+                  >
+                    <Trash2
+                      size={14}
+                      strokeWidth={1.7}
+                    />
+                  </button>
+                )}
+              </div>
             </div>
-          )}
-        </section>
+          );
+        })}
+    </div>
+  )}
+</section>    
+
       </div>
     );
   }
@@ -16891,30 +17020,37 @@ const displayedInsight =
                       </label>
 
                       <div className="relative">
-                        <select
-                          id="task-category"
-                          value={
-                            selectedTask.category ||
-                            categories[0]?.title ||
-                            ""
-                          }
-                          onChange={(event) =>
-                            setSelectedTask({
-                              ...selectedTask,
-                              category: event.target.value,
-                            })
-                          }
-                          className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
-                        >
-                          {categories.map((category: any) => (
-                            <option
-                              key={category.id}
-                              value={category.title}
-                            >
-                              {category.title}
-                            </option>
-                          ))}
-                        </select>
+                      <select
+  id="task-category"
+  value={
+    selectedTask.category === "-"
+      ? "-"
+      : selectedTask.category || ""
+  }
+  onChange={(event) =>
+    setSelectedTask({
+      ...selectedTask,
+      category: event.target.value,
+    })
+  }
+  className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
+>
+  <option value="-">-</option>
+
+  {categories
+    .filter(
+      (category: any) =>
+        category.title !== "-"
+    )
+    .map((category: any) => (
+      <option
+        key={category.id}
+        value={category.title}
+      >
+        {category.title}
+      </option>
+    ))}
+</select>
 
                         <ChevronDown
                           aria-hidden="true"
