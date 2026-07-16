@@ -1306,13 +1306,71 @@ const [completedToday, setCompletedToday] =
   const [dayEndTime, setDayEndTime] = useState("18:00");
   const [userRole, setUserRole] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [manualFocusTaskIds, setManualFocusTaskIds] = useState<string[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
-  
-  const taskListRef = useRef<HTMLElement | null>(null);
-const lastClipboardTextRef = useRef("");
-const clipboardCheckInFlightRef = useRef(false);
+  const [manualFocusTaskIds, setManualFocusTaskIds] =
+  useState<string[]>([]);
+
+const [isLoaded, setIsLoaded] =
+  useState(false);
+
+const [isRefreshingStatus, setIsRefreshingStatus] =
+  useState(false);
+
+/*
+ * Prevents state loaded from the server from immediately
+ * being written back to the server.
+ */
+const skipNextPersistRef =
+  useRef(false);
+
+/*
+ * Prevents multiple refresh requests from running together.
+ */
+const refreshInFlightRef =
+  useRef(false);
+
+/*
+ * Indicates that a local change is waiting to be saved.
+ *
+ * While this is true, automatic remote refreshes are skipped
+ * so they cannot overwrite the user's newest local change.
+ */
+const localChangesPendingRef =
+  useRef(false);
+
+/*
+ * Indicates that a save request is currently running.
+ */
+const saveInFlightRef =
+  useRef(false);
+
+  /*
+ * Identifies the newest local state change.
+ * An older save must not mark a newer change as synced.
+ */
+const localChangeVersionRef =
+useRef(0);
+
+/*
+ * Stores the current debounce timer so refresh logic can
+ * determine whether a local save is still pending.
+ */
+const saveTimerRef =
+  useRef<number | null>(null);
+
+/*
+ * Used only for diagnostics and future sync indicators.
+ */
+const lastSuccessfulSaveRef =
+  useRef<string | null>(null);
+
+const taskListRef =
+  useRef<HTMLElement | null>(null);
+
+const lastClipboardTextRef =
+  useRef("");
+
+const clipboardCheckInFlightRef =
+  useRef(false);
 
 const tutorialAutoOpenedForUserRef =
   useRef<string | null>(null);
@@ -1544,363 +1602,492 @@ const tutorialAutoOpenedForUserRef =
       );
     }, [dayEndTime, currentTime]);
 
-    /* ------------------------------------------------ */
-    /* Load State */
-    /* ------------------------------------------------ */
+  /* ------------------------------------------------ */
+/* Load, Refresh and Persist State */
+/* ------------------------------------------------ */
 
-    useEffect(() => {
-      if (!isUserLoaded) return;
-    
-      setIsLoaded(false);
-      tutorialAutoOpenedForUserRef.current = null;
-    
-      const loadUserState = async () => {
-        if (!user?.id) {
-          setCategories(initialCategories);
-          setArchive([]);
-          setInsightsHistory([]);
-          setCompletedToday([]);
-          setManualFocusTaskIds([]);
-        
-          setSelectedCategory(
-            initialCategories[0].title
-          );
-        
-          setSelectedView("today");
-          setThemeColor(
-            DEFAULT_THEME_COLOR
-          );
-          setDarkMode(false);
-        
-          setTodayTaskSortMode(
-            "date"
-          );
-        
-          setTodayTaskGroupMode(
-            "none"
-          );
-        
-          setPriorityViewMode(
-            "list"
-          );
-        
-          setUpcomingViewMode(
-            "calendar"
-          );
-        
-          setEnableAppSuggestions(
-            true
-          );
-        
-          setEnableAutoPriority(
-            true
-          );
-        
-          setEnableClipboardAssist(
-            true
-          );
-        
-          setDayEndTime("18:00");
-          setUserRole("");
-          setHasCompletedTutorial(
-            false
-          );
-        
-          setIsLoaded(true);
-          return;
-        }
-    
-        const saved = await loadState(user.id);
-    
-        if (saved) {
-          const parsed: any = saved;
-    
-          setCategories(parsed.categories || initialCategories);
-          setDarkMode(parsed.darkMode ?? false);
-  setThemeColor(parsed.themeColor || DEFAULT_THEME_COLOR);
+const resetToInitialState = () => {
+  setCategories(initialCategories);
+  setArchive([]);
+  setInsightsHistory([]);
+  setCompletedToday([]);
+  setManualFocusTaskIds([]);
+
+  setSelectedCategory(
+    initialCategories[0]?.title || ""
+  );
+
+  setSelectedView("today");
+
+  setThemeColor(
+    DEFAULT_THEME_COLOR
+  );
+
+  setDarkMode(false);
+
+  setTodayTaskSortMode("date");
+  setTodayTaskGroupMode("none");
+  setPriorityViewMode("list");
+  setUpcomingViewMode("calendar");
+
+  setEnableAppSuggestions(true);
+  setEnableAutoPriority(true);
+  setEnableClipboardAssist(true);
+
+  setDayEndTime("18:00");
+  setUserRole("");
+  setHasCompletedTutorial(false);
+};
+
+const applyLatestSavedState = (
+  savedState: any
+) => {
+  if (!savedState) {
+    return;
+  }
+
+  const parsed: any =
+    savedState;
+
+  /*
+   * All state setters below belong to one remote update.
+   * The persistence effect must ignore the resulting render.
+   */
+  skipNextPersistRef.current =
+    true;
+
+  const loadedCategories =
+    Array.isArray(parsed.categories) &&
+    parsed.categories.length > 0
+      ? parsed.categories
+      : initialCategories;
+
+  const loadedArchive =
+    Array.isArray(parsed.archive)
+      ? parsed.archive
+      : [];
+
+  const loadedInsightsHistory =
+    Array.isArray(
+      parsed.insightsHistory
+    ) &&
+    parsed.insightsHistory.length > 0
+      ? parsed.insightsHistory
+      : loadedArchive;
+
+  setCategories(
+    loadedCategories
+  );
+
+  setArchive(
+    loadedArchive
+  );
+
+  setInsightsHistory(
+    loadedInsightsHistory
+  );
+
+  setCompletedToday(
+    Array.isArray(
+      parsed.completedToday
+    )
+      ? parsed.completedToday
+      : []
+  );
+
+  setManualFocusTaskIds(
+    Array.isArray(
+      parsed.manualFocusTaskIds
+    )
+      ? parsed.manualFocusTaskIds
+      : []
+  );
+
+  setSelectedCategory(
+    loadedCategories[0]?.title || ""
+  );
+
+  setDarkMode(
+    parsed.darkMode ?? false
+  );
+
+  setThemeColor(
+    parsed.themeColor ||
+      DEFAULT_THEME_COLOR
+  );
 
   setTodayTaskSortMode(
-    ["date", "priority"].includes(parsed.todayTaskSortMode)
-      ? (parsed.todayTaskSortMode as SortMode)
+    ["date", "priority"].includes(
+      parsed.todayTaskSortMode
+    )
+      ? parsed.todayTaskSortMode
       : "date"
   );
 
-          setTodayTaskGroupMode(
-            ["none", "category", "priority", "date"].includes(
-              parsed.todayTaskGroupMode
-            )
-              ? (parsed.todayTaskGroupMode as GroupMode)
-              : "none"
-          );
+  setTodayTaskGroupMode(
+    [
+      "none",
+      "category",
+      "priority",
+      "date",
+    ].includes(
+      parsed.todayTaskGroupMode
+    )
+      ? parsed.todayTaskGroupMode
+      : "none"
+  );
 
-          setPriorityViewMode(parsed.priorityViewMode || "cards");
-          setUpcomingViewMode(parsed.upcomingViewMode || "calendar");
-          setEnableAppSuggestions(parsed.enableAppSuggestions ?? true);
-          setEnableAutoPriority(parsed.enableAutoPriority ?? true);
-          setEnableClipboardAssist(
-            parsed.enableClipboardAssist ?? true
-          );
-          
-          setHasCompletedTutorial(
-            parsed.hasCompletedTutorial ?? false
-          );
-          
-          const loadedArchive =
-  Array.isArray(parsed.archive)
-    ? parsed.archive
-    : [];
+  setPriorityViewMode(
+    parsed.priorityViewMode ||
+      "list"
+  );
 
-setArchive(loadedArchive);
+  setUpcomingViewMode(
+    parsed.upcomingViewMode ||
+      "calendar"
+  );
+
+  setEnableAppSuggestions(
+    parsed.enableAppSuggestions ??
+      true
+  );
+
+  setEnableAutoPriority(
+    parsed.enableAutoPriority ??
+      true
+  );
+
+  setEnableClipboardAssist(
+    parsed.enableClipboardAssist ??
+      true
+  );
+
+  setDayEndTime(
+    normalizeDayEndTime(
+      parsed.dayEndTime
+    )
+  );
+
+  setUserRole(
+    parsed.userRole || ""
+  );
+
+  setHasCompletedTutorial(
+    parsed.hasCompletedTutorial ??
+      false
+  );
+};
 
 /*
- * Migration support:
- *
- * Existing users will not yet have insightsHistory saved.
- * In that case, seed it from their existing Archive once.
+ * Initial state load.
  */
-/*
- * Migration support:
- *
- * Older saved states may already contain an empty
- * insightsHistory array from an earlier implementation.
- *
- * When Archive contains completed work but Insights is
- * still empty, seed Insights from Archive.
- */
-const loadedInsightsHistory =
-  Array.isArray(parsed.insightsHistory) &&
-  parsed.insightsHistory.length > 0
-    ? parsed.insightsHistory
-    : loadedArchive;
+useEffect(() => {
+  if (!isUserLoaded) {
+    return;
+  }
 
-setInsightsHistory(
-  loadedInsightsHistory
-);
+  let isCancelled = false;
 
-setCompletedToday(
-  Array.isArray(parsed.completedToday)
-    ? parsed.completedToday
-    : []
-);
-          setDayEndTime(
-            normalizeDayEndTime(parsed.dayEndTime)
-          );
-          setUserRole(parsed.userRole || "");
-          setManualFocusTaskIds(parsed.manualFocusTaskIds || []);
-    
-          if (parsed.categories && parsed.categories.length > 0) {
-            setSelectedCategory(parsed.categories[0].title);
-          } else {
-            setSelectedCategory(initialCategories[0].title);
-          }
-        } else {
-          setCategories(initialCategories);
-          setArchive([]);
-          setInsightsHistory([]);
-          setCompletedToday([]);
-          setManualFocusTaskIds([]);
-        
-          setSelectedCategory(
-            initialCategories[0].title
-          );
-        
-          setSelectedView("today");
-          setThemeColor(
-            DEFAULT_THEME_COLOR
-          );
-          setDarkMode(false);
-        
-          setTodayTaskSortMode(
-            "date"
-          );
-        
-          setTodayTaskGroupMode(
-            "none"
-          );
-        
-          setPriorityViewMode(
-            "list"
-          );
-        
-          setUpcomingViewMode(
-            "calendar"
-          );
-        
-          setEnableAppSuggestions(
-            true
-          );
-        
-          setEnableAutoPriority(
-            true
-          );
-        
-          setEnableClipboardAssist(
-            true
-          );
-        
-          setDayEndTime("18:00");
-          setUserRole("");
-          setHasCompletedTutorial(
-            false
-          );
-        }
-    
-        setIsLoaded(true);
-      };
-    
-      void loadUserState();
-    }, [isUserLoaded, user?.id]);
+  setIsLoaded(false);
 
-    /*
-     * Automatically open the tutorial once for a
-     * first-time signed-in user.
-     */
-    useEffect(() => {
-      if (!isLoaded) return;
-      if (!isUserLoaded) return;
-      if (!user?.id) return;
+  tutorialAutoOpenedForUserRef.current =
+    null;
 
+  const loadUserState =
+    async () => {
       /*
-       * Only perform the automatic onboarding check once
-       * for the currently loaded user.
+       * Signed-out users use a clean local state.
        */
-      if (
-        tutorialAutoOpenedForUserRef.current ===
-        user.id
-      ) {
+      if (!user?.id) {
+        if (!isCancelled) {
+          resetToInitialState();
+          setIsLoaded(true);
+        }
+
         return;
       }
 
-      tutorialAutoOpenedForUserRef.current =
-        user.id;
+      try {
+        const saved =
+          await loadState(user.id);
 
-      if (hasCompletedTutorial) return;
+        if (isCancelled) {
+          return;
+        }
 
-      setSelectedView("today");
-      setTutorialStep(0);
-      setIsTutorialOpen(true);
-    }, [
-      isLoaded,
-      isUserLoaded,
-      user?.id,
-      hasCompletedTutorial,
-    ]);
-
-    /*
-     * Opens the tutorial manually through
-     * the "How it works" button.
-     */
-    const openQuickTutorial = () => {
-      /*
-       * Close competing overlays before opening the tour.
-       */
-      setShowDueReminderPopup(false);
-      setShowClipboardPrompt(false);
-      setClipboardCandidate("");
-
-      setIsExtractModalOpen(false);
-      setIsSuggestionsModalOpen(false);
-      setIsEditModalOpen(false);
-      setSelectedTask(null);
-
-      setSelectedView("today");
-      setTutorialStep(0);
-      setIsTutorialOpen(true);
-    };
-
-    /*
-     * Used for both completing and skipping the tour.
-     */
-    const finishQuickTutorial = () => {
-      setHasCompletedTutorial(true);
-      setIsTutorialOpen(false);
-      setTutorialStep(0);
-
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new Event("momentuhm:open-tasks")
+        if (saved) {
+          applyLatestSavedState(
+            saved
+          );
+        } else {
+          resetToInitialState();
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load initial Momentuhm state:",
+          error
         );
+
+        if (!isCancelled) {
+          /*
+           * Do not allow this temporary fallback state
+           * to overwrite the user's existing server data.
+           */
+          skipNextPersistRef.current = true;
+        
+          resetToInitialState();
+        
+          setArchiveToast(
+            "Could not load your latest changes"
+          );
+        
+          window.setTimeout(() => {
+            setArchiveToast("");
+          }, 3500);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoaded(true);
+        }
       }
     };
 
+  void loadUserState();
 
-    const refreshLatestStatus = async () => {
-      if (isRefreshingStatus) return;
-    
-      setIsRefreshingStatus(true);
-    
-      try {
-        /*
-         * Refresh time-sensitive information immediately,
-         * even when the user is not signed in.
-         */
-        setCurrentTime(new Date());
-    
-        if (user?.id) {
-          const saved = await loadState(user.id);
-    
-          if (saved) {
-            const parsed: any = saved;
-    
-            setCategories(
-              Array.isArray(parsed.categories)
-                ? parsed.categories
-                : initialCategories
-            );
-    
-            setCompletedToday(
-              Array.isArray(parsed.completedToday)
-                ? parsed.completedToday
-                : []
-            );
-    
-            const refreshedArchive =
-            Array.isArray(parsed.archive)
-              ? parsed.archive
-              : [];
-          
-          setArchive(refreshedArchive);
-          
-          const refreshedInsightsHistory =
-  Array.isArray(parsed.insightsHistory) &&
-  parsed.insightsHistory.length > 0
-    ? parsed.insightsHistory
-    : refreshedArchive;
+  return () => {
+    isCancelled = true;
+  };
+}, [
+  isUserLoaded,
+  user?.id,
+]);
 
-setInsightsHistory(
-  refreshedInsightsHistory
-);
-    
-            setManualFocusTaskIds(
-              Array.isArray(parsed.manualFocusTaskIds)
-                ? parsed.manualFocusTaskIds
-                : []
-            );
-    
-            setDayEndTime(
-              normalizeDayEndTime(parsed.dayEndTime)
-            );
-          }
-        }
-    
-        setArchiveToast("Status refreshed");
-      } catch (error) {
-        console.error(
-          "Failed to refresh latest status:",
-          error
+/*
+ * Automatically open the tutorial once for a
+ * first-time signed-in user.
+ */
+useEffect(() => {
+  if (!isLoaded) return;
+  if (!isUserLoaded) return;
+  if (!user?.id) return;
+
+  if (
+    tutorialAutoOpenedForUserRef.current ===
+    user.id
+  ) {
+    return;
+  }
+
+  tutorialAutoOpenedForUserRef.current =
+    user.id;
+
+  if (hasCompletedTutorial) {
+    return;
+  }
+
+  setSelectedView("today");
+  setTutorialStep(0);
+  setIsTutorialOpen(true);
+}, [
+  isLoaded,
+  isUserLoaded,
+  user?.id,
+  hasCompletedTutorial,
+]);
+
+/*
+ * Opens the tutorial manually through
+ * the "How it works" button.
+ */
+const openQuickTutorial = () => {
+  setShowDueReminderPopup(false);
+  setShowClipboardPrompt(false);
+  setClipboardCandidate("");
+
+  setIsExtractModalOpen(false);
+  setIsSuggestionsModalOpen(false);
+  setIsEditModalOpen(false);
+  setSelectedTask(null);
+
+  setSelectedView("today");
+  setTutorialStep(0);
+  setIsTutorialOpen(true);
+};
+
+/*
+ * Used for both completing and skipping the tour.
+ */
+const finishQuickTutorial = () => {
+  setHasCompletedTutorial(true);
+  setIsTutorialOpen(false);
+  setTutorialStep(0);
+
+  if (
+    typeof window !==
+    "undefined"
+  ) {
+    window.dispatchEvent(
+      new Event(
+        "momentuhm:open-tasks"
+      )
+    );
+  }
+};
+
+/*
+ * Retrieve the latest state from the server.
+ *
+ * Automatic refreshes are skipped whenever this browser
+ * still has a local change waiting to be saved. This is
+ * important because loading older server data at that point
+ * could erase the user's newest local task.
+ */
+const refreshLatestStatus =
+  async (
+    showConfirmation = true
+  ) => {
+    if (
+      refreshInFlightRef.current
+    ) {
+      return;
+    }
+
+    /*
+     * Never replace local state while it is waiting to save.
+     */
+    if (
+      localChangesPendingRef.current ||
+      saveInFlightRef.current ||
+      saveTimerRef.current !== null
+    ) {
+      if (showConfirmation) {
+        setArchiveToast(
+          "Saving your latest changes first"
         );
-    
-        setArchiveToast("Could not refresh status");
-      } finally {
-        setIsRefreshingStatus(false);
-    
+
         window.setTimeout(() => {
           setArchiveToast("");
         }, 2200);
       }
+
+      return;
+    }
+
+    refreshInFlightRef.current =
+      true;
+
+    if (showConfirmation) {
+      setIsRefreshingStatus(true);
+    }
+
+    try {
+      setCurrentTime(
+        new Date()
+      );
+
+      if (user?.id) {
+        const saved =
+          await loadState(
+            user.id
+          );
+
+        if (saved) {
+          applyLatestSavedState(
+            saved
+          );
+        }
+      }
+
+      if (showConfirmation) {
+        setArchiveToast(
+          "Status refreshed"
+        );
+
+        window.setTimeout(() => {
+          setArchiveToast("");
+        }, 2200);
+      }
+    } catch (error) {
+      console.error(
+        "Failed to refresh latest status:",
+        error
+      );
+
+      if (showConfirmation) {
+        setArchiveToast(
+          "Could not refresh status"
+        );
+
+        window.setTimeout(() => {
+          setArchiveToast("");
+        }, 3000);
+      }
+    } finally {
+      refreshInFlightRef.current =
+        false;
+
+      if (showConfirmation) {
+        setIsRefreshingStatus(false);
+      }
+    }
+  };
+
+/*
+ * Automatically retrieve updates created on another device
+ * when this browser becomes active again.
+ */
+useEffect(() => {
+  if (!isLoaded) return;
+  if (!user?.id) return;
+
+  const refreshSilently = () => {
+    void refreshLatestStatus(
+      false
+    );
+  };
+
+  const handleWindowFocus =
+    () => {
+      refreshSilently();
     };
 
- /* ------------------------------------------------ */
+  const handleVisibilityChange =
+    () => {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        refreshSilently();
+      }
+    };
+
+  window.addEventListener(
+    "focus",
+    handleWindowFocus
+  );
+
+  document.addEventListener(
+    "visibilitychange",
+    handleVisibilityChange
+  );
+
+  return () => {
+    window.removeEventListener(
+      "focus",
+      handleWindowFocus
+    );
+
+    document.removeEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+  };
+}, [
+  isLoaded,
+  user?.id,
+]);
+
+/* ------------------------------------------------ */
 /* Persist */
 /* ------------------------------------------------ */
 
@@ -1909,14 +2096,52 @@ useEffect(() => {
   if (!user?.id) return;
 
   /*
-   * Debounce persistence so loading, migrations,
-   * and rapid task edits do not create overlapping
-   * save requests.
+   * This render came from server-loaded data.
+   * It must not be written back immediately.
    */
-  const saveTimer = window.setTimeout(() => {
-    const persistState = async () => {
-      try {
-        await saveState(user.id, {
+  if (skipNextPersistRef.current) {
+    skipNextPersistRef.current = false;
+    localChangesPendingRef.current = false;
+    return;
+  }
+
+  /*
+   * Every local state change receives a newer version.
+   */
+  localChangeVersionRef.current += 1;
+
+  const changeVersion =
+    localChangeVersionRef.current;
+
+  localChangesPendingRef.current = true;
+
+  if (saveTimerRef.current !== null) {
+    window.clearTimeout(
+      saveTimerRef.current
+    );
+  }
+
+  const persistState = async () => {
+    /*
+     * Never start a second save while an earlier save
+     * is still running. This preserves server save order.
+     */
+    if (saveInFlightRef.current) {
+      saveTimerRef.current =
+        window.setTimeout(() => {
+          saveTimerRef.current = null;
+          void persistState();
+        }, 250);
+  
+      return;
+    }
+  
+    saveInFlightRef.current = true;
+  
+    try {
+      await saveState(
+        user.id,
+        {
           categories,
           darkMode,
           themeColor,
@@ -1934,24 +2159,58 @@ useEffect(() => {
           userRole,
           manualFocusTaskIds,
           hasCompletedTutorial,
-        } as any);
-      } catch (error) {
-        /*
-         * A temporary network or API failure should not
-         * crash the entire application.
-         */
-        console.error(
-          "Failed to save Momentuhm state:",
-          error
-        );
+        } as any
+      );
+  
+      /*
+       * Only mark everything as synced when no newer
+       * local change occurred during this save.
+       */
+      if (
+        localChangeVersionRef.current ===
+        changeVersion
+      ) {
+        localChangesPendingRef.current =
+          false;
+  
+        lastSuccessfulSaveRef.current =
+          new Date().toISOString();
       }
-    };
-
-    void persistState();
-  }, 500);
+    } catch (error) {
+      console.error(
+        "Failed to save Momentuhm state:",
+        error
+      );
+  
+      localChangesPendingRef.current =
+        true;
+  
+      setArchiveToast(
+        "Changes could not be synced"
+      );
+  
+      window.setTimeout(() => {
+        setArchiveToast("");
+      }, 3500);
+    } finally {
+      saveInFlightRef.current = false;
+    }
+  };
+  
+  saveTimerRef.current =
+    window.setTimeout(() => {
+      saveTimerRef.current = null;
+      void persistState();
+    }, 700);
 
   return () => {
-    window.clearTimeout(saveTimer);
+    if (saveTimerRef.current !== null) {
+      window.clearTimeout(
+        saveTimerRef.current
+      );
+
+      saveTimerRef.current = null;
+    }
   };
 }, [
   categories,
@@ -1974,7 +2233,6 @@ useEffect(() => {
   isLoaded,
   user?.id,
 ]);
-
 
     /* ------------------------------------------------ */
     /* Derived Data */
