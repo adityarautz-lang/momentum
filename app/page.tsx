@@ -11983,7 +11983,7 @@ const momentumInsight =
               : "border-[#E8EAED] bg-[#FFFDFB]"
           }`}
         >
-          <button
+          {/* <button
             type="button"
             onClick={() => {
               setIsMomentumOpen(false);
@@ -12022,7 +12022,7 @@ const momentumInsight =
             />
 
             View full day breakdown
-          </button>
+          </button> */}
 
           <button
             type="button"
