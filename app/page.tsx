@@ -10394,7 +10394,7 @@ const timelineCoordinates =
       const chartHeight = 155;
       const chartLeft = 24;
       const chartRight = 736;
-      const chartTop = 20;
+      const chartTop = 34;
       const chartBottom = 132;
 
       const x =
@@ -11451,14 +11451,14 @@ const momentumInsight =
 
                 {currentTimelinePoint && (
                   <>
-                   <line
+                  <line
   x1={
     currentTimelinePoint.x
   }
   x2={
     currentTimelinePoint.x
   }
-  y1="21"
+  y1="27"
   y2="132"
   stroke="#8B5CF6"
   strokeDasharray="4 4"
@@ -11466,11 +11466,8 @@ const momentumInsight =
 />
 
 <rect
-  x={
-    currentTimelinePoint.x -
-    23
-  }
-  y="-1"
+  x={currentTimelinePoint.x - 23}
+  y="3"
   width="46"
   height="22"
   rx="6"
@@ -11478,10 +11475,8 @@ const momentumInsight =
 />
 
 <text
-  x={
-    currentTimelinePoint.x
-  }
-  y="12"
+  x={currentTimelinePoint.x}
+  y="18"
   textAnchor="middle"
   fill="white"
   fontSize="10"
@@ -11510,9 +11505,7 @@ const momentumInsight =
                         <circle
                           cx={point.x}
                           cy={
-                            index === currentTimelineIndex
-                              ? point.y + 10
-                              : isPast
+                            isPast
                               ? point.y
                               : timelineCoordinates[
                                   currentTimelineIndex
@@ -11543,9 +11536,7 @@ const momentumInsight =
                             d={`M ${
                               point.x - 2.5
                             } ${
-                              index === currentTimelineIndex
-                                ? point.y + 10
-                                : point.y
+                              point.y
                             } l 2 2.2 l 4 -5`}
                               fill="none"
                               stroke="white"
