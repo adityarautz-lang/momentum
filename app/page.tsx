@@ -6005,70 +6005,62 @@ archiveCompletedToday,
           </div>
 
           {ranked && (
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="relative">
-                <span className="sr-only">Sort tasks</span>
-                <select
-                  value={sortMode}
-                  onChange={(event) => {
-                    setSortMode(event.target.value as SortMode);
-                    setShowAllTasks(false);
-                    anchorTaskListSoon();
-                  }}
-                  className={`h-9 appearance-none rounded-[8px] border bg-transparent pl-3 pr-8 text-[11px] font-[650] outline-none ${
-                    darkMode
-                      ? "border-white/[0.10] text-white/72"
-                      : "border-[#DDDDE3] text-[#484D59]"
-                  }`}
-                >
-                  <option value="date">Sort: Date</option>
-                  <option value="priority">Sort: Priority</option>
-                </select>
-                <ChevronDown
-                  size={13}
-                  className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 ${mutedText}`}
-                />
-              </label>
+  <div className="flex flex-wrap items-center gap-2">
+    <label className="relative">
+      <span className="sr-only">Sort tasks</span>
 
-              <label className="relative">
-                <span className="sr-only">Group tasks</span>
-                <select
-                  value={groupMode}
-                  onChange={(event) => {
-                    setGroupMode(event.target.value as GroupMode);
-                    setShowAllTasks(false);
-                    anchorTaskListSoon();
-                  }}
-                  className={`h-9 appearance-none rounded-[8px] border bg-transparent pl-3 pr-8 text-[11px] font-[650] outline-none ${
-                    darkMode
-                      ? "border-white/[0.10] text-white/72"
-                      : "border-[#DDDDE3] text-[#484D59]"
-                  }`}
-                >
-                  <option value="none">Group: None</option>
-                  <option value="category">Group: Category</option>
-                  <option value="priority">Group: Priority</option>
-                  <option value="date">Group: Due</option>
-                </select>
-                <ChevronDown
-                  size={13}
-                  className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 ${mutedText}`}
-                />
-              </label>
+      <select
+        value={sortMode}
+        onChange={(event) => {
+          setSortMode(event.target.value as SortMode);
+          setShowAllTasks(false);
+          anchorTaskListSoon();
+        }}
+        className={`h-9 appearance-none rounded-[8px] border bg-transparent pl-3 pr-8 text-[11px] font-[650] outline-none ${
+          darkMode
+            ? "border-white/[0.10] text-white/72"
+            : "border-[#DDDDE3] text-[#484D59]"
+        }`}
+      >
+        <option value="date">Sort: Date</option>
+        <option value="priority">Sort: Priority</option>
+      </select>
 
-              <button
-                type="button"
-                aria-label="Task list options"
-                className={`flex h-9 w-9 items-center justify-center rounded-[8px] border transition ${
-                  darkMode
-                    ? "border-white/[0.10] text-white/48 hover:bg-white/[0.06] hover:text-white"
-                    : "border-[#DDDDE3] text-[#676D79] hover:bg-[#F4F5F7] hover:text-[#252933]"
-                }`}
-              >
-                <MoreVertical size={16} strokeWidth={1.8} />
-              </button>
-            </div>
-          )}
+      <ChevronDown
+        size={13}
+        className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 ${mutedText}`}
+      />
+    </label>
+
+    <label className="relative">
+      <span className="sr-only">Group tasks</span>
+
+      <select
+        value={groupMode}
+        onChange={(event) => {
+          setGroupMode(event.target.value as GroupMode);
+          setShowAllTasks(false);
+          anchorTaskListSoon();
+        }}
+        className={`h-9 appearance-none rounded-[8px] border bg-transparent pl-3 pr-8 text-[11px] font-[650] outline-none ${
+          darkMode
+            ? "border-white/[0.10] text-white/72"
+            : "border-[#DDDDE3] text-[#484D59]"
+        }`}
+      >
+        <option value="none">Group: None</option>
+        <option value="category">Group: Category</option>
+        <option value="priority">Group: Priority</option>
+        <option value="date">Group: Due</option>
+      </select>
+
+      <ChevronDown
+        size={13}
+        className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 ${mutedText}`}
+      />
+    </label>
+  </div>
+)}
         </div>
 
         {tasks.length === 0 ? (
