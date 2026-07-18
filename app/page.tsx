@@ -10,12 +10,21 @@
   import Toast from "@/components/Toast";
   import FirecrackerLayer from "@/components/Firecracker";
 
-  import type { Category, Firecracker, Priority } from "@/types";
-  import { loadState, saveState } from "@/utils/storage";
-
-
-
-
+  import type {
+    Category,
+    Firecracker,
+    Priority,
+  } from "@/types";
+  
+  import {
+    loadState,
+    saveState,
+  } from "@/utils/storage";
+  
+  import {
+    useMomentuhmMemory,
+  } from "@/hooks/useMomentuhmMemory";
+  
   import {
     Calendar,
     CheckCircle2,
@@ -504,14 +513,54 @@ const getRestorableTaskStatus = (
   /* Helper Functions */
   /* ------------------------------------------------ */
 
-  const getTodayDate = () => {
-    const date = new Date();
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
+  const getLocalDateKey = (
+    value: Date | string
+  ) => {
+    const date =
+      value instanceof Date
+        ? value
+        : new Date(value);
+  
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return "";
+    }
+  
+    const year =
+      date.getFullYear();
+  
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+  
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
+  
     return `${year}-${month}-${day}`;
+  };
+  
+  const getTodayDate = () => {
+    return getLocalDateKey(
+      new Date()
+    );
+  };
+  
+  const isCompletedToday = (
+    task: any
+  ) => {
+    if (!task?.completedAt) {
+      return false;
+    }
+  
+    return (
+      getLocalDateKey(
+        task.completedAt
+      ) === getTodayDate()
+    );
   };
 
   const getTomorrowDate = () => {
@@ -1306,14 +1355,31 @@ const [completedToday, setCompletedToday] =
   const [dayEndTime, setDayEndTime] = useState("18:00");
   const [userRole, setUserRole] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [manualFocusTaskIds, setManualFocusTaskIds] =
-  useState<string[]>([]);
+  const [
+    manualFocusTaskIds,
+    setManualFocusTaskIds,
+  ] = useState<string[]>([]);
+  
+  const {
+    planningEvents,
+    userPlanningProfile,
+    recordPlanningEvent,
+    loadMemory,
+    forgetTaskMemory,
+    resetMemory,
+  } = useMomentuhmMemory();
 
-const [isLoaded, setIsLoaded] =
-  useState(false);
-
-const [isRefreshingStatus, setIsRefreshingStatus] =
-  useState(false);
+ 
+  
+ 
+  
+  const [isLoaded, setIsLoaded] =
+    useState(false);
+  
+  const [
+    isRefreshingStatus,
+    setIsRefreshingStatus,
+  ] = useState(false);
 
 /*
  * Prevents state loaded from the server from immediately
@@ -1556,44 +1622,93 @@ const tutorialAutoOpenedForUserRef =
     });
   };
 
-    const todayDate = getTodayDate();
+  const todayDate =
+  getLocalDateKey(
+    currentTime
+  );
 
-    useEffect(() => {
-      const refreshCurrentTime = () => {
-        setCurrentTime(new Date());
-      };
-    
-      refreshCurrentTime();
-    
-      const timer = window.setInterval(
-        refreshCurrentTime,
-        30000
-      );
-    
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === "visible") {
-          refreshCurrentTime();
-        }
-      };
-    
-      window.addEventListener("focus", refreshCurrentTime);
-      document.addEventListener(
-        "visibilitychange",
-        handleVisibilityChange
-      );
-    
-      return () => {
-        window.clearInterval(timer);
-        window.removeEventListener(
-          "focus",
-          refreshCurrentTime
+useEffect(() => {
+  const refreshCurrentTime = () => {
+    setCurrentTime(
+      new Date()
+    );
+  };
+
+  refreshCurrentTime();
+
+  const timer =
+    window.setInterval(
+      refreshCurrentTime,
+      30000
+    );
+
+  const handleVisibilityChange =
+    () => {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        refreshCurrentTime();
+      }
+    };
+
+  window.addEventListener(
+    "focus",
+    refreshCurrentTime
+  );
+
+  document.addEventListener(
+    "visibilitychange",
+    handleVisibilityChange
+  );
+
+  return () => {
+    window.clearInterval(
+      timer
+    );
+
+    window.removeEventListener(
+      "focus",
+      refreshCurrentTime
+    );
+
+    document.removeEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+  };
+}, []);
+
+/*
+ * Remove stale items when the local calendar
+ * day changes while the app remains open.
+ */
+useEffect(() => {
+  if (!isLoaded) {
+    return;
+  }
+
+  setCompletedToday(
+    (previousTasks) => {
+      const currentTasks =
+        previousTasks.filter(
+          isCompletedToday
         );
-        document.removeEventListener(
-          "visibilitychange",
-          handleVisibilityChange
-        );
-      };
-    }, []);
+
+      if (
+        currentTasks.length ===
+        previousTasks.length
+      ) {
+        return previousTasks;
+      }
+
+      return currentTasks;
+    }
+  );
+}, [
+  todayDate,
+  isLoaded,
+]);
     
     const dayTimeRemaining = useMemo(() => {
       return getTimeRemainingInDay(
@@ -1612,7 +1727,8 @@ const resetToInitialState = () => {
   setInsightsHistory([]);
   setCompletedToday([]);
   setManualFocusTaskIds([]);
-
+  resetMemory();
+  
   setSelectedCategory(
     initialCategories[0]?.title || ""
   );
@@ -1687,13 +1803,18 @@ const applyLatestSavedState = (
     loadedInsightsHistory
   );
 
-  setCompletedToday(
-    Array.isArray(
-      parsed.completedToday
-    )
-      ? parsed.completedToday
-      : []
-  );
+  const loadedCompletedToday =
+  Array.isArray(
+    parsed.completedToday
+  )
+    ? parsed.completedToday.filter(
+        isCompletedToday
+      )
+    : [];
+
+setCompletedToday(
+  loadedCompletedToday
+);
 
   setManualFocusTaskIds(
     Array.isArray(
@@ -1702,7 +1823,11 @@ const applyLatestSavedState = (
       ? parsed.manualFocusTaskIds
       : []
   );
-
+  
+  loadMemory(
+    parsed.planningEvents
+  );
+  
   setSelectedCategory(
     loadedCategories[0]?.title || ""
   );
@@ -1860,6 +1985,8 @@ useEffect(() => {
 }, [
   isUserLoaded,
   user?.id,
+  loadMemory,
+  resetMemory,
 ]);
 
 /*
@@ -2099,117 +2226,176 @@ useEffect(() => {
    * This render came from server-loaded data.
    * It must not be written back immediately.
    */
-  if (skipNextPersistRef.current) {
-    skipNextPersistRef.current = false;
-    localChangesPendingRef.current = false;
+  if (
+    skipNextPersistRef.current
+  ) {
+    skipNextPersistRef.current =
+      false;
+
+    localChangesPendingRef.current =
+      false;
+
     return;
   }
 
-  /*
-   * Every local state change receives a newer version.
-   */
-  localChangeVersionRef.current += 1;
+  localChangeVersionRef.current +=
+    1;
 
   const changeVersion =
     localChangeVersionRef.current;
 
-  localChangesPendingRef.current = true;
+  localChangesPendingRef.current =
+    true;
 
-  if (saveTimerRef.current !== null) {
+  if (
+    saveTimerRef.current !==
+    null
+  ) {
     window.clearTimeout(
       saveTimerRef.current
     );
   }
 
-  const persistState = async () => {
-    /*
-     * Never start a second save while an earlier save
-     * is still running. This preserves server save order.
-     */
-    if (saveInFlightRef.current) {
-      saveTimerRef.current =
-        window.setTimeout(() => {
-          saveTimerRef.current = null;
-          void persistState();
-        }, 250);
-  
-      return;
-    }
-  
-    saveInFlightRef.current = true;
-  
-    try {
-      await saveState(
-        user.id,
-        {
-          categories,
-          darkMode,
-          themeColor,
-          todayTaskSortMode,
-          todayTaskGroupMode,
-          priorityViewMode,
-          upcomingViewMode,
-          enableAppSuggestions,
-          enableAutoPriority,
-          enableClipboardAssist,
-          archive,
-          insightsHistory,
-          completedToday,
-          dayEndTime,
-          userRole,
-          manualFocusTaskIds,
-          hasCompletedTutorial,
-        } as any
+  let retryAttempt = 0;
+
+  const maximumRetryAttempts = 3;
+
+  const scheduleSave = (
+    delay: number
+  ) => {
+    if (
+      saveTimerRef.current !==
+      null
+    ) {
+      window.clearTimeout(
+        saveTimerRef.current
       );
-  
+    }
+
+    saveTimerRef.current =
+      window.setTimeout(() => {
+        saveTimerRef.current =
+          null;
+
+        void persistState();
+      }, delay);
+  };
+
+  const persistState =
+    async () => {
       /*
-       * Only mark everything as synced when no newer
-       * local change occurred during this save.
+       * Preserve save order by waiting for
+       * the active request to finish.
        */
       if (
-        localChangeVersionRef.current ===
-        changeVersion
+        saveInFlightRef.current
       ) {
-        localChangesPendingRef.current =
-          false;
-  
-        lastSuccessfulSaveRef.current =
-          new Date().toISOString();
+        scheduleSave(250);
+        return;
       }
-    } catch (error) {
-      console.error(
-        "Failed to save Momentuhm state:",
-        error
-      );
-  
-      localChangesPendingRef.current =
+
+      saveInFlightRef.current =
         true;
-  
-      setArchiveToast(
-        "Changes could not be synced"
-      );
-  
-      window.setTimeout(() => {
-        setArchiveToast("");
-      }, 3500);
-    } finally {
-      saveInFlightRef.current = false;
-    }
-  };
-  
-  saveTimerRef.current =
-    window.setTimeout(() => {
-      saveTimerRef.current = null;
-      void persistState();
-    }, 700);
+
+      try {
+        await saveState(
+          user.id,
+          {
+            categories,
+            darkMode,
+            themeColor,
+            todayTaskSortMode,
+            todayTaskGroupMode,
+            priorityViewMode,
+            upcomingViewMode,
+            enableAppSuggestions,
+            enableAutoPriority,
+            enableClipboardAssist,
+            archive,
+            insightsHistory,
+            completedToday,
+            dayEndTime,
+            userRole,
+            manualFocusTaskIds,
+            planningEvents,
+            userPlanningProfile,
+            hasCompletedTutorial,
+          } as any
+        );
+
+        retryAttempt = 0;
+
+        /*
+         * An older save must not mark a newer
+         * local change as synchronized.
+         */
+        if (
+          localChangeVersionRef.current ===
+          changeVersion
+        ) {
+          localChangesPendingRef.current =
+            false;
+
+          lastSuccessfulSaveRef.current =
+            new Date().toISOString();
+        }
+      } catch (error) {
+        console.error(
+          "Failed to save Momentuhm state:",
+          error
+        );
+
+        localChangesPendingRef.current =
+          true;
+
+        retryAttempt += 1;
+
+        /*
+         * Retry temporary failures without
+         * requiring another user action.
+         */
+        if (
+          retryAttempt <=
+          maximumRetryAttempts
+        ) {
+          const retryDelay =
+            retryAttempt * 2000;
+
+          scheduleSave(
+            retryDelay
+          );
+
+          setArchiveToast(
+            "Sync interrupted. Retrying..."
+          );
+        } else {
+          setArchiveToast(
+            "Changes could not be synced"
+          );
+        }
+
+        window.setTimeout(() => {
+          setArchiveToast("");
+        }, 3500);
+      } finally {
+        saveInFlightRef.current =
+          false;
+      }
+    };
+
+  scheduleSave(700);
 
   return () => {
-    if (saveTimerRef.current !== null) {
+    if (
+      saveTimerRef.current !==
+      null
+    ) {
       window.clearTimeout(
         saveTimerRef.current
       );
 
-      saveTimerRef.current = null;
+      saveTimerRef.current =
+        null;
     }
   };
 }, [
@@ -2229,6 +2415,8 @@ useEffect(() => {
   dayEndTime,
   userRole,
   manualFocusTaskIds,
+  planningEvents,
+  userPlanningProfile,
   hasCompletedTutorial,
   isLoaded,
   user?.id,
@@ -2734,124 +2922,431 @@ if (!enableClipboardAssist) return;
       title: string,
       whyThisMatters: string
     ) => {
-      setSuggestingTaskIds((prev) => [...prev, taskId]);
+      setSuggestingTaskIds((previousIds) => [
+        ...previousIds,
+        taskId,
+      ]);
     
       try {
-        const response = await fetch("/api/suggest-task", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title,
-            whyThisMatters,
-            categories: categories.map((category) => category.title),
-            today: getTodayDate(),
-          }),
-        });
+        const response = await fetch(
+          "/api/suggest-task",
+          {
+            method: "POST",
     
-        const data = await response.json();
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
     
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to suggest task details.");
-        }
+            body: JSON.stringify({
+              title,
+              whyThisMatters,
     
-        const suggestion = data.suggestion;
+              categories: categories.map(
+                (category) =>
+                  category.title
+              ),
     
-        setCategories((prev) =>
-          prev.map((category) => ({
-            ...category,
-            tasks: category.tasks.map((task: any) => {
-              if (task.id !== taskId) {
-                return task;
-              }
+              today: getTodayDate(),
     
-              return {
-                ...task,
-                whyThisMatters: task.whyThisMatters || whyThisMatters,
-                priority: suggestion.priority || task.priority,
-                suggestedDueDate: suggestion.suggestedDueDate || task.suggestedDueDate,
-                status: task.completed
-  ? "Done"
-  : normalizeTaskStatus(task.status),
-                notes: suggestion.notes || task.notes || "",
-                tags: normalizeTaskTags(suggestion.tags || task.tags),
-                aiReason:
-                  suggestion.reason ||
-                  task.aiReason ||
-                  "Momentuhm reviewed this task with your reason in mind.",
-                aiConfidence:
-                  typeof suggestion.confidence === "number"
-                    ? suggestion.confidence
-                    : task.aiConfidence || 0.7,
-              };
+              planningProfile:
+                userPlanningProfile,
+    
+              memoryInstructions:
+                userPlanningProfile
+                  .promptInstructions,
             }),
-          }))
+          }
         );
     
-        if (
-          suggestion.category &&
-          categories.some((category) => category.title === suggestion.category)
-        ) {
-          setCategories((prev) => {
-            const taskToMove = prev
-              .flatMap((category) =>
-                category.tasks.map((task: any) => ({
+        const data =
+          await response.json();
+    
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+              "Failed to suggest task details."
+          );
+        }
+    
+        const suggestion =
+          data.suggestion || {};
+    
+        /*
+         * Only accept recognised priority values.
+         */
+        const suggestedPriority:
+          | Priority
+          | undefined =
+          [
+            "Low",
+            "Medium",
+            "High",
+          ].includes(
+            suggestion.priority
+          )
+            ? suggestion.priority
+            : undefined;
+    
+        const suggestedDueDate =
+          typeof suggestion.suggestedDueDate ===
+            "string" &&
+          suggestion.suggestedDueDate.trim()
+            ? suggestion.suggestedDueDate
+            : undefined;
+    
+        const suggestedCategory =
+          typeof suggestion.category ===
+            "string" &&
+          categories.some(
+            (category) =>
+              category.title ===
+              suggestion.category
+          )
+            ? suggestion.category
+            : undefined;
+    
+        /*
+         * One ID links the priority and date
+         * suggestion to the same AI response.
+         */
+        const suggestionId =
+          crypto.randomUUID();
+    
+        const suggestedAt =
+          new Date().toISOString();
+    
+        const originalTask =
+          categories
+            .flatMap((category) =>
+              category.tasks.map(
+                (task: any) => ({
                   ...task,
-                  categoryTitle: category.title,
-                }))
+                  category:
+                    category.title,
+                })
               )
-              .find((task: any) => task.id === taskId);
+            )
+            .find(
+              (task: any) =>
+                task.id === taskId
+            );
     
-            if (!taskToMove) return prev;
-            if (taskToMove.categoryTitle === suggestion.category) return prev;
+        /*
+         * Record raw suggestion evidence.
+         *
+         * These events mean Momentuhm made a
+         * suggestion. They do not mean the user
+         * accepted it.
+         */
+        if (suggestedPriority) {
+          recordPlanningEvent({
+            type:
+              "priority_suggested",
     
-            const cleanedCategories = prev.map((category) => ({
-              ...category,
-              tasks: category.tasks.filter((task: any) => task.id !== taskId),
-            }));
+            taskId,
     
-            return cleanedCategories.map((category) => {
-              if (category.title !== suggestion.category) {
-                return category;
-              }
+            suggestedValue:
+              suggestedPriority,
     
-              const movedTask = {
-                ...taskToMove,
-                whyThisMatters: taskToMove.whyThisMatters || whyThisMatters,
-                priority: suggestion.priority || taskToMove.priority,
-                suggestedDueDate:
-                  suggestion.suggestedDueDate || taskToMove.suggestedDueDate,
-                  status: taskToMove.completed
-  ? "Done"
-  : normalizeTaskStatus(
-      taskToMove.status
-    ),
-                notes: suggestion.notes || taskToMove.notes || "",
-                tags: normalizeTaskTags(suggestion.tags || taskToMove.tags),
-                aiReason:
-                  suggestion.reason ||
-                  taskToMove.aiReason ||
-                  "Momentuhm reviewed this task.",
-                aiConfidence:
-                  typeof suggestion.confidence === "number"
-                    ? suggestion.confidence
-                    : taskToMove.aiConfidence || 0.7,
-              };
+            context: {
+              title,
     
-              delete movedTask.categoryTitle;
+              category:
+                suggestedCategory ||
+                originalTask?.category,
     
-              return {
-                ...category,
-                tasks: [movedTask, ...category.tasks],
-              };
-            });
+              priority:
+                suggestedPriority,
+    
+              suggestedDueDate:
+                suggestedDueDate ||
+                null,
+    
+              source:
+                "suggest-task",
+            },
           });
         }
+    
+        if (suggestedDueDate) {
+          recordPlanningEvent({
+            type:
+              "date_suggested",
+    
+            taskId,
+    
+            suggestedValue:
+              suggestedDueDate,
+    
+            context: {
+              title,
+    
+              category:
+                suggestedCategory ||
+                originalTask?.category,
+    
+              priority:
+                suggestedPriority ||
+                originalTask?.priority,
+    
+              suggestedDueDate,
+    
+              source:
+                "suggest-task",
+            },
+          });
+        }
+    
+        /*
+         * Apply the suggestion to the task and
+         * preserve exactly what the AI suggested.
+         */
+        setCategories(
+          (previousCategories) =>
+            previousCategories.map(
+              (category) => ({
+                ...category,
+    
+                tasks:
+                  category.tasks.map(
+                    (task: any) => {
+                      if (
+                        task.id !== taskId
+                      ) {
+                        return task;
+                      }
+    
+                      return {
+                        ...task,
+    
+                        whyThisMatters:
+                          task.whyThisMatters ||
+                          whyThisMatters,
+    
+                        priority:
+                          suggestedPriority ||
+                          task.priority,
+    
+                        suggestedDueDate:
+                          suggestedDueDate ||
+                          task.suggestedDueDate,
+    
+                        status:
+                          task.completed
+                            ? "Done"
+                            : normalizeTaskStatus(
+                                task.status
+                              ),
+    
+                        notes:
+                          suggestion.notes ||
+                          task.notes ||
+                          "",
+    
+                        tags:
+                          normalizeTaskTags(
+                            suggestion.tags ||
+                              task.tags
+                          ),
+    
+                        aiReason:
+                          suggestion.reason ||
+                          task.aiReason ||
+                          "Momentuhm reviewed this task with your reason in mind.",
+    
+                        aiConfidence:
+                          typeof suggestion.confidence ===
+                          "number"
+                            ? suggestion.confidence
+                            : task.aiConfidence ||
+                              0.7,
+    
+                        /*
+                         * This remains unchanged when the
+                         * user later edits the live fields.
+                         */
+                        aiSuggestionSnapshot: {
+                          suggestionId,
+                        
+                          priority:
+                            suggestedPriority,
+                        
+                          dueDate:
+                            suggestedDueDate,
+                        
+                          category:
+                            suggestedCategory ||
+                            category.title,
+                        
+                          suggestedAt,
+                        },
+                        
+                        /*
+                         * This is a fresh AI suggestion, so any decision
+                         * attached to the previous suggestion must be cleared.
+                         */
+                        prioritySuggestionDecision:
+                          undefined,
+                      };
+                    }
+                  ),
+              })
+            )
+        );
+    
+        /*
+         * Move the task when the AI selected a
+         * different valid category.
+         */
+        if (suggestedCategory) {
+          setCategories(
+            (previousCategories) => {
+              const taskToMove =
+                previousCategories
+                  .flatMap(
+                    (category) =>
+                      category.tasks.map(
+                        (task: any) => ({
+                          ...task,
+    
+                          categoryTitle:
+                            category.title,
+                        })
+                      )
+                  )
+                  .find(
+                    (task: any) =>
+                      task.id === taskId
+                  );
+    
+              if (!taskToMove) {
+                return previousCategories;
+              }
+    
+              if (
+                taskToMove.categoryTitle ===
+                suggestedCategory
+              ) {
+                return previousCategories;
+              }
+    
+              const categoriesWithoutTask =
+                previousCategories.map(
+                  (category) => ({
+                    ...category,
+    
+                    tasks:
+                      category.tasks.filter(
+                        (task: any) =>
+                          task.id !== taskId
+                      ),
+                  })
+                );
+    
+              return categoriesWithoutTask.map(
+                (category) => {
+                  if (
+                    category.title !==
+                    suggestedCategory
+                  ) {
+                    return category;
+                  }
+    
+                  const movedTask = {
+                    ...taskToMove,
+    
+                    whyThisMatters:
+                      taskToMove.whyThisMatters ||
+                      whyThisMatters,
+    
+                    priority:
+                      suggestedPriority ||
+                      taskToMove.priority,
+    
+                    suggestedDueDate:
+                      suggestedDueDate ||
+                      taskToMove.suggestedDueDate,
+    
+                    status:
+                      taskToMove.completed
+                        ? "Done"
+                        : normalizeTaskStatus(
+                            taskToMove.status
+                          ),
+    
+                    notes:
+                      suggestion.notes ||
+                      taskToMove.notes ||
+                      "",
+    
+                    tags:
+                      normalizeTaskTags(
+                        suggestion.tags ||
+                          taskToMove.tags
+                      ),
+    
+                    aiReason:
+                      suggestion.reason ||
+                      taskToMove.aiReason ||
+                      "Momentuhm reviewed this task.",
+    
+                    aiConfidence:
+                      typeof suggestion.confidence ===
+                      "number"
+                        ? suggestion.confidence
+                        : taskToMove.aiConfidence ||
+                          0.7,
+    
+                          aiSuggestionSnapshot: {
+                            suggestionId,
+                          
+                            priority:
+                              suggestedPriority,
+                          
+                            dueDate:
+                              suggestedDueDate,
+                          
+                            category:
+                              suggestedCategory,
+                          
+                            suggestedAt,
+                          },
+                          
+                          /*
+                           * This task received a new AI recommendation.
+                           */
+                          prioritySuggestionDecision:
+                            undefined,
+                  };
+    
+                  delete movedTask.categoryTitle;
+    
+                  return {
+                    ...category,
+    
+                    tasks: [
+                      movedTask,
+                      ...category.tasks,
+                    ],
+                  };
+                }
+              );
+            }
+          );
+        }
       } catch (error) {
-        console.error(error);
+        console.error(
+          "Failed to improve task with AI:",
+          error
+        );
       } finally {
-        setSuggestingTaskIds((prev) => prev.filter((id) => id !== taskId));
+        setSuggestingTaskIds(
+          (previousIds) =>
+            previousIds.filter(
+              (id) => id !== taskId
+            )
+        );
       }
     };
 
@@ -3356,91 +3851,217 @@ if (!enableClipboardAssist) return;
         rect.top + rect.height / 2
       );
     
-      const taskWithCategory = categories
-        .flatMap((category) =>
-          category.tasks.map((task: any) => ({
-            ...task,
-            category: category.title,
-          }))
-        )
-        .find(
-          (task: any) => task.id === taskId
-        );
+      const taskWithCategory =
+        categories
+          .flatMap((category) =>
+            category.tasks.map(
+              (task: any) => ({
+                ...task,
+                category:
+                  category.title,
+              })
+            )
+          )
+          .find(
+            (task: any) =>
+              task.id === taskId
+          );
     
-      if (!taskWithCategory) return;
+      if (!taskWithCategory) {
+        return;
+      }
     
       const isAlreadyCompleted =
-        Boolean(taskWithCategory.completed);
+        Boolean(
+          taskWithCategory.completed
+        );
     
       const completedAt =
         isAlreadyCompleted
           ? undefined
           : new Date().toISOString();
     
-      setCategories((prev) =>
-        prev.map((category) => ({
-          ...category,
-          tasks: category.tasks.map(
-            (task: any) => {
-              if (task.id !== taskId) {
-                return task;
-              }
+      /*
+       * Record the execution decision before
+       * changing the task state.
+       */
+      if (isAlreadyCompleted) {
+        recordPlanningEvent({
+          type:
+            "task_completion_reversed",
     
-              if (isAlreadyCompleted) {
-                return {
-                  ...task,
-                  completed: false,
-                  completedAt: undefined,
-                  status:
-                    getRestorableTaskStatus(
-                      task.statusBeforeCompletion
-                    ),
-                  statusBeforeCompletion:
-                    undefined,
-                };
-              }
+          taskId,
     
-              return {
-                ...task,
-                completed: true,
-                completedAt,
-                statusBeforeCompletion:
-                  getRestorableTaskStatus(
-                    task.status
-                  ),
-                status: "Done",
-              };
-            }
-          ),
-        }))
+          previousValue:
+            "completed",
+    
+          finalValue:
+            "active",
+    
+          context: {
+            title:
+              taskWithCategory.title,
+    
+            category:
+              taskWithCategory.category,
+    
+            priority:
+              taskWithCategory.priority,
+    
+            dueDate:
+              taskWithCategory.dueDate ||
+              null,
+    
+            suggestedDueDate:
+              taskWithCategory
+                .suggestedDueDate ||
+              null,
+    
+            createdAt:
+              taskWithCategory.createdAt,
+    
+            source:
+              "task-checkbox",
+          },
+        });
+      } else {
+        recordPlanningEvent({
+          type:
+            "task_completed",
+    
+          taskId,
+    
+          previousValue:
+            "active",
+    
+          finalValue:
+            "completed",
+    
+          context: {
+            title:
+              taskWithCategory.title,
+    
+            category:
+              taskWithCategory.category,
+    
+            priority:
+              taskWithCategory.priority,
+    
+            dueDate:
+              taskWithCategory.dueDate ||
+              null,
+    
+            suggestedDueDate:
+              taskWithCategory
+                .suggestedDueDate ||
+              null,
+    
+            createdAt:
+              taskWithCategory.createdAt,
+    
+            source:
+              "task-checkbox",
+          },
+        });
+      }
+    
+      setCategories(
+        (previousCategories) =>
+          previousCategories.map(
+            (category) => ({
+              ...category,
+    
+              tasks:
+                category.tasks.map(
+                  (task: any) => {
+                    if (
+                      task.id !== taskId
+                    ) {
+                      return task;
+                    }
+    
+                    if (
+                      isAlreadyCompleted
+                    ) {
+                      return {
+                        ...task,
+    
+                        completed: false,
+    
+                        completedAt:
+                          undefined,
+    
+                        status:
+                          getRestorableTaskStatus(
+                            task
+                              .statusBeforeCompletion
+                          ),
+    
+                        statusBeforeCompletion:
+                          undefined,
+                      };
+                    }
+    
+                    return {
+                      ...task,
+    
+                      completed: true,
+    
+                      completedAt,
+    
+                      statusBeforeCompletion:
+                        getRestorableTaskStatus(
+                          task.status
+                        ),
+    
+                      status:
+                        "Done",
+                    };
+                  }
+                ),
+            })
+          )
       );
     
       if (isAlreadyCompleted) {
-        setCompletedToday((prev) =>
-          prev.filter(
-            (task) => task.id !== taskId
-          )
+        setCompletedToday(
+          (previousTasks) =>
+            previousTasks.filter(
+              (task) =>
+                task.id !== taskId
+            )
         );
     
         anchorTaskListSoon();
+    
         return;
       }
     
-      setCompletedToday((prev) => [
-        {
-          ...taskWithCategory,
-          completed: true,
-          completedAt,
-          statusBeforeCompletion:
-            getRestorableTaskStatus(
-              taskWithCategory.status
-            ),
-          status: "Done",
-        },
-        ...prev.filter(
-          (task) => task.id !== taskId
-        ),
-      ]);
+      setCompletedToday(
+        (previousTasks) => [
+          {
+            ...taskWithCategory,
+    
+            completed:
+              true,
+    
+            completedAt,
+    
+            statusBeforeCompletion:
+              getRestorableTaskStatus(
+                taskWithCategory.status
+              ),
+    
+            status:
+              "Done",
+          },
+    
+          ...previousTasks.filter(
+            (task) =>
+              task.id !== taskId
+          ),
+        ]
+      );
     
       anchorCompletedSectionSoon();
     };
@@ -3452,32 +4073,105 @@ if (!enableClipboardAssist) return;
     const restoreCompletedTask = (
       taskId: string
     ) => {
-      setCategories((prev) =>
-        prev.map((category) => ({
-          ...category,
-          tasks: category.tasks.map(
+      const taskWithCategory =
+        categories
+          .flatMap((category) =>
+            category.tasks.map(
+              (task: any) => ({
+                ...task,
+                category:
+                  category.title,
+              })
+            )
+          )
+          .find(
             (task: any) =>
               task.id === taskId
-                ? {
-                    ...task,
-                    completed: false,
-                    completedAt: undefined,
-                    status:
-                      getRestorableTaskStatus(
-                        task.statusBeforeCompletion
-                      ),
-                    statusBeforeCompletion:
-                      undefined,
-                  }
-                : task
-          ),
-        }))
+          );
+    
+      if (!taskWithCategory) {
+        return;
+      }
+    
+      recordPlanningEvent({
+        type:
+          "task_completion_reversed",
+    
+        taskId,
+    
+        previousValue:
+          "completed",
+    
+        finalValue:
+          "active",
+    
+        context: {
+          title:
+            taskWithCategory.title,
+    
+          category:
+            taskWithCategory.category,
+    
+          priority:
+            taskWithCategory.priority,
+    
+          dueDate:
+            taskWithCategory.dueDate ||
+            null,
+    
+          suggestedDueDate:
+            taskWithCategory
+              .suggestedDueDate ||
+            null,
+    
+          createdAt:
+            taskWithCategory.createdAt,
+    
+          source:
+            "completed-section-restore",
+        },
+      });
+    
+      setCategories(
+        (previousCategories) =>
+          previousCategories.map(
+            (category) => ({
+              ...category,
+    
+              tasks:
+                category.tasks.map(
+                  (task: any) =>
+                    task.id === taskId
+                      ? {
+                          ...task,
+    
+                          completed:
+                            false,
+    
+                          completedAt:
+                            undefined,
+    
+                          status:
+                            getRestorableTaskStatus(
+                              task
+                                .statusBeforeCompletion
+                            ),
+    
+                          statusBeforeCompletion:
+                            undefined,
+                        }
+                      : task
+                ),
+            })
+          )
       );
     
-      setCompletedToday((prev) =>
-        prev.filter(
-          (task) => task.id !== taskId
-        )
+      setCompletedToday(
+        (previousTasks) =>
+          previousTasks.filter(
+            (task) =>
+              task.id !== taskId
+          )
       );
     
       anchorTaskListSoon();
@@ -3561,52 +4255,76 @@ if (!enableClipboardAssist) return;
     const deleteTaskEverywhere = (
       taskId: string
     ) => {
-      setCategories((prev) =>
-        prev.map((category) => ({
-          ...category,
-          tasks: category.tasks.filter(
-            (task: any) =>
+      setCategories(
+        (previousCategories) =>
+          previousCategories.map(
+            (category) => ({
+              ...category,
+    
+              tasks:
+                category.tasks.filter(
+                  (task: any) =>
+                    task.id !== taskId
+                ),
+            })
+          )
+      );
+    
+      setCompletedToday(
+        (previousTasks) =>
+          previousTasks.filter(
+            (task) =>
               task.id !== taskId
-          ),
-        }))
+          )
       );
     
-      setCompletedToday((prev) =>
-        prev.filter(
-          (task) => task.id !== taskId
-        )
+      setArchive(
+        (previousTasks) =>
+          previousTasks.filter(
+            (task) =>
+              task.id !== taskId
+          )
       );
     
-      setArchive((prev) =>
-        prev.filter(
-          (task) => task.id !== taskId
-        )
+      setManualFocusTaskIds(
+        (previousTaskIds) =>
+          previousTaskIds.filter(
+            (existingTaskId) =>
+              existingTaskId !==
+              taskId
+          )
       );
     
-      /*
-       * A task may have multiple completion events
-       * inside Insights history.
-       *
-       * Remove every historical event connected to
-       * the permanently deleted source task.
-       */
-      setInsightsHistory((prev) =>
-        prev.filter((item: any) => {
-          const sourceTaskId = String(
-            item.sourceTaskId ||
-              item.id ||
-              ""
-          ).split(":")[0];
+      setInsightsHistory(
+        (previousItems) =>
+          previousItems.filter(
+            (item: any) => {
+              const sourceTaskId =
+                String(
+                  item.sourceTaskId ||
+                    item.id ||
+                    ""
+                ).split(":")[0];
     
-          return (
-            sourceTaskId !==
-            String(taskId)
-          );
-        })
+              return (
+                sourceTaskId !==
+                String(taskId)
+              );
+            }
+          )
       );
     
-      setIsEditModalOpen(false);
-      setSelectedTask(null);
+      forgetTaskMemory(
+        taskId
+      );
+    
+      setIsEditModalOpen(
+        false
+      );
+    
+      setSelectedTask(
+        null
+      );
     };
     
    
@@ -3616,107 +4334,468 @@ if (!enableClipboardAssist) return;
     /* Schedule Task */
     /* ------------------------------------------------ */
 
-    const scheduleTaskById = (taskId: string, dueDate: string) => {
-      setCategories((prev) =>
-        prev.map((category) => ({
-          ...category,
-          tasks: category.tasks.map((task: any) => {
-            if (task.id !== taskId) {
-              return task;
-            }
-
-            return {
-              ...task,
-              dueDate,
-              suggestedDueDate: undefined,
-              aiReason: "You manually scheduled this task.",
-              aiConfidence: 1,
-            };
-          }),
-        }))
+    const scheduleTaskById = (
+      taskId: string,
+      dueDate: string
+    ) => {
+      const taskWithCategory =
+        categories
+          .flatMap((category) =>
+            category.tasks.map(
+              (task: any) => ({
+                ...task,
+                category:
+                  category.title,
+              })
+            )
+          )
+          .find(
+            (task: any) =>
+              task.id === taskId
+          );
+    
+      if (!taskWithCategory) {
+        return;
+      }
+    
+      const previousDueDate =
+        taskWithCategory.dueDate;
+    
+      const previousSuggestedDate =
+        taskWithCategory.suggestedDueDate;
+    
+      const dateChanged =
+        dueDate !== previousDueDate;
+    
+      const wasDeferred =
+        Boolean(
+          previousDueDate &&
+          dateChanged &&
+          dueDate > previousDueDate
+        );
+    
+      const nextDeferCount =
+        wasDeferred
+          ? Number(
+              taskWithCategory.deferCount ||
+              0
+            ) + 1
+          : Number(
+              taskWithCategory.deferCount ||
+              0
+            );
+    
+      /*
+       * Record whether an AI date was accepted
+       * or replaced.
+       */
+      if (previousSuggestedDate) {
+        const acceptedSuggestion =
+          previousSuggestedDate ===
+          dueDate;
+    
+        recordPlanningEvent({
+          type: acceptedSuggestion
+            ? "date_suggestion_accepted"
+            : "date_suggestion_overridden",
+    
+          taskId,
+    
+          suggestedValue:
+            previousSuggestedDate,
+    
+          finalValue:
+            dueDate,
+    
+          context: {
+            title:
+              taskWithCategory.title,
+    
+            category:
+              taskWithCategory.category,
+    
+            priority:
+              taskWithCategory.priority,
+    
+            dueDate,
+    
+            suggestedDueDate:
+              previousSuggestedDate,
+    
+            createdAt:
+              taskWithCategory.createdAt,
+    
+            source:
+              "manual-schedule",
+          },
+        });
+      } else if (!previousDueDate) {
+        /*
+         * This is the first confirmed date assigned
+         * to the task.
+         */
+        recordPlanningEvent({
+          type:
+            "manual_date_assigned",
+    
+          taskId,
+    
+          finalValue:
+            dueDate,
+    
+          context: {
+            title:
+              taskWithCategory.title,
+    
+            category:
+              taskWithCategory.category,
+    
+            priority:
+              taskWithCategory.priority,
+    
+            dueDate,
+    
+            createdAt:
+              taskWithCategory.createdAt,
+    
+            source:
+              "manual-schedule",
+          },
+        });
+      }
+    
+      /*
+       * A deferral occurs only when an existing
+       * confirmed date is moved to a later day.
+       */
+      if (wasDeferred) {
+        recordPlanningEvent({
+          type:
+            "task_deferred",
+    
+          taskId,
+    
+          previousValue:
+            previousDueDate,
+    
+          finalValue:
+            dueDate,
+    
+          context: {
+            title:
+              taskWithCategory.title,
+    
+            category:
+              taskWithCategory.category,
+    
+            priority:
+              taskWithCategory.priority,
+    
+            dueDate,
+    
+            createdAt:
+              taskWithCategory.createdAt,
+    
+            deferCount:
+              nextDeferCount,
+    
+            source:
+              "manual-schedule",
+          },
+        });
+      }
+    
+      setCategories(
+        (previousCategories) =>
+          previousCategories.map(
+            (category) => ({
+              ...category,
+    
+              tasks:
+                category.tasks.map(
+                  (task: any) => {
+                    if (
+                      task.id !== taskId
+                    ) {
+                      return task;
+                    }
+    
+                    return {
+                      ...task,
+    
+                      dueDate,
+    
+                      suggestedDueDate:
+                        undefined,
+    
+                      deferCount:
+                        nextDeferCount,
+    
+                      aiReason:
+                        previousSuggestedDate
+                          ? previousSuggestedDate ===
+                            dueDate
+                            ? "You accepted Momentuhm's suggested date."
+                            : "You replaced Momentuhm's suggested date."
+                          : wasDeferred
+                          ? "You moved this task to a later date."
+                          : previousDueDate
+                          ? "You rescheduled this task."
+                          : "You manually scheduled this task.",
+    
+                      aiConfidence:
+                        1,
+                    };
+                  }
+                ),
+            })
+          )
       );
     };
-
     /* ------------------------------------------------ */
     /* Accept Suggested Date */
     /* ------------------------------------------------ */
 
-    const acceptSuggestedDateById = (taskId: string) => {
-      setCategories((prev) =>
-        prev.map((category) => ({
-          ...category,
-          tasks: category.tasks.map((task: any) => {
-            if (task.id !== taskId) {
-              return task;
-            }
-
-            if (!task.suggestedDueDate) {
-              return task;
-            }
-
-            return {
-              ...task,
-              dueDate: task.suggestedDueDate,
-              suggestedDueDate: undefined,
-              aiReason: "You accepted Momentuhm's app-suggested date.",
-              aiConfidence: 1,
-            };
-          }),
-        }))
+    const acceptSuggestedDateById = (
+      taskId: string
+    ) => {
+      const taskWithCategory =
+        categories
+          .flatMap((category) =>
+            category.tasks.map(
+              (task: any) => ({
+                ...task,
+                category:
+                  category.title,
+              })
+            )
+          )
+          .find(
+            (task: any) =>
+              task.id === taskId
+          );
+    
+      if (
+        !taskWithCategory?.suggestedDueDate
+      ) {
+        return;
+      }
+    
+      const acceptedDate =
+        taskWithCategory.suggestedDueDate;
+    
+      recordPlanningEvent({
+        type:
+          "date_suggestion_accepted",
+    
+        taskId,
+    
+        suggestedValue:
+          acceptedDate,
+    
+        finalValue:
+          acceptedDate,
+    
+        context: {
+          title:
+            taskWithCategory.title,
+    
+          category:
+            taskWithCategory.category,
+    
+          priority:
+            taskWithCategory.priority,
+    
+          dueDate:
+            acceptedDate,
+    
+          suggestedDueDate:
+            acceptedDate,
+    
+          createdAt:
+            taskWithCategory.createdAt,
+    
+          source:
+            "suggested-date-review",
+        },
+      });
+    
+      setCategories(
+        (previousCategories) =>
+          previousCategories.map(
+            (category) => ({
+              ...category,
+    
+              tasks:
+                category.tasks.map(
+                  (task: any) => {
+                    if (
+                      task.id !== taskId
+                    ) {
+                      return task;
+                    }
+    
+                    if (
+                      !task.suggestedDueDate
+                    ) {
+                      return task;
+                    }
+    
+                    return {
+                      ...task,
+    
+                      dueDate:
+                        task.suggestedDueDate,
+    
+                      suggestedDueDate:
+                        undefined,
+    
+                      aiReason:
+                        "You accepted Momentuhm's app-suggested date.",
+    
+                      aiConfidence: 1,
+                    };
+                  }
+                ),
+            })
+          )
       );
     };
 
-   const acceptAllSuggestedDates = () => {
-  /*
-   * Close the modal first. Updating every suggested task
-   * in the following frame prevents the modal exit animation
-   * and the bulk task re-render from competing.
-   */
-  setIsSuggestionsModalOpen(false);
-
-  window.requestAnimationFrame(() => {
-    setCategories((prev) =>
-      prev.map((category) => {
-        let categoryChanged = false;
-
-        const updatedTasks = category.tasks.map(
-          (task: any) => {
-            if (
-              task.dueDate ||
-              !task.suggestedDueDate
-            ) {
-              return task;
-            }
-
-            categoryChanged = true;
-
-            return {
-              ...task,
-              dueDate:
-                task.suggestedDueDate,
-              suggestedDueDate:
-                undefined,
-              aiReason:
-                "You accepted Momentuhm's app-suggested date.",
-              aiConfidence: 1,
-            };
-          }
+    const acceptAllSuggestedDates = () => {
+      /*
+       * Capture the accepted suggestions before
+       * updating task state.
+       */
+      const acceptedTasks =
+        categories.flatMap(
+          (category) =>
+            category.tasks
+              .filter(
+                (task: any) =>
+                  !task.dueDate &&
+                  Boolean(
+                    task.suggestedDueDate
+                  )
+              )
+              .map(
+                (task: any) => ({
+                  ...task,
+    
+                  category:
+                    category.title,
+                })
+              )
         );
-
-        /*
-         * Preserve the original category object when
-         * nothing inside it changed.
-         */
-        return categoryChanged
-          ? {
-              ...category,
-              tasks: updatedTasks,
-            }
-          : category;
-      })
-    );
-  });
-};
+    
+      acceptedTasks.forEach(
+        (task: any) => {
+          const acceptedDate =
+            task.suggestedDueDate;
+    
+          recordPlanningEvent({
+            type:
+              "date_suggestion_accepted",
+    
+            taskId:
+              task.id,
+    
+            suggestedValue:
+              acceptedDate,
+    
+            finalValue:
+              acceptedDate,
+    
+            context: {
+              title:
+                task.title,
+    
+              category:
+                task.category,
+    
+              priority:
+                task.priority,
+    
+              dueDate:
+                acceptedDate,
+    
+              suggestedDueDate:
+                acceptedDate,
+    
+              createdAt:
+                task.createdAt,
+    
+              source:
+                "accept-all-suggested-dates",
+            },
+          });
+        }
+      );
+    
+      /*
+       * Close the modal first. Updating every
+       * task in the following frame prevents the
+       * modal animation and task render from
+       * competing.
+       */
+      setIsSuggestionsModalOpen(
+        false
+      );
+    
+      window.requestAnimationFrame(
+        () => {
+          setCategories(
+            (
+              previousCategories
+            ) =>
+              previousCategories.map(
+                (category) => {
+                  let categoryChanged =
+                    false;
+    
+                  const updatedTasks =
+                    category.tasks.map(
+                      (task: any) => {
+                        if (
+                          task.dueDate ||
+                          !task.suggestedDueDate
+                        ) {
+                          return task;
+                        }
+    
+                        categoryChanged =
+                          true;
+    
+                        return {
+                          ...task,
+    
+                          dueDate:
+                            task.suggestedDueDate,
+    
+                          suggestedDueDate:
+                            undefined,
+    
+                          aiReason:
+                            "You accepted Momentuhm's app-suggested date.",
+    
+                          aiConfidence: 1,
+                        };
+                      }
+                    );
+    
+                  return categoryChanged
+                    ? {
+                        ...category,
+                        tasks:
+                          updatedTasks,
+                      }
+                    : category;
+                }
+              )
+          );
+        }
+      );
+    };
 
     /* ------------------------------------------------ */
     /* Save Task Changes */
@@ -3726,6 +4805,26 @@ if (!enableClipboardAssist) return;
       updatedTask: any
     ) => {
       if (!updatedTask?.title?.trim()) {
+        return;
+      }
+    
+      const originalTaskWithCategory =
+        categories
+          .flatMap((category) =>
+            category.tasks.map(
+              (task: any) => ({
+                ...task,
+                category:
+                  category.title,
+              })
+            )
+          )
+          .find(
+            (task: any) =>
+              task.id === updatedTask.id
+          );
+    
+      if (!originalTaskWithCategory) {
         return;
       }
     
@@ -3741,30 +4840,454 @@ if (!enableClipboardAssist) return;
         inferPriority(title);
     
       /*
- * Status does not determine whether the task is completed.
- * Only the explicit completed boolean controls completion.
+/*
+ * Status and completion remain separate.
+ * Completion changes are detected by comparing
+ * the modal value with the original task.
  */
-const completed =
-Boolean(updatedTask.completed);
+const wasCompleted =
+Boolean(
+  originalTaskWithCategory
+    .completed
+);
 
-const normalizedStatus = completed
-? "Done"
-: normalizeTaskStatus(
-    updatedTask.status
+const completed =
+Boolean(
+  updatedTask.completed
+);
+
+const completionChanged =
+completed !== wasCompleted;
+
+const normalizedStatus =
+completed
+  ? "Done"
+  : normalizeTaskStatus(
+      updatedTask.status
+    );
+
+const completedAt =
+completed
+  ? wasCompleted
+    ? updatedTask.completedAt ||
+      originalTaskWithCategory
+        .completedAt ||
+      new Date().toISOString()
+    : new Date().toISOString()
+  : undefined;
+
+const statusBeforeCompletion =
+completed
+  ? getRestorableTaskStatus(
+      updatedTask
+        .statusBeforeCompletion ||
+        originalTaskWithCategory
+          .statusBeforeCompletion ||
+        originalTaskWithCategory
+          .status
+    )
+  : undefined;
+
+/*
+* Record completion changes made through
+* the edit-task modal.
+*/
+if (completionChanged) {
+if (completed) {
+  recordPlanningEvent({
+    type:
+      "task_completed",
+
+    taskId:
+      updatedTask.id,
+
+    previousValue:
+      "active",
+
+    finalValue:
+      "completed",
+
+    context: {
+      title,
+
+      category:
+        updatedTask.category ||
+        originalTaskWithCategory
+          .category,
+
+      priority,
+
+      dueDate:
+        updatedTask.dueDate ||
+        null,
+
+      suggestedDueDate:
+        updatedTask
+          .suggestedDueDate ||
+        null,
+
+      createdAt:
+        originalTaskWithCategory
+          .createdAt,
+
+      source:
+        "edit-task-modal",
+    },
+  });
+} else {
+  recordPlanningEvent({
+    type:
+      "task_completion_reversed",
+
+    taskId:
+      updatedTask.id,
+
+    previousValue:
+      "completed",
+
+    finalValue:
+      "active",
+
+    context: {
+      title,
+
+      category:
+        updatedTask.category ||
+        originalTaskWithCategory
+          .category,
+
+      priority,
+
+      dueDate:
+        updatedTask.dueDate ||
+        null,
+
+      suggestedDueDate:
+        updatedTask
+          .suggestedDueDate ||
+        null,
+
+      createdAt:
+        originalTaskWithCategory
+          .createdAt,
+
+      source:
+        "edit-task-modal",
+    },
+  });
+}
+}
+
+/*
+* Compare the edited date with the task's
+* state before the modal was saved.
+*/
+const previousDueDate =
+  originalTaskWithCategory.dueDate;
+
+const previousSuggestedDate =
+  originalTaskWithCategory
+    .suggestedDueDate;
+
+const nextDueDate =
+  updatedTask.dueDate ||
+  undefined;
+
+  const dateChanged =
+  nextDueDate !== previousDueDate;
+
+const wasDeferred =
+  Boolean(
+    previousDueDate &&
+    nextDueDate &&
+    dateChanged &&
+    nextDueDate > previousDueDate
   );
 
-const completedAt = completed
-? updatedTask.completedAt ||
-  new Date().toISOString()
-: undefined;
+const nextDeferCount =
+  wasDeferred
+    ? Number(
+        originalTaskWithCategory
+          .deferCount || 0
+      ) + 1
+    : Number(
+        originalTaskWithCategory
+          .deferCount || 0
+      );
 
-const statusBeforeCompletion = completed
-? getRestorableTaskStatus(
-    updatedTask.statusBeforeCompletion
-  )
-: undefined;
-    
-      const savedTask = {
+if (dateChanged && nextDueDate) {
+  if (
+    previousSuggestedDate &&
+    nextDueDate ===
+      previousSuggestedDate
+  ) {
+    recordPlanningEvent({
+      type:
+        "date_suggestion_accepted",
+
+      taskId:
+        updatedTask.id,
+
+      suggestedValue:
+        previousSuggestedDate,
+
+      finalValue:
+        nextDueDate,
+
+      context: {
+        title,
+
+        category:
+          updatedTask.category ||
+          originalTaskWithCategory
+            .category,
+
+        priority,
+
+        dueDate:
+          nextDueDate,
+
+        suggestedDueDate:
+          previousSuggestedDate,
+
+        createdAt:
+          originalTaskWithCategory
+            .createdAt,
+
+        source:
+          "edit-task-modal",
+      },
+    });
+  } else if (
+    previousSuggestedDate &&
+    nextDueDate !==
+      previousSuggestedDate
+  ) {
+    recordPlanningEvent({
+      type:
+        "date_suggestion_overridden",
+
+      taskId:
+        updatedTask.id,
+
+      suggestedValue:
+        previousSuggestedDate,
+
+      finalValue:
+        nextDueDate,
+
+      context: {
+        title,
+
+        category:
+          updatedTask.category ||
+          originalTaskWithCategory
+            .category,
+
+        priority,
+
+        dueDate:
+          nextDueDate,
+
+        suggestedDueDate:
+          previousSuggestedDate,
+
+        createdAt:
+          originalTaskWithCategory
+            .createdAt,
+
+        source:
+          "edit-task-modal",
+      },
+    });
+  } else if (!previousDueDate) {
+    recordPlanningEvent({
+      type:
+        "manual_date_assigned",
+
+      taskId:
+        updatedTask.id,
+
+      finalValue:
+        nextDueDate,
+
+      context: {
+        title,
+
+        category:
+          updatedTask.category ||
+          originalTaskWithCategory
+            .category,
+
+        priority,
+
+        dueDate:
+          nextDueDate,
+
+        createdAt:
+          originalTaskWithCategory
+            .createdAt,
+
+        source:
+          "edit-task-modal",
+      },
+    });
+  }
+}
+
+/*
+ * Record a deferral separately from date-suggestion
+ * acceptance or override.
+ *
+ * This runs only when an already confirmed date is
+ * moved to a later calendar day.
+ */
+if (wasDeferred && nextDueDate) {
+  recordPlanningEvent({
+    type:
+      "task_deferred",
+
+    taskId:
+      updatedTask.id,
+
+    previousValue:
+      previousDueDate,
+
+    finalValue:
+      nextDueDate,
+
+    context: {
+      title,
+
+      category:
+        updatedTask.category ||
+        originalTaskWithCategory
+          .category,
+
+      priority,
+
+      dueDate:
+        nextDueDate,
+
+      createdAt:
+        originalTaskWithCategory
+          .createdAt,
+
+      deferCount:
+        nextDeferCount,
+
+      source:
+        "edit-task-modal",
+    },
+  });
+}
+
+/*
+ * Compare the saved priority with the original
+ * AI priority suggestion.
+ *
+ * prioritySuggestionDecision prevents the same
+ * acceptance or override from being recorded
+ * every time the task modal is saved.
+ */
+const suggestedPriority =
+  originalTaskWithCategory
+    .aiSuggestionSnapshot
+    ?.priority;
+
+const previousPrioritySuggestionDecision =
+  originalTaskWithCategory
+    .prioritySuggestionDecision;
+
+let nextPrioritySuggestionDecision =
+  previousPrioritySuggestionDecision;
+
+if (suggestedPriority) {
+  /*
+   * The user selected a different priority from
+   * the one originally suggested by Momentuhm.
+   */
+  if (
+    priority !== suggestedPriority &&
+    previousPrioritySuggestionDecision !==
+      "overridden"
+  ) {
+    recordPlanningEvent({
+      type:
+        "priority_suggestion_overridden",
+
+      taskId:
+        updatedTask.id,
+
+      suggestedValue:
+        suggestedPriority,
+
+      finalValue:
+        priority,
+
+      context: {
+        title,
+
+        category:
+          updatedTask.category ||
+          originalTaskWithCategory.category,
+
+        priority,
+
+        source:
+          "edit-task-modal",
+      },
+    });
+
+    nextPrioritySuggestionDecision =
+      "overridden";
+  }
+
+  /*
+   * The user kept the original AI priority.
+   *
+   * Record this only once. Saving the same task
+   * again without changing priority will not
+   * create another acceptance event.
+   */
+  if (
+    priority === suggestedPriority &&
+    !previousPrioritySuggestionDecision
+  ) {
+    recordPlanningEvent({
+      type:
+        "priority_suggestion_accepted",
+
+      taskId:
+        updatedTask.id,
+
+      suggestedValue:
+        suggestedPriority,
+
+      finalValue:
+        priority,
+
+      context: {
+        title,
+
+        category:
+          updatedTask.category ||
+          originalTaskWithCategory.category,
+
+        priority,
+
+        source:
+          "edit-task-modal",
+      },
+    });
+
+    nextPrioritySuggestionDecision =
+      "accepted";
+  }
+}
+
+const savedTask = {
+
         id: updatedTask.id,
         title,
         whyThisMatters,
@@ -3788,11 +5311,25 @@ const statusBeforeCompletion = completed
                 priority
               )
             : "App suggestions are turned off."),
-        aiConfidence:
-          updatedTask.aiConfidence || 0.72,
-        tags: normalizeTaskTags(
-          updatedTask.tags
-        ),
+            aiConfidence:
+            updatedTask.aiConfidence || 0.72,
+          
+            aiSuggestionSnapshot:
+            updatedTask.aiSuggestionSnapshot ||
+            originalTaskWithCategory
+              .aiSuggestionSnapshot,
+          
+          
+              prioritySuggestionDecision:
+  nextPrioritySuggestionDecision,
+
+deferCount:
+  nextDeferCount,
+
+tags: normalizeTaskTags(
+  updatedTask.tags
+),
+
         subtasks:
           getTaskSubtasks(updatedTask),
         whySuggestions:
@@ -4096,7 +5633,7 @@ setInsightsHistory(
     const resetAppData = () => {
       const confirmed =
         window.confirm(
-          "Reset all Momentuhm data? This will permanently delete active tasks, completed tasks, archived items, and Insights history."
+          "Reset all Momentuhm data? This will permanently delete active tasks, completed tasks, archived items, Insights history, and everything Momentuhm has learned about your planning."
         );
     
       if (!confirmed) {
@@ -4111,7 +5648,8 @@ setInsightsHistory(
       setInsightsHistory([]);
       setCompletedToday([]);
       setManualFocusTaskIds([]);
-    
+      resetMemory();
+      
       setSelectedCategory(
         initialCategories[0].title
       );
@@ -4450,19 +5988,19 @@ setInsightsHistory(
             } now have no category`
           : `"${categoryToDelete.title}" deleted`
       );
-    
+      
       window.setTimeout(() => {
         setArchiveToast("");
       }, 2500);
-    };
-
-    /* ------------------------------------------------ */
-    /* Loading */
-    /* ------------------------------------------------ */
-
-    if (!isLoaded) {
-      return <main className="min-h-screen bg-white" />;
-    }
+      };
+      
+      /* ------------------------------------------------ */
+      /* Loading */
+      /* ------------------------------------------------ */
+      
+      if (!isLoaded) {
+        return <main className="min-h-screen bg-white" />;
+      }
 
     return (
       <main
@@ -4577,8 +6115,9 @@ setInsightsHistory(
               newlyAddedTaskIds={newlyAddedTaskIds}
               userFirstName={user?.firstName || ""}
               refreshLatestStatus={refreshLatestStatus}
-              isRefreshingStatus={isRefreshingStatus}
-              />
+isRefreshingStatus={isRefreshingStatus}
+userPlanningProfile={userPlanningProfile}
+/>
               )}
 
 {selectedView === "priorities" && (
@@ -5007,9 +6546,10 @@ archiveCompletedToday,
     anchorTaskListSoon,
     newlyAddedTaskIds,
     userFirstName,
-    refreshLatestStatus,
-    isRefreshingStatus,
-    }: any) {
+refreshLatestStatus,
+isRefreshingStatus,
+userPlanningProfile,
+}: any) {
     const [showMorningBrief, setShowMorningBrief] = useState(false);
     const taskInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -5414,7 +6954,8 @@ archiveCompletedToday,
   prioritizedTasks={prioritizedTasks}
   completedToday={completedToday}
   insightsHistory={insightsHistory}
-                  darkMode={darkMode}
+  userPlanningProfile={userPlanningProfile}
+  darkMode={darkMode}
                   border={border}
                   strongerGlass={strongerGlass}
                   themeColor="#181818"
@@ -9962,6 +11503,7 @@ const displayedInsight =
     prioritizedTasks,
     completedToday,
     insightsHistory = [],
+    userPlanningProfile,
     darkMode,
     border,
     strongerGlass,
@@ -10103,8 +11645,20 @@ const [
           },
           body: JSON.stringify({
             today: getTodayDate(),
-            completedTodayCount: completedToday.length,
-            tasks: prioritizedTasks.slice(0, 15).map((task: any) => ({
+          
+            completedTodayCount:
+              completedToday.length,
+          
+            planningProfile:
+              userPlanningProfile,
+          
+            memoryInstructions:
+              userPlanningProfile
+                ?.promptInstructions || [],
+          
+            tasks: prioritizedTasks
+              .slice(0, 15)
+              .map((task: any) => ({
               id: task.id,
               title: task.title,
               whyThisMatters: task.whyThisMatters || "",
