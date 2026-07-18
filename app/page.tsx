@@ -8102,14 +8102,14 @@ useMemo(() => {
   
     {task.pinned && (
       <>
-        <span
+        {/* <span
           aria-hidden="true"
           className="opacity-40"
         >
           ·
         </span>
   
-        <span>Pinned</span>
+        <span>Pinned</span> */}
       </>
     )}
   
@@ -8142,14 +8142,14 @@ useMemo(() => {
 
     {task.pinned && (
       <>
-        <span
+        {/* <span
           aria-hidden="true"
           className="opacity-40"
         >
           ·
         </span>
 
-        <span>Pinned</span>
+        <span>Pinned</span> */}
       </>
     )}
 
