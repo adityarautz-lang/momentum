@@ -1559,6 +1559,36 @@ const tutorialAutoOpenedForUserRef =
     });
   };
 
+
+
+  const anchorTaskWorkspaceTabsSoon = () => {
+    if (typeof window === "undefined") return;
+  
+    window.setTimeout(() => {
+      const element =
+        document.getElementById(
+          "Momentuhm-task-workspace-tabs"
+        );
+  
+      if (!element) return;
+  
+      const rect =
+        element.getBoundingClientRect();
+  
+      const targetTop = Math.max(
+        0,
+        rect.top +
+          window.scrollY -
+          80
+      );
+  
+      animateWindowScrollTo(
+        targetTop,
+        950
+      );
+    }, 40);
+  };
+
   const getCompletedSectionAnchorElement = () => {
     if (typeof document === "undefined") return null;
 
@@ -4839,8 +4869,7 @@ if (!enableClipboardAssist) return;
         updatedTask.priority ||
         inferPriority(title);
     
-      /*
-/*
+   /*
  * Status and completion remain separate.
  * Completion changes are detected by comparing
  * the modal value with the original task.
@@ -6111,8 +6140,11 @@ setInsightsHistory(
   togglePinTask={togglePinTask}
               selectWhySuggestion={selectWhySuggestion}
               taskListRef={taskListRef}
-              anchorTaskListSoon={anchorTaskListSoon}
-              newlyAddedTaskIds={newlyAddedTaskIds}
+anchorTaskListSoon={anchorTaskListSoon}
+anchorTaskWorkspaceTabsSoon={
+  anchorTaskWorkspaceTabsSoon
+}
+newlyAddedTaskIds={newlyAddedTaskIds}
               userFirstName={user?.firstName || ""}
               refreshLatestStatus={refreshLatestStatus}
 isRefreshingStatus={isRefreshingStatus}
@@ -6544,14 +6576,27 @@ archiveCompletedToday,
     selectWhySuggestion,
     taskListRef,
     anchorTaskListSoon,
+    anchorTaskWorkspaceTabsSoon,
     newlyAddedTaskIds,
     userFirstName,
 refreshLatestStatus,
 isRefreshingStatus,
 userPlanningProfile,
 }: any) {
-    const [showMorningBrief, setShowMorningBrief] = useState(false);
-    const taskInputRef = useRef<HTMLInputElement | null>(null);
+  const [showMorningBrief, setShowMorningBrief] =
+  useState(false);
+
+const taskInputRef =
+  useRef<HTMLInputElement | null>(
+    null
+  );
+
+  const [
+    planningHorizon,
+    setPlanningHorizon,
+  ] = useState<
+    "tasks" | "backlog"
+  >("tasks");
 
     useEffect(() => {
       const focusTimer = window.setTimeout(() => {
@@ -6683,7 +6728,42 @@ userPlanningProfile,
         : completedToday.length >= 3
         ? "Strong progress. Stay focused."
         : "Nice start. Keep going.";
+    
+    /*
+     * The planning horizons affect only the main
+     * task-list area. The greeting, Day Left,
+     * Add Task panel and Focus panel stay unchanged.
+     */
+    /*
+ * These are views, not permanent task buckets.
+ *
+ * Tasks contains every active task with a
+ * user-confirmed due date.
+ *
+ * Backlog contains every active task without a
+ * confirmed due date. An AI-suggested date does
+ * not silently remove a task from Backlog.
+ */
+const planningTasks =
+useMemo(() => {
+  return prioritizedTasks.filter(
+    (task: any) =>
+      Boolean(task.dueDate)
+  );
+}, [
+  prioritizedTasks,
+]);
 
+const planningBacklogTasks =
+useMemo(() => {
+  return prioritizedTasks.filter(
+    (task: any) =>
+      !task.dueDate
+  );
+}, [
+  prioritizedTasks,
+]);
+    
     return (
       <>
         <MobileTodayAppView
@@ -6903,45 +6983,257 @@ userPlanningProfile,
                   </div>
                 </section>
 
-                <TaskListPanel
-                  title="Today"
-                  description="Your active tasks"
-                  tasks={prioritizedTasks}
-                  sortMode={taskSortMode}
-                  setSortMode={setTaskSortMode}
-                  groupMode={taskGroupMode}
-                  setGroupMode={setTaskGroupMode}
-                  darkMode={darkMode}
-                  border={border}
-                  className={strongerGlass}
-                  themeColor="#181818"
-                  toggleTaskById={toggleTaskById}
-                  suggestingTaskIds={suggestingTaskIds}
-                  deleteTask={deleteTask}
-                  acceptSuggestedDateById={acceptSuggestedDateById}
-                  setSelectedTask={setSelectedTask}
-                  setIsEditModalOpen={setIsEditModalOpen}
-                  emptyMessage="Add a task. Momentuhm will organize it for you."
-                  ranked
-                  draggableTasks
-                  manualFocusTaskIds={manualFocusTaskIds}
-                  setManualFocusTaskIds={setManualFocusTaskIds}
-                  togglePinTask={togglePinTask}
-                  selectWhySuggestion={selectWhySuggestion}
-                  taskListRef={taskListRef}
-                  anchorTaskListSoon={anchorTaskListSoon}
-                  newlyAddedTaskIds={newlyAddedTaskIds}
-                  onFocusCapture={() => taskInputRef.current?.focus()}
-                />
+              {/* Planning horizons */}
+{/* Task workspace views */}
+<section
+  id="Momentuhm-task-workspace-tabs"
+  aria-label="Task workspace"
+  className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] ${
+    darkMode
+      ? "border-white/[0.10] bg-white/[0.035]"
+      : "border-[#DDDDE3] bg-[#F6F7F9]"
+  }`}
+>
+  {[
+    {
+      value: "tasks",
+      label: "Tasks",
+      count:
+        planningTasks.length,
+      icon: ListChecks,
+    },
+    {
+      value: "backlog",
+      label: "Backlog",
+      count:
+        planningBacklogTasks.length,
+      icon: List,
+    },
+  ].map((option) => {
+    const Icon =
+      option.icon;
 
-                <CompletedTodaySection
-                  sectionId="Momentuhm-desktop-completed-anchor"
-                  completedToday={completedToday}
-                  restoreCompletedTask={restoreCompletedTask}
-                  archiveCompletedToday={archiveCompletedToday}
-                  darkMode={darkMode}
-                  border={border}
-                />
+    const isActive =
+      planningHorizon ===
+      option.value;
+
+    return (
+      <button
+        key={option.value}
+        type="button"
+        onClick={() => {
+          setPlanningHorizon(
+            option.value as
+              | "tasks"
+              | "backlog"
+          );
+        
+          anchorTaskWorkspaceTabsSoon();
+        }}
+        aria-pressed={isActive}
+        className={`relative flex min-h-[46px] items-center justify-center gap-2 rounded-[8px] px-3 text-[11px] font-[650] transition active:scale-[0.99] ${
+          isActive
+            ? darkMode
+              ? "bg-[#303134] text-white shadow-[0_1px_3px_rgba(0,0,0,0.28)]"
+              : "bg-white text-[#202124] shadow-[0_1px_3px_rgba(60,64,67,0.16)]"
+            : darkMode
+            ? "text-white/48 hover:text-white/76"
+            : "text-[#626875] hover:text-[#252933]"
+        }`}
+      >
+        <Icon
+          size={15}
+          strokeWidth={1.7}
+        />
+
+        <span>
+          {option.label}
+        </span>
+
+        <span
+          className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[9px] font-[700] ${
+            isActive
+              ? darkMode
+                ? "bg-white/[0.10] text-white/72"
+                : "bg-[#F0F1F4] text-[#4F5562]"
+              : darkMode
+              ? "bg-white/[0.05] text-white/38"
+              : "bg-black/[0.035] text-[#777D88]"
+          }`}
+        >
+          {option.count}
+        </span>
+
+        {isActive && (
+          <span
+            aria-hidden="true"
+            className={`absolute bottom-0 left-5 right-5 h-[2px] rounded-full ${
+              darkMode
+                ? "bg-violet-300"
+                : "bg-violet-600"
+            }`}
+          />
+        )}
+      </button>
+    );
+  })}
+</section>
+
+{planningHorizon ===
+  "tasks" && (
+  <>
+    <TaskListPanel
+      title="Tasks"
+      description="Your scheduled work"
+      tasks={
+        planningTasks
+      }
+      sortMode={
+        taskSortMode
+      }
+      setSortMode={
+        setTaskSortMode
+      }
+      groupMode={
+        taskGroupMode
+      }
+      setGroupMode={
+        setTaskGroupMode
+      }
+      darkMode={darkMode}
+      border={border}
+      className={
+        strongerGlass
+      }
+      themeColor="#181818"
+      toggleTaskById={
+        toggleTaskById
+      }
+      suggestingTaskIds={
+        suggestingTaskIds
+      }
+      deleteTask={
+        deleteTask
+      }
+      acceptSuggestedDateById={
+        acceptSuggestedDateById
+      }
+      setSelectedTask={
+        setSelectedTask
+      }
+      setIsEditModalOpen={
+        setIsEditModalOpen
+      }
+      emptyMessage="No scheduled tasks yet."
+      ranked
+      draggableTasks
+      manualFocusTaskIds={
+        manualFocusTaskIds
+      }
+      setManualFocusTaskIds={
+        setManualFocusTaskIds
+      }
+      togglePinTask={
+        togglePinTask
+      }
+      selectWhySuggestion={
+        selectWhySuggestion
+      }
+      taskListRef={
+        taskListRef
+      }
+      anchorTaskListSoon={
+        anchorTaskWorkspaceTabsSoon
+      }
+      newlyAddedTaskIds={
+        newlyAddedTaskIds
+      }
+      onFocusCapture={() =>
+        taskInputRef.current?.focus()
+      }
+    />
+
+    <CompletedTodaySection
+      sectionId="Momentuhm-desktop-completed-anchor"
+      completedToday={
+        completedToday
+      }
+      restoreCompletedTask={
+        restoreCompletedTask
+      }
+      archiveCompletedToday={
+        archiveCompletedToday
+      }
+      darkMode={darkMode}
+      border={border}
+    />
+  </>
+)}
+
+{planningHorizon ===
+  "backlog" && (
+  <TaskListPanel
+    title="Backlog"
+    description="Tasks without a confirmed due date"
+    tasks={
+      planningBacklogTasks
+    }
+    sortMode="priority"
+    setSortMode={() => {}}
+    groupMode="priority"
+    setGroupMode={() => {}}
+    darkMode={darkMode}
+    border={border}
+    className={
+      strongerGlass
+    }
+    themeColor="#181818"
+    toggleTaskById={
+      toggleTaskById
+    }
+    suggestingTaskIds={
+      suggestingTaskIds
+    }
+    deleteTask={
+      deleteTask
+    }
+    acceptSuggestedDateById={
+      acceptSuggestedDateById
+    }
+    setSelectedTask={
+      setSelectedTask
+    }
+    setIsEditModalOpen={
+      setIsEditModalOpen
+    }
+    emptyMessage="Your backlog is clear."
+    draggableTasks
+    manualFocusTaskIds={
+      manualFocusTaskIds
+    }
+    setManualFocusTaskIds={
+      setManualFocusTaskIds
+    }
+    togglePinTask={
+      togglePinTask
+    }
+    selectWhySuggestion={
+      selectWhySuggestion
+    }
+    taskListRef={
+      taskListRef
+    }
+    anchorTaskListSoon={
+      anchorTaskWorkspaceTabsSoon
+    }
+    newlyAddedTaskIds={
+      newlyAddedTaskIds
+    }
+    onFocusCapture={() =>
+      taskInputRef.current?.focus()
+    }
+  />
+)}
               </section>
 
               {/* Right: focus execution */}
