@@ -4860,6 +4860,74 @@ boostCacheKey,
     anchorCompletedSectionSoon();
   };
 
+   /* ------------------------------------------------ */
+  /* Toggle Subtask */
+  /* ------------------------------------------------ */
+
+  const toggleSubtaskById = (
+    taskId: string,
+    subtaskId: string
+  ) => {
+    const taskWithSubtask =
+      categories
+        .flatMap((category) =>
+          category.tasks
+        )
+        .find(
+          (task: any) =>
+            task.id === taskId &&
+            getTaskSubtasks(task).some(
+              (subtask) =>
+                subtask.id === subtaskId
+            )
+        );
+
+    if (!taskWithSubtask) {
+      return;
+    }
+
+    /*
+     * Protect the local subtask change from an automatic
+     * focus or visibility refresh before it is persisted.
+     */
+    markLocalChangesPending();
+
+    setCategories(
+      (previousCategories) =>
+        previousCategories.map(
+          (category) => ({
+            ...category,
+
+            tasks: category.tasks.map(
+              (task: any) => {
+                if (task.id !== taskId) {
+                  return task;
+                }
+
+                return {
+                  ...task,
+
+                  subtasks:
+                    getTaskSubtasks(task).map(
+                      (subtask) =>
+                        subtask.id ===
+                        subtaskId
+                          ? {
+                              ...subtask,
+
+                              completed:
+                                !subtask.completed,
+                            }
+                          : subtask
+                    ),
+                };
+              }
+            ),
+          })
+        )
+    );
+  };
+
   /* ------------------------------------------------ */
   /* Restore Completed Task */
   /* ------------------------------------------------ */
@@ -7080,8 +7148,11 @@ setNewTask={setNewTask}
 newTaskWhy={newTaskWhy}
 setNewTaskWhy={setNewTaskWhy}
 addTask={addTask}
-            toggleTaskById={toggleTaskById}
-            deleteTask={deleteTask}
+toggleTaskById={toggleTaskById}
+toggleSubtaskById={
+  toggleSubtaskById
+}
+deleteTask={deleteTask}
             acceptSuggestedDateById={acceptSuggestedDateById}
             setSelectedTask={setSelectedTask}
             setIsEditModalOpen={setIsEditModalOpen}
@@ -7516,6 +7587,7 @@ function TodayView({
   setNewTaskWhy,
   addTask,
   toggleTaskById,
+  toggleSubtaskById,
   deleteTask,
   acceptSuggestedDateById,
 setSelectedTask,
@@ -8088,6 +8160,9 @@ className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] 
     toggleTaskById={
       toggleTaskById
     }
+    toggleSubtaskById={
+      toggleSubtaskById
+    }
     suggestingTaskIds={
       suggestingTaskIds
     }
@@ -8592,6 +8667,7 @@ function TaskListPanel({
   darkMode,
   border,
   toggleTaskById,
+  toggleSubtaskById,
   suggestingTaskIds = [],
   deleteTask,
   acceptSuggestedDateById,
@@ -8608,8 +8684,53 @@ function TaskListPanel({
   newlyAddedTaskIds = [],
   onFocusCapture = () => {},
 }: any) {
-  const [showAllTasks, setShowAllTasks] = useState(false);
+  const [showAllTasks, setShowAllTasks] =
+    useState(false);
+
+  /*
+   * Subtasks are intentionally collapsed when the
+   * task list first loads. Expansion is local UI state
+   * and does not need to be persisted.
+   */
+  const [
+    expandedTaskIds,
+    setExpandedTaskIds,
+  ] = useState<string[]>([]);
+
   const defaultVisibleTaskCount = 15;
+
+  const toggleSubtaskExpansion = (
+    taskId: string
+  ) => {
+    const isCurrentlyExpanded =
+      expandedTaskIds.includes(
+        taskId
+      );
+  
+    setExpandedTaskIds(
+      (previousTaskIds) =>
+        previousTaskIds.includes(taskId)
+          ? previousTaskIds.filter(
+              (existingTaskId) =>
+                existingTaskId !== taskId
+            )
+          : [
+              ...previousTaskIds,
+              taskId,
+            ]
+    );
+  
+    /*
+     * When opening subtasks, return the viewport to
+     * the Tasks / Backlog workspace header, matching
+     * the other anchored interactions in the app.
+     */
+    if (!isCurrentlyExpanded) {
+      window.setTimeout(() => {
+        anchorTaskListSoon();
+      }, 120);
+    }
+  };
 
   const tableGridClass =
     "grid w-full grid-cols-[36px_minmax(0,1fr)_72px_76px_88px_30px] items-stretch";
@@ -8926,9 +9047,25 @@ function TaskListPanel({
             const shouldShowGroupHeader =
               groupMode !== "none" && groupMeta.key !== previousGroupKey;
             const isTaskOverdue = Boolean(task.dueDate && isOverdue(task.dueDate));
-            const isFocused = manualFocusTaskIds.includes(task.id);
-            const isNewlyAdded = newlyAddedTaskIds.includes(task.id);
-            const priorityLabel =
+            const isFocused =
+            manualFocusTaskIds.includes(
+              task.id
+            );
+
+          const isNewlyAdded =
+            newlyAddedTaskIds.includes(
+              task.id
+            );
+
+          const subtaskProgress =
+            getSubtaskProgress(task);
+
+          const isSubtasksExpanded =
+            expandedTaskIds.includes(
+              task.id
+            );
+
+          const priorityLabel =
               task.priority === "Medium" || task.priority === "Med"
                 ? "Medium"
                 : task.priority;
@@ -9104,43 +9241,115 @@ function TaskListPanel({
   )}
 
 {groupMode === "category" && (
-<div
-  className={`mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-[500] ${mutedText}`}
->
-  <InlineFocusAction
-    taskId={task.id}
-    manualFocusTaskIds={
-      manualFocusTaskIds
-    }
-    toggleFocusTask={
-      toggleTaskFocusFromList
-    }
-    darkMode={darkMode}
-    showSeparator={false}
-  />
-
-  {task.pinned && (
-    <>
-      {/* <span
-        aria-hidden="true"
-        className="opacity-40"
-      >
-        ·
-      </span>
-
-      <span>Pinned</span> */}
-    </>
-  )}
-
-  {suggestingTaskIds.includes(
-    task.id
-  ) && (
-    <Sparkles
-      size={9}
-      className="shrink-0 animate-pulse"
+  <div
+    className={`mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-[500] ${mutedText}`}
+  >
+    <InlineFocusAction
+      taskId={task.id}
+      manualFocusTaskIds={
+        manualFocusTaskIds
+      }
+      toggleFocusTask={
+        toggleTaskFocusFromList
+      }
+      darkMode={darkMode}
+      showSeparator={false}
     />
-  )}
-</div>
+
+    {suggestingTaskIds.includes(
+      task.id
+    ) && (
+      <Sparkles
+        size={9}
+        className="shrink-0 animate-pulse"
+      />
+    )}
+  </div>
+)}
+
+{subtaskProgress.hasSubtasks && (
+  <button
+    type="button"
+    onClick={(event) => {
+      event.stopPropagation();
+
+      toggleSubtaskExpansion(
+        task.id
+      );
+    }}
+    aria-expanded={
+      isSubtasksExpanded
+    }
+    aria-controls={`task-subtasks-${task.id}`}
+    className={`mt-2 inline-flex max-w-full items-center gap-1.5 rounded-[6px] border px-2 py-1 text-[9.5px] font-[600] transition ${
+      darkMode
+        ? "border-white/[0.09] bg-white/[0.025] text-white/52 hover:border-white/[0.18] hover:bg-white/[0.05] hover:text-white/78"
+        : "border-[#E1E2E6] bg-[#F8F9FA] text-[#626875] hover:border-[#C8CAD0] hover:bg-[#F1F2F5] hover:text-[#252933]"
+    }`}
+  >
+    {isSubtasksExpanded ? (
+      <ChevronDown
+        size={12}
+        strokeWidth={1.9}
+        className="shrink-0"
+      />
+    ) : (
+      <ChevronRight
+        size={12}
+        strokeWidth={1.9}
+        className="shrink-0"
+      />
+    )}
+
+    <span>
+      {subtaskProgress.total}{" "}
+      subtask
+      {subtaskProgress.total === 1
+        ? ""
+        : "s"}
+    </span>
+
+    <span
+      aria-hidden="true"
+      className="opacity-35"
+    >
+      •
+    </span>
+
+    <span
+      className={
+        subtaskProgress.allComplete
+          ? darkMode
+            ? "text-emerald-300"
+            : "text-emerald-700"
+          : ""
+      }
+    >
+      {subtaskProgress.completed} completed
+    </span>
+
+    <span
+      aria-hidden="true"
+      className={`ml-1 h-1.5 w-12 overflow-hidden rounded-full ${
+        darkMode
+          ? "bg-white/[0.08]"
+          : "bg-[#E2E4E8]"
+      }`}
+    >
+      <span
+        className={`block h-full rounded-full transition-[width] duration-300 ${
+          subtaskProgress.allComplete
+            ? "bg-emerald-500"
+            : darkMode
+            ? "bg-violet-300"
+            : "bg-violet-600"
+        }`}
+        style={{
+          width: `${subtaskProgress.percent}%`,
+        }}
+      />
+    </span>
+  </button>
 )}
 </div>
 
@@ -9193,7 +9402,226 @@ title="Edit task status"
   />
 </button>
 </div>
-                </motion.div>
+</motion.div>
+
+<AnimatePresence initial={false}>
+  {subtaskProgress.hasSubtasks &&
+    isSubtasksExpanded && (
+      <motion.div
+        id={`task-subtasks-${task.id}`}
+        key={`subtasks-${task.id}`}
+        initial={{
+          height: 0,
+          opacity: 0,
+          y: -8,
+        }}
+        animate={{
+          height: "auto",
+          opacity: 1,
+          y: 0,
+        }}
+        exit={{
+          height: 0,
+          opacity: 0,
+          y: -6,
+        }}
+        transition={{
+          height: {
+            duration: 0.65,
+            ease: [
+              0.16,
+              1,
+              0.3,
+              1,
+            ],
+          },
+        
+          opacity: {
+            duration: 0.65,
+            ease: [
+              0.16,
+              1,
+              0.3,
+              1,
+            ],
+          },
+        
+          y: {
+            duration: 0.65,
+            ease: [
+              0.16,
+              1,
+              0.3,
+              1,
+            ],
+          },
+        }}
+        className={`overflow-hidden border-b ${rowBorder} ${
+          darkMode
+            ? "bg-white/[0.018]"
+            : "bg-[#FAFAFB]"
+        }`}
+      >
+        <div className="pb-3 pl-[44px] pr-3 pt-2">
+          <div
+            className={`overflow-hidden rounded-[9px] border ${
+              darkMode
+                ? "border-white/[0.09] bg-[#121519]"
+                : "border-[#E1E2E6] bg-white"
+            }`}
+          >
+            <div
+              className={`flex min-h-[34px] items-center justify-between gap-3 border-b px-3 ${rowBorder}`}
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <ListChecks
+                  size={13}
+                  strokeWidth={1.8}
+                  className={
+                    darkMode
+                      ? "text-white/42"
+                      : "text-[#6B6F7B]"
+                  }
+                />
+
+                <span
+                  className={`text-[9.5px] font-[700] uppercase tracking-[0.06em] ${mutedText}`}
+                >
+                  Subtasks
+                </span>
+              </div>
+
+              <span
+                className={`text-[9.5px] font-[600] tabular-nums ${mutedText}`}
+              >
+                {subtaskProgress.completed}
+                {" / "}
+                {subtaskProgress.total}
+              </span>
+            </div>
+
+            <div>
+              {subtaskProgress.subtasks.map(
+                (subtask) => {
+                  const subtaskDate =
+                    subtask.dueDate
+                      ? formatDueDate(
+                          subtask.dueDate
+                        )
+                      : "";
+
+                  return (
+                    <div
+                      key={subtask.id}
+                      className={`group/subtask grid min-h-[40px] grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 border-b px-2.5 last:border-b-0 ${rowBorder}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+
+                          toggleSubtaskById(
+                            task.id,
+                            subtask.id
+                          );
+                        }}
+                        aria-label={
+                          subtask.completed
+                            ? `Mark ${subtask.title} incomplete`
+                            : `Complete ${subtask.title}`
+                        }
+                        aria-pressed={
+                          subtask.completed
+                        }
+                        className="flex h-7 w-7 items-center justify-center rounded-[6px] transition active:scale-95"
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`flex h-4 w-4 items-center justify-center rounded-[4px] border transition ${
+                            subtask.completed
+                              ? darkMode
+                                ? "border-violet-300 bg-violet-300 text-[#17181C]"
+                                : "border-violet-600 bg-violet-600 text-white"
+                              : darkMode
+                              ? "border-white/35 group-hover/subtask:border-white/60"
+                              : "border-[#9297A1] group-hover/subtask:border-[#4F5562]"
+                          }`}
+                        >
+                          {subtask.completed && (
+                            <Check
+                              size={10}
+                              strokeWidth={2.5}
+                            />
+                          )}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openTask(task);
+                        }}
+                        title={subtask.title}
+                        className={`min-w-0 truncate text-left text-[11px] leading-4 font-[550] transition hover:opacity-70 ${
+                          subtask.completed
+                            ? darkMode
+                              ? "text-white/38 line-through decoration-white/25"
+                              : "text-[#777D88] line-through decoration-black/20"
+                            : darkMode
+                            ? "text-white/76"
+                            : "text-[#353A45]"
+                        }`}
+                      >
+                        {subtask.title}
+                      </button>
+
+                      {subtaskDate && (
+                        <span
+                          className={`flex shrink-0 items-center gap-1 text-[9px] font-[550] ${mutedText}`}
+                        >
+                          <Calendar
+                            size={11}
+                            strokeWidth={1.7}
+                          />
+
+                          {subtaskDate}
+                        </span>
+                      )}
+                    </div>
+                  );
+                }
+              )}
+            </div>
+
+            <div
+              className={`flex min-h-[38px] items-center border-t px-3 ${rowBorder}`}
+            >
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  openTask(task);
+                }}
+                className={`inline-flex items-center gap-1.5 text-[10px] font-[600] transition ${
+                  darkMode
+                    ? "text-white/42 hover:text-white/72"
+                    : "text-[#686E7A] hover:text-[#252933]"
+                }`}
+              >
+                <Plus
+                  size={12}
+                  strokeWidth={1.8}
+                />
+
+                Add or edit subtasks
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    )}
+</AnimatePresence>
               </div>
             );
           })}
