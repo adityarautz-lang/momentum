@@ -3365,11 +3365,22 @@ if (!enableClipboardAssist) return;
             }
           );
         }
+
+        return {
+          suggestedDueDate,
+        };
+
+
+
       } catch (error) {
         console.error(
           "Failed to improve task with AI:",
           error
         );
+
+        return {
+          suggestedDueDate: undefined,
+        };
       } finally {
         setSuggestingTaskIds(
           (previousIds) =>
@@ -3505,9 +3516,41 @@ if (!enableClipboardAssist) return;
           );
         }
         if (enableAppSuggestions) {
-          await improveTaskWithAI(taskId, title, manualWhy);
+          const aiResult =
+            await improveTaskWithAI(
+              taskId,
+              title,
+              manualWhy
+            );
+
+          const taskHasUsableDate =
+            Boolean(
+              suggestedDueDate ||
+              aiResult?.suggestedDueDate
+            );
+
+          if (!taskHasUsableDate) {
+            setArchiveToast(
+              "AI could not confidently assign a date. Task moved to Backlog."
+            );
+
+            window.setTimeout(() => {
+              setArchiveToast("");
+            }, 4200);
+          }
+
           markTaskAsNew(taskId);
         } else {
+          if (!suggestedDueDate) {
+            setArchiveToast(
+              "No date was assigned. Task moved to Backlog."
+            );
+
+            window.setTimeout(() => {
+              setArchiveToast("");
+            }, 4200);
+          }
+
           markTaskAsNew(taskId);
         }
       } catch (error) {
@@ -6729,40 +6772,36 @@ const taskInputRef =
         ? "Strong progress. Stay focused."
         : "Nice start. Keep going.";
     
-    /*
-     * The planning horizons affect only the main
-     * task-list area. The greeting, Day Left,
-     * Add Task panel and Focus panel stay unchanged.
-     */
-    /*
- * These are views, not permanent task buckets.
- *
- * Tasks contains every active task with a
- * user-confirmed due date.
- *
- * Backlog contains every active task without a
- * confirmed due date. An AI-suggested date does
- * not silently remove a task from Backlog.
+  /*
+ * The planning horizons affect only the main
+ * task-list area. The greeting, Day Left,
+ * Add Task panel and Focus panel stay unchanged.
  */
-const planningTasks =
-useMemo(() => {
-  return prioritizedTasks.filter(
-    (task: any) =>
-      Boolean(task.dueDate)
-  );
-}, [
-  prioritizedTasks,
-]);
 
-const planningBacklogTasks =
-useMemo(() => {
+/*
+ * Tasks contains active work for which either the user
+ * or Momentuhm has been able to identify a usable date.
+ *
+ * Backlog is reserved only for tasks where no date could
+ * be confidently assigned.
+ */
+const planningTasks = useMemo(() => {
   return prioritizedTasks.filter(
     (task: any) =>
-      !task.dueDate
+      Boolean(
+        task.dueDate ||
+        task.suggestedDueDate
+      )
   );
-}, [
-  prioritizedTasks,
-]);
+}, [prioritizedTasks]);
+
+const planningBacklogTasks = useMemo(() => {
+  return prioritizedTasks.filter(
+    (task: any) =>
+      !task.dueDate &&
+      !task.suggestedDueDate
+  );
+}, [prioritizedTasks]);
     
     return (
       <>
@@ -7174,7 +7213,7 @@ useMemo(() => {
   "backlog" && (
   <TaskListPanel
     title="Backlog"
-    description="Tasks without a confirmed due date"
+    description="Tasks where no date could be assigned"
     tasks={
       planningBacklogTasks
     }
