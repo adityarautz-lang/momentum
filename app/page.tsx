@@ -2690,20 +2690,12 @@ const dueSoonCount = activeTasks.filter(
 ).length;
 
 const taskTabActiveTasks = activeTasks.filter(
-  (task) =>
-    Boolean(
-      task.dueDate ||
-      task.suggestedDueDate
-    )
+  (task) => !Boolean(task.isBacklog)
 );
 
 const taskTabCompletedToday =
   completedToday.filter(
-    (task) =>
-      Boolean(
-        task.dueDate ||
-        task.suggestedDueDate
-      )
+    (task) => !Boolean(task.isBacklog)
   );
 
 const taskTabTotalCount =
@@ -3716,6 +3708,8 @@ boostCacheKey,
       id: taskId,
       title,
   
+      isBacklog: false,
+
       whyThisMatters:
         initialWhy,
   
@@ -3849,36 +3843,11 @@ boostCacheKey,
       }
   
       if (enableAppSuggestions) {
-        const aiResult =
-          await improveTaskWithAI(
-            taskId,
-            title,
-            manualWhy
-          );
-  
-        const taskHasUsableDate =
-          Boolean(
-            suggestedDueDate ||
-            aiResult?.suggestedDueDate
-          );
-  
-        if (!taskHasUsableDate) {
-          setArchiveToast(
-            "AI could not confidently assign a date. Task moved to Backlog."
-          );
-  
-          window.setTimeout(() => {
-            setArchiveToast("");
-          }, 4200);
-        }
-      } else if (!suggestedDueDate) {
-        setArchiveToast(
-          "No date was assigned. Task moved to Backlog."
+        await improveTaskWithAI(
+          taskId,
+          title,
+          manualWhy
         );
-  
-        window.setTimeout(() => {
-          setArchiveToast("");
-        }, 4200);
       }
   
       markTaskAsNew(taskId);
@@ -4210,6 +4179,9 @@ boostCacheKey,
         id: crypto.randomUUID(),
   
         title,
+
+        isBacklog: false,
+
   
         whyThisMatters:
           "Captured from clipboard.",
@@ -4374,6 +4346,8 @@ boostCacheKey,
   
                       title:
                         task.title,
+
+                      isBacklog: false,
   
                       priority:
                         task.priority,
@@ -4555,6 +4529,8 @@ boostCacheKey,
   
                       title:
                         task.title,
+
+                        isBacklog: false,
   
                       priority:
                         task.priority,
@@ -5509,6 +5485,8 @@ boostCacheKey,
   
                   return {
                     ...task,
+
+                    isBacklog: false,
   
                     dueDate,
   
@@ -5632,6 +5610,8 @@ boostCacheKey,
   
                   return {
                     ...task,
+
+                    isBacklog: false,
   
                     dueDate:
                       task.suggestedDueDate,
@@ -5764,6 +5744,8 @@ boostCacheKey,
   
                       return {
                         ...task,
+
+                        isBacklog: false,
   
                         dueDate:
                           task.suggestedDueDate,
@@ -6289,21 +6271,36 @@ if (
 }
 
 const savedTask = {
+  id: updatedTask.id,
+  title,
+  whyThisMatters,
+  priority,
 
-      id: updatedTask.id,
-      title,
-      whyThisMatters,
-      priority,
-      dueDate:
-        updatedTask.dueDate || undefined,
-        suggestedDueDate:
-        updatedTask.moveToBacklog
-          ? undefined
-          : updatedTask.dueDate
-          ? undefined
-          : enableAppSuggestions
-          ? suggestDueDate(title)
-          : undefined,
+  isBacklog:
+    updatedTask.moveToBacklog
+      ? true
+      : Boolean(
+          updatedTask.isBacklog ??
+          originalTaskWithCategory.isBacklog
+        ),
+
+  dueDate:
+    updatedTask.moveToBacklog
+      ? undefined
+      : updatedTask.dueDate ||
+        undefined,
+
+  suggestedDueDate:
+    updatedTask.moveToBacklog
+      ? undefined
+      : updatedTask.dueDate
+      ? undefined
+      : updatedTask.suggestedDueDate ||
+        (
+          enableAppSuggestions
+            ? suggestDueDate(title)
+            : undefined
+        ),
       notes: updatedTask.notes || "",
       status: normalizedStatus,
       statusBeforeCompletion,
@@ -7818,28 +7815,23 @@ useEffect(() => {
 */
 
 /*
-* Tasks contains active work for which either the user
-* or Momentuhm has been able to identify a usable date.
-*
-* Backlog is reserved only for tasks where no date could
-* be confidently assigned.
-*/
+ * Tasks remain in the Tasks tab by default.
+ *
+ * A task enters Backlog only when the user explicitly
+ * selects "Move to backlog".
+ */
 const planningTasks = useMemo(() => {
-return prioritizedTasks.filter(
-  (task: any) =>
-    Boolean(
-      task.dueDate ||
-      task.suggestedDueDate
-    )
-);
+  return prioritizedTasks.filter(
+    (task: any) =>
+      !Boolean(task.isBacklog)
+  );
 }, [prioritizedTasks]);
 
 const planningBacklogTasks = useMemo(() => {
-return prioritizedTasks.filter(
-  (task: any) =>
-    !task.dueDate &&
-    !task.suggestedDueDate
-);
+  return prioritizedTasks.filter(
+    (task: any) =>
+      Boolean(task.isBacklog)
+  );
 }, [prioritizedTasks]);
   
   return (
@@ -7851,7 +7843,7 @@ return prioritizedTasks.filter(
         strongerGlass={strongerGlass}
         border={border}
         allTasks={allTasks}
-        prioritizedTasks={prioritizedTasks}
+        prioritizedTasks={planningTasks}
         completedToday={completedToday}
         completionPercent={completionPercent}
         taskTabTotalCount={taskTabTotalCount}
@@ -8263,7 +8255,7 @@ className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] 
 "backlog" && (
 <TaskListPanel
   title="Backlog"
-  description="Tasks where no date could be assigned"
+  description="Tasks you moved out of your active list"
   tasks={
     planningBacklogTasks
   }
@@ -21860,19 +21852,15 @@ const toggleTaskFocus = () => {
     saveTaskChanges({
       ...selectedTask,
   
+      isBacklog: true,
+      moveToBacklog: true,
+  
       /*
-       * Backlog contains active tasks without either
-       * a confirmed date or an AI-suggested date.
+       * Moving to Backlog removes scheduling information.
+       * This happens only after an explicit user action.
        */
       dueDate: undefined,
       suggestedDueDate: undefined,
-  
-      /*
-       * This temporary flag tells saveTaskChanges not
-       * to generate another suggested date while saving.
-       * It is not included in the saved task object.
-       */
-      moveToBacklog: true,
   
       aiReason:
         "You manually moved this task to Backlog.",
@@ -22191,14 +22179,12 @@ const toggleTaskFocus = () => {
       <button
         type="button"
         onClick={moveTaskToBacklog}
-        disabled={
-          !selectedTask.dueDate &&
-          !selectedTask.suggestedDueDate
-        }
+        disabled={Boolean(
+          selectedTask.isBacklog
+        )}
         aria-label="Move task to backlog"
         title={
-          !selectedTask.dueDate &&
-          !selectedTask.suggestedDueDate
+          selectedTask.isBacklog
             ? "This task is already in Backlog"
             : "Move to Backlog"
         }
