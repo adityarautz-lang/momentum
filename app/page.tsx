@@ -563,6 +563,32 @@ const isCompletedToday = (
   );
 };
 
+const getCompletedTodayFromCategories = (
+  categories: Category[]
+) => {
+  return categories
+    .flatMap((category) =>
+      category.tasks.map((task: any) => ({
+        ...task,
+        category: category.title,
+      }))
+    )
+    .filter(
+      (task: any) =>
+        Boolean(task.completed) &&
+        isCompletedToday(task)
+    )
+    .sort(
+      (taskA: any, taskB: any) =>
+        new Date(
+          taskB.completedAt || 0
+        ).getTime() -
+        new Date(
+          taskA.completedAt || 0
+        ).getTime()
+    );
+};
+
 const getTomorrowDate = () => {
   const date = new Date();
   date.setDate(date.getDate() + 1);
@@ -1880,34 +1906,56 @@ return () => {
 }, []);
 
 /*
-* Remove stale items when the local calendar
-* day changes while the app remains open.
-*/
+ * Keep Completed Today synchronized with categories.
+ *
+ * Categories are the source of truth. This repairs any
+ * mismatch caused by an interrupted save, an older saved
+ * completedToday list, refresh, or another update path.
+ */
 useEffect(() => {
-if (!isLoaded) {
-  return;
-}
-
-setCompletedToday(
-  (previousTasks) => {
-    const currentTasks =
-      previousTasks.filter(
-        isCompletedToday
-      );
-
-    if (
-      currentTasks.length ===
-      previousTasks.length
-    ) {
-      return previousTasks;
-    }
-
-    return currentTasks;
+  if (!isLoaded) {
+    return;
   }
-);
+
+  const synchronizedCompletedTasks =
+    getCompletedTodayFromCategories(
+      categories
+    );
+
+  setCompletedToday(
+    (previousTasks) => {
+      const previousSignature =
+        previousTasks
+          .map(
+            (task: any) =>
+              `${task.id}:${task.completedAt || ""}:${task.category || ""}`
+          )
+          .sort()
+          .join("|");
+
+      const nextSignature =
+        synchronizedCompletedTasks
+          .map(
+            (task: any) =>
+              `${task.id}:${task.completedAt || ""}:${task.category || ""}`
+          )
+          .sort()
+          .join("|");
+
+      if (
+        previousSignature ===
+        nextSignature
+      ) {
+        return previousTasks;
+      }
+
+      return synchronizedCompletedTasks;
+    }
+  );
 }, [
-todayDate,
-isLoaded,
+  categories,
+  todayDate,
+  isLoaded,
 ]);
   
   const dayTimeRemaining = useMemo(() => {
@@ -2003,17 +2051,56 @@ setInsightsHistory(
   loadedInsightsHistory
 );
 
-const loadedCompletedToday =
-Array.isArray(
-  parsed.completedToday
-)
-  ? parsed.completedToday.filter(
-      isCompletedToday
-    )
-  : [];
+/*
+ * Categories are the source of truth for task completion.
+ *
+ * Rebuild Completed Today from the actual completed tasks
+ * instead of trusting a second independently saved list.
+ */
+const completedTasksFromCategories =
+  getCompletedTodayFromCategories(
+    loadedCategories
+  );
+
+/*
+ * Legacy fallback:
+ * Older saved data may contain completedToday entries whose
+ * category task was already removed or not saved correctly.
+ */
+const legacyCompletedToday =
+  Array.isArray(parsed.completedToday)
+    ? parsed.completedToday.filter(
+        (task: any) =>
+          Boolean(task.completed) &&
+          isCompletedToday(task)
+      )
+    : [];
+
+const completedTaskMap =
+  new Map<string, any>();
+
+[
+  ...legacyCompletedToday,
+  ...completedTasksFromCategories,
+].forEach((task: any) => {
+  completedTaskMap.set(
+    String(task.id),
+    task
+  );
+});
 
 setCompletedToday(
-loadedCompletedToday
+  Array.from(
+    completedTaskMap.values()
+  ).sort(
+    (taskA: any, taskB: any) =>
+      new Date(
+        taskB.completedAt || 0
+      ).getTime() -
+      new Date(
+        taskA.completedAt || 0
+      ).getTime()
+  )
 );
 
 setManualFocusTaskIds(
