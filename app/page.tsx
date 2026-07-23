@@ -2689,12 +2689,35 @@ const dueSoonCount = activeTasks.filter(
     task.suggestedDueDate === getTomorrowDate()
 ).length;
 
+const taskTabActiveTasks = activeTasks.filter(
+  (task) =>
+    Boolean(
+      task.dueDate ||
+      task.suggestedDueDate
+    )
+);
+
+const taskTabCompletedToday =
+  completedToday.filter(
+    (task) =>
+      Boolean(
+        task.dueDate ||
+        task.suggestedDueDate
+      )
+  );
+
+const taskTabTotalCount =
+  taskTabActiveTasks.length +
+  taskTabCompletedToday.length;
+
 const completionPercent =
-  allTasks.length === 0
+  taskTabTotalCount === 0
     ? 0
     : Math.round(
-        (allTasks.filter((task) => task.completed).length / allTasks.length) *
-          100
+        (
+          taskTabCompletedToday.length /
+          taskTabTotalCount
+        ) * 100
       );
 
   const suggestedDateCount = allTasks.filter(
@@ -7136,6 +7159,8 @@ setTaskGroupMode={updateTodayTaskGroupMode}
 highPriorityCount={highPriorityCount}
             dueSoonCount={dueSoonCount}
             completionPercent={completionPercent}
+            taskTabTotalCount={taskTabTotalCount}
+            taskTabCompletedCount={taskTabCompletedToday.length}
             suggestedDateCount={suggestedDateCount}
             completedToday={completedToday}
             boostMessage={boostMessage}
@@ -7573,9 +7598,11 @@ function TodayView({
   setTaskGroupMode,
   highPriorityCount,
   dueSoonCount,
-  completionPercent,
-  suggestedDateCount,
-  completedToday,
+completionPercent,
+taskTabTotalCount,
+taskTabCompletedCount,
+suggestedDateCount,
+completedToday,
   boostMessage,
   boostLoading,
   dayEndTime,
@@ -7827,6 +7854,8 @@ return prioritizedTasks.filter(
         prioritizedTasks={prioritizedTasks}
         completedToday={completedToday}
         completionPercent={completionPercent}
+        taskTabTotalCount={taskTabTotalCount}
+        taskTabCompletedCount={taskTabCompletedCount}
         dayTimeRemaining={dayTimeRemaining}
         dayEndTime={dayEndTime}
         setDayEndTime={setDayEndTime}
@@ -7892,21 +7921,27 @@ id="momentuhm-tour-progress-desktop"
 className="grid grid-cols-3 gap-3"
 >
                     {[
-                      {
-                        label: "Tasks",
-                        value: allTasks.length,
-                        valueClass: darkMode ? "text-blue-300" : "text-blue-600",
-                      },
-                      {
-                        label: "Completed",
-                        value: completedToday.length,
-                        valueClass: darkMode ? "text-emerald-300" : "text-emerald-600",
-                      },
-                      {
-                        label: "Progress",
-                        value: `${completionPercent}%`,
-                        valueClass: darkMode ? "text-violet-300" : "text-violet-600",
-                      },
+                    {
+                      label: "Tasks",
+                      value: taskTabTotalCount,
+                      valueClass: darkMode
+                        ? "text-blue-300"
+                        : "text-blue-600",
+                    },
+                    {
+                      label: "Completed",
+                      value: taskTabCompletedCount,
+                      valueClass: darkMode
+                        ? "text-emerald-300"
+                        : "text-emerald-600",
+                    },
+                    {
+                      label: "Progress",
+                      value: `${completionPercent}%`,
+                      valueClass: darkMode
+                        ? "text-violet-300"
+                        : "text-violet-600",
+                    },
                     ].map((metric) => (
                       <div
                         key={metric.label}
@@ -17108,8 +17143,10 @@ function MobileTodayAppView({
   border,
   prioritizedTasks,
   completedToday,
-  completionPercent,
-  newTask,
+completionPercent,
+taskTabTotalCount,
+taskTabCompletedCount,
+newTask,
   setNewTask,
   newTaskWhy,
   setNewTaskWhy,
@@ -17673,29 +17710,27 @@ id="momentuhm-tour-progress-mobile"
 className="mt-3 grid grid-cols-3 gap-2"
 >
           {[
-            {
-              label: "Tasks",
-              value:
-                prioritizedTasks.length,
-              color: darkMode
-                ? "#8AB4F8"
-                : "#1A73E8",
-            },
-            {
-              label: "Completed",
-              value:
-                completedToday.length,
-              color: darkMode
-                ? "#81C995"
-                : "#188038",
-            },
-            {
-              label: "Progress",
-              value: `${completionPercent}%`,
-              color: darkMode
-                ? "#C58AF9"
-                : "#8430CE",
-            },
+         {
+          label: "Tasks",
+          value: taskTabTotalCount,
+          color: darkMode
+            ? "#8AB4F8"
+            : "#1A73E8",
+        },
+        {
+          label: "Completed",
+          value: taskTabCompletedCount,
+          color: darkMode
+            ? "#81C995"
+            : "#188038",
+        },
+        {
+          label: "Progress",
+          value: `${completionPercent}%`,
+          color: darkMode
+            ? "#C58AF9"
+            : "#8430CE",
+        },
           ].map((metric) => (
             <div
               key={metric.label}
