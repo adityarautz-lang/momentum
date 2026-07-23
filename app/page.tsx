@@ -8321,20 +8321,26 @@ className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] 
     }
   />
 
-  <CompletedTodaySection
-    sectionId="Momentuhm-desktop-completed-anchor"
-    completedToday={
-      completedToday
-    }
-    restoreCompletedTask={
-      restoreCompletedTask
-    }
-    archiveCompletedToday={
-      archiveCompletedToday
-    }
-    darkMode={darkMode}
-    border={border}
-  />
+<CompletedTodaySection
+  sectionId="Momentuhm-desktop-completed-anchor"
+  completedToday={
+    completedToday
+  }
+  restoreCompletedTask={
+    restoreCompletedTask
+  }
+  archiveCompletedToday={
+    archiveCompletedToday
+  }
+  setSelectedTask={
+    setSelectedTask
+  }
+  setIsEditModalOpen={
+    setIsEditModalOpen
+  }
+  darkMode={darkMode}
+  border={border}
+/>
 </>
 )}
 
@@ -9777,30 +9783,63 @@ function CompletedTodaySection({
   completedToday,
   restoreCompletedTask,
   archiveCompletedToday,
+  setSelectedTask,
+  setIsEditModalOpen,
   darkMode,
   border,
 }: any) {
-  const [showAllCompleted, setShowAllCompleted] = useState(false);
+  const [showAllCompleted, setShowAllCompleted] =
+    useState(false);
+
   const defaultVisibleCount = 3;
 
-  const visibleCompletedTasks = showAllCompleted
-    ? completedToday
-    : completedToday.slice(0, defaultVisibleCount);
+  const visibleCompletedTasks =
+    showAllCompleted
+      ? completedToday
+      : completedToday.slice(
+          0,
+          defaultVisibleCount
+        );
 
-  const hiddenCompletedCount = Math.max(
-    completedToday.length - defaultVisibleCount,
-    0
-  );
+  const hiddenCompletedCount =
+    Math.max(
+      completedToday.length -
+        defaultVisibleCount,
+      0
+    );
 
-  const formatCompletedTime = (completedAt?: string) => {
-    if (!completedAt) return "";
-    const date = new Date(completedAt);
-    if (Number.isNaN(date.getTime())) return "";
+  const formatCompletedTime = (
+    completedAt?: string
+  ) => {
+    if (!completedAt) {
+      return "";
+    }
 
-    return date.toLocaleTimeString(undefined, {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const date =
+      new Date(completedAt);
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return "";
+    }
+
+    return date.toLocaleTimeString(
+      undefined,
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
+  };
+
+  const openCompletedTask = (
+    task: any
+  ) => {
+    setSelectedTask(task);
+    setIsEditModalOpen(true);
   };
 
   const cardBorder = darkMode
@@ -9828,28 +9867,41 @@ function CompletedTodaySection({
           <div className="flex items-center gap-2.5">
             <h2
               className={`text-[18px] font-[740] leading-none tracking-[-0.035em] ${
-                darkMode ? "text-white" : "text-[#17191F]"
+                darkMode
+                  ? "text-white"
+                  : "text-[#17191F]"
               }`}
             >
               Completed today
             </h2>
+
             <span
               className={`flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[10px] font-[700] ${
-                darkMode ? "bg-white/[0.07] text-white/58" : "bg-[#F0F1F4] text-[#59606C]"
+                darkMode
+                  ? "bg-white/[0.07] text-white/58"
+                  : "bg-[#F0F1F4] text-[#59606C]"
               }`}
             >
               {completedToday.length}
             </span>
           </div>
-          <p className={`mt-1.5 text-[11px] font-[500] ${mutedText}`}>
-            Well done! Keep the momentum going.
+
+          <p
+            className={`mt-1.5 text-[11px] font-[500] ${mutedText}`}
+          >
+            Well done! Keep the momentum
+            going.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={archiveCompletedToday}
-          disabled={completedToday.length === 0}
+          onClick={
+            archiveCompletedToday
+          }
+          disabled={
+            completedToday.length === 0
+          }
           className={`h-9 shrink-0 px-2 text-[11px] font-[650] transition ${
             completedToday.length === 0
               ? "cursor-not-allowed opacity-30"
@@ -9863,87 +9915,159 @@ function CompletedTodaySection({
       </div>
 
       {completedToday.length === 0 ? (
-        <div className={`px-4 py-8 text-[12px] font-[500] ${mutedText}`}>
+        <div
+          className={`px-4 py-8 text-[12px] font-[500] ${mutedText}`}
+        >
           Nothing completed yet.
         </div>
       ) : (
         <div role="list">
-          <AnimatePresence initial={false}>
-            {visibleCompletedTasks.map((task: any) => {
-              const completedTime = formatCompletedTime(task.completedAt);
+          <AnimatePresence
+            initial={false}
+          >
+            {visibleCompletedTasks.map(
+              (task: any) => {
+                const completedTime =
+                  formatCompletedTime(
+                    task.completedAt
+                  );
 
-              return (
-                <motion.div
-                  key={task.id}
-                  role="listitem"
-                  layout="position"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className={`grid min-h-[48px] grid-cols-[28px_minmax(0,1fr)_auto_34px] items-center gap-2 border-b px-3 last:border-b-0 ${rowBorder}`}
-                >
-                  <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-emerald-500 text-white">
-                    <Check size={12} strokeWidth={2.3} />
-                  </span>
+                return (
+                  <motion.div
+                    key={task.id}
+                    role="listitem"
+                    layout="position"
+                    initial={{
+                      opacity: 0,
+                      y: 4,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      height: 0,
+                    }}
+                    className={`group/completed grid min-h-[48px] grid-cols-[28px_minmax(0,1fr)_auto_34px] items-center gap-2 border-b px-3 transition last:border-b-0 ${
+                      darkMode
+                        ? "hover:bg-white/[0.025]"
+                        : "hover:bg-[#FBFBFC]"
+                    } ${rowBorder}`}
+                  >
+                    <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-emerald-500 text-white">
+                      <Check
+                        size={12}
+                        strokeWidth={2.3}
+                      />
+                    </span>
 
-                  <div className="min-w-0 py-2">
-                    <p
-                      title={task.title}
-                      className={`truncate text-[12px] font-[550] line-through ${
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openCompletedTask(
+                          task
+                        )
+                      }
+                      title={`Edit ${task.title}`}
+                      className="min-w-0 py-2 text-left"
+                    >
+                      <p
+                        className={`truncate text-[12px] font-[550] line-through transition group-hover/completed:opacity-75 ${
+                          darkMode
+                            ? "text-white/55 decoration-white/30"
+                            : "text-[#5D626E] decoration-black/25"
+                        }`}
+                      >
+                        {task.title}
+                      </p>
+
+                      <p
+                        className={`mt-0.5 truncate text-[10px] font-[500] ${mutedText}`}
+                      >
+                        {task.category ||
+                          "No category"}
+                      </p>
+                    </button>
+
+                    <time
+                      dateTime={
+                        task.completedAt
+                      }
+                      className={`whitespace-nowrap text-[10px] font-[500] tabular-nums ${mutedText}`}
+                    >
+                      {completedTime}
+                    </time>
+
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+
+                        restoreCompletedTask(
+                          task.id
+                        );
+                      }}
+                      aria-label={`Restore ${task.title}`}
+                      title="Restore task"
+                      className={`flex h-8 w-8 items-center justify-center transition ${
                         darkMode
-                          ? "text-white/55 decoration-white/30"
-                          : "text-[#5D626E] decoration-black/25"
+                          ? "text-white/38 hover:text-white"
+                          : "text-[#747986] hover:text-[#252933]"
                       }`}
                     >
-                      {task.title}
-                    </p>
-                    <p className={`mt-0.5 truncate text-[10px] font-[500] ${mutedText}`}>
-                      {task.category || "No category"}
-                    </p>
-                  </div>
-
-                  <time
-                    dateTime={task.completedAt}
-                    className={`whitespace-nowrap text-[10px] font-[500] tabular-nums ${mutedText}`}
-                  >
-                    {completedTime}
-                  </time>
-
-                  <button
-                    type="button"
-                    onClick={() => restoreCompletedTask(task.id)}
-                    aria-label={`Restore ${task.title}`}
-                    title="Restore task"
-                    className={`flex h-8 w-8 items-center justify-center transition ${
-                      darkMode ? "text-white/38 hover:text-white" : "text-[#747986] hover:text-[#252933]"
-                    }`}
-                  >
-                    <RotateCcw size={14} strokeWidth={1.7} />
-                  </button>
-                </motion.div>
-              );
-            })}
+                      <RotateCcw
+                        size={14}
+                        strokeWidth={1.7}
+                      />
+                    </button>
+                  </motion.div>
+                );
+              }
+            )}
           </AnimatePresence>
         </div>
       )}
 
-      {(hiddenCompletedCount > 0 || completedToday.length > 0) && (
-        <div className={`flex min-h-[42px] items-center justify-center border-t px-3 ${rowBorder}`}>
+      {(hiddenCompletedCount > 0 ||
+        completedToday.length > 0) && (
+        <div
+          className={`flex min-h-[42px] items-center justify-center border-t px-3 ${rowBorder}`}
+        >
           {hiddenCompletedCount > 0 ? (
             <button
               type="button"
-              onClick={() => setShowAllCompleted((previous) => !previous)}
+              onClick={() =>
+                setShowAllCompleted(
+                  (previous) =>
+                    !previous
+                )
+              }
               className={`inline-flex items-center gap-1.5 text-[11px] font-[600] ${mutedText}`}
             >
-              {showAllCompleted ? "Show less" : `Show ${hiddenCompletedCount} more`}
+              {showAllCompleted
+                ? "Show less"
+                : `Show ${hiddenCompletedCount} more`}
+
               <ChevronDown
                 size={12}
-                className={`transition ${showAllCompleted ? "rotate-180" : ""}`}
+                className={`transition ${
+                  showAllCompleted
+                    ? "rotate-180"
+                    : ""
+                }`}
               />
             </button>
           ) : (
-            <p className={`text-center text-[10.5px] font-[500] ${mutedText}`}>
-              You’ve completed {completedToday.length} task{completedToday.length === 1 ? "" : "s"} today. Amazing work! 💜
+            <p
+              className={`text-center text-[10.5px] font-[500] ${mutedText}`}
+            >
+              You’ve completed{" "}
+              {completedToday.length} task
+              {completedToday.length === 1
+                ? ""
+                : "s"}{" "}
+              today. Amazing work! 💜
             </p>
           )}
         </div>
@@ -18257,20 +18381,26 @@ className="mt-3 grid grid-cols-3 gap-2"
           </section>
 
           {completedToday.length > 0 && (
-            <CompletedTodaySection
-              sectionId="Momentuhm-mobile-completed-anchor"
-              completedToday={
-                completedToday
-              }
-              restoreCompletedTask={
-                restoreCompletedTask
-              }
-              archiveCompletedToday={
-                archiveCompletedToday
-              }
-              darkMode={darkMode}
-              border={border}
-            />
+          <CompletedTodaySection
+          sectionId="Momentuhm-mobile-completed-anchor"
+          completedToday={
+            completedToday
+          }
+          restoreCompletedTask={
+            restoreCompletedTask
+          }
+          archiveCompletedToday={
+            archiveCompletedToday
+          }
+          setSelectedTask={
+            setSelectedTask
+          }
+          setIsEditModalOpen={
+            setIsEditModalOpen
+          }
+          darkMode={darkMode}
+          border={border}
+        />
           )}
         </>
       ) : (
