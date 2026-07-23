@@ -4946,6 +4946,93 @@ boostCacheKey,
     anchorCompletedSectionSoon();
   };
 
+
+
+  /*
+ * Persist subtask changes immediately from the edit modal.
+ *
+ * This updates categories—the persisted source of truth—
+ * without saving the other unsaved task fields in the modal.
+ */
+  const updateTaskSubtasksImmediately = (
+    taskId: string,
+    nextSubtasks: Subtask[]
+  ) => {
+    let taskWasUpdated = false;
+  
+    setCategories(
+      (previousCategories) => {
+        const nextCategories =
+          previousCategories.map(
+            (category) => ({
+              ...category,
+  
+              tasks:
+                category.tasks.map(
+                  (task: any) => {
+                    if (
+                      task.id !== taskId
+                    ) {
+                      return task;
+                    }
+  
+                    taskWasUpdated = true;
+  
+                    return {
+                      ...task,
+  
+                      subtasks:
+                        nextSubtasks,
+                    };
+                  }
+                ),
+            })
+          );
+  
+        if (!taskWasUpdated) {
+          return previousCategories;
+        }
+  
+        markLocalChangesPending();
+  
+        return nextCategories;
+      }
+    );
+  
+    setCompletedToday(
+      (previousTasks) => {
+        let completedTaskWasUpdated =
+          false;
+  
+        const nextTasks =
+          previousTasks.map(
+            (task: any) => {
+              if (
+                task.id !== taskId
+              ) {
+                return task;
+              }
+  
+              completedTaskWasUpdated =
+                true;
+  
+              return {
+                ...task,
+  
+                subtasks:
+                  nextSubtasks,
+              };
+            }
+          );
+  
+        return completedTaskWasUpdated
+          ? nextTasks
+          : previousTasks;
+      }
+    );
+  };
+
+
    /* ------------------------------------------------ */
   /* Toggle Subtask */
   /* ------------------------------------------------ */
@@ -7558,12 +7645,15 @@ clipboardCandidate && (
 )}
 
 {isEditModalOpen && selectedTask && (
-  <EditTaskModal
-    key="edit-task"
-    selectedTask={selectedTask}
-    setSelectedTask={setSelectedTask}
-    setIsEditModalOpen={setIsEditModalOpen}
-    saveTaskChanges={saveTaskChanges}
+ <EditTaskModal
+ key="edit-task"
+ selectedTask={selectedTask}
+ setSelectedTask={setSelectedTask}
+ setIsEditModalOpen={setIsEditModalOpen}
+ saveTaskChanges={saveTaskChanges}
+ updateTaskSubtasksImmediately={
+   updateTaskSubtasksImmediately
+ }
     deleteTaskEverywhere={deleteTaskEverywhere}
     restoreCompletedTask={restoreCompletedTask}
     categories={categories}
@@ -22006,6 +22096,7 @@ function EditTaskModal({
   setSelectedTask,
   setIsEditModalOpen,
   saveTaskChanges,
+  updateTaskSubtasksImmediately,
   deleteTaskEverywhere,
   restoreCompletedTask,
   categories,
@@ -22138,96 +22229,171 @@ const toggleTaskFocus = () => {
       .filter(Boolean);
   };
   
-  const appendSubtasksToSelectedTask = (
-    titles: string[]
-  ) => {
-    if (titles.length === 0) return;
-  
-    setSelectedTask((currentTask: any) => ({
-      ...currentTask,
-      subtasks: [
-        ...getTaskSubtasks(currentTask),
-        ...titles.map((title) => ({
-          id: crypto.randomUUID(),
-          title,
-          completed: false,
-          createdAt: new Date().toISOString(),
-        })),
-      ],
-    }));
+  /*
+ * Update the modal immediately and also update categories.
+ *
+ * Updating categories triggers the existing database
+ * persistence effect, so subtasks no longer depend on
+ * the Save changes button.
+ */
+const persistSelectedTaskSubtasks = (
+  nextSubtasks: Subtask[]
+) => {
+  const nextTask = {
+    ...selectedTask,
+
+    subtasks:
+      nextSubtasks,
   };
-  
-  const addStepToSelectedTask = () => {
-    const titles = parseSubtaskList(
+
+  setSelectedTask(
+    nextTask
+  );
+
+  updateTaskSubtasksImmediately(
+    selectedTask.id,
+    nextSubtasks
+  );
+};
+
+const appendSubtasksToSelectedTask = (
+  titles: string[]
+) => {
+  const newSubtasks: Subtask[] =
+    titles.map((title) => ({
+      id:
+        crypto.randomUUID(),
+
+      title,
+
+      completed: false,
+
+      createdAt:
+        new Date().toISOString(),
+    }));
+
+  persistSelectedTaskSubtasks([
+    ...getTaskSubtasks(
+      selectedTask
+    ),
+
+    ...newSubtasks,
+  ]);
+};
+
+const addStepToSelectedTask = () => {
+  const titles =
+    parseSubtaskList(
       newStepTitle
     );
-  
-    if (titles.length === 0) return;
-  
-    appendSubtasksToSelectedTask(titles);
-    setNewStepTitle("");
-  };
 
-  const toggleSelectedStep = (stepId: string) => {
-    setSelectedTask({
-      ...selectedTask,
-      subtasks: getTaskSubtasks(selectedTask).map((step) =>
-        step.id === stepId
-          ? {
-              ...step,
-              completed: !step.completed,
-            }
-          : step
-      ),
-    });
-  };
+  if (
+    titles.length === 0
+  ) {
+    return;
+  }
 
-  const deleteSelectedStep = (stepId: string) => {
-    setSelectedTask({
-      ...selectedTask,
-      subtasks: getTaskSubtasks(selectedTask).filter(
-        (step) => step.id !== stepId
-      ),
-    });
+  appendSubtasksToSelectedTask(
+    titles
+  );
 
-    if (editingStepId === stepId) {
-      setEditingStepId(null);
-      setEditingStepTitle("");
-    }
-  };
+  setNewStepTitle("");
+};
 
-  const startEditingStep = (step: Subtask) => {
-    setEditingStepId(step.id);
-    setEditingStepTitle(step.title);
-  };
+const toggleSelectedStep = (
+  stepId: string
+) => {
+  const nextSubtasks =
+    getTaskSubtasks(
+      selectedTask
+    ).map((step) =>
+      step.id === stepId
+        ? {
+            ...step,
 
-  const cancelEditingStep = () => {
+            completed:
+              !step.completed,
+          }
+        : step
+    );
+
+  persistSelectedTaskSubtasks(
+    nextSubtasks
+  );
+};
+
+const deleteSelectedStep = (
+  stepId: string
+) => {
+  const nextSubtasks =
+    getTaskSubtasks(
+      selectedTask
+    ).filter(
+      (step) =>
+        step.id !== stepId
+    );
+
+  persistSelectedTaskSubtasks(
+    nextSubtasks
+  );
+
+  if (
+    editingStepId === stepId
+  ) {
     setEditingStepId(null);
     setEditingStepTitle("");
-  };
+  }
+};
 
-  const saveEditedStep = () => {
-    const title = editingStepTitle.trim();
+const startEditingStep = (
+  step: Subtask
+) => {
+  setEditingStepId(
+    step.id
+  );
 
-    if (!editingStepId || !title) {
-      cancelEditingStep();
-      return;
-    }
+  setEditingStepTitle(
+    step.title
+  );
+};
 
-    setSelectedTask({
-      ...selectedTask,
-      subtasks: getTaskSubtasks(selectedTask).map((step) =>
-        step.id === editingStepId
-          ? {
-              ...step,
-              title,
-            }
-          : step
-      ),
-    });
+const cancelEditingStep = () => {
+  setEditingStepId(null);
+  setEditingStepTitle("");
+};
 
+const saveEditedStep = () => {
+  const title =
+    editingStepTitle.trim();
+
+  if (
+    !editingStepId ||
+    !title
+  ) {
     cancelEditingStep();
-  };
+    return;
+  }
+
+  const nextSubtasks =
+    getTaskSubtasks(
+      selectedTask
+    ).map((step) =>
+      step.id ===
+      editingStepId
+        ? {
+            ...step,
+
+            title,
+          }
+        : step
+    );
+
+  persistSelectedTaskSubtasks(
+    nextSubtasks
+  );
+
+  cancelEditingStep();
+};
 
   const restoreTask = () => {
     restoreCompletedTask(selectedTask.id);
