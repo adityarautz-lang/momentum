@@ -321,20 +321,32 @@ const TUTORIAL_INSIGHT_METRICS = [
 
 const TUTORIAL_INSIGHT_CATEGORIES = [
   {
-    label: "Major Projects",
-    percentage: 42,
+    label: "Planning & Prioritization",
+    percentage: 26,
   },
   {
-    label: "Sustaining",
-    percentage: 27,
+    label: "Product / Project Delivery",
+    percentage: 22,
   },
   {
-    label: "Small Wins",
-    percentage: 19,
+    label: "Communication & Follow-ups",
+    percentage: 18,
   },
   {
-    label: "Self Growth",
-    percentage: 12,
+    label: "Meetings & Team Rituals",
+    percentage: 14,
+  },
+  {
+    label: "Admin & Reporting",
+    percentage: 9,
+  },
+  {
+    label: "Personal Admin",
+    percentage: 6,
+  },
+  {
+    label: "Finance & Compliance",
+    percentage: 5,
   },
 ];
 
