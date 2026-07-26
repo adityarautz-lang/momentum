@@ -486,25 +486,40 @@ const textStyles = {
 /* Initial Data */
 /* ------------------------------------------------ */
 
-const initialCategories: Category[] = [
+const createInitialCategories = (): Category[] => [
   {
     id: crypto.randomUUID(),
-    title: "Small Wins",
+    title: "Planning & Prioritization",
     tasks: [],
   },
   {
     id: crypto.randomUUID(),
-    title: "Major Projects",
+    title: "Meetings & Team Rituals",
     tasks: [],
   },
   {
     id: crypto.randomUUID(),
-    title: "Sustaining",
+    title: "Communication & Follow-ups",
     tasks: [],
   },
   {
     id: crypto.randomUUID(),
-    title: "Self Growth",
+    title: "Product / Project Delivery",
+    tasks: [],
+  },
+  {
+    id: crypto.randomUUID(),
+    title: "Admin & Reporting",
+    tasks: [],
+  },
+  {
+    id: crypto.randomUUID(),
+    title: "Personal Admin",
+    tasks: [],
+  },
+  {
+    id: crypto.randomUUID(),
+    title: "Finance & Compliance",
     tasks: [],
   },
 ];
@@ -1970,6 +1985,9 @@ useEffect(() => {
 /* ------------------------------------------------ */
 
 const resetToInitialState = () => {
+const initialCategories =
+  createInitialCategories();
+
 setCategories(initialCategories);
 setArchive([]);
 setInsightsHistory([]);
@@ -2024,7 +2042,7 @@ const loadedCategories =
   Array.isArray(parsed.categories) &&
   parsed.categories.length > 0
     ? parsed.categories
-    : initialCategories;
+    : createInitialCategories();
 
 const loadedArchive =
   Array.isArray(parsed.archive)
@@ -2970,8 +2988,8 @@ localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
             category:
               categories.find((category) => category.title === task.category)
                 ?.title ||
-              categories[0]?.title ||
-              "Small Wins",
+                categories[0]?.title ||
+                "Planning & Prioritization",
             notes: String(task.notes || ""),
             status: normalizeTaskStatus(task.status),
             reason: String(task.reason || ""),
@@ -6820,6 +6838,9 @@ return [
       }
       
       markLocalChangesPending();
+
+      const initialCategories =
+        createInitialCategories();
       
       setCategories(
         initialCategories
@@ -8164,6 +8185,7 @@ className="relative mb-5"
                 >
                   <button
                     type="button"
+                    data-testid="desktop-add-task-button"
                     onClick={(event) => {
                       event.stopPropagation();
                       if (newTask.trim()) {
@@ -8184,6 +8206,7 @@ className="relative mb-5"
 
                   <input
                     ref={taskInputRef}
+                    data-testid="desktop-task-input"
                     autoFocus
                     value={newTask}
                     onChange={(event) => setNewTask(event.target.value)}
@@ -9341,6 +9364,11 @@ function TaskListPanel({
                 )}
 
 <motion.div
+  data-testid="task-row"
+  data-task-id={task.id}
+  data-task-title={task.title}
+  data-task-completed={String(Boolean(task.completed))}
+  data-task-backlog={String(Boolean(task.isBacklog))}
   layout="position"
   initial={{ opacity: 0 }}
   animate={{ opacity: 1 }}
@@ -9373,6 +9401,9 @@ function TaskListPanel({
                 <div className="flex items-start justify-center pt-3">
   <button
     type="button"
+    data-testid="complete-task-button"
+    data-task-id={task.id}
+    data-task-title={task.title}
     onClick={(event) => toggleTaskById(task.id, event)}
     aria-label={`Complete ${task.title}`}
     className="group/check flex h-5 w-5 items-center justify-center"
@@ -9391,6 +9422,8 @@ function TaskListPanel({
                   <div className="flex min-w-0 flex-col justify-start px-2 py-3">
                   <button
   type="button"
+  data-testid="task-title"
+  data-task-id={task.id}
   onClick={() => openTask(task)}
   title={task.title}
   className={`block w-full text-left text-[13px] font-[600] leading-5 tracking-[-0.015em] transition hover:opacity-70 ${
@@ -9947,6 +9980,7 @@ function CompletedTodaySection({
   return (
     <section
       id={sectionId}
+      data-testid="completed-today-section"
       aria-label="Completed today"
       className={`mt-4 w-full scroll-mt-8 overflow-hidden rounded-[12px] border ${cardBorder}`}
     >
@@ -10026,6 +10060,9 @@ function CompletedTodaySection({
                   <motion.div
                     key={task.id}
                     role="listitem"
+                    data-testid="completed-task-row"
+                    data-task-id={task.id}
+                    data-task-title={task.title}
                     layout="position"
                     initial={{
                       opacity: 0,
@@ -10054,6 +10091,8 @@ function CompletedTodaySection({
 
                     <button
                       type="button"
+                      data-testid="completed-task-title"
+                      data-task-id={task.id}
                       onClick={() =>
                         openCompletedTask(
                           task
@@ -10091,6 +10130,8 @@ function CompletedTodaySection({
 
                     <button
                       type="button"
+                      data-testid="restore-task-button"
+                      data-task-id={task.id}
                       onClick={(event) => {
                         event.stopPropagation();
 
@@ -17896,6 +17937,7 @@ newTask,
   <header className="relative pb-3 pt-1 text-center">
 <button
   type="button"
+  data-testid="refresh-status-button"
   onClick={() => {
     void refreshLatestStatus();
   }}
@@ -18243,6 +18285,10 @@ className="mt-3 grid grid-cols-3 gap-2"
                               return (
                                 <motion.div
                                   key={task.id}
+                                  data-testid="mobile-task-row"
+                                  data-task-id={task.id}
+                                  data-task-title={task.title}
+                                  data-task-completed={String(Boolean(task.completed))}
                                   layout="position"
                                   initial={{
                                     opacity: 0,
@@ -18263,6 +18309,9 @@ className="mt-3 grid grid-cols-3 gap-2"
                                 >
                                   <button
                                     type="button"
+                                    data-testid="mobile-complete-task-button"
+                                    data-task-id={task.id}
+                                    data-task-title={task.title}
                                     onClick={(
                                       event
                                     ) =>
@@ -18404,6 +18453,7 @@ className="mt-3 grid grid-cols-3 gap-2"
                   className={`border-t p-3 ${dividerClass}`}
                 >
                   <input
+                    data-testid="mobile-task-input"
                     autoFocus
                     value={newTask}
                     onChange={(event) =>
@@ -18453,6 +18503,7 @@ className="mt-3 grid grid-cols-3 gap-2"
 
                     <button
                       type="submit"
+                      data-testid="mobile-add-task-button"
                       disabled={
                         !newTask.trim()
                       }
@@ -22445,6 +22496,7 @@ const saveEditedStep = () => {
   role="dialog"
   aria-modal="true"
   aria-labelledby="edit-task-modal-title"
+  data-testid="edit-task-modal"
   initial={{
     opacity: 0,
     x: "0%",
@@ -22561,6 +22613,7 @@ const saveEditedStep = () => {
     <>
       <button
         type="button"
+        data-testid="move-task-to-backlog-button"
         onClick={moveTaskToBacklog}
         disabled={Boolean(
           selectedTask.isBacklog
@@ -22587,6 +22640,7 @@ const saveEditedStep = () => {
 
       <button
         type="button"
+        data-testid="mark-task-complete-button"
         onClick={() =>
           saveTaskChanges({
             ...selectedTask,
@@ -22619,6 +22673,7 @@ const saveEditedStep = () => {
 
   <button
     type="button"
+    data-testid="close-task-edit-button"
     onClick={closeWithoutSaving}
     aria-label="Close edit task"
     title="Close"
@@ -22653,6 +22708,7 @@ const saveEditedStep = () => {
 
                   <input
                     id="task-title"
+                    data-testid="task-title-input"
                     value={selectedTask.title || ""}
                     onChange={(event) =>
                       setSelectedTask({
@@ -22687,6 +22743,7 @@ const saveEditedStep = () => {
                           <button
                             key={priority}
                             type="button"
+                            data-testid={`task-priority-${priority.toLowerCase()}`}
                             aria-pressed={isActive}
                             onClick={() =>
                               setSelectedTask({
@@ -22739,6 +22796,7 @@ return (
   <button
     key={status}
     type="button"
+    data-testid={`task-status-${status.toLowerCase().replace(/\s+/g, "-")}`}
     aria-pressed={isActive}
     onClick={() =>
       setSelectedTask({
@@ -22816,6 +22874,7 @@ return (
 
   <button
     type="button"
+    data-testid="toggle-task-focus-button"
     onClick={toggleTaskFocus}
     disabled={isFocusStackFull}
     aria-pressed={isTaskInFocus}
@@ -22889,6 +22948,7 @@ className={`flex items-center justify-between gap-4 rounded-[7px] border px-3 py
 
 <button
   type="button"
+  data-testid="toggle-task-pin-button"
   onClick={() =>
     setSelectedTask({
       ...selectedTask,
@@ -22921,6 +22981,7 @@ className={`flex items-center justify-between gap-4 rounded-[7px] border px-3 py
 
                     <input
                       id="task-due-date"
+                      data-testid="task-due-date-input"
                       type="date"
                       value={
                         selectedTask.dueDate ||
@@ -22958,6 +23019,7 @@ className={`flex items-center justify-between gap-4 rounded-[7px] border px-3 py
                     <div className="relative">
                     <select
 id="task-category"
+data-testid="task-category-select"
 value={selectedTask.category || "-"}
 onChange={(event) =>
   setSelectedTask({
@@ -23017,6 +23079,7 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
 
                   <textarea
                     id="task-why"
+                    data-testid="task-why-textarea"
                     value={selectedTask.whyThisMatters || ""}
                     onChange={(event) =>
                       setSelectedTask({
@@ -23040,6 +23103,7 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
 
                   <textarea
                     id="task-notes"
+                    data-testid="task-notes-textarea"
                     value={selectedTask.notes || ""}
                     onChange={(event) =>
                       setSelectedTask({
@@ -23193,6 +23257,7 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
               {/* Add subtask */}
               <div className="mt-5 grid grid-cols-[minmax(0,1fr)_72px] gap-2">
               <input
+data-testid="subtask-input"
 aria-label="New subtask"
 value={newStepTitle}
 onChange={(event) =>
@@ -23235,6 +23300,7 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
 
                 <button
                   type="button"
+                  data-testid="add-subtask-button"
                   onClick={addStepToSelectedTask}
                   disabled={!newStepTitle.trim()}
                   className={`h-11 rounded-[7px] border text-[12px] font-[700] transition ${
@@ -23292,10 +23358,15 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
                     (step: Subtask, index: number) => (
                       <div
                         key={step.id}
+                        data-testid="subtask-row"
+                        data-subtask-id={step.id}
+                        data-subtask-title={step.title}
                         className={`grid min-h-[54px] grid-cols-[36px_minmax(0,1fr)_34px_34px] items-center gap-2 border-b px-2 last:border-b-0 ${dividerClass}`}
                       >
                         <button
                           type="button"
+                          data-testid="toggle-subtask-button"
+                          data-subtask-id={step.id}
                           onClick={() =>
                             toggleSelectedStep(step.id)
                           }
@@ -23337,6 +23408,8 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
                         {editingStepId === step.id ? (
                           <input
                             autoFocus
+                            data-testid="edit-subtask-input"
+                            data-subtask-id={step.id}
                             value={editingStepTitle}
                             onChange={(event) =>
                               setEditingStepTitle(
@@ -23360,6 +23433,8 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
                         ) : (
                           <button
                             type="button"
+                            data-testid="subtask-title-button"
+                            data-subtask-id={step.id}
                             onClick={() =>
                               startEditingStep(step)
                             }
@@ -23379,6 +23454,8 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
 
                         <button
                           type="button"
+                          data-testid="edit-subtask-button"
+                          data-subtask-id={step.id}
                           onClick={() =>
                             startEditingStep(step)
                           }
@@ -23398,6 +23475,8 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
 
                         <button
                           type="button"
+                          data-testid="delete-subtask-button"
+                          data-subtask-id={step.id}
                           onClick={() =>
                             deleteSelectedStep(step.id)
                           }
@@ -23444,6 +23523,7 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
             {selectedTask.completed && (
               <button
                 type="button"
+                data-testid="restore-task-from-modal-button"
                 onClick={restoreTask}
                 className={`flex h-10 items-center gap-2 text-[12px] font-[650] transition ${
                   darkMode
@@ -23458,6 +23538,7 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
 
             <button
               type="button"
+              data-testid="delete-task-button"
               onClick={deleteTask}
               className={`flex h-10 items-center gap-2 text-[12px] font-[650] transition ${
                 darkMode
@@ -23473,6 +23554,7 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
           <div className="flex items-center justify-end gap-3">
             <button
               type="button"
+              data-testid="cancel-task-edit-button"
               onClick={closeWithoutSaving}
               className={`h-10 rounded-[7px] px-4 text-[12px] font-[650] transition ${
                 darkMode
@@ -23485,6 +23567,7 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
 
             <button
               type="button"
+              data-testid="save-task-changes-button"
               onClick={saveAndClose}
               disabled={!selectedTask?.title?.trim()}
               className={`h-10 min-w-[76px] rounded-[7px] px-5 text-[12px] font-[700] transition ${
