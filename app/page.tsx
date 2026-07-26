@@ -1338,8 +1338,19 @@ function FollowUpTag({ darkMode }: { darkMode: boolean }) {
 
 export default function Home() {
   const { user, isLoaded: isUserLoaded } = useUser();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [archive, setArchive] = useState<any[]>([]);
+  const [categories, setCategories] =
+  useState<Category[]>([]);
+
+const categoriesRef =
+  useRef<Category[]>([]);
+
+useEffect(() => {
+  categoriesRef.current =
+    categories;
+}, [categories]);
+
+const [archive, setArchive] =
+  useState<any[]>([]);
 
 /*
 * Insights history is intentionally separate from Archive.
@@ -3333,13 +3344,14 @@ boostCacheKey,
       const suggestedAt =
         new Date().toISOString();
   
-      const originalTask =
-        categories
+        const originalTask =
+        categoriesRef.current
           .flatMap((category) =>
             category.tasks.map(
               (task: any) => ({
                 ...task,
-                category: category.title,
+                category:
+                  category.title,
               })
             )
           )
@@ -3403,11 +3415,12 @@ boostCacheKey,
       }
   
       const taskStillExists =
-      categories.some((category) =>
-        category.tasks.some(
-          (task: any) =>
-            task.id === taskId
-        )
+      categoriesRef.current.some(
+        (category) =>
+          category.tasks.some(
+            (task: any) =>
+              task.id === taskId
+          )
       );
     
     if (!taskStillExists) {
@@ -3505,11 +3518,12 @@ boostCacheKey,
       );
   
       const currentTaskCategory =
-      categories.find((category) =>
-        category.tasks.some(
-          (task: any) =>
-            task.id === taskId
-        )
+      categoriesRef.current.find(
+        (category) =>
+          category.tasks.some(
+            (task: any) =>
+              task.id === taskId
+          )
       )?.title;
     
     if (
@@ -3906,8 +3920,8 @@ boostCacheKey,
           whySuggestions[0] ||
           "This task may support meaningful progress on active work.";
   
-        const taskStillExists =
-          categories.some(
+          const taskStillExists =
+          categoriesRef.current.some(
             (category) =>
               category.tasks.some(
                 (task: any) =>
@@ -3972,13 +3986,13 @@ boostCacheKey,
       console.error(error);
   
       const taskStillExists =
-        categories.some(
-          (category) =>
-            category.tasks.some(
-              (task: any) =>
-                task.id === taskId
-            )
-        );
+      categoriesRef.current.some(
+        (category) =>
+          category.tasks.some(
+            (task: any) =>
+              task.id === taskId
+          )
+      );
 
       if (!taskStillExists) {
         return;
