@@ -4567,6 +4567,203 @@ boostCacheKey,
       anchorTaskListSoon();
     };
   
+
+
+    const addSelectedClipboardTasksAsSubtasks = (
+      parentTaskName: string
+    ) => {
+      const title =
+        parentTaskName.trim();
+    
+      if (!title) {
+        setClipboardExtractError(
+          "Enter a name for the parent task."
+        );
+    
+        return;
+      }
+    
+      const selectedTasks =
+        clipboardExtractedTasks.filter(
+          (task) => task.selected
+        );
+    
+      if (selectedTasks.length === 0) {
+        setClipboardExtractError(
+          "Select at least one task to use as a subtask."
+        );
+    
+        return;
+      }
+    
+      const visibleCategories =
+        categories.filter(
+          (category) =>
+            category.title !== "-"
+        );
+    
+      const categoryTitle =
+        visibleCategories.some(
+          (category) =>
+            category.title ===
+            selectedCategory
+        )
+          ? selectedCategory
+          : visibleCategories[0]?.title;
+    
+      if (!categoryTitle) {
+        setClipboardExtractError(
+          "Create a category before adding this task."
+        );
+    
+        return;
+      }
+    
+      const priorityRank: Record<
+        Priority,
+        number
+      > = {
+        Low: 1,
+        Medium: 2,
+        High: 3,
+      };
+    
+      const parentPriority =
+        selectedTasks.reduce<Priority>(
+          (
+            highestPriority,
+            task
+          ) =>
+            priorityRank[task.priority] >
+            priorityRank[highestPriority]
+              ? task.priority
+              : highestPriority,
+          "Low"
+        );
+    
+      const suggestedDates =
+        selectedTasks
+          .map(
+            (task) =>
+              task.suggestedDueDate
+          )
+          .filter(
+            (
+              date
+            ): date is string =>
+              Boolean(date)
+          )
+          .sort();
+    
+      const parentTaskId =
+        crypto.randomUUID();
+    
+      const createdAt =
+        new Date().toISOString();
+    
+      const parentTask = {
+        id: parentTaskId,
+    
+        title,
+    
+        isBacklog: false,
+    
+        whyThisMatters:
+          `This task groups ${selectedTasks.length} related actions captured from the clipboard.`,
+    
+        whySuggestions: [
+          `This task groups ${selectedTasks.length} related actions captured from the clipboard.`,
+        ],
+    
+        selectedWhyIndex: 0,
+    
+        priority:
+          parentPriority,
+    
+        dueDate:
+          undefined,
+    
+        suggestedDueDate:
+          suggestedDates[0] ||
+          undefined,
+    
+        notes:
+          "Created from Clipboard Assist.",
+    
+        status:
+          "Not started" as TaskStatus,
+    
+        tags: [],
+    
+        subtasks:
+          selectedTasks.map(
+            (task): Subtask => ({
+              id:
+                crypto.randomUUID(),
+    
+              title:
+                task.title,
+    
+              completed:
+                false,
+    
+              dueDate:
+                task.suggestedDueDate ||
+                undefined,
+    
+              createdAt,
+            })
+          ),
+    
+        aiReason:
+          "Related clipboard actions were grouped under one task.",
+    
+        aiConfidence: 1,
+    
+        completed: false,
+    
+        createdAt,
+      };
+    
+      markLocalChangesPending();
+    
+      setCategories(
+        (
+          previousCategories
+        ) =>
+          previousCategories.map(
+            (category) =>
+              category.title ===
+              categoryTitle
+                ? {
+                    ...category,
+    
+                    tasks: [
+                      parentTask,
+                      ...category.tasks,
+                    ],
+                  }
+                : category
+          )
+      );
+    
+      markTaskAsNew(
+        parentTaskId
+      );
+    
+      setArchiveToast(
+        `${selectedTasks.length} subtasks added under "${title}"`
+      );
+    
+      window.setTimeout(() => {
+        setArchiveToast("");
+      }, 3000);
+    
+      dismissClipboardCandidate();
+      setSelectedView("today");
+      anchorTaskListSoon();
+    };
+
   const toggleExtractedTask = (
     taskId: string
   ) => {
@@ -7639,19 +7836,24 @@ CLIPBOARD_ASSIST_ENABLED_FOR_TESTING &&
 enableClipboardAssist &&
 showClipboardPrompt &&
 clipboardCandidate && (
-    <ClipboardAssistPrompt
-      key="clipboard-assist"
-      text={clipboardCandidate}
-      themeColor={themeColor}
-      darkMode={darkMode}
-      loading={clipboardExtractLoading}
-      error={clipboardExtractError}
-      extractedTasks={clipboardExtractedTasks}
-      onClose={dismissClipboardCandidate}
-      onAddAsIs={addClipboardCandidateAsTask}
-      onToggleTask={toggleClipboardExtractedTask}
-      onAddSelected={addSelectedClipboardExtractedTasks}
-    />
+  <ClipboardAssistPrompt
+  key="clipboard-assist"
+  text={clipboardCandidate}
+  themeColor={themeColor}
+  darkMode={darkMode}
+  loading={clipboardExtractLoading}
+  error={clipboardExtractError}
+  extractedTasks={clipboardExtractedTasks}
+  onClose={dismissClipboardCandidate}
+  onAddAsIs={addClipboardCandidateAsTask}
+  onToggleTask={toggleClipboardExtractedTask}
+  onAddSelected={
+    addSelectedClipboardExtractedTasks
+  }
+  onAddAsSubtasks={
+    addSelectedClipboardTasksAsSubtasks
+  }
+/>
   )}
 
 {isExtractModalOpen && (
@@ -20606,7 +20808,18 @@ function ClipboardAssistPrompt({
   onAddAsIs,
   onToggleTask,
   onAddSelected,
+  onAddAsSubtasks,
 }: any) {
+  const [
+    parentTaskName,
+    setParentTaskName,
+  ] = useState("");
+
+  const [
+    showSubtaskComposer,
+    setShowSubtaskComposer,
+  ] = useState(false);
+
   const preview = normalizeClipboardText(text);
 
   const clippedPreview =
@@ -21022,67 +21235,222 @@ function ClipboardAssistPrompt({
         )}
 
         {/* Footer */}
-        <footer
-          className={`flex shrink-0 flex-col gap-3 border-t px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6 ${rowBorder} ${secondarySurface}`}
-        >
-          <p className={`text-[11px] font-[500] ${mutedText}`}>
-            {loading
-              ? "You can add the full copied text immediately."
-              : hasTasks
-              ? `${selectedCount} of ${extractedTasks.length} selected`
-              : "Save the full content as one task."}
-          </p>
-
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className={`h-9 rounded-[8px] border px-3.5 text-[11px] font-[650] transition ${
-                darkMode
-                  ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
-                  : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
-              }`}
+       
+       {/* Footer */}
+<footer
+  className={`shrink-0 border-t ${rowBorder} ${secondarySurface}`}
+>
+  {hasTasks &&
+    showSubtaskComposer && (
+      <div
+        className={`border-b px-5 py-3.5 sm:px-6 ${rowBorder}`}
+      >
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <label
+              htmlFor="clipboard-parent-task-name"
+              className={`mb-1.5 block text-[10px] font-[700] uppercase tracking-[0.08em] ${mutedText}`}
             >
-              Dismiss
-            </button>
+              Parent task name
+            </label>
 
-            <button
-              type="button"
-              onClick={onAddAsIs}
-              className={`h-9 rounded-[8px] border px-3.5 text-[11px] font-[650] transition ${
+            <input
+              id="clipboard-parent-task-name"
+              autoFocus
+              value={
+                parentTaskName
+              }
+              onChange={(
+                event
+              ) => {
+                setParentTaskName(
+                  event.target.value
+                );
+              }}
+              onKeyDown={(
+                event
+              ) => {
+                if (
+                  event.key ===
+                    "Enter" &&
+                  parentTaskName.trim() &&
+                  selectedCount > 0
+                ) {
+                  event.preventDefault();
+
+                  onAddAsSubtasks(
+                    parentTaskName
+                  );
+                }
+
+                if (
+                  event.key ===
+                  "Escape"
+                ) {
+                  event.preventDefault();
+
+                  setShowSubtaskComposer(
+                    false
+                  );
+                }
+              }}
+              placeholder="For example: Prepare for All Hands"
+              className={`h-10 w-full rounded-[8px] border px-3 text-[12px] font-[550] outline-none transition ${
                 darkMode
-                  ? "border-white/[0.12] bg-white/[0.05] text-white/72 hover:bg-white/[0.08] hover:text-white"
-                  : "border-[#CFCFC9] bg-white text-[#353A45] hover:bg-[#F4F5F7]"
+                  ? "border-white/[0.14] bg-white/[0.04] text-white placeholder:text-white/30 focus:border-white/[0.30]"
+                  : "border-[#C9CBD1] bg-white text-[#252933] placeholder:text-[#80868B] focus:border-[#8F939C]"
               }`}
-            >
-              Add copied text
-            </button>
-
-            {hasTasks && (
-              <button
-                type="button"
-                onClick={onAddSelected}
-                disabled={selectedCount === 0}
-                className={`inline-flex h-9 items-center justify-center gap-2 rounded-[8px] px-3.5 text-[11px] font-[700] transition ${
-                  selectedCount === 0
-                    ? "cursor-not-allowed opacity-30"
-                    : darkMode
-                    ? "bg-white text-[#181818] hover:bg-white/90"
-                    : "bg-[#181818] text-white hover:bg-[#2A2A2A]"
-                }`}
-              >
-                <Plus
-                  size={13}
-                  strokeWidth={2}
-                />
-                Add selected
-                <span className="opacity-55">
-                  ({selectedCount})
-                </span>
-              </button>
-            )}
+            />
           </div>
-        </footer>
+
+          <button
+            type="button"
+            onClick={() =>
+              onAddAsSubtasks(
+                parentTaskName
+              )
+            }
+            disabled={
+              !parentTaskName.trim() ||
+              selectedCount === 0
+            }
+            className={`mt-auto inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[8px] px-3.5 text-[11px] font-[700] transition ${
+              !parentTaskName.trim() ||
+              selectedCount === 0
+                ? "cursor-not-allowed opacity-30"
+                : darkMode
+                ? "bg-white text-[#181818] hover:bg-white/90"
+                : "bg-[#181818] text-white hover:bg-[#2A2A2A]"
+            }`}
+          >
+            <ListChecks
+              size={14}
+              strokeWidth={1.9}
+            />
+
+            Create with subtasks
+
+            <span className="opacity-55">
+              ({selectedCount})
+            </span>
+          </button>
+        </div>
+
+        <p
+          className={`mt-2 text-[10px] font-[500] ${mutedText}`}
+        >
+          The selected items will become
+          subtasks instead of separate
+          tasks.
+        </p>
+      </div>
+    )}
+
+  <div className="flex flex-col gap-3 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <p
+      className={`text-[11px] font-[500] ${mutedText}`}
+    >
+      {loading
+        ? "You can add the full copied text immediately."
+        : hasTasks
+        ? `${selectedCount} of ${extractedTasks.length} selected`
+        : "Save the full content as one task."}
+    </p>
+
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <button
+        type="button"
+        onClick={onClose}
+        className={`h-9 rounded-[8px] border px-3.5 text-[11px] font-[650] transition ${
+          darkMode
+            ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
+            : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+        }`}
+      >
+        Dismiss
+      </button>
+
+      <button
+        type="button"
+        onClick={onAddAsIs}
+        className={`h-9 rounded-[8px] border px-3.5 text-[11px] font-[650] transition ${
+          darkMode
+            ? "border-white/[0.12] bg-white/[0.05] text-white/72 hover:bg-white/[0.08] hover:text-white"
+            : "border-[#CFCFC9] bg-white text-[#353A45] hover:bg-[#F4F5F7]"
+        }`}
+      >
+        Add copied text
+      </button>
+
+      {hasTasks && (
+        <>
+          <button
+            type="button"
+            onClick={() =>
+              setShowSubtaskComposer(
+                (previous) =>
+                  !previous
+              )
+            }
+            disabled={
+              selectedCount === 0
+            }
+            aria-expanded={
+              showSubtaskComposer
+            }
+            className={`inline-flex h-9 items-center justify-center gap-2 rounded-[8px] border px-3.5 text-[11px] font-[700] transition ${
+              selectedCount === 0
+                ? "cursor-not-allowed opacity-30"
+                : showSubtaskComposer
+                ? darkMode
+                  ? "border-violet-300/25 bg-violet-300/10 text-violet-200"
+                  : "border-violet-200 bg-violet-50 text-violet-700"
+                : darkMode
+                ? "border-white/[0.12] text-white/68 hover:bg-white/[0.06]"
+                : "border-[#CFCFC9] bg-white text-[#353A45] hover:bg-[#F4F5F7]"
+            }`}
+          >
+            <ListChecks
+              size={13}
+              strokeWidth={1.9}
+            />
+
+            Group as subtasks
+          </button>
+
+          <button
+            type="button"
+            onClick={
+              onAddSelected
+            }
+            disabled={
+              selectedCount === 0
+            }
+            className={`inline-flex h-9 items-center justify-center gap-2 rounded-[8px] px-3.5 text-[11px] font-[700] transition ${
+              selectedCount === 0
+                ? "cursor-not-allowed opacity-30"
+                : darkMode
+                ? "bg-white text-[#181818] hover:bg-white/90"
+                : "bg-[#181818] text-white hover:bg-[#2A2A2A]"
+            }`}
+          >
+            <Plus
+              size={13}
+              strokeWidth={2}
+            />
+
+            Add separately
+
+            <span className="opacity-55">
+              ({selectedCount})
+            </span>
+          </button>
+        </>
+      )}
+    </div>
+  </div>
+</footer>
+
       </motion.section>
     </motion.div>
   );
