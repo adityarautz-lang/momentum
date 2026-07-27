@@ -2061,10 +2061,48 @@ const parsed: any =
 skipNextPersistRef.current =
   true;
 
-const loadedCategories =
+  const loadedCategories =
   Array.isArray(parsed.categories) &&
   parsed.categories.length > 0
-    ? parsed.categories
+    ? parsed.categories.map(
+        (category: any) => ({
+          ...category,
+
+          tasks: Array.isArray(
+            category.tasks
+          )
+            ? category.tasks.map(
+                (task: any) => {
+                  const hasTemporaryWhyText =
+                    String(
+                      task.whyThisMatters || ""
+                    ).trim() ===
+                    "Momentuhm is finding why this matters...";
+
+                  const hasTemporaryAiReason =
+                    String(
+                      task.aiReason || ""
+                    ).trim() ===
+                    "Momentuhm is finding why this matters...";
+
+                  return {
+                    ...task,
+
+                    whyThisMatters:
+                      hasTemporaryWhyText
+                        ? ""
+                        : task.whyThisMatters,
+
+                    aiReason:
+                      hasTemporaryAiReason
+                        ? ""
+                        : task.aiReason,
+                  };
+                }
+              )
+            : [],
+        })
+      )
     : createInitialCategories();
 
 const loadedArchive =
@@ -3831,9 +3869,8 @@ boostCacheKey,
     const taskId =
       crypto.randomUUID();
   
-    const initialWhy =
-      manualWhy ||
-      "Momentuhm is finding why this matters...";
+      const initialWhy =
+      manualWhy || "";
   
     const taskToAdd = {
       id: taskId,
