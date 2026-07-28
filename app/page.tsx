@@ -9617,16 +9617,19 @@ function TaskListPanel({
 
             return (
               <div key={task.id} className="contents">
-                {shouldShowGroupHeader && (
-                  <div
-                    className={`col-span-6 flex min-h-[34px] items-center gap-2 border-b px-3 text-[11px] font-[700] ${rowBorder} ${
-                      darkMode ? "bg-white/[0.035] text-white/62" : "bg-[#F4F5F7] text-[#565C68]"
-                    }`}
-                  >
-                    <span>{groupMeta.title}</span>
-                    <span className="opacity-45">{groupCounts[groupMeta.key] || 0}</span>
-                  </div>
-                )}
+  {shouldShowGroupHeader && (
+    <div
+      className={`col-span-6 flex min-h-[34px] items-center gap-2 border-b px-3 text-[11px] font-[700] ${rowBorder} ${
+        darkMode
+          ? "bg-white/[0.035] text-white"
+          : "bg-[#F4F5F7] text-black"
+      }`}
+    >
+      <span>{groupMeta.title}</span>
+      <span>{groupCounts[groupMeta.key] || 0}</span>
+    </div>
+  )}
+            
 
 <motion.div
   data-testid="task-row"
