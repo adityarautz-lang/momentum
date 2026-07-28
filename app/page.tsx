@@ -8226,6 +8226,25 @@ clipboardCandidate && (
       box-shadow: none;
     }
   }
+
+  #task-due-date {
+  display: flex;
+  align-items: center;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+#task-due-date::-webkit-date-and-time-value {
+  display: flex;
+  height: 100%;
+  min-height: 100%;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
 `}</style>
 
 
@@ -23938,7 +23957,7 @@ className={`flex items-center justify-between gap-4 rounded-[7px] border px-3 py
         : "light",
       textAlign: "left",
     }}
-    className={`block h-full w-full min-w-0 border-0 bg-transparent px-3 py-0 text-left text-[12px] font-[650] leading-normal outline-none ${
+    className={`block h-full w-full min-w-0 border-0 bg-transparent px-3 py-0 text-left text-[12px] font-[650] leading-none outline-none ${
       darkMode
         ? "text-white"
         : "text-[#181818]"
