@@ -23318,7 +23318,7 @@ const saveEditedStep = () => {
     ease: [0.22, 1, 0.36, 1],
   }}
   onClick={closeWithoutSaving}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/35 p-3 backdrop-blur-[2px] sm:p-6"
+      className="fixed inset-0 z-[200] flex h-[100dvh] max-h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-black/35 p-0 backdrop-blur-[2px] sm:items-center sm:p-6"
     >
     <motion.div
   role="dialog"
@@ -23408,7 +23408,7 @@ const saveEditedStep = () => {
     transformOrigin: "50% 100%",
   }}
   onClick={(event) => event.stopPropagation()}
-        className={`will-change-[transform,clip-path,filter] flex max-h-[92vh] w-full max-w-[1120px] flex-col overflow-hidden rounded-[10px] border shadow-[0_24px_80px_rgba(0,0,0,0.20)] ${
+  className={`will-change-[transform,clip-path,filter] flex h-[100dvh] max-h-[100dvh] w-full max-w-[1120px] flex-col overflow-hidden rounded-none border shadow-[0_24px_80px_rgba(0,0,0,0.20)] sm:h-auto sm:max-h-[92vh] sm:rounded-[10px] ${
           darkMode
             ? "border-white/[0.14] bg-[#151515] text-white"
             : "border-[#CFCFCA] bg-[#FAFAF8] text-[#181818]"
@@ -23438,7 +23438,7 @@ const saveEditedStep = () => {
 
           <div className="flex shrink-0 items-center gap-3">
   {!selectedTask.completed && (
-    <>
+    <div className="hidden items-center gap-3 sm:flex">
       <button
         type="button"
         data-testid="move-task-to-backlog-button"
@@ -23495,8 +23495,8 @@ const saveEditedStep = () => {
         />
 
         Mark this complete
-      </button>
-    </>
+        </button>
+    </div>
   )}
 
   <button
@@ -23520,7 +23520,7 @@ const saveEditedStep = () => {
         </header>
 
         {/* Scrollable content */}
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="grid min-h-full grid-cols-1 lg:grid-cols-[minmax(0,0.95fr)_1px_minmax(0,1.05fr)]">
             {/* Task details */}
             <section className="px-5 py-5 sm:px-7 sm:py-6">
