@@ -23636,7 +23636,7 @@ const saveEditedStep = () => {
                       })
                     }
                     placeholder="What needs to get done?"
-                    className={`h-10 min-h-0 rounded-[7px] py-0 leading-none sm:h-6 ${fieldClass}`}
+                    className={`h-10 min-h-0 rounded-[7px] py-0 leading-none sm:h-11 ${fieldClass}`}
                   />
                 </div>
 
@@ -23898,33 +23898,52 @@ className={`flex items-center justify-between gap-4 rounded-[7px] border px-3 py
                       Due date
                     </label>
 
-                    <input
-                      id="task-due-date"
-                      data-testid="task-due-date-input"
-                      type="date"
-                      value={
-                        selectedTask.dueDate ||
-                        selectedTask.suggestedDueDate ||
-                        ""
-                      }
-                      onChange={(event) =>
-                        setSelectedTask({
-                          ...selectedTask,
-                          dueDate: event.target.value || undefined,
-                          suggestedDueDate: undefined,
-                          aiReason: event.target.value
-                            ? "You manually scheduled this task."
-                            : undefined,
-                          aiConfidence: event.target.value ? 1 : 0,
-                        })
-                      }
-                      style={{
-                        colorScheme: darkMode
-                          ? "dark"
-                          : "light",
-                      }}
-                      className={`h-11 rounded-[7px] ${fieldClass}`}
-                    />
+                    <div
+  className={`h-11 w-full overflow-hidden rounded-[7px] border ${
+    darkMode
+      ? "border-white/[0.35] bg-[#202020]"
+      : "border-[#868681] bg-white"
+  }`}
+>
+  <input
+    id="task-due-date"
+    data-testid="task-due-date-input"
+    type="date"
+    value={
+      selectedTask.dueDate ||
+      selectedTask.suggestedDueDate ||
+      ""
+    }
+    onChange={(event) =>
+      setSelectedTask({
+        ...selectedTask,
+        dueDate:
+          event.target.value ||
+          undefined,
+        suggestedDueDate:
+          undefined,
+        aiReason:
+          event.target.value
+            ? "You manually scheduled this task."
+            : undefined,
+        aiConfidence:
+          event.target.value
+            ? 1
+            : 0,
+      })
+    }
+    style={{
+      colorScheme: darkMode
+        ? "dark"
+        : "light",
+    }}
+    className={`block h-full w-full min-w-0 appearance-none border-0 bg-transparent px-3 py-0 text-[12px] font-[650] leading-none outline-none ${
+      darkMode
+        ? "text-white"
+        : "text-[#181818]"
+    }`}
+  />
+</div>
                   </div>
 
                   <div>
