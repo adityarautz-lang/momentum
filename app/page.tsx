@@ -23636,7 +23636,7 @@ const saveEditedStep = () => {
                       })
                     }
                     placeholder="What needs to get done?"
-                    className={`h-10 min-h-0 rounded-[7px] py-0 leading-none sm:h-11 ${fieldClass}`}
+                    className={`h-10 min-h-0 rounded-[7px] py-0 leading-none sm:h-6 ${fieldClass}`}
                   />
                 </div>
 
