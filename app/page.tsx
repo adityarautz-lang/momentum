@@ -19098,11 +19098,11 @@ className="mt-3 grid grid-cols-3 gap-2"
                   }}
                   className={`min-w-0 max-w-full overflow-hidden border-t p-3 ${dividerClass}`}
                 >
-                  <div
-  className={`h-10 w-full min-w-0 overflow-hidden rounded-[8px] border ${
+                 <div
+  className={`group h-10 w-full min-w-0 overflow-hidden rounded-[10px] border transition-all duration-150 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/15 ${
     darkMode
       ? "border-white/[0.12] bg-white/[0.035]"
-      : "border-[#DADCE0] bg-white"
+      : "border-[#DADCE0] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
   }`}
 >
   <input
@@ -19115,19 +19115,19 @@ className="mt-3 grid grid-cols-3 gap-2"
       )
     }
     placeholder="What needs to get done?"
-    className={`h-[53px] w-[133.333%] origin-left scale-75 border-0 bg-transparent px-4 text-[16px] font-[520] outline-none ${
+    className={`h-[53.333px] w-[133.333%] origin-left scale-75 border-0 bg-transparent px-4 py-0 text-[16px] font-[560] leading-[53.333px] outline-none ${
       darkMode
         ? "text-white placeholder:text-white/30"
-        : "text-[#202124] placeholder:text-[#80868B]"
+        : "text-[#202124] placeholder:text-[#8A9099]"
     }`}
   />
 </div>
 
 <div
-  className={`mt-2 h-10 w-full min-w-0 overflow-hidden rounded-[8px] border ${
+  className={`group mt-2 h-10 w-full min-w-0 overflow-hidden rounded-[10px] border transition-all duration-150 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/15 ${
     darkMode
       ? "border-white/[0.12] bg-white/[0.035]"
-      : "border-[#DADCE0] bg-white"
+      : "border-[#DADCE0] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
   }`}
 >
   <input
@@ -19138,10 +19138,10 @@ className="mt-3 grid grid-cols-3 gap-2"
       )
     }
     placeholder="Optional context"
-    className={`h-[53px] w-[133.333%] origin-left scale-75 border-0 bg-transparent px-4 text-[16px] font-[520] outline-none ${
+    className={`h-[53.333px] w-[133.333%] origin-left -translate-y-[8px] scale-75 border-0 bg-transparent px-4 py-0 text-[16px] font-[520] leading-[53.333px] outline-none ${
       darkMode
         ? "text-white placeholder:text-white/30"
-        : "text-[#202124] placeholder:text-[#80868B]"
+        : "text-[#202124] placeholder:text-[#8A9099]"
     }`}
   />
 </div>
