@@ -8134,7 +8134,24 @@ clipboardCandidate && (
 
 <style jsx global>{`
   html {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
     scrollbar-gutter: stable;
+    overscroll-behavior-x: none;
+  }
+
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+
+  #__next {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   @supports not (scrollbar-gutter: stable) {
@@ -8169,6 +8186,15 @@ clipboardCandidate && (
   outline-offset: 0 !important;
   box-shadow: none !important;
   border-color: transparent !important;
+}
+
+
+@media (max-width: 639px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
 
   @media (prefers-reduced-motion: reduce) {
@@ -18558,8 +18584,8 @@ newTask,
 
   return (
     <div
-      className={`min-h-screen pb-4 sm:hidden ${canvasClass}`}
-    >
+    className={`min-h-screen w-full min-w-0 max-w-full overflow-x-hidden pb-4 sm:hidden ${canvasClass}`}
+  >
   <header className="relative pb-3 pt-1 text-center">
 <button
   type="button"
@@ -19076,7 +19102,7 @@ className="mt-3 grid grid-cols-3 gap-2"
                     event.preventDefault();
                     submitTask();
                   }}
-                  className={`border-t p-3 ${dividerClass}`}
+                  className={`min-w-0 max-w-full overflow-hidden border-t p-3 ${dividerClass}`}
                 >
                   <input
                     data-testid="mobile-task-input"
@@ -19088,7 +19114,7 @@ className="mt-3 grid grid-cols-3 gap-2"
                       )
                     }
                     placeholder="What needs to get done?"
-                    className={`h-10 w-full rounded-[8px] border px-3 text-[11px] font-[520] outline-none ${
+                    className={`h-11 min-w-0 max-w-full rounded-[8px] border px-3 text-[16px] font-[520] outline-none ${
                       darkMode
                         ? "border-white/[0.12] bg-white/[0.035] text-white placeholder:text-white/30"
                         : "border-[#DADCE0] bg-white text-[#202124] placeholder:text-[#80868B]"
@@ -19103,7 +19129,7 @@ className="mt-3 grid grid-cols-3 gap-2"
                       )
                     }
                     placeholder="Optional context"
-                    className={`mt-2 h-10 w-full rounded-[8px] border px-3 text-[11px] font-[520] outline-none ${
+                    className={`mt-2 h-11 min-w-0 max-w-full rounded-[8px] border px-3 text-[16px] font-[520] outline-none ${
                       darkMode
                         ? "border-white/[0.12] bg-white/[0.035] text-white placeholder:text-white/30"
                         : "border-[#DADCE0] bg-white text-[#202124] placeholder:text-[#80868B]"
