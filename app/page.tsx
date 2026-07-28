@@ -23936,8 +23936,9 @@ className={`flex items-center justify-between gap-4 rounded-[7px] border px-3 py
       colorScheme: darkMode
         ? "dark"
         : "light",
+      textAlign: "left",
     }}
-    className={`block h-full w-full min-w-0 appearance-none border-0 bg-transparent px-3 py-0 text-[12px] font-[650] leading-none outline-none ${
+    className={`block h-full w-full min-w-0 border-0 bg-transparent px-3 py-0 text-left text-[12px] font-[650] leading-normal outline-none ${
       darkMode
         ? "text-white"
         : "text-[#181818]"
