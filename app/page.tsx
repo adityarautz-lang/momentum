@@ -22995,6 +22995,11 @@ function EditTaskModal({
   const [editingStepId, setEditingStepId] = useState<string | null>(null);
   const [editingStepTitle, setEditingStepTitle] = useState("");
 
+const [mobileEditTab, setMobileEditTab] =
+  useState<"details" | "steps">(
+    "details"
+  );
+
   const stepProgress = getSubtaskProgress(selectedTask);
 
 const isTaskInFocus = manualFocusTaskIds.includes(
@@ -23408,7 +23413,7 @@ const saveEditedStep = () => {
     transformOrigin: "50% 100%",
   }}
   onClick={(event) => event.stopPropagation()}
-  className={`will-change-[transform,clip-path,filter] flex h-[100dvh] max-h-[100dvh] w-full max-w-[1120px] flex-col overflow-hidden rounded-none border shadow-[0_24px_80px_rgba(0,0,0,0.20)] sm:h-auto sm:max-h-[92vh] sm:rounded-[10px] ${
+  className={`will-change-[transform,clip-path,filter] flex h-full max-h-none w-full flex-col overflow-hidden border shadow-[0_24px_80px_rgba(0,0,0,0.20)] sm:h-auto sm:max-h-[92vh] sm:max-w-[1120px] sm:rounded-[10px] ${
           darkMode
             ? "border-white/[0.14] bg-[#151515] text-white"
             : "border-[#CFCFCA] bg-[#FAFAF8] text-[#181818]"
@@ -23416,12 +23421,12 @@ const saveEditedStep = () => {
       >
         {/* Header */}
         <header
-  className={`relative flex shrink-0 flex-col gap-4 border-b px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-7 sm:py-5 ${dividerClass}`}
+  className={`relative flex shrink-0 items-start justify-between gap-4 border-b px-4 py-4 sm:gap-6 sm:px-7 sm:py-5 ${dividerClass}`}
 >
 <div className="min-w-0 pr-10 sm:pr-0">
             <h2
               id="edit-task-modal-title"
-              className={`whitespace-nowrap text-[22px] font-[750] leading-none tracking-[-0.045em] sm:text-[24px] ${
+              className={`translate-y-[7px] whitespace-nowrap text-[22px] font-[750] leading-none tracking-[-0.045em] sm:translate-y-0 sm:text-[24px] ${
                 darkMode ? "text-white" : "text-[#181818]"
               }`}
             >
@@ -23436,7 +23441,7 @@ const saveEditedStep = () => {
 </p>
           </div>
 
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-start gap-3">
   {!selectedTask.completed && (
     <div className="hidden items-center gap-3 sm:flex">
       <button
@@ -23495,7 +23500,7 @@ const saveEditedStep = () => {
         />
 
         Mark this complete
-        </button>
+      </button>
     </div>
   )}
 
@@ -23505,25 +23510,111 @@ const saveEditedStep = () => {
     onClick={closeWithoutSaving}
     aria-label="Close edit task"
     title="Close"
-    className={`flex h-9 w-9 items-center justify-center rounded-[6px] transition ${
+    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition sm:rounded-[6px] ${
       darkMode
-        ? "text-white/55 hover:bg-white/[0.07] hover:text-white"
-        : "text-[#6F6F6A] hover:bg-black/[0.04] hover:text-[#181818]"
+        ? "bg-white/[0.06] text-white/55 hover:bg-white/[0.10] hover:text-white sm:bg-transparent"
+        : "bg-[#F1F3F4] text-[#5F6368] hover:bg-[#E8EAED] hover:text-[#202124] sm:bg-transparent"
     }`}
   >
     <X
       size={18}
-      strokeWidth={1.6}
+      strokeWidth={1.7}
     />
   </button>
 </div>
         </header>
 
+        {/* Mobile modal tabs */}
+<div
+  role="tablist"
+  aria-label="Edit task sections"
+  className={`grid shrink-0 grid-cols-2 border-b sm:hidden ${dividerClass}`}
+>
+  <button
+    type="button"
+    role="tab"
+    aria-selected={
+      mobileEditTab === "details"
+    }
+    onClick={() =>
+      setMobileEditTab("details")
+    }
+    className={`relative flex h-12 items-center justify-center text-[12px] font-[700] transition ${
+      mobileEditTab === "details"
+        ? darkMode
+          ? "text-violet-300"
+          : "text-violet-700"
+        : mutedTextClass
+    }`}
+  >
+    Details
+
+    {mobileEditTab === "details" && (
+      <span
+        aria-hidden="true"
+        className={`absolute bottom-0 left-6 right-6 h-[2px] rounded-full ${
+          darkMode
+            ? "bg-violet-300"
+            : "bg-violet-600"
+        }`}
+      />
+    )}
+  </button>
+
+  <button
+    type="button"
+    role="tab"
+    aria-selected={
+      mobileEditTab === "steps"
+    }
+    onClick={() =>
+      setMobileEditTab("steps")
+    }
+    className={`relative flex h-12 items-center justify-center gap-1.5 text-[12px] font-[700] transition ${
+      mobileEditTab === "steps"
+        ? darkMode
+          ? "text-violet-300"
+          : "text-violet-700"
+        : mutedTextClass
+    }`}
+  >
+    Steps
+
+    <span
+      className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[9px] font-[700] ${
+        darkMode
+          ? "bg-white/[0.08] text-white/60"
+          : "bg-[#EEEAFB] text-violet-700"
+      }`}
+    >
+      {stepProgress.total}
+    </span>
+
+    {mobileEditTab === "steps" && (
+      <span
+        aria-hidden="true"
+        className={`absolute bottom-0 left-6 right-6 h-[2px] rounded-full ${
+          darkMode
+            ? "bg-violet-300"
+            : "bg-violet-600"
+        }`}
+      />
+    )}
+  </button>
+</div>
+
         {/* Scrollable content */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="grid min-h-full grid-cols-1 lg:grid-cols-[minmax(0,0.95fr)_1px_minmax(0,1.05fr)]">
             {/* Task details */}
-            <section className="px-5 py-5 sm:px-7 sm:py-6">
+            {/* Task details */}
+<section
+  className={`px-4 py-5 sm:block sm:px-7 sm:py-6 ${
+    mobileEditTab === "details"
+      ? "block"
+      : "hidden"
+  }`}
+>
               <div className="space-y-5">
                 {/* Title */}
                 <div>
@@ -24008,14 +24099,18 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
               className={`hidden border-l lg:block ${dividerClass}`}
             />
 
-            {/* Subtasks */}
-            <section
-              className={`border-t px-5 py-5 sm:px-7 sm:py-6 lg:border-t-0 ${
-                darkMode
-                  ? "border-white/[0.12]"
-                  : "border-[#D4D4CF]"
-              }`}
-            >
+           {/* Subtasks */}
+<section
+  className={`px-4 py-5 sm:block sm:px-7 sm:py-6 lg:border-t-0 ${
+    mobileEditTab === "steps"
+      ? "block"
+      : "hidden"
+  } ${
+    darkMode
+      ? "border-white/[0.12]"
+      : "border-[#D4D4CF]"
+  }`}
+>
               {/* Subtask header */}
               <div className="flex items-start justify-between gap-5">
                 <div className="min-w-0">
@@ -24345,9 +24440,9 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
 
         {/* Footer */}
         <footer
-          className={`flex shrink-0 flex-col-reverse gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7 ${dividerClass}`}
+          className={`flex shrink-0 flex-col-reverse gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-4 ${dividerClass}`}
         >
-          <div className="flex items-center gap-4">
+          <div className="hidden items-center gap-4 sm:flex">
             {selectedTask.completed && (
               <button
                 type="button"
@@ -24379,12 +24474,12 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
             </button>
           </div>
 
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
             <button
               type="button"
               data-testid="cancel-task-edit-button"
               onClick={closeWithoutSaving}
-              className={`h-10 rounded-[7px] px-4 text-[12px] font-[650] transition ${
+              className={`hidden h-10 rounded-[7px] px-4 text-[12px] font-[650] transition sm:block ${
                 darkMode
                   ? "text-white/55 hover:bg-white/[0.06] hover:text-white"
                   : "text-[#6F6F6A] hover:bg-black/[0.035] hover:text-[#181818]"
@@ -24398,7 +24493,7 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
               data-testid="save-task-changes-button"
               onClick={saveAndClose}
               disabled={!selectedTask?.title?.trim()}
-              className={`h-10 min-w-[76px] rounded-[7px] px-5 text-[12px] font-[700] transition ${
+              className={`h-12 w-full rounded-[10px] px-5 text-[13px] font-[700] transition active:scale-[0.99] sm:h-10 sm:w-auto sm:min-w-[76px] sm:rounded-[7px] sm:text-[12px] ${
                 !selectedTask?.title?.trim()
                   ? "cursor-not-allowed opacity-35"
                   : darkMode
