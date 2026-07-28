@@ -1,5 +1,14 @@
 import type { AppState } from "@/types";
 
+export type LoadedAppState = {
+  state: AppState;
+  revision: number;
+};
+
+export type SaveStateResult = {
+  revision: number;
+};
+
 const readErrorMessage = async (
   response: Response,
   fallbackMessage: string
@@ -29,8 +38,9 @@ const readErrorMessage = async (
 
 export const saveState = async (
   _userId: string,
-  state: AppState
-): Promise<void> => {
+  state: AppState,
+  expectedRevision: number
+): Promise<SaveStateResult> => {
   let response: Response;
 
   try {
@@ -44,6 +54,7 @@ export const saveState = async (
         },
         body: JSON.stringify({
           state,
+          expectedRevision,
         }),
         cache: "no-store",
       }
@@ -56,6 +67,20 @@ export const saveState = async (
 
     throw new Error(
       "Could not connect to the server"
+    );
+  }
+
+  /*
+   * A 409 means another device saved a newer version
+   * after this browser last loaded the state.
+   */
+  if (response.status === 409) {
+    console.error(
+      "Failed to save Veira state: revision conflict"
+    );
+
+    throw new Error(
+      "STATE_REVISION_CONFLICT"
     );
   }
 
@@ -73,11 +98,43 @@ export const saveState = async (
 
     throw new Error(message);
   }
+
+  let data: {
+    revision?: number;
+  };
+
+  try {
+    data = await response.json();
+  } catch (error) {
+    console.error(
+      "Invalid Veira save response:",
+      error
+    );
+
+    throw new Error(
+      "The server returned invalid save data"
+    );
+  }
+
+  const revision =
+    Number(data.revision);
+
+  if (
+    !Number.isFinite(revision)
+  ) {
+    throw new Error(
+      "The server did not return a valid state revision"
+    );
+  }
+
+  return {
+    revision,
+  };
 };
 
 export const loadState = async (
   _userId: string
-): Promise<AppState | null> => {
+): Promise<LoadedAppState | null> => {
   let response: Response;
 
   try {
@@ -119,6 +176,7 @@ export const loadState = async (
 
   let data: {
     state?: AppState | null;
+    revision?: number;
   };
 
   try {
@@ -134,5 +192,20 @@ export const loadState = async (
     );
   }
 
-  return data.state ?? null;
+  if (!data.state) {
+    return null;
+  }
+
+  const revision =
+    Number(data.revision);
+
+  return {
+    state:
+      data.state,
+
+    revision:
+      Number.isFinite(revision)
+        ? revision
+        : 0,
+  };
 };

@@ -21,6 +21,39 @@ import {
   saveState,
 } from "@/utils/storage";
 
+type LoadedStateResult = {
+  state: any;
+  revision: number;
+};
+
+const normalizeLoadedState = (
+  saved: any
+): LoadedStateResult | null => {
+  if (!saved) {
+    return null;
+  }
+
+  if (
+    typeof saved === "object" &&
+    saved !== null &&
+    "state" in saved
+  ) {
+    return {
+      state: saved.state,
+      revision: Number.isFinite(
+        Number(saved.revision)
+      )
+        ? Number(saved.revision)
+        : 0,
+    };
+  }
+
+  return {
+    state: saved,
+    revision: 0,
+  };
+};
+
 import {
   useMomentuhmMemory,
 } from "@/hooks/useMomentuhmMemory";
@@ -1494,6 +1527,25 @@ const lastSuccessfulSaveRef =
 useRef<string | null>(null);
 
 /*
+ * The revision of the state currently loaded from the server.
+ *
+ * Every successful server save returns a newer revision.
+ * A save is rejected when another device has already changed
+ * the server state since this browser last loaded it.
+ */
+const serverRevisionRef =
+  useRef(0);
+
+/*
+ * A newer server revision was detected.
+ *
+ * Silent refreshes remain blocked so local changes do not
+ * suddenly disappear. A manual refresh is still allowed.
+ */
+const revisionConflictRef =
+  useRef(false);
+
+/*
 * Mark a local mutation immediately.
 *
 * Waiting for the persistence useEffect is too late because
@@ -2045,14 +2097,27 @@ setHasCompletedTutorial(false);
 };
 
 const applyLatestSavedState = (
-savedState: any
-) => {
-if (!savedState) {
-  return;
-}
+  savedState: any,
+  revision = 0
+  ) => {
+  if (!savedState) {
+    return;
+  }
+  
+  /*
+   * Remember the exact server revision that produced
+   * the state being applied.
+   */
+  serverRevisionRef.current =
+  Number.isFinite(Number(revision))
+    ? Number(revision)
+    : 0;
 
-const parsed: any =
-  savedState;
+revisionConflictRef.current =
+  false;
+  
+  const parsed: any =
+    savedState;
 
 /*
  * All state setters below belong to one remote update.
@@ -2291,28 +2356,35 @@ const loadUserState =
      */
     if (!user?.id) {
       if (!isCancelled) {
+        serverRevisionRef.current = 0;
+        revisionConflictRef.current = false;
         resetToInitialState();
         setIsLoaded(true);
       }
-
+    
       return;
     }
 
     try {
       const saved =
-        await loadState(user.id);
+      await loadState(user.id);
 
-      if (isCancelled) {
-        return;
-      }
-
-      if (saved) {
-        applyLatestSavedState(
-          saved
-        );
-      } else {
-        resetToInitialState();
-      }
+    const loadedState =
+      normalizeLoadedState(saved);
+    
+    if (isCancelled) {
+      return;
+    }
+    
+    if (loadedState?.state) {
+      applyLatestSavedState(
+        loadedState.state,
+        loadedState.revision
+      );
+    } else {
+      serverRevisionRef.current = 0;
+      resetToInitialState();
+    }
     } catch (error) {
       console.error(
         "Failed to load initial Momentuhm state:",
@@ -2444,6 +2516,20 @@ async (
   ) {
     return;
   }
+  
+  /*
+   * After a revision conflict, do not silently replace
+   * the user's local changes.
+   *
+   * A manual refresh uses showConfirmation = true and
+   * is allowed to continue.
+   */
+  if (
+    revisionConflictRef.current &&
+    !showConfirmation
+  ) {
+    return;
+  }
 
   /*
    * Never replace local state while it is waiting to save.
@@ -2480,15 +2566,19 @@ async (
 
     if (user?.id) {
       const saved =
-        await loadState(
-          user.id
-        );
+  await loadState(
+    user.id
+  );
 
-      if (saved) {
-        applyLatestSavedState(
-          saved
-        );
-      }
+const loadedState =
+  normalizeLoadedState(saved);
+
+if (loadedState?.state) {
+  applyLatestSavedState(
+    loadedState.state,
+    loadedState.revision
+  );
+}
     }
 
     if (showConfirmation) {
@@ -2664,7 +2754,8 @@ const persistState =
       true;
 
     try {
-      await saveState(
+      const saveResult =
+      await (saveState as any)(
         user.id,
         {
           categories,
@@ -2686,11 +2777,25 @@ const persistState =
           planningEvents,
           userPlanningProfile,
           hasCompletedTutorial,
-        } as any
+        } as any,
+        serverRevisionRef.current
       );
-
-      retryAttempt = 0;
-
+    
+    /*
+     * The server increments the revision only after
+     * successfully writing this state.
+     */
+    serverRevisionRef.current =
+    Number.isFinite(
+      Number(saveResult?.revision)
+    )
+      ? Number(saveResult.revision)
+      : serverRevisionRef.current;
+  
+  revisionConflictRef.current =
+    false;
+  
+  retryAttempt = 0;
       /*
        * An older save must not mark a newer
        * local change as synchronized.
@@ -2710,10 +2815,57 @@ const persistState =
         "Failed to save Momentuhm state:",
         error
       );
-
+    
       localChangesPendingRef.current =
         true;
-
+    
+      const isRevisionConflict =
+        error instanceof Error &&
+        error.message ===
+          "STATE_REVISION_CONFLICT";
+    
+      /*
+       * Do not keep retrying an outdated snapshot.
+       *
+       * Retrying the same stale data would continue failing,
+       * and forcing it through would overwrite another device.
+       */
+      if (isRevisionConflict) {
+        revisionConflictRef.current =
+  true;
+        /*
+         * Stop treating this snapshot as safely saveable.
+         *
+         * This allows the user to refresh and retrieve the
+         * newer server version instead of repeatedly trying
+         * to save an outdated snapshot.
+         */
+        localChangesPendingRef.current =
+          false;
+      
+        if (
+          saveTimerRef.current !==
+          null
+        ) {
+          window.clearTimeout(
+            saveTimerRef.current
+          );
+      
+          saveTimerRef.current =
+            null;
+        }
+      
+        setArchiveToast(
+          "Newer changes exist on another device. Refresh to load them."
+        );
+      
+        window.setTimeout(() => {
+          setArchiveToast("");
+        }, 5000);
+      
+        return;
+      }
+    
       retryAttempt += 1;
 
       /*
