@@ -19115,7 +19115,7 @@ className="mt-3 grid grid-cols-3 gap-2"
       )
     }
     placeholder="What needs to get done?"
-    className={`h-[53.333px] w-[133.333%] origin-left scale-75 border-0 bg-transparent px-4 py-0 text-[16px] font-[560] leading-[53.333px] outline-none ${
+    className={`h-[53.333px] w-[133.333%] origin-left -translate-y-[8px] scale-75 border-0 bg-transparent px-4 py-0 text-[16px] font-[560] leading-[53.333px] outline-none ${
       darkMode
         ? "text-white placeholder:text-white/30"
         : "text-[#202124] placeholder:text-[#8A9099]"
