@@ -1417,8 +1417,15 @@ const [clipboardExtractError, setClipboardExtractError] = useState("");
 const [clipboardExtractedTasks, setClipboardExtractedTasks] = useState<
   ExtractedTaskSuggestion[]
 >([]);
-  const [archiveToast, setArchiveToast] = useState("");
-  const [firecrackers, setFirecrackers] = useState<Firecracker[]>([]);
+const [archiveToast, setArchiveToast] = useState("");
+
+const [
+  showRevisionConflictModal,
+  setShowRevisionConflictModal,
+] = useState(false);
+
+const [firecrackers, setFirecrackers] = useState<Firecracker[]>([]);
+
   const [newTask, setNewTask] = useState("");
 const [newlyAddedTaskIds, setNewlyAddedTaskIds] = useState<string[]>([]);
 const [newTaskWhy, setNewTaskWhy] = useState("");
@@ -2832,13 +2839,13 @@ const persistState =
        */
       if (isRevisionConflict) {
         revisionConflictRef.current =
-  true;
+          true;
+      
         /*
-         * Stop treating this snapshot as safely saveable.
+         * The server rejected this stale snapshot.
          *
-         * This allows the user to refresh and retrieve the
-         * newer server version instead of repeatedly trying
-         * to save an outdated snapshot.
+         * Stop retrying it because forcing the save could
+         * overwrite newer work from another device.
          */
         localChangesPendingRef.current =
           false;
@@ -2855,13 +2862,14 @@ const persistState =
             null;
         }
       
-        setArchiveToast(
-          "Newer changes exist on another device. Refresh to load them."
+        /*
+         * A revision conflict is too important for a
+         * temporary corner notification. Show a centred
+         * modal on both mobile and desktop.
+         */
+        setShowRevisionConflictModal(
+          true
         );
-      
-        window.setTimeout(() => {
-          setArchiveToast("");
-        }, 5000);
       
         return;
       }
@@ -7993,6 +8001,21 @@ userPlanningProfile={userPlanningProfile}
       />
 
 <AnimatePresence initial={false} mode="sync">
+{showRevisionConflictModal && (
+  <RevisionConflictModal
+    key="revision-conflict"
+    darkMode={darkMode}
+    onStay={() => {
+      setShowRevisionConflictModal(
+        false
+      );
+    }}
+    onReload={() => {
+      window.location.reload();
+    }}
+  />
+)}
+
 {isTutorialOpen && (
   <QuickTutorial
     key="quick-tutorial"
@@ -8187,6 +8210,189 @@ clipboardCandidate && (
 
 
     </main>
+  );
+}
+
+/* ------------------------------------------------ */
+/* Revision Conflict Modal */
+/* ------------------------------------------------ */
+
+function RevisionConflictModal({
+  darkMode,
+  onStay,
+  onReload,
+}: {
+  darkMode: boolean;
+  onStay: () => void;
+  onReload: () => void;
+}) {
+  /*
+   * Let Escape dismiss the modal without pretending
+   * that the rejected local change was saved.
+   */
+  useEffect(() => {
+    const handleKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key === "Escape") {
+        onStay();
+      }
+    };
+
+    window.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  }, [onStay]);
+
+  return (
+    <motion.div
+      initial={{
+        opacity: 0,
+      }}
+      animate={{
+        opacity: 1,
+      }}
+      exit={{
+        opacity: 0,
+      }}
+      transition={{
+        duration: 0.18,
+      }}
+      className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-[3px] sm:px-6"
+    >
+      <motion.section
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="revision-conflict-title"
+        aria-describedby="revision-conflict-description"
+        initial={{
+          opacity: 0,
+          y: 16,
+          scale: 0.97,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          scale: 1,
+        }}
+        exit={{
+          opacity: 0,
+          y: 10,
+          scale: 0.98,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 360,
+          damping: 30,
+          mass: 0.85,
+        }}
+        className={`w-full max-w-[420px] overflow-hidden rounded-[18px] border shadow-[0_28px_90px_rgba(0,0,0,0.35)] ${
+          darkMode
+            ? "border-white/[0.12] bg-[#1B1C20] text-white"
+            : "border-[#DADCE0] bg-white text-[#202124]"
+        }`}
+      >
+        <div className="px-5 pb-5 pt-6 text-center sm:px-6 sm:pt-7">
+          <div
+            className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
+              darkMode
+                ? "bg-violet-400/12 text-violet-300"
+                : "bg-violet-50 text-violet-600"
+            }`}
+          >
+            <RotateCcw
+              size={22}
+              strokeWidth={1.9}
+            />
+          </div>
+
+          <h2
+            id="revision-conflict-title"
+            className="mt-4 text-[20px] font-[740] leading-tight tracking-[-0.035em]"
+          >
+            Newer changes found
+          </h2>
+
+          <p
+            id="revision-conflict-description"
+            className={`mx-auto mt-2 max-w-[340px] text-[12px] font-[500] leading-5 ${
+              darkMode
+                ? "text-white/58"
+                : "text-[#5F6368]"
+            }`}
+          >
+            Another device saved a newer
+            version of your tasks. Your
+            latest change on this device
+            was not saved.
+          </p>
+
+          <div
+            className={`mt-4 rounded-[10px] border px-3.5 py-3 text-left ${
+              darkMode
+                ? "border-amber-300/15 bg-amber-300/[0.06]"
+                : "border-amber-200 bg-amber-50"
+            }`}
+          >
+            <p
+              className={`text-[10.5px] font-[600] leading-4 ${
+                darkMode
+                  ? "text-amber-100/80"
+                  : "text-amber-800"
+              }`}
+            >
+              Reloading will load the
+              latest saved version. The
+              unsaved change currently
+              visible on this device will
+              be removed.
+            </p>
+          </div>
+        </div>
+
+        <footer
+          className={`flex flex-col gap-2 border-t px-4 py-4 sm:flex-row-reverse sm:px-5 ${
+            darkMode
+              ? "border-white/[0.09] bg-white/[0.018]"
+              : "border-[#E8EAED] bg-[#FAFAFB]"
+          }`}
+        >
+          <button
+            type="button"
+            autoFocus
+            onClick={onReload}
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-violet-600 px-4 text-[12px] font-[700] text-white transition hover:bg-violet-700 active:scale-[0.98] sm:flex-1"
+          >
+            <RotateCcw
+              size={15}
+              strokeWidth={1.9}
+            />
+
+            Reload latest changes
+          </button>
+
+          <button
+            type="button"
+            onClick={onStay}
+            className={`h-11 w-full rounded-[10px] border px-4 text-[12px] font-[650] transition active:scale-[0.98] sm:flex-1 ${
+              darkMode
+                ? "border-white/[0.11] text-white/62 hover:bg-white/[0.06] hover:text-white"
+                : "border-[#DADCE0] bg-white text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124]"
+            }`}
+          >
+            Stay here
+          </button>
+        </footer>
+      </motion.section>
+    </motion.div>
   );
 }
 
