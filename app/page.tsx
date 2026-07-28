@@ -23380,12 +23380,12 @@ const saveEditedStep = () => {
       >
         {/* Header */}
         <header
-          className={`flex shrink-0 items-start justify-between gap-6 border-b px-5 py-5 sm:px-7 ${dividerClass}`}
-        >
-          <div className="min-w-0">
+  className={`relative flex shrink-0 flex-col gap-4 border-b px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-7 sm:py-5 ${dividerClass}`}
+>
+<div className="min-w-0 pr-10 sm:pr-0">
             <h2
               id="edit-task-modal-title"
-              className={`text-[24px] font-[750] leading-none tracking-[-0.045em] ${
+              className={`whitespace-nowrap text-[22px] font-[750] leading-none tracking-[-0.045em] sm:text-[24px] ${
                 darkMode ? "text-white" : "text-[#181818]"
               }`}
             >
@@ -23393,11 +23393,11 @@ const saveEditedStep = () => {
             </h2>
 
             <p
-              className={`mt-2 text-[12px] font-[500] leading-5 ${mutedTextClass}`}
-            >
-              Edit the task details on the left. Break execution into steps on
-              the right.
-            </p>
+  className={`mt-2 hidden text-[12px] font-[500] leading-5 sm:block ${mutedTextClass}`}
+>
+  Edit the task details on the left. Break execution into steps on
+  the right.
+</p>
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
