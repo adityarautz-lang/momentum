@@ -8189,13 +8189,7 @@ clipboardCandidate && (
 }
 
 
-@media (max-width: 639px) {
-  input,
-  textarea,
-  select {
-    font-size: 16px !important;
-  }
-}
+
 
   @media (prefers-reduced-motion: reduce) {
     html {
@@ -19104,37 +19098,53 @@ className="mt-3 grid grid-cols-3 gap-2"
                   }}
                   className={`min-w-0 max-w-full overflow-hidden border-t p-3 ${dividerClass}`}
                 >
-                  <input
-                    data-testid="mobile-task-input"
-                    autoFocus
-                    value={newTask}
-                    onChange={(event) =>
-                      setNewTask(
-                        event.target.value
-                      )
-                    }
-                    placeholder="What needs to get done?"
-                    className={`h-11 min-w-0 max-w-full rounded-[8px] border px-3 text-[16px] font-[520] outline-none ${
-                      darkMode
-                        ? "border-white/[0.12] bg-white/[0.035] text-white placeholder:text-white/30"
-                        : "border-[#DADCE0] bg-white text-[#202124] placeholder:text-[#80868B]"
-                    }`}
-                  />
+                  <div
+  className={`h-10 w-full min-w-0 overflow-hidden rounded-[8px] border ${
+    darkMode
+      ? "border-white/[0.12] bg-white/[0.035]"
+      : "border-[#DADCE0] bg-white"
+  }`}
+>
+  <input
+    data-testid="mobile-task-input"
+    autoFocus
+    value={newTask}
+    onChange={(event) =>
+      setNewTask(
+        event.target.value
+      )
+    }
+    placeholder="What needs to get done?"
+    className={`h-[53px] w-[133.333%] origin-left scale-75 border-0 bg-transparent px-4 text-[16px] font-[520] outline-none ${
+      darkMode
+        ? "text-white placeholder:text-white/30"
+        : "text-[#202124] placeholder:text-[#80868B]"
+    }`}
+  />
+</div>
 
-                  <input
-                    value={newTaskWhy}
-                    onChange={(event) =>
-                      setNewTaskWhy(
-                        event.target.value
-                      )
-                    }
-                    placeholder="Optional context"
-                    className={`mt-2 h-11 min-w-0 max-w-full rounded-[8px] border px-3 text-[16px] font-[520] outline-none ${
-                      darkMode
-                        ? "border-white/[0.12] bg-white/[0.035] text-white placeholder:text-white/30"
-                        : "border-[#DADCE0] bg-white text-[#202124] placeholder:text-[#80868B]"
-                    }`}
-                  />
+<div
+  className={`mt-2 h-10 w-full min-w-0 overflow-hidden rounded-[8px] border ${
+    darkMode
+      ? "border-white/[0.12] bg-white/[0.035]"
+      : "border-[#DADCE0] bg-white"
+  }`}
+>
+  <input
+    value={newTaskWhy}
+    onChange={(event) =>
+      setNewTaskWhy(
+        event.target.value
+      )
+    }
+    placeholder="Optional context"
+    className={`h-[53px] w-[133.333%] origin-left scale-75 border-0 bg-transparent px-4 text-[16px] font-[520] outline-none ${
+      darkMode
+        ? "text-white placeholder:text-white/30"
+        : "text-[#202124] placeholder:text-[#80868B]"
+    }`}
+  />
+</div>
 
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <button
