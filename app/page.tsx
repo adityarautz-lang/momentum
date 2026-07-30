@@ -24786,6 +24786,8 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
     }
   )}
 </AnimatePresence>
+                </div>
+              )}
 
               {stepProgress.allComplete && (
                 <p
