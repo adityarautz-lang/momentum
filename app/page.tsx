@@ -23327,88 +23327,93 @@ const saveEditedStep = () => {
     getTaskSubtasks(
       selectedTask
     ).map((step) =>
-      step.id ===
-      editingStepId
+      step.id === editingStepId
         ? {
             ...step,
-
             title,
           }
         : step
     );
 
-    persistSelectedTaskSubtasks(
-      nextSubtasks
+  persistSelectedTaskSubtasks(
+    nextSubtasks
+  );
+
+  cancelEditingStep();
+};
+
+const reorderSelectedSteps = (
+  draggedId: string,
+  targetId: string
+) => {
+  if (
+    !draggedId ||
+    !targetId ||
+    draggedId === targetId
+  ) {
+    return;
+  }
+
+  const currentSubtasks =
+    getTaskSubtasks(
+      selectedTask
     );
-  
-    cancelEditingStep();
-  };
-  
-  const reorderSelectedSteps = (
-    draggedId: string,
-    targetId: string
-  ) => {
-    if (
-      !draggedId ||
-      !targetId ||
-      draggedId === targetId
-    ) {
-      return;
-    }
-  
-    const currentSubtasks =
-      getTaskSubtasks(selectedTask);
-  
-    const draggedIndex =
-      currentSubtasks.findIndex(
-        (step) =>
-          step.id === draggedId
-      );
-  
-    const targetIndex =
-      currentSubtasks.findIndex(
-        (step) =>
-          step.id === targetId
-      );
-  
-    if (
-      draggedIndex === -1 ||
-      targetIndex === -1
-    ) {
-      return;
-    }
-  
-    const nextSubtasks = [
-      ...currentSubtasks,
-    ];
-  
-    const [draggedStep] =
-      nextSubtasks.splice(
-        draggedIndex,
-        1
-      );
-  
+
+  const draggedIndex =
+    currentSubtasks.findIndex(
+      (step) =>
+        step.id === draggedId
+    );
+
+  const targetIndex =
+    currentSubtasks.findIndex(
+      (step) =>
+        step.id === targetId
+    );
+
+  if (
+    draggedIndex === -1 ||
+    targetIndex === -1
+  ) {
+    return;
+  }
+
+  const nextSubtasks = [
+    ...currentSubtasks,
+  ];
+
+  const [draggedStep] =
     nextSubtasks.splice(
-      targetIndex,
-      0,
-      draggedStep
+      draggedIndex,
+      1
     );
+
+  nextSubtasks.splice(
+    targetIndex,
+    0,
+    draggedStep
+  );
+
+  persistSelectedTaskSubtasks(
+    nextSubtasks
+  );
+};
+
+const finishStepDrag = () => {
+  setDraggedStepId(null);
+  setDragOverStepId(null);
+};
+
+const restoreTask = () => {
+  restoreCompletedTask(
+    selectedTask.id
+  );
+
+  setIsEditModalOpen(false);
+  setSelectedTask(null);
+};
   
-    persistSelectedTaskSubtasks(
-      nextSubtasks
-    );
-  };
-  
-  const finishStepDrag = () => {
-    setDraggedStepId(null);
-    setDragOverStepId(null);
-  };
-  
-    const restoreTask = () => {
-    restoreCompletedTask(selectedTask.id);
-    setIsEditModalOpen(false);
-    setSelectedTask(null);
-  };
+ 
 
   const deleteTask = () => {
     const confirmed = window.confirm(
