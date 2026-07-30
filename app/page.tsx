@@ -3016,6 +3016,7 @@ const dueSoonCount = activeTasks.filter(
 ).length;
 
 /*
+ /*
  * Dashboard metrics must use only tasks currently
  * stored in the Tasks tab.
  *
