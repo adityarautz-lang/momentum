@@ -24474,7 +24474,7 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
             editingStepId !==
             step.id
           }
-          onDragStart={(
+          onDragStartCapture={(
             event: React.DragEvent<HTMLDivElement>
           ) => {
             if (
@@ -24559,7 +24559,7 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
 
             finishStepDrag();
           }}
-          onDragEnd={
+          onDragEndCapture={
             finishStepDrag
           }
           animate={{
