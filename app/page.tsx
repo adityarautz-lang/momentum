@@ -3015,18 +3015,31 @@ const dueSoonCount = activeTasks.filter(
     task.suggestedDueDate === getTomorrowDate()
 ).length;
 
-const taskTabActiveTasks = activeTasks.filter(
+/*
+ * Dashboard metrics must use only tasks currently
+ * stored in the Tasks tab.
+ *
+ * Backlog tasks are excluded whether they are active
+ * or completed.
+ */
+const taskTabTasks = allTasks.filter(
   (task) => !Boolean(task.isBacklog)
 );
 
+const taskTabActiveTasks =
+  taskTabTasks.filter(
+    (task) => !Boolean(task.completed)
+  );
+
 const taskTabCompletedToday =
-  completedToday.filter(
-    (task) => !Boolean(task.isBacklog)
+  taskTabTasks.filter(
+    (task) =>
+      Boolean(task.completed) &&
+      isCompletedToday(task)
   );
 
 const taskTabTotalCount =
-  taskTabActiveTasks.length +
-  taskTabCompletedToday.length;
+  taskTabTasks.length;
 
 const completionPercent =
   taskTabTotalCount === 0
