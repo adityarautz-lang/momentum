@@ -3039,16 +3039,20 @@ const taskTabCompletedToday =
       isCompletedToday(task)
   );
 
-const taskTabTotalCount =
-  taskTabTasks.length;
+  const taskTabTotalCount =
+  taskTabActiveTasks.length;
+
+const taskTabProgressTotal =
+  taskTabActiveTasks.length +
+  taskTabCompletedToday.length;
 
 const completionPercent =
-  taskTabTotalCount === 0
+  taskTabProgressTotal === 0
     ? 0
     : Math.round(
         (
           taskTabCompletedToday.length /
-          taskTabTotalCount
+          taskTabProgressTotal
         ) * 100
       );
 
