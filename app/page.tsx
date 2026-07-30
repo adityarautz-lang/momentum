@@ -23055,8 +23055,27 @@ const toggleTaskFocus = () => {
     saveTaskChanges(selectedTask);
   };
   
-  const moveTaskToBacklog = () => {
+  const moveTaskBetweenTasksAndBacklog = () => {
     if (!selectedTask?.id) {
+      return;
+    }
+  
+    const isCurrentlyInBacklog =
+      Boolean(selectedTask.isBacklog);
+  
+    if (isCurrentlyInBacklog) {
+      saveTaskChanges({
+        ...selectedTask,
+  
+        isBacklog: false,
+        moveToBacklog: false,
+  
+        aiReason:
+          "You manually moved this task to Tasks.",
+  
+        aiConfidence: 1,
+      });
+  
       return;
     }
   
@@ -23079,7 +23098,6 @@ const toggleTaskFocus = () => {
       aiConfidence: 1,
     });
   };
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -23463,32 +23481,48 @@ const saveEditedStep = () => {
           <div className="flex shrink-0 items-start gap-3">
   {!selectedTask.completed && (
     <div className="hidden items-center gap-3 sm:flex">
-      <button
-        type="button"
-        data-testid="move-task-to-backlog-button"
-        onClick={moveTaskToBacklog}
-        disabled={Boolean(
-          selectedTask.isBacklog
-        )}
-        aria-label="Move task to backlog"
-        title={
-          selectedTask.isBacklog
-            ? "This task is already in Backlog"
-            : "Move to Backlog"
-        }
-        className={`inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border bg-transparent px-3 text-[11px] font-[700] transition disabled:cursor-not-allowed disabled:opacity-35 ${
-          darkMode
-            ? "border-white/[0.20] text-white/72 hover:border-white/40 hover:bg-white/[0.06] hover:text-white"
-            : "border-[#B8B8B2] text-[#555550] hover:border-[#777772] hover:bg-black/[0.035] hover:text-[#181818]"
-        }`}
-      >
-        <List
-          size={13}
-          strokeWidth={1.8}
-        />
+    <button
+  type="button"
+  data-testid={
+    selectedTask.isBacklog
+      ? "move-task-to-tasks-button"
+      : "move-task-to-backlog-button"
+  }
+  onClick={
+    moveTaskBetweenTasksAndBacklog
+  }
+  aria-label={
+    selectedTask.isBacklog
+      ? "Move task to Tasks"
+      : "Move task to Backlog"
+  }
+  title={
+    selectedTask.isBacklog
+      ? "Move to Tasks"
+      : "Move to Backlog"
+  }
+  className={`inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border bg-transparent px-3 text-[11px] font-[700] transition ${
+    darkMode
+      ? "border-white/[0.20] text-white/72 hover:border-white/40 hover:bg-white/[0.06] hover:text-white"
+      : "border-[#B8B8B2] text-[#555550] hover:border-[#777772] hover:bg-black/[0.035] hover:text-[#181818]"
+  }`}
+>
+  {selectedTask.isBacklog ? (
+    <ListChecks
+      size={13}
+      strokeWidth={1.8}
+    />
+  ) : (
+    <List
+      size={13}
+      strokeWidth={1.8}
+    />
+  )}
 
-        Move to backlog
-      </button>
+  {selectedTask.isBacklog
+    ? "Move to Tasks"
+    : "Move to backlog"}
+</button>
 
       <button
         type="button"
