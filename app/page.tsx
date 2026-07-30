@@ -87,6 +87,7 @@ X,
 PencilLine,
 RotateCcw,
 MoreVertical,
+GripVertical,
 Play,
 Settings2,
 HelpCircle,
@@ -23025,8 +23026,21 @@ function EditTaskModal({
   ];
 
   const [newStepTitle, setNewStepTitle] = useState("");
-  const [editingStepId, setEditingStepId] = useState<string | null>(null);
-  const [editingStepTitle, setEditingStepTitle] = useState("");
+  const [editingStepId, setEditingStepId] =
+  useState<string | null>(null);
+
+const [editingStepTitle, setEditingStepTitle] =
+  useState("");
+
+const [
+  draggedStepId,
+  setDraggedStepId,
+] = useState<string | null>(null);
+
+const [
+  dragOverStepId,
+  setDragOverStepId,
+] = useState<string | null>(null);
 
 const [mobileEditTab, setMobileEditTab] =
   useState<"details" | "steps">(
@@ -23323,14 +23337,74 @@ const saveEditedStep = () => {
         : step
     );
 
-  persistSelectedTaskSubtasks(
-    nextSubtasks
-  );
-
-  cancelEditingStep();
-};
-
-  const restoreTask = () => {
+    persistSelectedTaskSubtasks(
+      nextSubtasks
+    );
+  
+    cancelEditingStep();
+  };
+  
+  const reorderSelectedSteps = (
+    draggedId: string,
+    targetId: string
+  ) => {
+    if (
+      !draggedId ||
+      !targetId ||
+      draggedId === targetId
+    ) {
+      return;
+    }
+  
+    const currentSubtasks =
+      getTaskSubtasks(selectedTask);
+  
+    const draggedIndex =
+      currentSubtasks.findIndex(
+        (step) =>
+          step.id === draggedId
+      );
+  
+    const targetIndex =
+      currentSubtasks.findIndex(
+        (step) =>
+          step.id === targetId
+      );
+  
+    if (
+      draggedIndex === -1 ||
+      targetIndex === -1
+    ) {
+      return;
+    }
+  
+    const nextSubtasks = [
+      ...currentSubtasks,
+    ];
+  
+    const [draggedStep] =
+      nextSubtasks.splice(
+        draggedIndex,
+        1
+      );
+  
+    nextSubtasks.splice(
+      targetIndex,
+      0,
+      draggedStep
+    );
+  
+    persistSelectedTaskSubtasks(
+      nextSubtasks
+    );
+  };
+  
+  const finishStepDrag = () => {
+    setDraggedStepId(null);
+    setDragOverStepId(null);
+  };
+  
+    const restoreTask = () => {
     restoreCompletedTask(selectedTask.id);
     setIsEditModalOpen(false);
     setSelectedTask(null);
@@ -24364,150 +24438,349 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
                       : "border-[#D4D4CF]"
                   }`}
                 >
-                  {stepProgress.subtasks.map(
-                    (step: Subtask, index: number) => (
-                      <div
-                        key={step.id}
-                        data-testid="subtask-row"
-                        data-subtask-id={step.id}
-                        data-subtask-title={step.title}
-                        className={`grid min-h-[54px] grid-cols-[36px_minmax(0,1fr)_34px_34px] items-center gap-2 border-b px-2 last:border-b-0 ${dividerClass}`}
-                      >
-                        <button
-                          type="button"
-                          data-testid="toggle-subtask-button"
-                          data-subtask-id={step.id}
-                          onClick={() =>
-                            toggleSelectedStep(step.id)
-                          }
-                          aria-label={
-                            step.completed
-                              ? `Mark ${step.title} incomplete`
-                              : `Complete ${step.title}`
-                          }
-                          className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
-                            darkMode
-                              ? "text-white/55 hover:bg-white/[0.06] hover:text-white"
-                              : "text-[#6F6F6A] hover:bg-black/[0.04] hover:text-[#181818]"
-                          }`}
-                        >
-                          {step.completed ? (
-                            <span
-                              className={`flex h-[18px] w-[18px] items-center justify-center border ${
-                                darkMode
-                                  ? "border-white bg-white text-[#181818]"
-                                  : "border-[#181818] bg-[#181818] text-white"
-                              }`}
-                            >
-                              <Check
-                                size={12}
-                                strokeWidth={2.4}
-                              />
-                            </span>
-                          ) : (
-                            <span
-                              className={`h-[18px] w-[18px] border ${
-                                darkMode
-                                  ? "border-white/55"
-                                  : "border-[#777772]"
-                              }`}
-                            />
-                          )}
-                        </button>
+                <AnimatePresence initial={false}>
+  {stepProgress.subtasks.map(
+    (
+      step: Subtask,
+      index: number
+    ) => {
+      const isDragging =
+        draggedStepId ===
+        step.id;
 
-                        {editingStepId === step.id ? (
-                          <input
-                            autoFocus
-                            data-testid="edit-subtask-input"
-                            data-subtask-id={step.id}
-                            value={editingStepTitle}
-                            onChange={(event) =>
-                              setEditingStepTitle(
-                                event.target.value
-                              )
-                            }
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                event.preventDefault();
-                                saveEditedStep();
-                              }
+      const isDragTarget =
+        dragOverStepId ===
+          step.id &&
+        draggedStepId !==
+          step.id;
 
-                              if (event.key === "Escape") {
-                                event.stopPropagation();
-                                cancelEditingStep();
-                              }
-                            }}
-                            onBlur={saveEditedStep}
-                            className={`h-9 rounded-[6px] ${fieldClass}`}
-                          />
-                        ) : (
-                          <button
-                            type="button"
-                            data-testid="subtask-title-button"
-                            data-subtask-id={step.id}
-                            onClick={() =>
-                              startEditingStep(step)
-                            }
-                            className={`min-w-0 py-3 text-left text-[12px] font-[550] leading-5 ${
-                              step.completed
-                                ? darkMode
-                                  ? "text-white/40 line-through decoration-white/30"
-                                  : "text-[#777772] line-through decoration-black/25"
-                                : darkMode
-                                ? "text-white/82"
-                                : "text-[#181818]"
-                            }`}
-                          >
-                            {step.title}
-                          </button>
-                        )}
+      return (
+        <motion.div
+          layout="position"
+          key={step.id}
+          data-testid="subtask-row"
+          data-subtask-id={
+            step.id
+          }
+          data-subtask-title={
+            step.title
+          }
+          draggable={
+            editingStepId !==
+            step.id
+          }
+          onDragStart={(
+            event: React.DragEvent<HTMLDivElement>
+          ) => {
+            if (
+              editingStepId ===
+              step.id
+            ) {
+              event.preventDefault();
+              return;
+            }
 
-                        <button
-                          type="button"
-                          data-testid="edit-subtask-button"
-                          data-subtask-id={step.id}
-                          onClick={() =>
-                            startEditingStep(step)
-                          }
-                          aria-label={`Edit ${step.title}`}
-                          title="Edit subtask"
-                          className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
-                            darkMode
-                              ? "text-white/45 hover:bg-white/[0.06] hover:text-white"
-                              : "text-[#777772] hover:bg-black/[0.04] hover:text-[#181818]"
-                          }`}
-                        >
-                          <PencilLine
-                            size={14}
-                            strokeWidth={1.6}
-                          />
-                        </button>
+            setDraggedStepId(
+              step.id
+            );
 
-                        <button
-                          type="button"
-                          data-testid="delete-subtask-button"
-                          data-subtask-id={step.id}
-                          onClick={() =>
-                            deleteSelectedStep(step.id)
-                          }
-                          aria-label={`Delete ${step.title}`}
-                          title="Delete subtask"
-                          className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
-                            darkMode
-                              ? "text-white/40 hover:bg-white/[0.06] hover:text-white"
-                              : "text-[#777772] hover:bg-black/[0.04] hover:text-[#181818]"
-                          }`}
-                        >
-                          <Trash2
-                            size={14}
-                            strokeWidth={1.6}
-                          />
-                        </button>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
+            event.dataTransfer.effectAllowed =
+              "move";
+
+            event.dataTransfer.setData(
+              "text/plain",
+              step.id
+            );
+          }}
+          onDragOver={(
+            event: React.DragEvent<HTMLDivElement>
+          ) => {
+            event.preventDefault();
+
+            event.dataTransfer.dropEffect =
+              "move";
+
+            if (
+              draggedStepId &&
+              draggedStepId !==
+                step.id
+            ) {
+              setDragOverStepId(
+                step.id
+              );
+            }
+          }}
+          onDragLeave={(
+            event: React.DragEvent<HTMLDivElement>
+          ) => {
+            const nextElement =
+              event.relatedTarget as
+                | Node
+                | null;
+
+            if (
+              nextElement &&
+              event.currentTarget.contains(
+                nextElement
+              )
+            ) {
+              return;
+            }
+
+            if (
+              dragOverStepId ===
+              step.id
+            ) {
+              setDragOverStepId(
+                null
+              );
+            }
+          }}
+          onDrop={(
+            event: React.DragEvent<HTMLDivElement>
+          ) => {
+            event.preventDefault();
+
+            const droppedStepId =
+              draggedStepId ||
+              event.dataTransfer.getData(
+                "text/plain"
+              );
+
+            reorderSelectedSteps(
+              droppedStepId,
+              step.id
+            );
+
+            finishStepDrag();
+          }}
+          onDragEnd={
+            finishStepDrag
+          }
+          animate={{
+            opacity: isDragging
+              ? 0.48
+              : 1,
+
+            scale: isDragging
+              ? 0.985
+              : 1,
+          }}
+          transition={{
+            duration: 0.16,
+          }}
+          className={`relative grid min-h-[54px] grid-cols-[28px_36px_minmax(0,1fr)_34px_34px] items-center gap-2 border-b px-2 last:border-b-0 ${dividerClass} ${
+            isDragging
+              ? darkMode
+                ? "bg-white/[0.045]"
+                : "bg-black/[0.025]"
+              : ""
+          } ${
+            isDragTarget
+              ? darkMode
+                ? "before:absolute before:inset-x-2 before:top-0 before:h-[2px] before:rounded-full before:bg-violet-300"
+                : "before:absolute before:inset-x-2 before:top-0 before:h-[2px] before:rounded-full before:bg-violet-600"
+              : ""
+          }`}
+        >
+          <button
+            type="button"
+            draggable={false}
+            aria-label={`Drag to reorder ${step.title}`}
+            title="Drag to reorder"
+            className={`flex h-8 w-7 cursor-grab touch-none items-center justify-center rounded-[5px] transition active:cursor-grabbing ${
+              darkMode
+                ? "text-white/30 hover:bg-white/[0.06] hover:text-white/70"
+                : "text-[#9A9A94] hover:bg-black/[0.04] hover:text-[#555550]"
+            }`}
+            onMouseDown={() => {
+              if (
+                editingStepId ===
+                step.id
+              ) {
+                cancelEditingStep();
+              }
+            }}
+          >
+            <GripVertical
+              size={15}
+              strokeWidth={1.7}
+            />
+          </button>
+
+          <button
+            type="button"
+            draggable={false}
+            data-testid="toggle-subtask-button"
+            data-subtask-id={
+              step.id
+            }
+            onClick={() =>
+              toggleSelectedStep(
+                step.id
+              )
+            }
+            aria-label={
+              step.completed
+                ? `Mark ${step.title} incomplete`
+                : `Complete ${step.title}`
+            }
+            className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
+              darkMode
+                ? "text-white/55 hover:bg-white/[0.06] hover:text-white"
+                : "text-[#6F6F6A] hover:bg-black/[0.04] hover:text-[#181818]"
+            }`}
+          >
+            {step.completed ? (
+              <span
+                className={`flex h-[18px] w-[18px] items-center justify-center border ${
+                  darkMode
+                    ? "border-white bg-white text-[#181818]"
+                    : "border-[#181818] bg-[#181818] text-white"
+                }`}
+              >
+                <Check
+                  size={12}
+                  strokeWidth={2.4}
+                />
+              </span>
+            ) : (
+              <span
+                className={`h-[18px] w-[18px] border ${
+                  darkMode
+                    ? "border-white/55"
+                    : "border-[#777772]"
+                }`}
+              />
+            )}
+          </button>
+
+          {editingStepId ===
+          step.id ? (
+            <input
+              autoFocus
+              draggable={false}
+              data-testid="edit-subtask-input"
+              data-subtask-id={
+                step.id
+              }
+              value={
+                editingStepTitle
+              }
+              onChange={(
+                event
+              ) =>
+                setEditingStepTitle(
+                  event.target.value
+                )
+              }
+              onKeyDown={(
+                event
+              ) => {
+                if (
+                  event.key ===
+                  "Enter"
+                ) {
+                  event.preventDefault();
+                  saveEditedStep();
+                }
+
+                if (
+                  event.key ===
+                  "Escape"
+                ) {
+                  event.stopPropagation();
+                  cancelEditingStep();
+                }
+              }}
+              onBlur={
+                saveEditedStep
+              }
+              className={`h-9 rounded-[6px] ${fieldClass}`}
+            />
+          ) : (
+            <button
+              type="button"
+              draggable={false}
+              data-testid="subtask-title-button"
+              data-subtask-id={
+                step.id
+              }
+              onClick={() =>
+                startEditingStep(
+                  step
+                )
+              }
+              className={`min-w-0 py-3 text-left text-[12px] font-[550] leading-5 ${
+                step.completed
+                  ? darkMode
+                    ? "text-white/40 line-through decoration-white/30"
+                    : "text-[#777772] line-through decoration-black/25"
+                  : darkMode
+                  ? "text-white/82"
+                  : "text-[#181818]"
+              }`}
+            >
+              {step.title}
+            </button>
+          )}
+
+          <button
+            type="button"
+            draggable={false}
+            data-testid="edit-subtask-button"
+            data-subtask-id={
+              step.id
+            }
+            onClick={() =>
+              startEditingStep(
+                step
+              )
+            }
+            aria-label={`Edit ${step.title}`}
+            title="Edit subtask"
+            className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
+              darkMode
+                ? "text-white/45 hover:bg-white/[0.06] hover:text-white"
+                : "text-[#777772] hover:bg-black/[0.04] hover:text-[#181818]"
+            }`}
+          >
+            <PencilLine
+              size={14}
+              strokeWidth={1.6}
+            />
+          </button>
+
+          <button
+            type="button"
+            draggable={false}
+            data-testid="delete-subtask-button"
+            data-subtask-id={
+              step.id
+            }
+            onClick={() =>
+              deleteSelectedStep(
+                step.id
+              )
+            }
+            aria-label={`Delete ${step.title}`}
+            title="Delete subtask"
+            className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
+              darkMode
+                ? "text-white/40 hover:bg-white/[0.06] hover:text-white"
+                : "text-[#777772] hover:bg-black/[0.04] hover:text-[#181818]"
+            }`}
+          >
+            <Trash2
+              size={14}
+              strokeWidth={1.6}
+            />
+          </button>
+        </motion.div>
+      );
+    }
+  )}
+</AnimatePresence>
 
               {stepProgress.allComplete && (
                 <p
