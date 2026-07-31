@@ -14359,10 +14359,21 @@ setIsMomentumOpen,
 
   const moveNext = () => {
     if (activeFocusTasks.length === 0) return;
-
+  
     setFocusIndex((previous) =>
-      previous >= activeFocusTasks.length - 1 ? 0 : previous + 1
+      previous >= activeFocusTasks.length - 1
+        ? 0
+        : previous + 1
     );
+  };
+  
+  const clearFocusStack = () => {
+    setManualFocusTaskIds([]);
+    setFocusPlan(null);
+    setFocusIndex(0);
+    setFocusError("");
+  
+    localStorage.removeItem(focusCacheKey);
   };
 
   const getTaskReason = (taskId: string) => {
@@ -15171,22 +15182,45 @@ completedToday.length === 0
       )}
 
       <section className={`mt-4 overflow-hidden rounded-[13px] border ${cardBorder}`}>
-        <div className={`flex min-h-[58px] items-center gap-2 border-b px-4 ${rowBorder}`}>
-          <h3
-            className={`text-[17px] font-[720] tracking-[-0.025em] ${
-              darkMode ? "text-white" : "text-[#17191F]"
-            }`}
-          >
-            Focus stack
-          </h3>
-          <span
-            className={`flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[10px] font-[700] ${
-              darkMode ? "bg-white/[0.07] text-white/58" : "bg-[#F0F1F4] text-[#59606C]"
-            }`}
-          >
-            {activeFocusTasks.length}
-          </span>
-        </div>
+      <div
+  className={`flex min-h-[58px] items-center justify-between gap-3 border-b px-4 ${rowBorder}`}
+>
+  <div className="flex items-center gap-2">
+    <h3
+      className={`text-[17px] font-[720] tracking-[-0.025em] ${
+        darkMode
+          ? "text-white"
+          : "text-[#17191F]"
+      }`}
+    >
+      Focus stack
+    </h3>
+
+    <span
+      className={`flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[10px] font-[700] ${
+        darkMode
+          ? "bg-white/[0.07] text-white/58"
+          : "bg-[#F0F1F4] text-[#59606C]"
+      }`}
+    >
+      {activeFocusTasks.length}
+    </span>
+  </div>
+
+  {activeFocusTasks.length > 0 && (
+    <button
+      type="button"
+      onClick={clearFocusStack}
+      className={`h-8 rounded-[7px] px-2.5 text-[10.5px] font-[650] transition ${
+        darkMode
+          ? "text-white/48 hover:bg-white/[0.06] hover:text-white"
+          : "text-[#6B6F7B] hover:bg-[#F1F3F4] hover:text-[#202124]"
+      }`}
+    >
+      Clear stack
+    </button>
+  )}
+</div>
 
         {activeFocusTasks.length === 0 ? (
           <div className={`px-4 py-8 text-center text-[12px] font-[500] ${mutedText}`}>
