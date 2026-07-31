@@ -29,6 +29,8 @@ import {
   useUser,
 } from "@clerk/nextjs";
 
+import MomentuhmLogo from "@/components/MomentuhmLogo";
+
 /* ------------------------------------------------ */
 /* Navigation configuration */
 /* ------------------------------------------------ */
@@ -218,41 +220,12 @@ export default function Sidebar({
               selectView("today")
             }
             aria-label="Open Today"
-            className="min-w-0 text-left"
+            title="Momentuhm"
+            className="min-w-0 rounded-[12px] text-left transition-opacity hover:opacity-85 active:opacity-70"
           >
-            <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
-              <span className="text-[24px] font-[600] leading-none tracking-[-0.045em]">
-                <span
-                  className={
-                    darkMode
-                      ? "text-white"
-                      : "text-[#181818]"
-                  }
-                >
-                  Moment
-                </span>
-
-                <span
-                  className={
-                    darkMode
-                      ? "text-white/38"
-                      : "text-[#A8A8A2]"
-                  }
-                >
-                  uhm
-                </span>
-
-                <span
-                  className={
-                    darkMode
-                      ? "text-white"
-                      : "text-[#181818]"
-                  }
-                >
-                  .app
-                </span>
-              </span>
-            </span>
+            <MomentuhmLogo
+              darkMode={darkMode}
+            />
           </button>
         </div>
 

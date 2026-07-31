@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Inter } from "next/font/google";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";
+import MomentuhmLogo from "@/components/MomentuhmLogo";
 
 import Sidebar from "@/components/Sidebar";
 import SettingsView from "@/components/SettingsView";
@@ -18741,15 +18742,12 @@ newTask,
     />
   </button>
 
-  <p
-    className={`px-16 text-[13px] font-[650] tracking-[-0.015em] ${
-      darkMode
-        ? "text-white/88"
-        : "text-[#3C4043]"
-    }`}
-  >
-    Momentuhm.app
-  </p>
+  <div className="flex min-h-8 justify-center px-16">
+  <MomentuhmLogo
+    darkMode={darkMode}
+    size="small"
+  />
+</div>
 
         <h1 className="mt-4 text-[22px] font-[720] leading-tight tracking-[-0.042em]">
           {greetingWithName}
