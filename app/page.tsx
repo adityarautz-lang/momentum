@@ -1,3 +1,4 @@
+/* APP DASHBOARD FILE — replace app/page.tsx only. Do not place this in app/new/page.tsx. */
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -5,6 +6,11 @@ import { Inter } from "next/font/google";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";
 import MomentuhmLogo from "@/components/MomentuhmLogo";
+import MomentuhmIllustration, {
+  type MomentuhmIllustrationName,
+} from "@/components/MomentuhmIllustration";
+
+/* Illustration-integrated build: app logic and persistence remain unchanged. */
 
 import Sidebar from "@/components/Sidebar";
 import SettingsView from "@/components/SettingsView";
@@ -178,7 +184,7 @@ type MobileGroupMode = "category" | "priority" | "date";
 
 const MOBILE_GROUP_MODE_KEY = "Momentuhm-mobile-group-mode";
 
-const DEFAULT_THEME_COLOR = "#1F2937";
+const DEFAULT_THEME_COLOR = "#0B6EFF";
 
 type Subtask = {
   id: string;
@@ -1286,7 +1292,7 @@ const scoreTask = (task: any) => {
   return score;
 };
 const getPriorityClass = (_priority: Priority) => {
-  return "border border-[#E7E7E3] bg-[#F7F7F5] text-[#666661] dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-white/55";
+  return "border border-[#E7E7E3] bg-[#F7F7F5] text-[#667085] dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-white/55";
 };
 
 const getPriorityRowClass = (priority: Priority, darkMode: boolean) => {
@@ -3423,19 +3429,19 @@ boostCacheKey,
 
   const glass = darkMode
     ? "bg-[#181818] border border-white/[0.08]"
-    : "bg-white border border-[#E7E7E3]";
+    : "bg-white border border-[#E3EAF3]";
 
   const strongerGlass = darkMode
     ? "bg-[#181818] border border-white/[0.08]"
-    : "bg-white border border-[#E7E7E3] shadow-[0_1px_2px_rgba(0,0,0,0.025)]";
+    : "bg-white border border-[#E3EAF3] shadow-[0_8px_24px_rgba(15,23,42,0.045)]";
 
     const input = darkMode
     ? "bg-[#202020] text-white placeholder:text-white/[0.55] border border-white/[0.35] focus:border-white/[0.70]"
-    : "bg-white text-[#181818] placeholder:text-[#6F6F6A] border border-[#868681] focus:border-[#181818]";
+    : "bg-white text-[#181818] placeholder:text-[#667085] border border-[#868681] focus:border-[#181818]";
   
   const border = darkMode
     ? "border-white/[0.12]"
-    : "border-[#D4D4CF]";
+    : "border-[#D6DEE9]";
   
   const modalSelect = darkMode
     ? "bg-[#202020] text-white border border-white/[0.35]"
@@ -7710,24 +7716,26 @@ return [
 
   return (
     <main
+  data-mh-theme="option-a"
   style={
     {
-      "--focus-inner": darkMode ? "#111111" : "#F7F7F5",
-      "--focus-outer": darkMode ? "#FFFFFF" : "#181818",
+      "--focus-inner": darkMode ? "#111111" : "#FFFFFF",
+      "--focus-outer": darkMode ? "#FFFFFF" : "#0B6EFF",
     } as React.CSSProperties
   }
   className={`${fontClass} min-h-screen w-full overflow-x-hidden transition-colors duration-500 ${
     darkMode
       ? "bg-[#111111] text-white"
-      : "bg-[#F7F7F5] text-[#181818]"
+      : "bg-[#F8FAFD] text-[#181818]"
   }`}
 >
-    {darkMode && (
-  <>
-  <div className="pointer-events-none fixed inset-0 z-0 bg-[#111111]" />
-    
-  </>
-)}
+    <div
+      className={`pointer-events-none fixed inset-0 z-0 ${
+        darkMode
+          ? "bg-[#11141A]"
+          : "bg-[linear-gradient(180deg,#FFFFFF_0px,#F8FAFD_180px,#F8FAFD_100%)]"
+      }`}
+    />
 
 <FirecrackerLayer firecrackers={firecrackers} themeColor={themeColor} />
 <Toast message={archiveToast} darkMode={darkMode} />
@@ -7740,21 +7748,20 @@ return [
   themeColor={themeColor}
   inboxCount={inboxTasks.length}
   pendingSuggestionCount={suggestionReviewTasks.length}
-  onOpenSuggestedDates={() =>
-    setIsSuggestionsModalOpen(true)
-  }
+  onOpenSuggestedDates={() => setIsSuggestionsModalOpen(true)}
+  onOpenTutorial={openQuickTutorial}
 />
 
-<button
+{/* <button
 id="momentuhm-tour-help-button"
 type="button"
 onClick={openQuickTutorial}
 aria-label="Open quick tutorial"
 title="How Momentuhm works"
-className={`fixed right-[76px] top-5 z-[175] inline-flex h-9 items-center justify-center gap-2 rounded-full border px-2.5 text-[11px] font-[650] shadow-[0_2px_10px_rgba(0,0,0,0.08)] transition active:scale-[0.97] sm:right-[170px] sm:top-[14px] sm:h-10 sm:px-3.5 ${
+className={`fixed right-[76px] top-4 z-[175] inline-flex h-9 items-center justify-center gap-2 rounded-full border px-2.5 text-[11px] font-[650] shadow-[0_2px_10px_rgba(0,0,0,0.08)] transition active:scale-[0.97] sm:right-[170px] sm:top-[10px] sm:h-9 sm:px-3.5 ${
   darkMode
-    ? "border-white/[0.12] bg-[#202124]/95 text-white/72 hover:bg-[#292A2E] hover:text-white"
-    : "border-[#DADCE0] bg-white/95 text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124]"
+    ? "border-white/[0.12] bg-[#111827]/95 text-white/72 hover:bg-[#292A2E] hover:text-white"
+    : "border-blue-200 bg-white/95 text-blue-700 hover:border-blue-300 hover:bg-blue-50"
 }`}
 >
 <HelpCircle
@@ -7765,7 +7772,7 @@ className={`fixed right-[76px] top-5 z-[175] inline-flex h-9 items-center justif
 <span className="hidden sm:inline">
   How it works
 </span>
-</button>
+</button> */}
 
 <div className="relative z-10 min-h-screen w-full overflow-x-hidden">
   <div className="w-full min-w-0 overflow-x-hidden px-3 pb-28 pt-5 sm:px-5 sm:pb-28 sm:pt-[96px] md:px-6 lg:pl-[276px] lg:pr-6 2xl:pb-16 2xl:pr-8">
@@ -8208,6 +8215,69 @@ clipboardCandidate && (
 
 
 
+  /* Blue + lime theme safety net for imported child components. */
+  [class~="text-violet-200"],
+  [class~="text-violet-300"],
+  [class~="text-violet-400"],
+  [class~="text-violet-500"],
+  [class~="text-violet-600"],
+  [class~="text-violet-700"],
+  [class~="text-violet-800"],
+  [class~="text-violet-900"] {
+    color: #0B6EFF !important;
+  }
+
+  [class~="bg-violet-50"] { background-color: #EFF6FF !important; }
+  [class~="bg-violet-100"] { background-color: #DBEAFE !important; }
+  [class~="bg-violet-200"] { background-color: #BFDBFE !important; }
+  [class~="bg-violet-600"] { background-color: #0B6EFF !important; }
+  [class~="bg-violet-700"] { background-color: #0057D9 !important; }
+  [class~="border-violet-100"] { border-color: #DBEAFE !important; }
+  [class~="border-violet-200"] { border-color: #BFDBFE !important; }
+  [class~="border-violet-300"] { border-color: #93C5FD !important; }
+  [class~="border-violet-600"] { border-color: #0B6EFF !important; }
+
+  [data-mh-theme="option-a"] {
+    --mh-blue: #0B6EFF;
+    --mh-blue-strong: #0057D9;
+    --mh-blue-soft: #EEF5FF;
+    --mh-lime: #B9F227;
+    --mh-lime-soft: #F6FFD8;
+    --mh-green: #14B86E;
+    --mh-yellow: #FFD84D;
+    --mh-coral: #FF625C;
+    --mh-ink: #111827;
+    --mh-muted: #667085;
+    --mh-border: #E3EAF3;
+    --mh-canvas: #F8FAFD;
+  }
+
+  [data-mh-theme="option-a"] button,
+  [data-mh-theme="option-a"] input,
+  [data-mh-theme="option-a"] select,
+  [data-mh-theme="option-a"] textarea {
+    letter-spacing: -0.01em;
+  }
+
+  [data-mh-theme="option-a"] button:not(:disabled) {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  [data-mh-theme="option-a"] input,
+  [data-mh-theme="option-a"] select,
+  [data-mh-theme="option-a"] textarea {
+    border-color: var(--mh-border);
+  }
+
+  [data-mh-theme="option-a"] [role="dialog"],
+  [data-mh-theme="option-a"] [role="alertdialog"] {
+    border-color: var(--mh-border);
+  }
+
+  [data-mh-theme="option-a"] ::selection {
+    background: rgba(11, 110, 255, 0.18);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto !important;
@@ -8222,20 +8292,20 @@ clipboardCandidate && (
     }
   }
 
-  @keyframes veiraNewTaskGlow {
+  @keyframes momentuhmNewTaskGlow {
     0% {
-      background-color: rgba(24, 24, 24, 0.08);
-      box-shadow: 0 0 0 1px rgba(24, 24, 24, 0.16);
+      background-color: rgba(23, 105, 255, 0.11);
+      box-shadow: 0 0 0 1px rgba(23, 105, 255, 0.22), 0 10px 30px rgba(23, 105, 255, 0.10);
     }
 
     42% {
-      background-color: rgba(24, 24, 24, 0.05);
-      box-shadow: 0 0 0 1px rgba(24, 24, 24, 0.1);
+      background-color: rgba(23, 105, 255, 0.07);
+      box-shadow: 0 0 0 1px rgba(23, 105, 255, 0.14);
     }
 
     72% {
-      background-color: rgba(24, 24, 24, 0.025);
-      box-shadow: 0 0 0 1px rgba(24, 24, 24, 0.05);
+      background-color: rgba(23, 105, 255, 0.035);
+      box-shadow: 0 0 0 1px rgba(23, 105, 255, 0.08);
     }
 
     100% {
@@ -8353,22 +8423,14 @@ function RevisionConflictModal({
         className={`w-full max-w-[420px] overflow-hidden rounded-[18px] border shadow-[0_28px_90px_rgba(0,0,0,0.35)] ${
           darkMode
             ? "border-white/[0.12] bg-[#1B1C20] text-white"
-            : "border-[#DADCE0] bg-white text-[#202124]"
+            : "border-[#E2E8F0] bg-white text-[#111827]"
         }`}
       >
         <div className="px-5 pb-5 pt-6 text-center sm:px-6 sm:pt-7">
-          <div
-            className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
-              darkMode
-                ? "bg-violet-400/12 text-violet-300"
-                : "bg-violet-50 text-violet-600"
-            }`}
-          >
-            <RotateCcw
-              size={22}
-              strokeWidth={1.9}
-            />
-          </div>
+          <MomentuhmIllustration
+            name="conflict-alert"
+            className="mx-auto h-[78px] w-[78px]"
+          />
 
           <h2
             id="revision-conflict-title"
@@ -8382,7 +8444,7 @@ function RevisionConflictModal({
             className={`mx-auto mt-2 max-w-[340px] text-[12px] font-[500] leading-5 ${
               darkMode
                 ? "text-white/58"
-                : "text-[#5F6368]"
+                : "text-[#667085]"
             }`}
           >
             Another device saved a newer
@@ -8418,14 +8480,14 @@ function RevisionConflictModal({
           className={`flex flex-col gap-2 border-t px-4 py-4 sm:flex-row-reverse sm:px-5 ${
             darkMode
               ? "border-white/[0.09] bg-white/[0.018]"
-              : "border-[#E8EAED] bg-[#FAFAFB]"
+              : "border-[#EDF1F6] bg-[#FBFCFE]"
           }`}
         >
           <button
             type="button"
             autoFocus
             onClick={onReload}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-violet-600 px-4 text-[12px] font-[700] text-white transition hover:bg-violet-700 active:scale-[0.98] sm:flex-1"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-blue-600 px-4 text-[12px] font-[700] text-white transition hover:bg-blue-700 active:scale-[0.98] sm:flex-1"
           >
             <RotateCcw
               size={15}
@@ -8441,7 +8503,7 @@ function RevisionConflictModal({
             className={`h-11 w-full rounded-[10px] border px-4 text-[12px] font-[650] transition active:scale-[0.98] sm:flex-1 ${
               darkMode
                 ? "border-white/[0.11] text-white/62 hover:bg-white/[0.06] hover:text-white"
-                : "border-[#DADCE0] bg-white text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124]"
+                : "border-[#E2E8F0] bg-white text-[#667085] hover:bg-[#F2F5F9] hover:text-[#111827]"
             }`}
           >
             Stay here
@@ -8664,7 +8726,7 @@ useEffect(() => {
 
   const dashboardBorder = darkMode
     ? "border-white/[0.10]"
-    : "border-[#DDDDE3]";
+    : "border-[#E3EAF3]";
 
   const dashboardSurface = darkMode
     ? "bg-[#14171B]"
@@ -8672,18 +8734,18 @@ useEffect(() => {
 
   const mutedText = darkMode
     ? "text-white/52"
-    : "text-[#6B6F7B]";
+    : "text-[#647084]";
 
     const insightText =
     completedToday.length === 0
-      ? "One clear step at a time."
+      ? "You only need one clear start."
       : completionPercent >= 80
-      ? "Excellent momentum. Finish strong."
+      ? "You are nearly there. Finish the day your way."
       : completionPercent >= 50
-      ? "Great progress. Keep moving."
+      ? "The day is moving. Keep the good work rolling."
       : completedToday.length >= 3
-      ? "Strong progress. Stay focused."
-      : "Nice start. Keep going.";
+      ? "You have real momentum now. Protect it."
+      : "That first win changed the shape of the day.";
   
 /*
 * The planning horizons affect only the main
@@ -8761,10 +8823,12 @@ const planningBacklogTasks = useMemo(() => {
                   <div className="flex min-w-0 items-start gap-4">
                     <div
                       className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                        darkMode ? "bg-violet-400/10 text-violet-300" : "bg-violet-50 text-violet-600"
+                        darkMode
+                          ? "bg-amber-300/12 text-amber-200"
+                          : "bg-[#FFF8D9] text-[#F5B700]"
                       }`}
                     >
-                      <Sparkles size={22} strokeWidth={1.8} />
+                      <Lightbulb size={20} strokeWidth={1.9} />
                     </div>
 
                     <div className="min-w-0">
@@ -8790,43 +8854,70 @@ id="momentuhm-tour-progress-desktop"
 className="grid grid-cols-3 gap-3"
 >
                     {[
-                    {
-                      label: "Tasks",
-                      value: taskTabTotalCount,
-                      valueClass: darkMode
-                        ? "text-blue-300"
-                        : "text-blue-600",
-                    },
-                    {
-                      label: "Completed",
-                      value: taskTabCompletedCount,
-                      valueClass: darkMode
-                        ? "text-emerald-300"
-                        : "text-emerald-600",
-                    },
-                    {
-                      label: "Progress",
-                      value: `${completionPercent}%`,
-                      valueClass: darkMode
-                        ? "text-violet-300"
-                        : "text-violet-600",
-                    },
+                      {
+                        label: "Tasks",
+                        value: taskTabTotalCount,
+                        note:
+                          taskTabTotalCount === 0
+                            ? "Ready when you are"
+                            : "In today's plan",
+                        valueClass: darkMode
+                          ? "text-blue-300"
+                          : "text-blue-700",
+                        surfaceClass: darkMode
+                          ? "border-blue-400/15 bg-blue-400/[0.07]"
+                          : "border-blue-100 bg-blue-50/70",
+                        icon: ListChecks,
+                      },
+                      {
+                        label: "Completed",
+                        value: taskTabCompletedCount,
+                        note:
+                          taskTabCompletedCount === 0
+                            ? "Start with one"
+                            : "Wins stacked today",
+                        valueClass: darkMode
+                          ? "text-emerald-300"
+                          : "text-emerald-700",
+                        surfaceClass: darkMode
+                          ? "border-emerald-400/15 bg-emerald-400/[0.07]"
+                          : "border-emerald-100 bg-emerald-50/75",
+                        icon: CheckCircle2,
+                      },
+                      {
+                        label: "Progress",
+                        value: `${completionPercent}%`,
+                        note:
+                          completionPercent === 0
+                            ? "Today is still open"
+                            : "You are moving",
+                        valueClass: darkMode
+                          ? "text-lime-300"
+                          : "text-lime-700",
+                        surfaceClass: darkMode
+                          ? "border-lime-400/15 bg-lime-400/[0.07]"
+                          : "border-lime-200 bg-lime-50/85",
+                        icon: TrendingUp,
+                      },
                     ].map((metric) => (
-                      <div
+                      <motion.div
                         key={metric.label}
-                        className={`flex min-h-[78px] min-w-0 flex-col items-center justify-center rounded-[11px] border px-2 text-center ${dashboardBorder}`}
+                        whileHover={{ y: -2 }}
+                        transition={{ duration: 0.16 }}
+                        className={`flex min-h-[78px] min-w-0 flex-col items-center justify-center rounded-[11px] border px-2 text-center shadow-[0_5px_16px_rgba(15,23,42,0.035)] ${metric.surfaceClass}`}
                       >
                         <p
                           className={`text-[25px] font-[720] leading-none tracking-[-0.055em] ${metric.valueClass}`}
                         >
                           {metric.value}
                         </p>
+
                         <p
                           className={`mt-2 text-[10px] font-[700] uppercase tracking-[0.06em] ${mutedText}`}
                         >
                           {metric.label}
                         </p>
-                      </div>
+                      </motion.div>
                     ))}
                                   </div>
                 </div>
@@ -8856,10 +8947,10 @@ className="relative mb-5"
                   role="group"
                   aria-label="Create a new task"
                   onClick={() => taskInputRef.current?.focus()}
-                  className={`flex min-h-[58px] w-full cursor-text items-center gap-2 rounded-[11px] border px-3.5 transition focus-within:ring-2 focus-within:ring-violet-500/10 ${
+                  className={`flex min-h-[58px] w-full cursor-text items-center gap-2 rounded-[11px] border px-3.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition focus-within:-translate-y-[1px] focus-within:ring-2 focus-within:ring-blue-500/15 ${
                     darkMode
-                      ? "border-white/[0.10] bg-white/[0.025] focus-within:border-white/[0.22]"
-                      : "border-[#DDDDE3] bg-white focus-within:border-[#BFC0C8]"
+                      ? "border-blue-300/15 bg-blue-400/[0.05] focus-within:border-blue-300/30"
+                      : "border-blue-200 bg-[linear-gradient(135deg,#FFFFFF,#F7FBFF)] focus-within:border-blue-400"
                   }`}
                 >
                   <button
@@ -8874,10 +8965,10 @@ className="relative mb-5"
                       }
                     }}
                     aria-label={newTask.trim() ? "Add task" : "Focus task input"}
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition ${
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] border transition active:scale-95 ${
                       darkMode
-                        ? "border-white/[0.10] bg-white/[0.04] text-white/70 hover:bg-white/[0.08]"
-                        : "border-[#DDDDE3] bg-[#F5F6F8] text-[#4F5562] hover:bg-[#ECEEF2]"
+                        ? "border-blue-300/20 bg-blue-400/15 text-blue-200 hover:bg-blue-400/25"
+                        : "border-blue-600 bg-blue-600 text-white shadow-[0_7px_18px_rgba(11,110,255,0.25)] hover:bg-blue-700"
                     }`}
                   >
                     <Plus size={19} strokeWidth={1.7} />
@@ -8896,12 +8987,12 @@ className="relative mb-5"
                         void submitNewTask();
                       }
                     }}
-                    placeholder="Add a task. Momentuhm will organize it for you."
+                    placeholder="Drop the first thing on your mind..."
                     aria-label="Add a new task"
-                    className={`task-capture-input h-[56px] min-w-0 flex-1 border-0 bg-transparent px-0 text-[14px] font-[500] outline-none ring-0 ${
+                    className={`task-capture-input h-[56px] min-w-0 flex-1 border-0 bg-transparent px-0 text-[13px] font-[500] outline-none ring-0 ${
                       darkMode
                         ? "text-white placeholder:text-white/38 caret-white"
-                        : "text-[#252933] placeholder:text-[#747986] caret-[#252933]"
+                        : "text-[#202939] placeholder:text-[#747986] caret-[#202939]"
                     }`}
                   />
 
@@ -8917,7 +9008,7 @@ className="relative mb-5"
                       className={`flex h-9 w-9 items-center justify-center rounded-[8px] transition ${
                         darkMode
                           ? "text-white/48 hover:bg-white/[0.06] hover:text-white"
-                          : "text-[#626875] hover:bg-[#F2F3F6] hover:text-[#252933]"
+                          : "text-blue-600 hover:bg-blue-50 hover:text-blue-800"
                       }`}
                     >
                       <Calendar size={17} strokeWidth={1.7} />
@@ -8931,7 +9022,7 @@ className="relative mb-5"
                       className={`flex h-9 w-9 items-center justify-center rounded-[8px] transition ${
                         darkMode
                           ? "text-white/48 hover:bg-white/[0.06] hover:text-white"
-                          : "text-[#626875] hover:bg-[#F2F3F6] hover:text-[#252933]"
+                          : "text-blue-600 hover:bg-blue-50 hover:text-blue-800"
                       }`}
                     >
                       <Sparkles size={17} strokeWidth={1.7} />
@@ -8948,7 +9039,7 @@ aria-label="Task workspace"
 className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] ${
   darkMode
     ? "border-white/[0.10] bg-white/[0.035]"
-    : "border-[#DDDDE3] bg-[#F6F7F9]"
+    : "border-blue-100 bg-[#EEF5FF]"
 }`}
 >
 {[
@@ -8992,10 +9083,10 @@ className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] 
         isActive
           ? darkMode
             ? "bg-[#303134] text-white shadow-[0_1px_3px_rgba(0,0,0,0.28)]"
-            : "bg-white text-[#202124] shadow-[0_1px_3px_rgba(60,64,67,0.16)]"
+            : "bg-white text-blue-700 shadow-[0_5px_14px_rgba(11,110,255,0.12)]"
           : darkMode
           ? "text-white/48 hover:text-white/76"
-          : "text-[#626875] hover:text-[#252933]"
+          : "text-[#657184] hover:text-blue-700"
       }`}
     >
       <Icon
@@ -9026,8 +9117,8 @@ className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] 
           aria-hidden="true"
           className={`absolute bottom-0 left-5 right-5 h-[2px] rounded-full ${
             darkMode
-              ? "bg-violet-300"
-              : "bg-violet-600"
+              ? "bg-blue-300"
+              : "bg-blue-600"
           }`}
         />
       )}
@@ -9062,7 +9153,7 @@ className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] 
     className={
       strongerGlass
     }
-    themeColor="#181818"
+    themeColor="#0B6EFF"
     toggleTaskById={
       toggleTaskById
     }
@@ -9084,7 +9175,7 @@ className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] 
     setIsEditModalOpen={
       setIsEditModalOpen
     }
-    emptyMessage="No scheduled tasks yet."
+    emptyMessage="Add the first thing on your mind. Momentuhm will help shape it."
     ranked
     draggableTasks
     manualFocusTaskIds={
@@ -9153,7 +9244,7 @@ className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] 
   className={
     strongerGlass
   }
-  themeColor="#181818"
+  themeColor="#0B6EFF"
   toggleTaskById={
     toggleTaskById
   }
@@ -9172,7 +9263,7 @@ className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] 
   setIsEditModalOpen={
     setIsEditModalOpen
   }
-  emptyMessage="Your backlog is clear."
+  emptyMessage="Nothing is parked for later. Keep your active list intentional."
   draggableTasks
   manualFocusTaskIds={
     manualFocusTaskIds
@@ -9204,10 +9295,10 @@ className={`mb-4 grid grid-cols-2 overflow-hidden rounded-[11px] border p-[3px] 
 
             {/* Right: focus execution */}
             <aside
-id="momentuhm-tour-focus-desktop"
-aria-label="Focus workspace"
-  className={`min-w-0 self-start rounded-[14px] border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02)] xl:p-6 ${dashboardBorder} ${dashboardSurface}`}
->
+              id="momentuhm-tour-focus-desktop"
+              aria-label="Focus workspace"
+              className={`min-w-0 self-start rounded-[14px] border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02)] xl:p-6 ${dashboardBorder} ${dashboardSurface}`}
+            >
               <FocusModePanel
 prioritizedTasks={planningTasks}
 completedToday={completedToday}
@@ -9216,7 +9307,7 @@ userPlanningProfile={userPlanningProfile}
 darkMode={darkMode}
                 border={border}
                 strongerGlass={strongerGlass}
-                themeColor="#181818"
+                themeColor="#0B6EFF"
                 toggleTaskById={toggleTaskById}
                 setSelectedTask={setSelectedTask}
                 setIsEditModalOpen={setIsEditModalOpen}
@@ -9323,11 +9414,11 @@ function MobileBottomNav({
     return `flex min-w-0 flex-col items-center justify-center gap-1 rounded-[14px] py-1.5 text-[9.5px] font-[600] transition active:scale-[0.97] ${
       isActive
         ? darkMode
-          ? "text-[#F1F3F4]"
-          : "text-[#202124]"
+          ? "text-blue-200"
+          : "text-blue-700"
         : darkMode
         ? "text-white/42 hover:text-white/70"
-        : "text-[#5F6368] hover:text-[#202124]"
+        : "text-[#667085] hover:text-[#111827]"
     }`;
   };
 
@@ -9338,8 +9429,8 @@ function MobileBottomNav({
 
     return {
       backgroundColor: darkMode
-        ? `${themeColor}28`
-        : `${themeColor}16`,
+        ? "rgba(96, 165, 250, 0.16)"
+        : "rgba(23, 105, 255, 0.10)",
     };
   };
 
@@ -9348,8 +9439,8 @@ function MobileBottomNav({
       aria-label="Mobile navigation"
       className={`fixed bottom-3 left-1/2 z-[180] grid h-[68px] w-[calc(100%_-_24px)] max-w-[430px] -translate-x-1/2 grid-cols-5 items-center rounded-[22px] border px-2 shadow-[0_8px_30px_rgba(60,64,67,0.22)] backdrop-blur-xl lg:hidden ${
         darkMode
-          ? "border-white/[0.10] bg-[#202124]/95 text-[#F1F3F4]"
-          : "border-[#DADCE0] bg-white/95 text-[#202124]"
+          ? "border-white/[0.10] bg-[#111827]/95 text-[#F2F5F9]"
+          : "border-blue-100 bg-white/95 text-[#111827] shadow-[0_12px_36px_rgba(11,110,255,0.18)]"
       }`}
     >
       <button
@@ -9391,10 +9482,7 @@ function MobileBottomNav({
         onClick={goToCapture}
         aria-label="Add a task"
         title="Add a task"
-        className="mx-auto flex h-12 w-12 -translate-y-3 items-center justify-center rounded-full text-white shadow-[0_5px_16px_rgba(60,64,67,0.30)] transition active:scale-95"
-        style={{
-          backgroundColor: themeColor,
-        }}
+        className="mx-auto flex h-12 w-12 -translate-y-3 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0B6EFF,#29A3FF)] text-white shadow-[0_8px_22px_rgba(11,110,255,0.35)] transition active:scale-95"
       >
         <Plus
           size={22}
@@ -9423,7 +9511,7 @@ function MobileBottomNav({
           <span
             className={`absolute right-2.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[8px] font-[700] ${
               darkMode
-                ? "bg-[#F28B82] text-[#202124]"
+                ? "bg-[#F28B82] text-[#111827]"
                 : "bg-[#D93025] text-white"
             }`}
           >
@@ -9441,7 +9529,7 @@ function MobileBottomNav({
                 "h-6 w-6",
 
               userButtonPopoverCard:
-                "w-[280px] rounded-[16px] border border-[#DADCE0] bg-white p-2 text-[#202124] shadow-[0_8px_30px_rgba(60,64,67,0.25)] dark:border-white/[0.10] dark:bg-[#202124] dark:text-[#F1F3F4]",
+                "w-[280px] rounded-[16px] border border-[#E2E8F0] bg-white p-2 text-[#111827] shadow-[0_8px_30px_rgba(60,64,67,0.25)] dark:border-white/[0.10] dark:bg-[#111827] dark:text-[#F2F5F9]",
 
               userButtonPopoverMain:
                 "bg-transparent",
@@ -9477,7 +9565,7 @@ function MobileBottomNav({
           className={`truncate text-[9.5px] font-[600] ${
             darkMode
               ? "text-white/42"
-              : "text-[#5F6368]"
+              : "text-[#667085]"
           }`}
         >
           Account
@@ -9554,7 +9642,7 @@ function InlineFocusAction({
               : "text-emerald-700 hover:text-emerald-800"
             : darkMode
             ? "text-white/48 hover:text-white"
-            : "text-[#6B6F7B] hover:text-[#252933]"
+            : "text-[#667085] hover:text-[#202939]"
         }`}
       >
         {isInFocus
@@ -9649,15 +9737,15 @@ function TaskListPanel({
 
   const cardBorder = darkMode
     ? "border-white/[0.10]"
-    : "border-[#DDDDE3]";
+    : "border-[#E3EAF3]";
 
   const rowBorder = darkMode
     ? "border-white/[0.08]"
-    : "border-[#E8E9ED]";
+    : "border-[#E9EEF5]";
 
   const mutedText = darkMode
     ? "text-white/48"
-    : "text-[#6B6F7B]";
+    : "text-[#667085]";
 
   const priorityRank: Record<string, number> = {
     High: 3,
@@ -9837,12 +9925,16 @@ function TaskListPanel({
       className={`w-full min-w-0 scroll-mt-[80px] overflow-hidden rounded-[12px] border ${cardBorder}`}
     >
       <div
-        className={`flex min-h-[72px] flex-col gap-3 border-b px-4 py-3.5 xl:flex-row xl:items-center xl:justify-between ${rowBorder}`}
+        className={`flex min-h-[72px] flex-col gap-3 border-b px-4 py-3.5 xl:flex-row xl:items-center xl:justify-between ${rowBorder} ${
+          darkMode
+            ? "bg-white/[0.018]"
+            : "bg-[linear-gradient(135deg,#FFFFFF,#F7FBFF)]"
+        }`}
       >
         <div className="min-w-0">
           <h2
             className={`text-[20px] font-[760] leading-none tracking-[-0.04em] ${
-              darkMode ? "text-white" : "text-[#17191F]"
+              darkMode ? "text-white" : "text-[#111827]"
             }`}
           >
             {title}
@@ -9867,7 +9959,7 @@ function TaskListPanel({
       className={`h-9 appearance-none rounded-[8px] border bg-transparent pl-3 pr-8 text-[11px] font-[650] outline-none ${
         darkMode
           ? "border-white/[0.10] text-white/72"
-          : "border-[#DDDDE3] text-[#484D59]"
+          : "border-[#E1E7EF] text-[#484D59]"
       }`}
     >
       <option value="date">Sort: Date</option>
@@ -9893,7 +9985,7 @@ function TaskListPanel({
       className={`h-9 appearance-none rounded-[8px] border bg-transparent pl-3 pr-8 text-[11px] font-[650] outline-none ${
         darkMode
           ? "border-white/[0.10] text-white/72"
-          : "border-[#DDDDE3] text-[#484D59]"
+          : "border-[#E1E7EF] text-[#484D59]"
       }`}
     >
       <option value="none">Group: None</option>
@@ -9912,14 +10004,51 @@ function TaskListPanel({
       </div>
 
       {tasks.length === 0 ? (
-        <div className={`px-5 py-14 text-center text-[13px] font-[500] ${mutedText}`}>
+  <div className="flex min-h-[132px] items-center justify-center px-4 py-3">
+    <div className="grid w-full max-w-[500px] items-center gap-4 text-center sm:grid-cols-[132px_minmax(0,1fr)] sm:gap-5 sm:text-left">
+      <OptionAEmptyIllustration
+        type={title === "Backlog" ? "backlog" : "tasks"}
+        darkMode={darkMode}
+        className="!h-[92px] !w-[114px] scale-100"
+      />
+
+      <div className="min-w-0">
+        <h3
+          className={`text-[13px] font-[740] leading-[17px] tracking-[-0.025em] ${
+            darkMode ? "text-white" : "text-[#182033]"
+          }`}
+        >
+          {title === "Backlog"
+            ? "Nothing parked for later."
+            : "Your next win starts here."}
+        </h3>
+
+        <p className={`mt-1.5 text-[11px] font-[500] leading-[17px] ${mutedText}`}>
           {emptyMessage}
-        </div>
-      ) : (
+        </p>
+
+        {title !== "Backlog" && (
+          <button
+            type="button"
+            onClick={onFocusCapture}
+            className={`mt-3 inline-flex h-9 items-center gap-2 rounded-[10px] px-3.5 text-[10px] font-[700] transition active:scale-[0.98] ${
+              darkMode
+                ? "bg-white text-[#181818] hover:bg-white/90"
+                : "bg-blue-600 text-white shadow-[0_8px_20px_rgba(11,110,255,0.24)] hover:bg-blue-700"
+            }`}
+          >
+            <Plus size={13} strokeWidth={2} />
+            Add your first task
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+) : (
         <div className="min-w-0 overflow-x-hidden">
           <div
             className={`${tableGridClass} min-h-[40px] border-b ${rowBorder} ${
-              darkMode ? "bg-white/[0.018]" : "bg-[#FAFAFB]"
+              darkMode ? "bg-white/[0.018]" : "bg-[#FBFCFE]"
             }`}
           >
         
@@ -9930,7 +10059,7 @@ function TaskListPanel({
     className={`h-4 w-4 rounded-[4px] border ${
       darkMode
         ? "border-white/45"
-        : "border-[#9297A1]"
+        : "border-[#98A2B3]"
     }`}
   />
 </div>
@@ -10027,7 +10156,7 @@ function TaskListPanel({
                     : "border-blue-200 bg-blue-50 text-blue-700"
                   : darkMode
                   ? "border-white/[0.12] bg-white/[0.05] text-white/60"
-                  : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368]";
+                  : "border-[#E2E8F0] bg-[#F2F5F9] text-[#667085]";
 
             return (
               <div key={task.id} className="contents">
@@ -10036,7 +10165,7 @@ function TaskListPanel({
       className={`col-span-6 flex min-h-[34px] items-center gap-2 border-b px-3 text-[11px] font-[700] ${rowBorder} ${
         darkMode
           ? "bg-white/[0.035] text-white"
-          : "bg-[#F4F5F7] text-black"
+          : "bg-[#F6F8FB] text-black"
       }`}
     >
       <span>{groupMeta.title}</span>
@@ -10073,10 +10202,10 @@ function TaskListPanel({
   className={`group/task ${tableGridClass} min-h-[62px] border-b transition last:border-b-0 ${rowBorder} ${
     darkMode
       ? "hover:bg-white/[0.025]"
-      : "hover:bg-[#FBFBFC]"
+      : "hover:bg-blue-50/45"
   } ${
     isNewlyAdded
-      ? "animate-[veiraNewTaskGlow_2.2s_ease-out]"
+      ? "animate-[momentuhmNewTaskGlow_2.2s_ease-out]"
       : ""
   }`}
 >
@@ -10095,7 +10224,7 @@ function TaskListPanel({
       className={`h-4 w-4 rounded-[4px] border transition ${
         darkMode
           ? "border-white/45 group-hover/check:border-white"
-          : "border-[#9297A1] group-hover/check:border-[#252933]"
+          : "border-[#98A2B3] group-hover/check:border-[#202939]"
       }`}
     />
   </button>
@@ -10113,7 +10242,7 @@ function TaskListPanel({
       ? "line-clamp-2 whitespace-normal"
       : "truncate"
   } ${
-    darkMode ? "text-white/90" : "text-[#20232B]"
+    darkMode ? "text-white/90" : "text-[#182033]"
   }`}
 >
   {task.title}
@@ -10209,7 +10338,7 @@ function TaskListPanel({
     className={`mt-2 inline-flex max-w-full items-center gap-1.5 rounded-[6px] border px-2 py-1 text-[9.5px] font-[600] transition ${
       darkMode
         ? "border-white/[0.09] bg-white/[0.025] text-white/52 hover:border-white/[0.18] hover:bg-white/[0.05] hover:text-white/78"
-        : "border-[#E1E2E6] bg-[#F8F9FA] text-[#626875] hover:border-[#C8CAD0] hover:bg-[#F1F2F5] hover:text-[#252933]"
+        : "border-[#E4EAF2] bg-[#F8F9FA] text-[#626875] hover:border-[#C8CAD0] hover:bg-[#F1F2F5] hover:text-[#202939]"
     }`}
   >
     {isSubtasksExpanded ? (
@@ -10266,8 +10395,8 @@ function TaskListPanel({
           subtaskProgress.allComplete
             ? "bg-emerald-500"
             : darkMode
-            ? "bg-violet-300"
-            : "bg-violet-600"
+            ? "bg-blue-300"
+            : "bg-blue-600"
         }`}
         style={{
           width: `${subtaskProgress.percent}%`,
@@ -10314,10 +10443,10 @@ title="Edit task status"
     task.pinned
       ? darkMode
         ? "text-white"
-        : "text-[#202124]"
+        : "text-[#111827]"
       : darkMode
       ? "text-white/38 opacity-0 group-hover/task:opacity-100 group-focus-within/task:opacity-100 hover:text-white"
-      : "text-[#747986] opacity-0 group-hover/task:opacity-100 group-focus-within/task:opacity-100 hover:text-[#252933]"
+      : "text-[#747986] opacity-0 group-hover/task:opacity-100 group-focus-within/task:opacity-100 hover:text-[#202939]"
   }`}
 >
   <Star
@@ -10384,7 +10513,7 @@ title="Edit task status"
         className={`overflow-hidden border-b ${rowBorder} ${
           darkMode
             ? "bg-white/[0.018]"
-            : "bg-[#FAFAFB]"
+            : "bg-[#FBFCFE]"
         }`}
       >
         <div className="pb-3 pl-[44px] pr-3 pt-2">
@@ -10392,7 +10521,7 @@ title="Edit task status"
             className={`overflow-hidden rounded-[9px] border ${
               darkMode
                 ? "border-white/[0.09] bg-[#121519]"
-                : "border-[#E1E2E6] bg-white"
+                : "border-[#E4EAF2] bg-white"
             }`}
           >
             <div
@@ -10405,7 +10534,7 @@ title="Edit task status"
                   className={
                     darkMode
                       ? "text-white/42"
-                      : "text-[#6B6F7B]"
+                      : "text-[#667085]"
                   }
                 />
 
@@ -10465,11 +10594,11 @@ title="Edit task status"
                           className={`flex h-4 w-4 items-center justify-center rounded-[4px] border transition ${
                             subtask.completed
                               ? darkMode
-                                ? "border-violet-300 bg-violet-300 text-[#17181C]"
-                                : "border-violet-600 bg-violet-600 text-white"
+                                ? "border-blue-300 bg-blue-300 text-[#17181C]"
+                                : "border-blue-600 bg-blue-600 text-white"
                               : darkMode
                               ? "border-white/35 group-hover/subtask:border-white/60"
-                              : "border-[#9297A1] group-hover/subtask:border-[#4F5562]"
+                              : "border-[#98A2B3] group-hover/subtask:border-[#4F5562]"
                           }`}
                         >
                           {subtask.completed && (
@@ -10531,7 +10660,7 @@ title="Edit task status"
                 className={`inline-flex items-center gap-1.5 text-[10px] font-[600] transition ${
                   darkMode
                     ? "text-white/42 hover:text-white/72"
-                    : "text-[#686E7A] hover:text-[#252933]"
+                    : "text-[#686E7A] hover:text-[#202939]"
                 }`}
               >
                 <Plus
@@ -10555,8 +10684,8 @@ title="Edit task status"
             <button
               type="button"
               onClick={onFocusCapture}
-              className={`inline-flex items-center gap-2 text-[12px] font-[550] transition ${
-                darkMode ? "text-white/45 hover:text-white" : "text-[#686E7A] hover:text-[#252933]"
+              className={`inline-flex items-center gap-2 text-[12px] font-[650] transition ${
+                darkMode ? "text-blue-300 hover:text-blue-200" : "text-blue-600 hover:text-blue-800"
               }`}
             >
               <Plus size={14} strokeWidth={1.7} />
@@ -10649,15 +10778,15 @@ function CompletedTodaySection({
 
   const cardBorder = darkMode
     ? "border-white/[0.10]"
-    : "border-[#DDDDE3]";
+    : "border-[#DCEFE5]";
 
   const rowBorder = darkMode
     ? "border-white/[0.08]"
-    : "border-[#E8E9ED]";
+    : "border-[#E7F2EC]";
 
   const mutedText = darkMode
     ? "text-white/48"
-    : "text-[#6B6F7B]";
+    : "text-[#667085]";
 
   return (
     <section
@@ -10667,7 +10796,11 @@ function CompletedTodaySection({
       className={`mt-4 w-full scroll-mt-8 overflow-hidden rounded-[12px] border ${cardBorder}`}
     >
       <div
-        className={`flex min-h-[66px] items-center justify-between gap-4 border-b px-4 ${rowBorder}`}
+        className={`flex min-h-[66px] items-center justify-between gap-4 border-b px-4 ${rowBorder} ${
+          darkMode
+            ? "bg-emerald-400/[0.025]"
+            : "bg-[linear-gradient(135deg,#FFFFFF,#F2FBF6)]"
+        }`}
       >
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
@@ -10675,7 +10808,7 @@ function CompletedTodaySection({
               className={`text-[18px] font-[740] leading-none tracking-[-0.035em] ${
                 darkMode
                   ? "text-white"
-                  : "text-[#17191F]"
+                  : "text-[#111827]"
               }`}
             >
               Completed today
@@ -10685,7 +10818,7 @@ function CompletedTodaySection({
               className={`flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[10px] font-[700] ${
                 darkMode
                   ? "bg-white/[0.07] text-white/58"
-                  : "bg-[#F0F1F4] text-[#59606C]"
+                  : "bg-emerald-100 text-emerald-700"
               }`}
             >
               {completedToday.length}
@@ -10695,8 +10828,7 @@ function CompletedTodaySection({
           <p
             className={`mt-1.5 text-[11px] font-[500] ${mutedText}`}
           >
-            Well done! Keep the momentum
-            going.
+            Each finish counts. Keep stacking wins.
           </p>
         </div>
 
@@ -10712,8 +10844,8 @@ function CompletedTodaySection({
             completedToday.length === 0
               ? "cursor-not-allowed opacity-30"
               : darkMode
-              ? "text-violet-300 hover:text-violet-200"
-              : "text-violet-600 hover:text-violet-700"
+              ? "text-blue-300 hover:text-blue-200"
+              : "text-blue-600 hover:text-blue-700"
           }`}
         >
           Archive all
@@ -10721,12 +10853,31 @@ function CompletedTodaySection({
       </div>
 
       {completedToday.length === 0 ? (
-        <div
-          className={`px-4 py-8 text-[12px] font-[500] ${mutedText}`}
+  <div className="flex min-h-[92px] items-center justify-center px-4 py-3">
+    <div className="flex w-full max-w-[500px] items-center justify-center gap-4 text-left">
+      <OptionAEmptyIllustration
+        type="completed"
+        darkMode={darkMode}
+        compact
+        className="!h-[64px] !w-[84px] scale-100"
+      />
+
+      <div className="min-w-0">
+        <h3
+          className={`text-[12.5px] font-[720] ${
+            darkMode ? "text-white" : "text-[#173127]"
+          }`}
         >
-          Nothing completed yet.
-        </div>
-      ) : (
+          Your first win will show up here.
+        </h3>
+
+        <p className={`mt-1 text-[10px] font-[500] leading-4 ${mutedText}`}>
+          Finish one meaningful task. That is enough to create momentum.
+        </p>
+      </div>
+    </div>
+  </div>
+) : (
         <div role="list">
           <AnimatePresence
             initial={false}
@@ -10761,7 +10912,7 @@ function CompletedTodaySection({
                     className={`group/completed grid min-h-[48px] grid-cols-[28px_minmax(0,1fr)_auto_34px] items-center gap-2 border-b px-3 transition last:border-b-0 ${
                       darkMode
                         ? "hover:bg-white/[0.025]"
-                        : "hover:bg-[#FBFBFC]"
+                        : "hover:bg-emerald-50/45"
                     } ${rowBorder}`}
                   >
                     <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-emerald-500 text-white">
@@ -10826,7 +10977,7 @@ function CompletedTodaySection({
                       className={`flex h-8 w-8 items-center justify-center transition ${
                         darkMode
                           ? "text-white/38 hover:text-white"
-                          : "text-[#747986] hover:text-[#252933]"
+                          : "text-[#747986] hover:text-[#202939]"
                       }`}
                     >
                       <RotateCcw
@@ -10875,12 +11026,12 @@ function CompletedTodaySection({
             <p
               className={`text-center text-[10.5px] font-[500] ${mutedText}`}
             >
-              You’ve completed{" "}
+              You&apos;ve completed{" "}
               {completedToday.length} task
               {completedToday.length === 1
                 ? ""
                 : "s"}{" "}
-              today. Amazing work! 💜
+              today. That is real progress.
             </p>
           )}
         </div>
@@ -11129,7 +11280,7 @@ categoryCounts
     const categoryPalette = [
       "#22C55E",
       "#3B82F6",
-      "#8B5CF6",
+      "#0B6EFF",
       "#F97316",
       "#EAB308",
     ];
@@ -11245,7 +11396,7 @@ categoryCounts
           "roadmap",
           "outline",
         ],
-        color: "#8B5CF6",
+        color: "#2563EB",
       },
       {
         label: "Preparation",
@@ -12076,11 +12227,11 @@ fallbackInsight;
 
   const panelBorder = darkMode
     ? "border-white/[0.10]"
-    : "border-[#DDDDE3]";
+    : "border-[#E1E7EF]";
 
   const rowBorder = darkMode
     ? "border-white/[0.08]"
-    : "border-[#E8E9ED]";
+    : "border-[#EDF1F6]";
 
   const panelSurface = darkMode
     ? "bg-[#14171B]"
@@ -12089,7 +12240,7 @@ fallbackInsight;
   const secondarySurface =
     darkMode
       ? "bg-white/[0.025]"
-      : "bg-[#FAFAFB]";
+      : "bg-[#FBFCFE]";
 
   const insetSurface = darkMode
     ? "bg-[#101317]"
@@ -12097,7 +12248,7 @@ fallbackInsight;
 
   const primaryText = darkMode
     ? "text-white"
-    : "text-[#17191F]";
+    : "text-[#111827]";
 
   const secondaryText =
     darkMode
@@ -12106,7 +12257,7 @@ fallbackInsight;
 
   const mutedText = darkMode
     ? "text-white/48"
-    : "text-[#6B6F7B]";
+    : "text-[#667085]";
 
   const getPriorityPill = (
     priority?: string
@@ -12134,7 +12285,7 @@ fallbackInsight;
 
     return darkMode
       ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-      : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]";
+      : "border-[#E1E7EF] bg-[#F8FAFC] text-[#667085]";
   };
 
   return (
@@ -12185,7 +12336,7 @@ fallbackInsight;
         ? "cursor-not-allowed opacity-30"
         : darkMode
         ? "border-white/[0.10] text-white/62 hover:bg-white/[0.06] hover:text-white"
-        : "border-[#DDDDE3] bg-white text-[#555B67] hover:bg-[#F4F5F7] hover:text-[#252933]"
+        : "border-[#E1E7EF] bg-white text-[#555B67] hover:bg-[#F6F8FB] hover:text-[#202939]"
     }`}
   >
     Clear archive
@@ -12286,7 +12437,7 @@ className={
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${
                     darkMode
                       ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-                      : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                      : "border-[#E1E7EF] bg-[#F8FAFC] text-[#667085]"
                   }`}
                 >
                   <Icon
@@ -12314,15 +12465,15 @@ className={
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex items-start gap-3">
               <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border ${
                   darkMode
-                    ? "border-amber-300/15 bg-amber-300/[0.07] text-amber-200"
-                    : "border-amber-200 bg-amber-50 text-amber-700"
+                    ? "border-white/[0.10] bg-white/[0.04]"
+                    : "border-blue-100 bg-blue-50/60"
                 }`}
               >
-                <Sparkles
-                  size={16}
-                  strokeWidth={1.8}
+                <MomentuhmIllustration
+                  name="insights-chart"
+                  className="h-11 w-11"
                 />
               </div>
 
@@ -12348,7 +12499,7 @@ className={
               className={`inline-flex h-8 shrink-0 items-center gap-2 self-start rounded-full border px-3 text-[9.5px] font-[650] ${
                 darkMode
                   ? "border-white/[0.09] bg-white/[0.03] text-white/48"
-                  : "border-[#E1E2E6] bg-[#F8F9FA] text-[#6B6F7B]"
+                  : "border-[#E4EAF2] bg-[#F8F9FA] text-[#667085]"
               }`}
             >
             {!hasEnoughInsightsData ? (
@@ -12398,8 +12549,8 @@ className={
               strokeWidth={1.8}
               className={
                 darkMode
-                  ? "mt-0.5 shrink-0 text-violet-300"
-                  : "mt-0.5 shrink-0 text-violet-600"
+                  ? "mt-0.5 shrink-0 text-blue-300"
+                  : "mt-0.5 shrink-0 text-blue-600"
               }
             />
 
@@ -12588,7 +12739,7 @@ className={
                       className={`h-2 overflow-hidden rounded-full ${
                         darkMode
                           ? "bg-white/[0.07]"
-                          : "bg-[#E8E9ED]"
+                          : "bg-[#EDF1F6]"
                       }`}
                     >
                       <motion.div
@@ -12694,12 +12845,12 @@ className={
                   >
                     <stop
                       offset="0%"
-                      stopColor="#8B5CF6"
+                      stopColor="#0B6EFF"
                       stopOpacity="0.28"
                     />
                     <stop
                       offset="100%"
-                      stopColor="#8B5CF6"
+                      stopColor="#0B6EFF"
                       stopOpacity="0"
                     />
                   </linearGradient>
@@ -12749,7 +12900,7 @@ className={
                       analytics.productivityPath
                     }
                     fill="none"
-                    stroke="#8B5CF6"
+                    stroke="#0B6EFF"
                     strokeWidth="3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -12765,7 +12916,7 @@ className={
                       cx={point.x}
                       cy={point.y}
                       r="4"
-                      fill="#8B5CF6"
+                      fill="#0B6EFF"
                       stroke={
                         darkMode
                           ? "#14171B"
@@ -12806,15 +12957,15 @@ className={
             <div
               className={`mt-4 rounded-[9px] border px-3 py-2.5 ${
                 darkMode
-                  ? "border-violet-300/10 bg-violet-300/[0.05]"
-                  : "border-violet-200 bg-violet-50"
+                  ? "border-blue-300/10 bg-blue-300/[0.05]"
+                  : "border-blue-200 bg-blue-50"
               }`}
             >
               <p
                 className={`text-[9.5px] font-[600] leading-4 ${
                   darkMode
-                    ? "text-violet-100/80"
-                    : "text-violet-800"
+                    ? "text-blue-100/80"
+                    : "text-blue-800"
                 }`}
               >
                 You complete the most
@@ -12989,15 +13140,15 @@ className={`mt-4 rounded-[9px] border px-3 py-2.5 ${
   >
     <div className="w-full max-w-[520px]">
       <div
-        className={`mx-auto flex h-12 w-12 items-center justify-center rounded-[12px] border ${
+        className={`mx-auto flex h-[104px] w-[128px] items-center justify-center rounded-[18px] border ${
           darkMode
-            ? "border-white/[0.10] bg-white/[0.04] text-white/60"
-            : "border-[#DDDDE3] bg-white text-[#5F6572]"
+            ? "border-white/[0.10] bg-white/[0.04]"
+            : "border-blue-100 bg-white"
         }`}
       >
-        <Sparkles
-          size={20}
-          strokeWidth={1.7}
+        <MomentuhmIllustration
+          name="insights-chart"
+          className="h-[92px] w-[116px] object-contain"
         />
       </div>
 
@@ -13065,7 +13216,7 @@ className={`mt-4 rounded-[9px] border px-3 py-2.5 ${
             className={`h-full rounded-full ${
               darkMode
                 ? "bg-white/70"
-                : "bg-[#252933]"
+                : "bg-[#202939]"
             }`}
           />
         </div>
@@ -13089,7 +13240,7 @@ className={`mt-4 rounded-[9px] border px-3 py-2.5 ${
             className={`flex min-h-[38px] items-center gap-2 rounded-[8px] border px-3 text-[10px] font-[600] ${
               darkMode
                 ? "border-white/[0.08] bg-white/[0.025]"
-                : "border-[#E1E2E6] bg-white"
+                : "border-[#E4EAF2] bg-white"
             }`}
           >
             <Clock3
@@ -13153,7 +13304,7 @@ className={
               className={`h-9 min-w-[150px] appearance-none rounded-[8px] border bg-transparent pl-3 pr-8 text-[11px] font-[650] outline-none transition ${
                 darkMode
                   ? "border-white/[0.10] text-white/72 hover:border-white/[0.20]"
-                  : "border-[#DDDDE3] text-[#484D59] hover:border-[#BFC0C8]"
+                  : "border-[#E1E7EF] text-[#484D59] hover:border-[#BFC0C8]"
               }`}
             >
               <option value="date">
@@ -13176,18 +13327,10 @@ className={
         0 ? (
           <div className="flex min-h-[300px] items-center justify-center px-6 py-12 text-center">
             <div className="max-w-[360px]">
-              <div
-                className={`mx-auto flex h-11 w-11 items-center justify-center rounded-[10px] border ${
-                  darkMode
-                    ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-                    : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
-                }`}
-              >
-                <CheckCircle2
-                  size={19}
-                  strokeWidth={1.7}
-                />
-              </div>
+              <OptionAEmptyIllustration
+                type="archive"
+                darkMode={darkMode}
+              />
 
               <h3
                 className={`mt-4 text-[16px] font-[700] ${primaryText}`}
@@ -13291,7 +13434,7 @@ className={
                                 className={`truncate text-[13px] font-[650] tracking-[-0.015em] ${
                                   darkMode
                                     ? "text-white/88"
-                                    : "text-[#20232B]"
+                                    : "text-[#182033]"
                                 }`}
                               >
                                 {
@@ -13413,11 +13556,11 @@ function CategoriesView({
 }: any) {
   const panelBorder = darkMode
     ? "border-white/[0.10]"
-    : "border-[#DDDDE3]";
+    : "border-[#E1E7EF]";
 
   const rowBorder = darkMode
     ? "border-white/[0.08]"
-    : "border-[#E8E9ED]";
+    : "border-[#EDF1F6]";
 
   const panelSurface = darkMode
     ? "bg-[#14171B]"
@@ -13425,23 +13568,23 @@ function CategoriesView({
 
   const secondarySurface = darkMode
     ? "bg-white/[0.025]"
-    : "bg-[#FAFAFB]";
+    : "bg-[#FBFCFE]";
 
   const primaryText = darkMode
     ? "text-white"
-    : "text-[#17191F]";
+    : "text-[#111827]";
 
   const secondaryText = darkMode
     ? "text-white/82"
-    : "text-[#252933]";
+    : "text-[#202939]";
 
   const mutedText = darkMode
     ? "text-white/48"
-    : "text-[#6B6F7B]";
+    : "text-[#667085]";
 
   const inputClass = darkMode
     ? "border-white/[0.16] bg-white/[0.035] text-white placeholder:text-white/35 focus:border-white/[0.32]"
-    : "border-[#C9CBD1] bg-white text-[#252933] placeholder:text-[#80868B] focus:border-[#8F939C]";
+    : "border-[#C9CBD1] bg-white text-[#202939] placeholder:text-[#80868B] focus:border-[#8F939C]";
 
   const beginEditingCategory = (
     category: any
@@ -13509,7 +13652,7 @@ function CategoriesView({
             className={`inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[9px] px-5 text-[12px] font-[700] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35 ${
               darkMode
                 ? "bg-white text-[#181818] hover:bg-white/90"
-                : "bg-[#20232B] text-white hover:bg-[#30343D]"
+                : "bg-[#182033] text-white hover:bg-[#30343D]"
             }`}
           >
             <Plus
@@ -13566,18 +13709,10 @@ className={`overflow-hidden rounded-[14px] border shadow-[0_1px_2px_rgba(15,23,4
 ).length === 0 ? (
   <div className="flex min-h-[260px] items-center justify-center px-6 py-12 text-center">
     <div className="max-w-[340px]">
-      <div
-        className={`mx-auto flex h-11 w-11 items-center justify-center rounded-[10px] border ${
-          darkMode
-            ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-            : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
-        }`}
-      >
-        <LayoutGrid
-          size={19}
-          strokeWidth={1.7}
-        />
-      </div>
+      <OptionAEmptyIllustration
+        type="categories"
+        darkMode={darkMode}
+      />
 
       <h3
         className={`mt-4 text-[16px] font-[700] ${primaryText}`}
@@ -13628,7 +13763,7 @@ className={`overflow-hidden rounded-[14px] border shadow-[0_1px_2px_rgba(15,23,4
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${
                 darkMode
                   ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-                  : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                  : "border-[#E1E7EF] bg-[#F8FAFC] text-[#667085]"
               }`}
             >
               <LayoutGrid
@@ -13720,7 +13855,7 @@ className={`overflow-hidden rounded-[14px] border shadow-[0_1px_2px_rgba(15,23,4
                     className={`h-9 rounded-[8px] px-3 text-[10px] font-[700] transition disabled:cursor-not-allowed disabled:opacity-35 ${
                       darkMode
                         ? "bg-white text-[#181818] hover:bg-white/90"
-                        : "bg-[#20232B] text-white hover:bg-[#30343D]"
+                        : "bg-[#182033] text-white hover:bg-[#30343D]"
                     }`}
                   >
                     Save
@@ -13734,7 +13869,7 @@ className={`overflow-hidden rounded-[14px] border shadow-[0_1px_2px_rgba(15,23,4
                     className={`h-9 rounded-[8px] border px-3 text-[10px] font-[650] transition ${
                       darkMode
                         ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
-                        : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                        : "border-[#E1E7EF] bg-white text-[#667085] hover:bg-[#F6F8FB] hover:text-[#202939]"
                     }`}
                   >
                     Cancel
@@ -13753,7 +13888,7 @@ className={`overflow-hidden rounded-[14px] border shadow-[0_1px_2px_rgba(15,23,4
                   className={`flex h-9 w-9 items-center justify-center rounded-[8px] border transition ${
                     darkMode
                       ? "border-white/[0.08] text-white/35 hover:border-red-400/20 hover:bg-red-400/10 hover:text-red-300"
-                      : "border-[#E1E2E6] text-[#8A8F99] hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                      : "border-[#E4EAF2] text-[#8A8F99] hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                   }`}
                 >
                   <Trash2
@@ -13778,6 +13913,63 @@ className={`overflow-hidden rounded-[14px] border shadow-[0_1px_2px_rgba(15,23,4
 /* Small Components */
 /* ------------------------------------------------ */
 
+
+function OptionAEmptyIllustration({
+  type,
+  darkMode,
+  compact = false,
+  className = "",
+}: {
+  type:
+    | "tasks"
+    | "backlog"
+    | "completed"
+    | "archive"
+    | "categories"
+    | "focus"
+    | "inbox"
+    | "reviewed";
+  darkMode: boolean;
+  compact?: boolean;
+  className?: string;
+}) {
+  const illustrationByType: Record<
+    typeof type,
+    MomentuhmIllustrationName
+  > = {
+    tasks: "task-checklist",
+    backlog: "backlog-box",
+    completed: "completed-mountain",
+    archive: "archive-drawer",
+    categories: "categories-cards",
+    focus: "focus-target",
+    inbox: "inbox-tray",
+    reviewed: "reviewed-check",
+  };
+
+  const sizeClass = compact
+    ? "h-[92px] w-[124px]"
+    : type === "focus"
+    ? "h-[190px] w-[238px]"
+    : type === "tasks" || type === "backlog"
+    ? "h-[148px] w-[184px]"
+    : type === "completed"
+    ? "h-[132px] w-[170px]"
+    : "h-[126px] w-[164px]";
+
+  return (
+    <MomentuhmIllustration
+      name={illustrationByType[type]}
+      priority={type === "focus"}
+      className={`z-10 mx-auto block shrink-0 object-contain ${sizeClass} ${
+        darkMode
+          ? "drop-shadow-[0_14px_30px_rgba(0,0,0,0.28)]"
+          : "drop-shadow-[0_14px_30px_rgba(11,110,255,0.14)]"
+      } ${className}`}
+    />
+  );
+}
+
 function PageHeader({
   title,
   description,
@@ -13798,7 +13990,7 @@ function PageHeader({
 
         <p
           className={`mt-2 text-[13px] sm:text-sm ${
-            darkMode ? "text-white/55" : "text-[#666661]/45"
+            darkMode ? "text-white/55" : "text-[#667085]/45"
           }`}
         >
           {description}
@@ -13865,7 +14057,7 @@ function AssistantItem({ icon, title, description, color, darkMode }: any) {
         <p className="text-sm font-[700]">{title}</p>
         <p
           className={`mt-1 text-xs leading-5 ${
-            darkMode ? "text-white/42" : "text-[#666661]/42"
+            darkMode ? "text-white/42" : "text-[#667085]/42"
           }`}
         >
           {description}
@@ -13903,7 +14095,7 @@ function CompactMetric({
 
       <span
         className={`text-[11px] font-[700] ${
-          darkMode ? "text-white/38" : "text-[#666661]/38"
+          darkMode ? "text-white/38" : "text-[#667085]/38"
         }`}
       >
         {label}
@@ -14083,7 +14275,7 @@ function DayTimeLeftCard({
   const selectClass = `h-9 appearance-none rounded-[8px] border px-2 text-[11px] font-[700] outline-none transition ${
     darkMode
       ? "border-white/[0.12] bg-[#202020] text-white focus:border-white/[0.30]"
-      : "border-[#D4D4CF] bg-white text-[#181818] focus:border-[#8B8B85]"
+      : "border-[#D6DEE9] bg-white text-[#181818] focus:border-[#8B8B85]"
   }`;
 
   return (
@@ -14118,7 +14310,7 @@ function DayTimeLeftCard({
               className={`whitespace-nowrap text-[9px] font-[600] ${
                 darkMode
                   ? "text-white/35"
-                  : "text-[#6F6F6A]"
+                  : "text-[#667085]"
               }`}
             >
               Ends {currentParts.hour}:
@@ -14159,7 +14351,7 @@ function DayTimeLeftCard({
           className={`absolute left-0 top-[calc(100%+8px)] z-[1100] w-[310px] rounded-[12px] border p-3 shadow-[0_14px_40px_rgba(0,0,0,0.14)] min-[1400px]:left-[calc(100%+16px)] min-[1400px]:top-0 ${
             darkMode
               ? "border-white/[0.10] bg-[#171717]"
-              : "border-[#D4D4CF] bg-white"
+              : "border-[#D6DEE9] bg-white"
           }`}
         >
           <div className="flex items-center gap-2">
@@ -14167,7 +14359,7 @@ function DayTimeLeftCard({
               className={`mr-1 shrink-0 text-[9px] font-[700] uppercase tracking-[0.12em] ${
                 darkMode
                   ? "text-white/38"
-                  : "text-[#6F6F6A]"
+                  : "text-[#667085]"
               }`}
             >
               End time
@@ -14194,7 +14386,7 @@ function DayTimeLeftCard({
               className={`text-[12px] font-[700] ${
                 darkMode
                   ? "text-white/30"
-                  : "text-[#6F6F6A]"
+                  : "text-[#667085]"
               }`}
             >
               :
@@ -14237,7 +14429,7 @@ function DayTimeLeftCard({
             className={`mt-2 text-[9px] font-[500] ${
               darkMode
                 ? "text-white/32"
-                : "text-[#777772]"
+                : "text-[#7A8595]"
             }`}
           >
             Click outside to apply the new time.
@@ -15020,15 +15212,15 @@ completedToday.length === 0
 
   const cardBorder = darkMode
     ? "border-white/[0.10]"
-    : "border-[#DDDDE3]";
+    : "border-[#E3EAF3]";
 
   const rowBorder = darkMode
     ? "border-white/[0.08]"
-    : "border-[#E8E9ED]";
+    : "border-[#E9EEF5]";
 
   const mutedText = darkMode
     ? "text-white/50"
-    : "text-[#6B6F7B]";
+    : "text-[#667085]";
 
   return (
     <section className="min-w-0">
@@ -15036,7 +15228,7 @@ completedToday.length === 0
         <div className="min-w-0">
           <h2
             className={`text-[20px] font-[760] leading-none tracking-[-0.045em] ${
-              darkMode ? "text-white" : "text-[#17191F]"
+              darkMode ? "text-white" : "text-[#111827]"
             }`}
           >
             Focus
@@ -15050,17 +15242,18 @@ completedToday.length === 0
           type="button"
           onClick={() => void computeFocusStack()}
           disabled={focusLoading || prioritizedTasks.length === 0}
-          className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-[9px] border px-3 text-[11px] font-[650] transition disabled:cursor-not-allowed disabled:opacity-40 ${
+          className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-[9px] border px-3 text-[11px] font-[650] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
             darkMode
-              ? "border-white/[0.10] bg-white/[0.04] text-white/68 hover:bg-white/[0.07]"
-              : "border-[#DDDDE3] bg-[#F7F8FA] text-[#4F5562] hover:bg-[#F0F1F4]"
+              ? "border-blue-300/20 bg-blue-400/10 text-blue-200 hover:bg-blue-400/18"
+              : "border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100"
           }`}
         >
           <Settings2 size={15} strokeWidth={1.7} />
-          {focusLoading ? "Updating..." : "AI Mode"}
+          {focusLoading ? "Building..." : "AI Mode"}
         </button>
       </header>
 
+      <div className="min-w-0">
       <div
         onDragOver={(event) => {
           event.preventDefault();
@@ -15075,37 +15268,39 @@ completedToday.length === 0
         className={`relative overflow-hidden rounded-[14px] border p-5 transition ${
           isDragOver
             ? darkMode
-              ? "border-amber-300/40 bg-amber-300/[0.08]"
-              : "border-amber-300 bg-amber-50"
+              ? "border-amber-300/45 bg-amber-300/[0.10]"
+              : "border-amber-400 bg-amber-50"
             : darkMode
-            ? "border-amber-300/20 bg-[linear-gradient(135deg,rgba(251,191,36,0.08),rgba(251,191,36,0.025))]"
-            : "border-amber-200 bg-[linear-gradient(135deg,#FFFDF8,#FFF9EE)]"
+            ? "border-blue-300/25 bg-[radial-gradient(circle_at_top_right,rgba(163,230,53,0.13),transparent_36%),linear-gradient(135deg,rgba(37,99,235,0.12),rgba(163,230,53,0.045))]"
+            : "border-blue-200 bg-[radial-gradient(circle_at_top_right,rgba(163,230,53,0.20),transparent_34%),linear-gradient(135deg,#FFFFFF_0%,#F4F8FF_55%,#F8FFE8_100%)]"
         }`}
       >
-        <div
-          className={`pointer-events-none absolute -right-8 -top-6 flex h-32 w-32 items-center justify-center rounded-full border-[10px] opacity-15 ${
-            darkMode ? "border-amber-300" : "border-amber-500"
-          }`}
-        >
-          <Target size={52} strokeWidth={1.5} />
-        </div>
+        {currentTask && (
+          <div
+            className={`pointer-events-none absolute -right-9 -top-8 flex h-36 w-36 items-center justify-center rounded-full border-[11px] opacity-20 ${
+              darkMode ? "border-lime-300" : "border-lime-400"
+            }`}
+          >
+            <Target size={52} strokeWidth={1.5} />
+          </div>
+        )}
 
         {currentTask ? (
           <div className="relative pr-8 sm:pr-20">
             <span
               className={`inline-flex rounded-full px-3 py-1 text-[10px] font-[700] ${
                 darkMode
-                  ? "bg-amber-300/10 text-amber-200"
-                  : "bg-amber-100 text-amber-700"
+                  ? "bg-lime-300/10 text-lime-200"
+                  : "bg-lime-100 text-lime-800"
               }`}
             >
-              Current focus
+              Now, not everything
             </span>
 
             <button
               type="button"
               onClick={openCurrentTask}
-              className={`mt-3 block max-w-full text-left text-[17px] font-[720] leading-6 tracking-[-0.025em] hover:opacity-72 ${
+              className={`mt-3 block max-w-full text-left text-[20px] font-[760] leading-7 tracking-[-0.035em] hover:opacity-72 ${
                 darkMode ? "text-white" : "text-[#1C1F26]"
               }`}
             >
@@ -15143,35 +15338,61 @@ completedToday.length === 0
             </div> */}
           </div>
         ) : (
-          <div className="relative flex min-h-[210px] items-center justify-center text-center">
-            <div className="max-w-sm">
-              <Target
-                size={34}
-                className={`mx-auto ${darkMode ? "text-amber-200/55" : "text-amber-600/55"}`}
-              />
-              <h3
-                className={`mt-4 text-[17px] font-[700] ${
-                  darkMode ? "text-white" : "text-[#1C1F26]"
+          <div className="relative min-h-[220px] overflow-hidden">
+            <div className="relative z-10 flex min-h-[220px] max-w-[300px] flex-col justify-center py-2 text-left">
+              <p
+                className={`text-[9px] font-[800] uppercase tracking-[0.15em] ${
+                  darkMode ? "text-lime-300" : "text-lime-700"
                 }`}
               >
-                Build your focus stack.
-              </h3>
-              <p className={`mt-2 text-[12px] font-[500] leading-5 ${mutedText}`}>
-                Drag a task here or let Momentuhm choose your strongest next move.
+                Clear the noise
               </p>
+
+              <h3
+                className={`mt-2 text-[18px] font-[780] leading-6 tracking-[-0.045em] ${
+                  darkMode ? "text-white" : "text-[#17233A]"
+                }`}
+              >
+                Too many things competing for attention?
+              </h3>
+
+              <p className={`mt-2 max-w-[280px] text-[11px] font-[520] leading-[18px] ${mutedText}`}>
+                Choose a few tasks, or let Momentuhm find the strongest place to start.
+              </p>
+
               <button
                 type="button"
                 onClick={() => void computeFocusStack()}
                 disabled={focusLoading || prioritizedTasks.length === 0}
-                className={`mt-4 h-10 rounded-[9px] px-4 text-[11px] font-[700] transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                className={`mt-4 inline-flex h-10 w-fit items-center gap-2 rounded-[11px] px-4 text-[10.5px] font-[750] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
                   darkMode
-                    ? "bg-white text-[#181818]"
-                    : "bg-[#20232B] text-white"
+                    ? "bg-white text-[#181818] hover:bg-white/90"
+                    : "bg-blue-600 text-white shadow-[0_10px_24px_rgba(11,110,255,0.27)] hover:bg-blue-700"
                 }`}
               >
-                {focusLoading ? "Thinking..." : "Choose focus tasks"}
+                <Sparkles size={15} strokeWidth={1.9} />
+                {focusLoading ? "Finding your focus..." : "Find my focus"}
               </button>
+
+              {prioritizedTasks.length === 0 && (
+                <p className={`mt-2 text-[9.5px] font-[550] ${mutedText}`}>
+                  Add a task first, then Momentuhm can help you choose.
+                </p>
+              )}
             </div>
+
+            <OptionAEmptyIllustration
+              type="focus"
+              darkMode={darkMode}
+              className="pointer-events-none absolute -bottom-3 right-4 hidden !h-[170px] !w-[205px] scale-100 xl:block"
+            />
+
+            <OptionAEmptyIllustration
+              type="focus"
+              darkMode={darkMode}
+              compact
+              className="pointer-events-none absolute bottom-1 right-1 !h-[116px] !w-[142px] scale-100 xl:hidden"
+            />
           </div>
         )}
       </div>
@@ -15184,14 +15405,18 @@ completedToday.length === 0
 
       <section className={`mt-4 overflow-hidden rounded-[13px] border ${cardBorder}`}>
       <div
-  className={`flex min-h-[58px] items-center justify-between gap-3 border-b px-4 ${rowBorder}`}
+  className={`flex min-h-[58px] items-center justify-between gap-3 border-b px-4 ${rowBorder} ${
+    darkMode
+      ? "bg-white/[0.018]"
+      : "bg-[linear-gradient(135deg,#FFFFFF,#F7FBFF)]"
+  }`}
 >
   <div className="flex items-center gap-2">
     <h3
       className={`text-[17px] font-[720] tracking-[-0.025em] ${
         darkMode
           ? "text-white"
-          : "text-[#17191F]"
+          : "text-[#111827]"
       }`}
     >
       Focus stack
@@ -15201,7 +15426,7 @@ completedToday.length === 0
       className={`flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[10px] font-[700] ${
         darkMode
           ? "bg-white/[0.07] text-white/58"
-          : "bg-[#F0F1F4] text-[#59606C]"
+          : "bg-blue-100 text-blue-700"
       }`}
     >
       {activeFocusTasks.length}
@@ -15215,7 +15440,7 @@ completedToday.length === 0
       className={`h-8 rounded-[7px] px-2.5 text-[10.5px] font-[650] transition ${
         darkMode
           ? "text-white/48 hover:bg-white/[0.06] hover:text-white"
-          : "text-[#6B6F7B] hover:bg-[#F1F3F4] hover:text-[#202124]"
+          : "text-[#667085] hover:bg-[#F2F5F9] hover:text-[#111827]"
       }`}
     >
       Clear stack
@@ -15224,8 +15449,30 @@ completedToday.length === 0
 </div>
 
         {activeFocusTasks.length === 0 ? (
-          <div className={`px-4 py-8 text-center text-[12px] font-[500] ${mutedText}`}>
-            Your focus stack is empty.
+          <div className="flex min-h-[80px] items-center justify-center px-4 py-3 text-center">
+            <div className="max-w-[320px]">
+              <div
+                className={`mx-auto flex h-10 w-10 items-center justify-center rounded-[12px] border ${
+                  darkMode
+                    ? "border-blue-300/20 bg-blue-400/10 text-blue-200"
+                    : "border-blue-100 bg-blue-50 text-blue-600"
+                }`}
+              >
+                <Target size={19} strokeWidth={1.8} />
+              </div>
+
+              <h4
+                className={`mt-3 text-[14px] font-[720] ${
+                  darkMode ? "text-white" : "text-[#17233A]"
+                }`}
+              >
+                Your stack is clear.
+              </h4>
+
+              <p className={`mt-1.5 text-[10.5px] font-[500] leading-[18px] ${mutedText}`}>
+                Choose the task that would make today count, or let Momentuhm choose for you.
+              </p>
+            </div>
           </div>
         ) : (
           activeFocusTasks.map((task: any, index: number) => {
@@ -15249,7 +15496,7 @@ completedToday.length === 0
                   currentTask?.id === task.id
                     ? darkMode
                       ? "bg-white/[0.035]"
-                      : "bg-[#FBFBFC]"
+                      : "bg-blue-50/55"
                     : ""
                 }`}
               >
@@ -15268,7 +15515,7 @@ className="col-span-2 grid min-w-0 grid-cols-[24px_minmax(0,1fr)] items-center g
     currentTask?.id === task.id
       ? darkMode
         ? "text-white"
-        : "text-[#20232B]"
+        : "text-[#182033]"
       : mutedText
   }`}
 >
@@ -15298,7 +15545,7 @@ className="col-span-2 grid min-w-0 grid-cols-[24px_minmax(0,1fr)] items-center g
   className={`flex h-8 w-8 items-center justify-center transition ${
     darkMode
       ? "text-white/36 hover:text-white"
-      : "text-[#747986] hover:text-[#252933]"
+      : "text-[#747986] hover:text-[#202939]"
   }`}
 >
   <MoreVertical size={15} strokeWidth={1.8} />
@@ -15309,14 +15556,26 @@ className="col-span-2 grid min-w-0 grid-cols-[24px_minmax(0,1fr)] items-center g
         )}
       </section>
 
-      <section className={`mt-4 rounded-[13px] border p-4 ${cardBorder}`}>
-        <h3
-          className={`text-[17px] font-[720] tracking-[-0.025em] ${
-            darkMode ? "text-white" : "text-[#17191F]"
-          }`}
-        >
-          Quick actions
-        </h3>
+      <section
+        className={`mt-4 rounded-[13px] border p-4 ${cardBorder} ${
+          darkMode
+            ? "bg-white/[0.015]"
+            : "bg-[linear-gradient(135deg,#FFFFFF,#F8FBFF)]"
+        }`}
+      >
+        <div>
+          <h3
+            className={`text-[15px] font-[740] tracking-[-0.03em] ${
+              darkMode ? "text-white" : "text-[#17233A]"
+            }`}
+          >
+            Quick actions
+          </h3>
+
+          <p className={`mt-1 text-[10.5px] font-[500] ${mutedText}`}>
+            Small actions that keep the day moving.
+          </p>
+        </div>
 
         <div className="mt-4 grid grid-cols-3 gap-3">
           <button
@@ -15326,94 +15585,117 @@ className="col-span-2 grid min-w-0 grid-cols-[24px_minmax(0,1fr)] items-center g
               if (!currentTask) return;
               toggleTaskById(currentTask.id, event);
             }}
-            className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-[10px] border px-2 text-center text-[11px] font-[600] transition disabled:cursor-not-allowed disabled:opacity-35 ${cardBorder} ${
-              darkMode ? "hover:bg-white/[0.04]" : "hover:bg-[#FAFAFB]"
+            className={`flex min-h-[76px] w-full flex-col items-center justify-center gap-2 rounded-[10px] border px-2 text-center text-[10.5px] font-[650] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-35 ${
+              darkMode
+                ? "border-emerald-400/15 bg-emerald-400/[0.06] hover:bg-emerald-400/[0.10]"
+                : "border-emerald-100 bg-emerald-50/75 hover:border-emerald-200"
             }`}
           >
-            <Check size={22} className="text-blue-500" strokeWidth={2} />
-            <span>Mark current complete</span>
+            <span
+              className={`flex h-9 w-9 items-center justify-center rounded-[12px] ${
+                darkMode
+                  ? "bg-emerald-400/12 text-emerald-300"
+                  : "bg-white text-emerald-600 shadow-[0_5px_14px_rgba(16,185,129,0.10)]"
+              }`}
+            >
+              <Check size={20} strokeWidth={2} />
+            </span>
+            <span>Finish current task</span>
           </button>
 
           <button
             type="button"
             disabled={activeFocusTasks.length < 2}
             onClick={moveNext}
-            className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-[10px] border px-2 text-center text-[11px] font-[600] transition disabled:cursor-not-allowed disabled:opacity-35 ${cardBorder} ${
-              darkMode ? "hover:bg-white/[0.04]" : "hover:bg-[#FAFAFB]"
+            className={`flex min-h-[76px] w-full flex-col items-center justify-center gap-2 rounded-[10px] border px-2 text-center text-[10.5px] font-[650] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-35 ${
+              darkMode
+                ? "border-blue-400/15 bg-blue-400/[0.06] hover:bg-blue-400/[0.10]"
+                : "border-blue-100 bg-blue-50/80 hover:border-blue-200"
             }`}
           >
-            <Play size={21} className="text-emerald-500" strokeWidth={1.9} />
-            <span>Start next in stack</span>
+            <span
+              className={`flex h-9 w-9 items-center justify-center rounded-[12px] ${
+                darkMode
+                  ? "bg-blue-400/12 text-blue-300"
+                  : "bg-white text-blue-600 shadow-[0_5px_14px_rgba(11,110,255,0.10)]"
+              }`}
+            >
+              <Play size={19} strokeWidth={1.9} />
+            </span>
+            <span>Start what&apos;s next</span>
           </button>
 
           <button
-type="button"
-onClick={() =>
-  setIsMomentumOpen(true)
-}
-className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-[10px] border px-2 text-center text-[11px] font-[600] transition ${cardBorder} ${
-  darkMode
-    ? "hover:bg-white/[0.04]"
-    : "hover:bg-[#FAFAFB]"
-}`}
->
-<TrendingUp
-  size={21}
-  className="text-violet-500"
-  strokeWidth={1.9}
-/>
-
-<span>
-  See today&apos;s momentum
-</span>
-</button>
+            type="button"
+            onClick={() => setIsMomentumOpen(true)}
+            className={`flex min-h-[76px] w-full flex-col items-center justify-center gap-2 rounded-[10px] border px-2 text-center text-[10.5px] font-[650] transition hover:-translate-y-0.5 ${
+              darkMode
+                ? "border-lime-400/15 bg-lime-400/[0.06] hover:bg-lime-400/[0.10]"
+                : "border-lime-200 bg-lime-50/85 hover:border-lime-300"
+            }`}
+          >
+            <span
+              className={`flex h-9 w-9 items-center justify-center rounded-[12px] ${
+                darkMode
+                  ? "bg-lime-400/12 text-lime-300"
+                  : "bg-white text-lime-700 shadow-[0_5px_14px_rgba(132,204,22,0.12)]"
+              }`}
+            >
+              <TrendingUp size={19} strokeWidth={1.9} />
+            </span>
+            <span>See today&apos;s momentum</span>
+          </button>
         </div>
       </section>
 
    
       <section
-className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5 ${
+  className={`relative mt-4 flex min-h-[110px] items-center gap-4 overflow-hidden rounded-[13px] border p-5 shadow-[0_10px_26px_rgba(11,110,255,0.07)] ${
   darkMode
-    ? "border-violet-400/20 bg-violet-400/[0.06]"
-    : "border-violet-200 bg-[linear-gradient(135deg,#FBF8FF,#F7F2FF)]"
+    ? "border-blue-400/20 bg-[linear-gradient(135deg,rgba(37,99,235,0.10),rgba(163,230,53,0.045))]"
+    : "border-blue-200 bg-[linear-gradient(135deg,#FFFFFF_0%,#EEF5FF_58%,#F8FFE8_100%)]"
 }`}
 >
-<Sparkles
-  size={30}
-  className={
+<div
+  className={`flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[11px] ${
     darkMode
-      ? "shrink-0 text-violet-300"
-      : "shrink-0 text-violet-600"
-  }
-  strokeWidth={1.7}
-/>
+      ? "bg-white/[0.04]"
+      : "bg-white shadow-[0_8px_20px_rgba(11,110,255,0.12)]"
+  }`}
+>
+  <MomentuhmIllustration
+    name="progress-trophy"
+    className="h-[38px] w-[38px]"
+  />
+</div>
 
-<div className="min-w-0">
+<div className="relative z-10 min-w-0">
   <h3
-    className={`text-[15px] font-[700] ${
+    className={`text-[14px] font-[740] leading-[19px] tracking-[-0.025em] ${
       darkMode
         ? "text-white"
-        : "text-[#20232B]"
+        : "text-[#17233A]"
     }`}
   >
     {completedToday.length > 0
-      ? "Keep the momentum going"
-      : "Start with one meaningful task"}
+      ? "You're already moving."
+      : "One task can change the shape of the day."}
   </h3>
 
   <p
-    className={`mt-1.5 text-[12px] font-[500] ${mutedText}`}
+    className={`mt-1 text-[10px] font-[500] leading-[16px] ${mutedText}`}
   >
-    {prioritizedTasks.length} active task
-    {prioritizedTasks.length === 1
-      ? ""
-      : "s"}{" "}
-    remain today.
+    {prioritizedTasks.length === 0
+      ? "Your list is clear. Capture anything you do not want to carry in your head."
+      : `${prioritizedTasks.length} active task${
+          prioritizedTasks.length === 1 ? "" : "s"
+        } remain. You do not need to finish everything—just the right next thing.`}
   </p>
 </div>
+
+<div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full border-[16px] border-blue-300/20" />
 </section>
-
-
+      </div>
 
 <AnimatePresence>
 {isMomentumOpen && (
@@ -15465,8 +15747,8 @@ className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5
       }
       className={`relative z-[10000] flex max-h-[calc(100vh-104px)] w-full max-w-[980px] flex-col overflow-hidden rounded-[18px] border shadow-[0_30px_100px_rgba(0,0,0,0.34)] sm:max-h-[calc(100vh-120px)] ${
         darkMode
-          ? "border-white/[0.12] bg-[#17181C] text-[#F1F3F4]"
-          : "border-[#DADCE0] bg-[#FFFDFB] text-[#202124]"
+          ? "border-white/[0.12] bg-[#17181C] text-[#F2F5F9]"
+          : "border-[#E2E8F0] bg-[#FFFDFB] text-[#111827]"
       }`}
     >
       {/* Modal header */}
@@ -15475,8 +15757,8 @@ className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
               darkMode
-                ? "bg-violet-400/12 text-violet-300"
-                : "bg-violet-100 text-violet-600"
+                ? "bg-blue-400/12 text-blue-300"
+                : "bg-blue-100 text-blue-600"
             }`}
           >
             <TrendingUp
@@ -15497,7 +15779,7 @@ className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5
               className={`mt-2 text-[12px] font-[500] ${
                 darkMode
                   ? "text-white/48"
-                  : "text-[#5F6368]"
+                  : "text-[#667085]"
               }`}
             >
               How your day is unfolding so far
@@ -15515,7 +15797,7 @@ className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] transition ${
             darkMode
               ? "text-white/52 hover:bg-white/[0.07] hover:text-white"
-              : "text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124]"
+              : "text-[#667085] hover:bg-[#F2F5F9] hover:text-[#111827]"
           }`}
         >
           <X
@@ -15567,8 +15849,8 @@ className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5
                 Clock3,
               iconClass:
                 darkMode
-                  ? "border-violet-400/20 bg-violet-400/10 text-violet-300"
-                  : "border-violet-200 bg-violet-50 text-violet-600",
+                  ? "border-blue-400/20 bg-blue-400/10 text-blue-300"
+                  : "border-blue-200 bg-blue-50 text-blue-600",
             },
             {
               label:
@@ -15603,12 +15885,12 @@ className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5
                     index > 0
                       ? darkMode
                         ? "lg:border-l lg:border-white/[0.09]"
-                        : "lg:border-l lg:border-[#E8EAED]"
+                        : "lg:border-l lg:border-[#EDF1F6]"
                       : ""
                   } ${
                     darkMode
                       ? "border-white/[0.09] bg-white/[0.018]"
-                      : "border-[#E8EAED] bg-white"
+                      : "border-[#EDF1F6] bg-white"
                   }`}
                 >
                   <div
@@ -15635,7 +15917,7 @@ className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5
                       className={`mt-0.5 text-[9.5px] font-[500] ${
                         darkMode
                           ? "text-white/40"
-                          : "text-[#6B6F7B]"
+                          : "text-[#667085]"
                       }`}
                     >
                       {metric.detail}
@@ -15652,7 +15934,7 @@ className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5
           className={`mt-3 overflow-hidden rounded-[13px] border p-4 sm:p-5 ${
             darkMode
               ? "border-white/[0.10] bg-white/[0.018]"
-              : "border-[#DADCE0] bg-white"
+              : "border-[#E2E8F0] bg-white"
           }`}
         >
           <div className="flex items-start justify-between gap-4">
@@ -15665,7 +15947,7 @@ className={`mt-4 flex min-h-[110px] items-center gap-4 rounded-[13px] border p-5
                 className={`mt-1 text-[10.5px] font-[500] ${
                   darkMode
                     ? "text-white/42"
-                    : "text-[#6B6F7B]"
+                    : "text-[#667085]"
                 }`}
               >
                 Tasks completed throughout the day
@@ -15798,7 +16080,7 @@ x2={
 }
 y1="27"
 y2="132"
-stroke="#8B5CF6"
+stroke="#0B6EFF"
 strokeDasharray="4 4"
 strokeWidth="1.5"
 />
@@ -15809,7 +16091,7 @@ y="3"
 width="46"
 height="22"
 rx="6"
-fill="#7C3AED"
+fill="#0B6EFF"
 />
 
 <text
@@ -15891,7 +16173,7 @@ Now
                         fill={
                           darkMode
                             ? "rgba(255,255,255,0.48)"
-                            : "#6B6F7B"
+                            : "#667085"
                         }
                         fontSize="9"
                         fontWeight="600"
@@ -15913,7 +16195,7 @@ Now
             className={`rounded-[13px] border p-4 ${
               darkMode
                 ? "border-white/[0.10] bg-white/[0.018]"
-                : "border-[#DADCE0] bg-white"
+                : "border-[#E2E8F0] bg-white"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -15923,7 +16205,7 @@ Now
                 className={
                   darkMode
                     ? "text-white/55"
-                    : "text-[#5F6368]"
+                    : "text-[#667085]"
                 }
               />
 
@@ -15938,7 +16220,7 @@ Now
                   className={`text-[9.5px] font-[550] ${
                     darkMode
                       ? "text-white/42"
-                      : "text-[#6B6F7B]"
+                      : "text-[#667085]"
                   }`}
                 >
                   Most productive
@@ -15959,7 +16241,7 @@ Now
                   className={`mt-2 text-[9.5px] font-[500] ${
                     darkMode
                       ? "text-white/40"
-                      : "text-[#6B6F7B]"
+                      : "text-[#667085]"
                   }`}
                 >
                   {productiveWindow.count >
@@ -16013,7 +16295,7 @@ Now
             className={`rounded-[13px] border p-4 ${
               darkMode
                 ? "border-white/[0.10] bg-white/[0.018]"
-                : "border-[#DADCE0] bg-white"
+                : "border-[#E2E8F0] bg-white"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -16023,7 +16305,7 @@ Now
                 className={
                   darkMode
                     ? "text-white/55"
-                    : "text-[#5F6368]"
+                    : "text-[#667085]"
                 }
               />
 
@@ -16063,7 +16345,7 @@ Now
             className={`rounded-[13px] border p-4 ${
               darkMode
                 ? "border-white/[0.10] bg-white/[0.018]"
-                : "border-[#DADCE0] bg-white"
+                : "border-[#E2E8F0] bg-white"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -16073,7 +16355,7 @@ Now
                 className={
                   darkMode
                     ? "text-white/55"
-                    : "text-[#5F6368]"
+                    : "text-[#667085]"
                 }
               />
 
@@ -16102,7 +16384,7 @@ Now
               className={`mt-4 h-2 overflow-hidden rounded-full ${
                 darkMode
                   ? "bg-white/[0.09]"
-                  : "bg-[#E8EAED]"
+                  : "bg-[#EDF1F6]"
               }`}
             >
               <motion.div
@@ -16121,7 +16403,7 @@ Now
                     1,
                   ],
                 }}
-                className="h-full rounded-full bg-violet-600"
+                className="h-full rounded-full bg-lime-500"
               />
             </div>
           </article>
@@ -16131,8 +16413,8 @@ Now
         <section
           className={`relative mt-3 min-h-[145px] overflow-hidden rounded-[13px] border px-5 py-5 ${
             darkMode
-              ? "border-violet-400/20 bg-[linear-gradient(110deg,rgba(139,92,246,0.12),rgba(124,58,237,0.05))]"
-              : "border-violet-200 bg-[linear-gradient(110deg,#FCF8FF_0%,#F7F0FF_58%,#E9DDFC_100%)]"
+              ? "border-blue-400/20 bg-[linear-gradient(110deg,rgba(37,99,235,0.12),rgba(163,230,53,0.05))]"
+              : "border-blue-200 bg-[linear-gradient(110deg,#FFFFFF_0%,#EEF5FF_60%,#F3FFD6_100%)]"
           }`}
         >
           <div className="relative z-10 max-w-[58%]">
@@ -16142,8 +16424,8 @@ Now
                 strokeWidth={1.8}
                 className={
                   darkMode
-                    ? "text-violet-300"
-                    : "text-violet-600"
+                    ? "text-blue-300"
+                    : "text-blue-600"
                 }
               />
 
@@ -16156,7 +16438,7 @@ Now
               className={`mt-3 text-[11.5px] font-[600] leading-5 ${
                 darkMode
                   ? "text-white/82"
-                  : "text-[#2F243E]"
+                  : "text-[#1D2B42]"
               }`}
             >
               {momentumInsight.headline}
@@ -16166,7 +16448,7 @@ Now
               className={`mt-1 text-[11px] font-[520] leading-5 ${
                 darkMode
                   ? "text-white/60"
-                  : "text-[#51455F]"
+                  : "text-[#4B5D75]"
               }`}
             >
               {momentumInsight.message}
@@ -16175,141 +16457,19 @@ Now
             <p
               className={`mt-3 text-[11.5px] font-[720] ${
                 darkMode
-                  ? "text-violet-200"
-                  : "text-[#352346]"
+                  ? "text-blue-200"
+                  : "text-[#1D4E89]"
               }`}
             >
               Keep this momentum going.
             </p>
           </div>
 
-          {/* Decorative mountain artwork */}
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 420 180"
-            className="pointer-events-none absolute bottom-0 right-0 h-[145px] w-[44%] opacity-95"
-            preserveAspectRatio="xMidYMax meet"
-          >
-            <defs>
-              <linearGradient
-                id="momentum-mountain-back"
-                x1="0"
-                x2="0"
-                y1="0"
-                y2="1"
-              >
-                <stop
-                  offset="0%"
-                  stopColor="#C4B5FD"
-                />
-                <stop
-                  offset="100%"
-                  stopColor="#8B5CF6"
-                />
-              </linearGradient>
-
-              <linearGradient
-                id="momentum-mountain-front"
-                x1="0"
-                x2="0"
-                y1="0"
-                y2="1"
-              >
-                <stop
-                  offset="0%"
-                  stopColor="#8B5CF6"
-                />
-                <stop
-                  offset="100%"
-                  stopColor="#4C1D95"
-                />
-              </linearGradient>
-
-              <linearGradient
-                id="momentum-sun"
-                x1="0"
-                x2="0"
-                y1="0"
-                y2="1"
-              >
-                <stop
-                  offset="0%"
-                  stopColor="#FDBA74"
-                />
-                <stop
-                  offset="100%"
-                  stopColor="#F97316"
-                />
-              </linearGradient>
-            </defs>
-
-            <circle
-              cx="205"
-              cy="118"
-              r="30"
-              fill="url(#momentum-sun)"
-              opacity="0.9"
-            />
-
-            <path
-              d="M 0 170 L 68 100 L 112 140 L 170 82 L 235 150 L 296 92 L 352 145 L 420 105 L 420 180 L 0 180 Z"
-              fill="url(#momentum-mountain-back)"
-              opacity="0.88"
-            />
-
-            <path
-              d="M 0 180 L 92 125 L 135 157 L 218 74 L 274 145 L 338 96 L 420 155 L 420 180 Z"
-              fill="url(#momentum-mountain-front)"
-              opacity="0.95"
-            />
-
-            <path
-              d="M 206 180 C 230 160, 212 147, 244 133 C 270 121, 253 104, 281 88"
-              fill="none"
-              stroke="#FDBA74"
-              strokeWidth="5"
-              strokeLinecap="round"
-            />
-
-            <line
-              x1="281"
-              x2="281"
-              y1="88"
-              y2="53"
-              stroke="#F8FAFC"
-              strokeWidth="3"
-            />
-
-            <path
-              d="M 284 54 L 321 65 L 284 76 Z"
-              fill="#7C3AED"
-            />
-
-            {[
-              [58, 46],
-              [118, 68],
-              [347, 45],
-              [380, 74],
-            ].map(
-              (
-                sparkle,
-                index
-              ) => (
-                <g
-                  key={
-                    index
-                  }
-                  transform={`translate(${sparkle[0]} ${sparkle[1]})`}
-                  opacity="0.7"
-                >
-                  <path
-                    d="M 0 -6 L 2 -2 L 6 0 L 2 2 L 0 6 L -2 2 L -6 0 L -2 -2 Z"
-                    fill="#A78BFA"
-                  />
-                </g>
-              )
-            )}
-          </svg>
+          {/* Shared Momentuhm momentum artwork */}
+          <MomentuhmIllustration
+            name="momentum-landscape"
+            className="pointer-events-none absolute bottom-0 right-1 h-[142px] w-[42%] opacity-95"
+          />
         </section>
       </div>
 
@@ -16318,7 +16478,7 @@ Now
         className={`flex shrink-0 flex-col gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${
           darkMode
             ? "border-white/[0.09] bg-white/[0.018]"
-            : "border-[#E8EAED] bg-[#FFFDFB]"
+            : "border-[#EDF1F6] bg-[#FFFDFB]"
         }`}
       >
         <button
@@ -16351,7 +16511,7 @@ Now
           className={`inline-flex h-10 items-center justify-center gap-2 rounded-[9px] border px-4 text-[11px] font-[650] transition ${
             darkMode
               ? "border-white/[0.10] text-white/62 hover:bg-white/[0.06] hover:text-white"
-              : "border-[#DADCE0] bg-white text-[#4F5562] hover:bg-[#F1F3F4] hover:text-[#202124]"
+              : "border-[#E2E8F0] bg-white text-[#4F5562] hover:bg-[#F2F5F9] hover:text-[#111827]"
           }`}
         >
           <ListChecks
@@ -16367,7 +16527,7 @@ Now
           onClick={() =>
             setIsMomentumOpen(false)
           }
-          className="h-10 rounded-[9px] bg-violet-600 px-8 text-[11px] font-[700] text-white transition hover:bg-violet-700 active:scale-[0.98]"
+          className="h-10 rounded-[9px] bg-blue-600 px-8 text-[11px] font-[700] text-white transition hover:bg-blue-700 active:scale-[0.98]"
         >
           Close
         </button>
@@ -16405,7 +16565,7 @@ function DateBadge({ task, visibleDueDate, darkMode }: any) {
       className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-[700] tracking-[-0.01em] ${
         darkMode
           ? "border-white/[0.08] bg-white/[0.04] text-white/35"
-          : "border-black/[0.06] bg-black/[0.025] text-[#666661]/35"
+          : "border-black/[0.06] bg-black/[0.025] text-[#667085]/35"
       }`}
     >
       No date
@@ -16472,7 +16632,7 @@ function PrioritiesView({
             className={`mt-2 text-sm ${
               darkMode
                 ? "text-white/55"
-                : "text-[#666661]/45"
+                : "text-[#667085]/45"
             }`}
           >
             Your active tasks grouped by
@@ -16530,7 +16690,7 @@ function PrioritiesView({
                     className={`mt-1 text-[11px] sm:text-[12px] ${
                       darkMode
                         ? "text-white/55"
-                        : "text-[#666661]/45"
+                        : "text-[#667085]/45"
                     }`}
                   >
                     {group.description}
@@ -16541,7 +16701,7 @@ function PrioritiesView({
                   className={`flex h-8 min-w-8 items-center justify-center rounded-full px-3 text-xs font-[700] ${
                     darkMode
                       ? "bg-white/10 text-white/70"
-                      : "bg-black/[0.04] text-[#666661]/60"
+                      : "bg-black/[0.04] text-[#667085]/60"
                   }`}
                 >
                   {group.tasks.length}
@@ -16582,7 +16742,7 @@ function PrioritiesView({
                         className={`block max-w-full truncate text-left text-[13px] font-[700] sm:text-[14px] ${
                           darkMode
                             ? "text-white"
-                            : "text-[#252933]"
+                            : "text-[#202939]"
                         }`}
                       >
                         {task.title}
@@ -16592,7 +16752,7 @@ function PrioritiesView({
                         className={`mt-1 flex min-w-0 items-center gap-1.5 text-[11px] ${
                           darkMode
                             ? "text-white/48"
-                            : "text-[#666661]/55"
+                            : "text-[#667085]/55"
                         }`}
                       >
                         <span className="truncate">
@@ -16679,7 +16839,7 @@ function PriorityColumn({
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
             <h3 className="text-[15px] font-[700]">{title}</h3>
           </div>
-          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#666661]/40"}`}>
+          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#667085]/40"}`}>
             {description}
           </p>
         </div>
@@ -16695,7 +16855,7 @@ function PriorityColumn({
             className={`rounded-2xl border border-dashed p-5 text-sm ${
               darkMode
                 ? "border-white/10 text-white/35"
-                : "border-black/10 text-[#666661]/35"
+                : "border-black/10 text-[#667085]/35"
             }`}
           >
             {emptyMessage}
@@ -16744,7 +16904,7 @@ function CompactTaskCard({
           onClick={(e) => toggleTaskById(task.id, e)}
           className="mt-0.5 opacity-70 transition hover:opacity-100"
         >
-          <Circle size={18} className={darkMode ? "text-white/25" : "text-[#666661]/25"} />
+          <Circle size={18} className={darkMode ? "text-white/25" : "text-[#667085]/25"} />
         </button>
 
         <div className="min-w-0 flex-1">
@@ -16758,7 +16918,7 @@ function CompactTaskCard({
             {task.title}
           </p>
 
-          <p className={`mt-1 text-[11px] ${darkMode ? "text-white/38" : "text-[#666661]/38"}`}>
+          <p className={`mt-1 text-[11px] ${darkMode ? "text-white/38" : "text-[#667085]/38"}`}>
             {task.category}
           </p>
 
@@ -16808,7 +16968,7 @@ function PriorityListGroup({
             <h3 className="text-[15px] font-[700]">{title}</h3>
           </div>
 
-          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#666661]/40"}`}>
+          <p className={`mt-1 text-xs ${darkMode ? "text-white/40" : "text-[#667085]/40"}`}>
             {description}
           </p>
         </div>
@@ -16865,13 +17025,13 @@ function AirtablePriorityGroup({
             <h3 className="text-[15px] font-[700] sm:text-[16px]">{title}</h3>
           </div>
 
-          <p className={`mt-1 text-[11px] sm:text-[12px] ${darkMode ? "text-white/55" : "text-[#666661]/45"}`}>
+          <p className={`mt-1 text-[11px] sm:text-[12px] ${darkMode ? "text-white/55" : "text-[#667085]/45"}`}>
             {description}
           </p>
         </div>
 
         <div className={`flex h-8 min-w-8 items-center justify-center rounded-full px-3 text-xs font-[700] ${
-          darkMode ? "bg-white/10 text-white/70" : "bg-black/[0.04] text-[#666661]/60"
+          darkMode ? "bg-white/10 text-white/70" : "bg-black/[0.04] text-[#667085]/60"
         }`}>
           {tasks.length}
         </div>
@@ -16905,10 +17065,10 @@ function AirtablePriorityGroup({
                 task.completed
                   ? darkMode
                     ? "text-white/55 line-through decoration-white/45"
-                    : "text-[#666661]/45 line-through decoration-black/45"
+                    : "text-[#667085]/45 line-through decoration-black/45"
                   : darkMode
                   ? "text-white"
-                  : "text-[#666661]"
+                  : "text-[#667085]"
               }`}
             >
               {task.title}
@@ -16925,10 +17085,10 @@ function AirtablePriorityGroup({
               task.completed
                 ? darkMode
                   ? "text-white/42"
-                  : "text-[#666661]/35"
+                  : "text-[#667085]/35"
                 : darkMode
                 ? "text-white/48"
-                : "text-[#666661]/40"
+                : "text-[#667085]/40"
             }`}
             >
               {task.category} • {task.priority}
@@ -16938,7 +17098,7 @@ function AirtablePriorityGroup({
           <div className="flex w-full flex-wrap items-center justify-start gap-3 text-[12px] font-[700] sm:w-auto sm:justify-end sm:gap-5 sm:text-[13px] sm:font-[700]">
             {task.dueDate && (
               <div className={`flex items-center gap-1.5 ${
-                darkMode ? "text-white/70" : "text-[#666661]/65"
+                darkMode ? "text-white/70" : "text-[#667085]/65"
               }`}>
                 <Calendar size={14} />
                 <span>{formatDueDate(task.dueDate)}</span>
@@ -17050,7 +17210,7 @@ function UpcomingView({
             className={`mt-2 text-[13px] sm:text-sm ${
               darkMode
                 ? "text-white/55"
-                : "text-[#666661]/45"
+                : "text-[#667085]/45"
             }`}
           >
             Tasks grouped by manual due dates and
@@ -17081,7 +17241,7 @@ function UpcomingView({
                   ? "text-white"
                   : darkMode
                   ? "text-white/55 hover:text-white"
-                  : "text-[#666661]/45 hover:text-[#666661]"
+                  : "text-[#667085]/45 hover:text-[#667085]"
               }`}
               style={
                 viewMode === "calendar"
@@ -17105,7 +17265,7 @@ function UpcomingView({
                   ? "text-white"
                   : darkMode
                   ? "text-white/55 hover:text-white"
-                  : "text-[#666661]/45 hover:text-[#666661]"
+                  : "text-[#667085]/45 hover:text-[#667085]"
               }`}
               style={
                 viewMode === "list"
@@ -17273,7 +17433,7 @@ function UpcomingCalendarView({
                 className={`mt-1 text-xs ${
                   darkMode
                     ? "text-white/40"
-                    : "text-[#666661]/40"
+                    : "text-[#667085]/40"
                 }`}
               >
                 {day.dateLabel}
@@ -17284,7 +17444,7 @@ function UpcomingCalendarView({
               className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
                 darkMode
                   ? "bg-white/[0.06] text-white/50"
-                  : "bg-black/[0.04] text-[#666661]/50"
+                  : "bg-black/[0.04] text-[#667085]/50"
               }`}
             >
               {day.tasks.length}
@@ -17294,13 +17454,19 @@ function UpcomingCalendarView({
           <div className="space-y-2">
             {day.tasks.length === 0 && (
               <div
-                className={`rounded-2xl border border-dashed p-4 text-sm ${
+                className={`flex min-h-[170px] flex-col items-center justify-center rounded-[18px] border border-dashed p-4 text-center text-sm ${
                   darkMode
-                    ? "border-white/10 text-white/35"
-                    : "border-black/10 text-[#666661]/35"
+                    ? "border-white/10 bg-white/[0.02] text-white/45"
+                    : "border-blue-100 bg-blue-50/35 text-[#667085]"
                 }`}
               >
-                {day.emptyMessage}
+                <MomentuhmIllustration
+                  name="upcoming-calendar"
+                  className="h-[86px] w-[104px]"
+                />
+                <p className="mt-2 text-[11px] font-[650]">
+                  {day.emptyMessage}
+                </p>
               </div>
             )}
 
@@ -17390,7 +17556,7 @@ function UpcomingCalendarTaskCard({
             className={
               darkMode
                 ? "text-white/25"
-                : "text-[#666661]/25"
+                : "text-[#667085]/25"
             }
           />
         </button>
@@ -17411,7 +17577,7 @@ function UpcomingCalendarTaskCard({
             className={`mt-1 flex min-w-0 items-center gap-1.5 text-[11px] ${
               darkMode
                 ? "text-white/38"
-                : "text-[#666661]/38"
+                : "text-[#667085]/38"
             }`}
           >
             <span className="truncate">
@@ -17481,7 +17647,7 @@ function UpcomingCalendarTaskCard({
               className={`rounded-full px-2.5 py-1 text-[10px] font-[700] transition hover:scale-[1.03] ${
                 darkMode
                   ? "bg-white/[0.06] text-white/55 hover:text-white"
-                  : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
+                  : "bg-black/[0.04] text-[#667085]/55 hover:text-[#667085]"
               }`}
             >
               Accept
@@ -17535,7 +17701,7 @@ function UpcomingGroup({
             className={`mt-1 text-xs ${
               darkMode
                 ? "text-white/40"
-                : "text-[#666661]/40"
+                : "text-[#667085]/40"
             }`}
           >
             {description}
@@ -17546,7 +17712,7 @@ function UpcomingGroup({
           className={`rounded-full px-2.5 py-1 text-[10px] font-[900] ${
             darkMode
               ? "bg-white/[0.06] text-white/50"
-              : "bg-black/[0.04] text-[#666661]/50"
+              : "bg-black/[0.04] text-[#667085]/50"
           }`}
         >
           {tasks.length}
@@ -17606,7 +17772,7 @@ function TaskRows({
           className={`p-5 text-sm ${
             darkMode
               ? "text-white/35"
-              : "text-[#666661]/35"
+              : "text-[#667085]/35"
           }`}
         >
           {emptyMessage}
@@ -17650,7 +17816,7 @@ function TaskRows({
                   className={
                     darkMode
                       ? "text-white/25"
-                      : "text-[#666661]/25"
+                      : "text-[#667085]/25"
                   }
                 />
               </button>
@@ -17676,7 +17842,7 @@ function TaskRows({
                   className={`mt-1 flex min-w-0 items-center gap-1.5 text-[10.5px] font-[650] sm:mt-1.5 sm:text-[11px] ${
                     darkMode
                       ? "text-white/38"
-                      : "text-[#666661]/38"
+                      : "text-[#667085]/38"
                   }`}
                 >
                   <span className="truncate">
@@ -17741,7 +17907,7 @@ function TaskRows({
                     className={`rounded-full px-3 py-1 text-[11px] font-[700] transition hover:scale-[1.03] ${
                       darkMode
                         ? "bg-white/[0.06] text-white/55 hover:text-white"
-                        : "bg-black/[0.04] text-[#666661]/55 hover:text-[#666661]"
+                        : "bg-black/[0.04] text-[#667085]/55 hover:text-[#667085]"
                     }`}
                   >
                     Accept
@@ -17791,11 +17957,11 @@ function InboxView({
 }: any) {
   const panelBorder = darkMode
     ? "border-white/[0.10]"
-    : "border-[#DDDDE3]";
+    : "border-[#E1E7EF]";
 
   const rowBorder = darkMode
     ? "border-white/[0.08]"
-    : "border-[#E8E9ED]";
+    : "border-[#EDF1F6]";
 
   const panelSurface = darkMode
     ? "bg-[#14171B]"
@@ -17804,19 +17970,19 @@ function InboxView({
   const secondarySurface =
     darkMode
       ? "bg-white/[0.025]"
-      : "bg-[#FAFAFB]";
+      : "bg-[#FBFCFE]";
 
   const primaryText = darkMode
     ? "text-white"
-    : "text-[#17191F]";
+    : "text-[#111827]";
 
   const secondaryText = darkMode
     ? "text-white/86"
-    : "text-[#252933]";
+    : "text-[#202939]";
 
   const mutedText = darkMode
     ? "text-white/48"
-    : "text-[#6B6F7B]";
+    : "text-[#667085]";
 
   const openTaskEditor = (
     task: any
@@ -17898,7 +18064,7 @@ function InboxView({
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border ${
                 darkMode
                   ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-                  : "border-[#DDDDE3] bg-white text-[#5F6572]"
+                  : "border-[#E1E7EF] bg-white text-[#667085]"
               }`}
             >
               <Calendar
@@ -17938,18 +18104,10 @@ function InboxView({
         {inboxTasks.length === 0 ? (
           <div className="flex min-h-[280px] items-center justify-center px-6 py-12 text-center">
             <div className="max-w-[360px]">
-              <div
-                className={`mx-auto flex h-11 w-11 items-center justify-center rounded-[10px] border ${
-                  darkMode
-                    ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-                    : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
-                }`}
-              >
-                <CheckCircle2
-                  size={19}
-                  strokeWidth={1.7}
-                />
-              </div>
+              <OptionAEmptyIllustration
+                type="inbox"
+                darkMode={darkMode}
+              />
 
               <h3
                 className={`mt-4 text-[16px] font-[700] ${primaryText}`}
@@ -18019,7 +18177,7 @@ function InboxView({
                           className={`h-4 w-4 rounded-[4px] border ${
                             darkMode
                               ? "border-white/42"
-                              : "border-[#9297A1]"
+                              : "border-[#98A2B3]"
                           }`}
                         />
                       </button>
@@ -18113,7 +18271,7 @@ function InboxView({
                             className={`h-9 rounded-[8px] border px-3 text-[10px] font-[650] transition ${
                               darkMode
                                 ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
-                                : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                                : "border-[#E1E7EF] bg-white text-[#667085] hover:bg-[#F6F8FB] hover:text-[#202939]"
                             }`}
                           >
                             Today
@@ -18130,7 +18288,7 @@ function InboxView({
                             className={`h-9 rounded-[8px] border px-3 text-[10px] font-[650] transition ${
                               darkMode
                                 ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
-                                : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                                : "border-[#E1E7EF] bg-white text-[#667085] hover:bg-[#F6F8FB] hover:text-[#202939]"
                             }`}
                           >
                             Tomorrow
@@ -18148,7 +18306,7 @@ function InboxView({
                         className={`h-9 rounded-[8px] px-3.5 text-[10px] font-[700] transition active:scale-[0.98] ${
                           darkMode
                             ? "bg-white text-[#181818] hover:bg-white/90"
-                            : "bg-[#20232B] text-white hover:bg-[#30343D]"
+                            : "bg-[#182033] text-white hover:bg-[#30343D]"
                         }`}
                       >
                         Review
@@ -18166,7 +18324,7 @@ function InboxView({
                         className={`flex h-9 w-9 items-center justify-center rounded-[8px] border transition ${
                           darkMode
                             ? "border-white/[0.08] text-white/35 hover:border-red-400/20 hover:bg-red-400/10 hover:text-red-300"
-                            : "border-[#E1E2E6] text-[#8A8F99] hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                            : "border-[#E4EAF2] text-[#8A8F99] hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                         }`}
                       >
                         <Trash2
@@ -18626,29 +18784,29 @@ newTask,
       label: "Not started",
       className: darkMode
         ? "border-white/[0.12] bg-white/[0.05] text-white/58"
-        : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368]",
+        : "border-[#E2E8F0] bg-[#F2F5F9] text-[#667085]",
     };
   };
 
   const canvasClass = darkMode
-    ? "bg-[#101114] text-[#F1F3F4]"
-    : "bg-[#F8F9FA] text-[#202124]";
+    ? "bg-[#101114] text-[#F2F5F9]"
+    : "bg-[#F8FAFD] text-[#111827]";
 
   const panelClass = darkMode
     ? "border-white/[0.09] bg-[#17181C]"
-    : "border-[#DADCE0] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.08)]";
+    : "border-[#E3EAF3] bg-white shadow-[0_10px_28px_rgba(11,110,255,0.06)]";
 
   const dividerClass = darkMode
     ? "border-white/[0.075]"
-    : "border-[#E8EAED]";
+    : "border-[#E9EEF5]";
 
   const mutedTextClass = darkMode
     ? "text-white/46"
-    : "text-[#5F6368]";
+    : "text-[#667085]";
 
   return (
     <div
-    className={`min-h-screen w-full min-w-0 max-w-full overflow-x-hidden pb-4 sm:hidden ${canvasClass}`}
+    className={`min-h-screen w-full min-w-0 max-w-full overflow-x-hidden pb-4 lg:hidden ${canvasClass}`}
   >
   <header className="relative pb-3 pt-1 text-center">
 <button
@@ -18671,7 +18829,7 @@ newTask,
   className={`absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full border transition active:scale-95 disabled:cursor-wait ${
     darkMode
       ? "border-white/[0.10] bg-[#17181C] text-white/58 hover:bg-white/[0.07] hover:text-white"
-      : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368] hover:bg-[#E8EAED] hover:text-[#202124]"
+      : "border-[#E2E8F0] bg-[#F2F5F9] text-[#667085] hover:bg-[#EDF1F6] hover:text-[#111827]"
   }`}
 >
   <RotateCcw
@@ -18707,7 +18865,7 @@ newTask,
     className={`absolute right-0 top-0 inline-flex h-8 w-[58px] items-center justify-between rounded-full border p-[3px] transition-colors duration-200 ${
       darkMode
         ? "border-white/[0.10] bg-[#17181C]"
-        : "border-[#DADCE0] bg-[#F1F3F4]"
+        : "border-[#E2E8F0] bg-[#F2F5F9]"
     }`}
   >
     <span
@@ -18715,7 +18873,7 @@ newTask,
       className={`absolute left-[3px] top-[3px] h-6 w-6 rounded-full shadow-[0_1px_3px_rgba(60,64,67,0.28)] transition-transform duration-200 ease-out ${
         darkMode
           ? "translate-x-[26px] bg-white"
-          : "translate-x-0 bg-[#202124]"
+          : "translate-x-0 bg-[#111827]"
       }`}
     />
 
@@ -18736,8 +18894,8 @@ newTask,
       strokeWidth={1.9}
       className={`relative z-10 mr-[5px] transition-colors ${
         darkMode
-          ? "text-[#202124]"
-          : "text-[#5F6368]"
+          ? "text-[#111827]"
+          : "text-[#667085]"
       }`}
     />
   </button>
@@ -18749,7 +18907,15 @@ newTask,
   />
 </div>
 
-        <h1 className="mt-4 text-[22px] font-[720] leading-tight tracking-[-0.042em]">
+        <p
+          className={`mt-4 text-[8.5px] font-[800] uppercase tracking-[0.16em] ${
+            darkMode ? "text-blue-300" : "text-blue-600"
+          }`}
+        >
+          Today&apos;s game plan
+        </p>
+
+        <h1 className="mt-1.5 text-[23px] font-[760] leading-tight tracking-[-0.048em]">
           {greetingWithName}
         </h1>
 
@@ -18758,47 +18924,49 @@ id="momentuhm-tour-progress-mobile"
 className="mt-3 grid grid-cols-3 gap-2"
 >
           {[
-         {
-          label: "Tasks",
-          value: taskTabTotalCount,
-          color: darkMode
-            ? "#8AB4F8"
-            : "#1A73E8",
-        },
-        {
-          label: "Completed",
-          value: taskTabCompletedCount,
-          color: darkMode
-            ? "#81C995"
-            : "#188038",
-        },
-        {
-          label: "Progress",
-          value: `${completionPercent}%`,
-          color: darkMode
-            ? "#C58AF9"
-            : "#8430CE",
-        },
+            {
+              label: "Tasks",
+              value: taskTabTotalCount,
+              color: darkMode ? "#8AB4F8" : "#1D4ED8",
+              surfaceClass: darkMode
+                ? "border-blue-400/15 bg-blue-400/[0.06]"
+                : "border-blue-100 bg-blue-50/70",
+            },
+            {
+              label: "Completed",
+              value: taskTabCompletedCount,
+              color: darkMode ? "#81C995" : "#047857",
+              surfaceClass: darkMode
+                ? "border-emerald-400/15 bg-emerald-400/[0.06]"
+                : "border-emerald-100 bg-emerald-50/75",
+            },
+            {
+              label: "Progress",
+              value: `${completionPercent}%`,
+              color: darkMode ? "#BEF264" : "#4D7C0F",
+              surfaceClass: darkMode
+                ? "border-lime-400/15 bg-lime-400/[0.06]"
+                : "border-lime-200 bg-lime-50/85",
+            },
           ].map((metric) => (
-            <div
+            <motion.div
               key={metric.label}
-              className={`flex min-h-[62px] flex-col items-center justify-center rounded-[10px] border px-2 ${panelClass}`}
+              whileTap={{ scale: 0.98 }}
+              className={`flex min-h-[68px] flex-col items-center justify-center rounded-[14px] border px-2 shadow-[0_7px_20px_rgba(15,23,42,0.035)] ${metric.surfaceClass}`}
             >
               <p
-                className="text-[20px] font-[700] leading-none tracking-[-0.04em]"
-                style={{
-                  color: metric.color,
-                }}
+                className="text-[21px] font-[740] leading-none tracking-[-0.045em]"
+                style={{ color: metric.color }}
               >
                 {metric.value}
               </p>
 
               <p
-                className={`mt-2 text-[9px] font-[650] uppercase tracking-[0.055em] ${mutedTextClass}`}
+                className={`mt-2 text-[8.5px] font-[750] uppercase tracking-[0.065em] ${mutedTextClass}`}
               >
                 {metric.label}
               </p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </header>
@@ -18821,13 +18989,13 @@ className="mt-3 grid grid-cols-3 gap-2"
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="text-[18px] font-[700] leading-none tracking-[-0.032em]">
-                    Today
+                    Today&apos;s game plan
                   </h2>
 
                   <p
                     className={`mt-1.5 text-[10.5px] font-[500] ${mutedTextClass}`}
                   >
-                    Your active tasks
+                    Pick one thing and make the day move.
                   </p>
                 </div>
 
@@ -18849,7 +19017,7 @@ className="mt-3 grid grid-cols-3 gap-2"
                     className={`h-8 appearance-none rounded-[7px] border pl-2.5 pr-7 text-[10px] font-[600] outline-none ${
                       darkMode
                         ? "border-white/[0.10] bg-[#17181C] text-white/72"
-                        : "border-[#DADCE0] bg-white text-[#3C4043]"
+                        : "border-[#E2E8F0] bg-white text-[#3C4043]"
                     }`}
                   >
                     <option value="date">
@@ -18872,7 +19040,7 @@ className="mt-3 grid grid-cols-3 gap-2"
                 className={`mt-3 grid grid-cols-3 rounded-[9px] border p-[3px] ${
                   darkMode
                     ? "border-white/[0.08] bg-white/[0.035]"
-                    : "border-[#DADCE0] bg-[#F8F9FA]"
+                    : "border-blue-100 bg-[#EEF5FF]"
                 }`}
               >
                 {[
@@ -18908,11 +19076,11 @@ className="mt-3 grid grid-cols-3 gap-2"
                       className={`h-8 rounded-[7px] text-[10px] font-[620] transition active:scale-[0.98] ${
                         isActive
                           ? darkMode
-                            ? "bg-[#303134] text-[#F1F3F4] shadow-[0_1px_2px_rgba(0,0,0,0.28)]"
-                            : "bg-white text-[#202124] shadow-[0_1px_2px_rgba(60,64,67,0.18)]"
+                            ? "bg-[#303134] text-[#F2F5F9] shadow-[0_1px_2px_rgba(0,0,0,0.28)]"
+                            : "bg-white text-blue-700 shadow-[0_4px_12px_rgba(11,110,255,0.12)]"
                           : darkMode
                           ? "text-white/44 hover:text-white/72"
-                          : "text-[#5F6368] hover:text-[#202124]"
+                          : "text-[#667085] hover:text-[#111827]"
                       }`}
                     >
                       {option.label}
@@ -18931,13 +19099,25 @@ className="mt-3 grid grid-cols-3 gap-2"
             >
               {groupedTasks.length === 0 ? (
                 <div
-                  className={`rounded-[9px] border border-dashed px-5 py-10 text-center text-[12px] font-[500] ${
+                  className={`rounded-[14px] border border-dashed px-5 py-10 text-center ${
                     darkMode
-                      ? "border-white/[0.10] text-white/38"
-                      : "border-[#DADCE0] text-[#5F6368]"
+                      ? "border-blue-300/15 bg-blue-400/[0.04] text-white/48"
+                      : "border-blue-200 bg-blue-50/50 text-[#5E6B7E]"
                   }`}
                 >
-                  No active tasks yet.
+                  <OptionAEmptyIllustration
+                    type="tasks"
+                    darkMode={darkMode}
+                    compact
+                  />
+
+                  <p className={`mt-3 text-[13px] font-[700] ${darkMode ? "text-white" : "text-[#17233A]"}`}>
+                    Nothing on deck yet.
+                  </p>
+
+                  <p className="mt-1.5 text-[10.5px] font-[500] leading-5">
+                    Add the first thing on your mind. You do not need the whole plan yet.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -18952,7 +19132,7 @@ className="mt-3 grid grid-cols-3 gap-2"
                           className={`flex min-h-[32px] items-center justify-between gap-3 border-b px-2.5 ${
                             darkMode
                               ? "border-white/[0.075] bg-white/[0.025]"
-                              : "border-[#E8EAED] bg-[#F8F9FA]"
+                              : "border-[#EDF1F6] bg-[#F8F9FA]"
                           }`}
                         >
                           <h3
@@ -19058,8 +19238,8 @@ className="mt-3 grid grid-cols-3 gap-2"
                                     <p
                                       className={`line-clamp-2 text-[12px] font-[560] leading-[16px] tracking-[-0.012em] ${
                                         darkMode
-                                          ? "text-[#F1F3F4]"
-                                          : "text-[#202124]"
+                                          ? "text-[#F2F5F9]"
+                                          : "text-[#111827]"
                                       }`}
                                     >
                                       {
@@ -19097,7 +19277,11 @@ className="mt-3 grid grid-cols-3 gap-2"
           <section
             id="mobile-quick-capture"
             aria-label="Add a task"
-            className={`mt-3 scroll-mt-24 overflow-hidden rounded-[12px] border ${panelClass}`}
+            className={`mt-3 scroll-mt-24 overflow-hidden rounded-[16px] border ${panelClass} ${
+              darkMode
+                ? "bg-blue-400/[0.035]"
+                : "bg-[linear-gradient(135deg,#FFFFFF,#F7FBFF)]"
+            }`}
           >
             <button
               type="button"
@@ -19118,8 +19302,7 @@ className="mt-3 grid grid-cols-3 gap-2"
                 <p
                   className={`mt-1 text-[9.5px] font-[500] ${mutedTextClass}`}
                 >
-                  Capture something without
-                  leaving Today.
+                  Get it out of your head before it disappears.
                 </p>
               </div>
 
@@ -19127,7 +19310,7 @@ className="mt-3 grid grid-cols-3 gap-2"
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition ${
                   darkMode
                     ? "bg-white/[0.06] text-white/65"
-                    : "bg-[#F1F3F4] text-[#5F6368]"
+                    : "bg-[#F2F5F9] text-[#667085]"
                 } ${
                   isCaptureOpen
                     ? "rotate-45"
@@ -19166,10 +19349,10 @@ className="mt-3 grid grid-cols-3 gap-2"
                   className={`min-w-0 max-w-full overflow-hidden border-t p-3 ${dividerClass}`}
                 >
                  <div
-  className={`group h-10 w-full min-w-0 overflow-hidden rounded-[10px] border transition-all duration-150 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/15 ${
+  className={`group h-10 w-full min-w-0 overflow-hidden rounded-[10px] border transition-all duration-150 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 ${
     darkMode
       ? "border-white/[0.12] bg-white/[0.035]"
-      : "border-[#DADCE0] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+      : "border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
   }`}
 >
   <input
@@ -19185,16 +19368,16 @@ className="mt-3 grid grid-cols-3 gap-2"
     className={`h-[53.333px] w-[133.333%] origin-left -translate-y-[8px] scale-75 border-0 bg-transparent px-4 py-0 text-[16px] font-[560] leading-[53.333px] outline-none ${
       darkMode
         ? "text-white placeholder:text-white/30"
-        : "text-[#202124] placeholder:text-[#8A9099]"
+        : "text-[#111827] placeholder:text-[#8A9099]"
     }`}
   />
 </div>
 
 <div
-  className={`group mt-2 h-10 w-full min-w-0 overflow-hidden rounded-[10px] border transition-all duration-150 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/15 ${
+  className={`group mt-2 h-10 w-full min-w-0 overflow-hidden rounded-[10px] border transition-all duration-150 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 ${
     darkMode
       ? "border-white/[0.12] bg-white/[0.035]"
-      : "border-[#DADCE0] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+      : "border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
   }`}
 >
   <input
@@ -19208,7 +19391,7 @@ className="mt-3 grid grid-cols-3 gap-2"
     className={`h-[53.333px] w-[133.333%] origin-left -translate-y-[8px] scale-75 border-0 bg-transparent px-4 py-0 text-[16px] font-[520] leading-[53.333px] outline-none ${
       darkMode
         ? "text-white placeholder:text-white/30"
-        : "text-[#202124] placeholder:text-[#8A9099]"
+        : "text-[#111827] placeholder:text-[#8A9099]"
     }`}
   />
 </div>
@@ -19224,7 +19407,7 @@ className="mt-3 grid grid-cols-3 gap-2"
                       className={`h-9 rounded-[8px] border px-3 text-[10px] font-[600] ${
                         darkMode
                           ? "border-white/[0.10] text-white/58"
-                          : "border-[#DADCE0] text-[#5F6368]"
+                          : "border-[#E2E8F0] text-[#667085]"
                       }`}
                     >
                       Extract from text
@@ -19302,7 +19485,7 @@ className={`mt-1 overflow-hidden rounded-[12px] border ${panelClass}`}
               className={`h-8 shrink-0 rounded-[8px] border px-3 text-[10px] font-[600] ${
                 darkMode
                   ? "border-white/[0.10] text-white/58"
-                  : "border-[#DADCE0] text-[#5F6368]"
+                  : "border-[#E2E8F0] text-[#667085]"
               }`}
             >
               Back to Today
@@ -19321,17 +19504,21 @@ className={`mt-1 overflow-hidden rounded-[12px] border ${panelClass}`}
                 className={`rounded-[9px] border border-dashed px-5 py-10 text-center ${
                   darkMode
                     ? "border-white/[0.10] text-white/38"
-                    : "border-[#DADCE0] text-[#5F6368]"
+                    : "border-[#E2E8F0] text-[#667085]"
                 }`}
               >
-                <Target
-                  size={24}
-                  strokeWidth={1.7}
-                  className="mx-auto mb-3 opacity-60"
+                <OptionAEmptyIllustration
+                  type="focus"
+                  darkMode={darkMode}
+                  compact
                 />
 
                 <p className="text-[12px] font-[600]">
-                  Your focus stack is empty.
+                  Too many things competing for attention?
+                </p>
+
+                <p className={`mt-2 text-[10px] font-[500] leading-5 ${mutedTextClass}`}>
+                  Add a few tasks to Focus and start with the one that would make today count.
                 </p>
               </div>
             ) : (
@@ -19352,7 +19539,7 @@ className={`mt-1 overflow-hidden rounded-[12px] border ${panelClass}`}
                       <span
                         className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-[650] ${
                           darkMode
-                            ? "bg-[#303134] text-[#F1F3F4]"
+                            ? "bg-[#303134] text-[#F2F5F9]"
                             : "bg-[#E8F0FE] text-[#1967D2]"
                         }`}
                       >
@@ -19761,20 +19948,20 @@ step.id === "help";
   if (!isOpen) return null;
 
   const surfaceClass = darkMode
-    ? "border-white/[0.13] bg-[#202124] text-[#F1F3F4]"
-    : "border-[#DADCE0] bg-white text-[#202124]";
+    ? "border-white/[0.13] bg-[#111827] text-[#F2F5F9]"
+    : "border-[#E2E8F0] bg-white text-[#111827]";
 
   const panelClass = darkMode
     ? "border-white/[0.10] bg-white/[0.035]"
-    : "border-[#DADCE0] bg-[#F8F9FA]";
+    : "border-[#E2E8F0] bg-[#F8F9FA]";
 
   const elevatedPanelClass = darkMode
     ? "border-white/[0.11] bg-[#17181C]"
-    : "border-[#DADCE0] bg-white";
+    : "border-[#E2E8F0] bg-white";
 
   const mutedTextClass = darkMode
     ? "text-white/48"
-    : "text-[#5F6368]";
+    : "text-[#667085]";
 
   const secondaryTextClass = darkMode
     ? "text-white/68"
@@ -19782,7 +19969,7 @@ step.id === "help";
 
   const previewBadgeClass = darkMode
     ? "border-white/[0.10] bg-white/[0.05] text-white/55"
-    : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368]";
+    : "border-[#E2E8F0] bg-[#F2F5F9] text-[#667085]";
 
     const renderStepIcon = () => {
       if (
@@ -19932,7 +20119,7 @@ step.id === "help";
               className={`flex items-center justify-between border-b px-4 py-3 ${
                 darkMode
                   ? "border-white/[0.08]"
-                  : "border-[#E8EAED]"
+                  : "border-[#EDF1F6]"
               }`}
             >
               <div>
@@ -20115,7 +20302,7 @@ step.id === "help";
               className={`flex items-start justify-between gap-4 border-b px-4 py-4 ${
                 darkMode
                   ? "border-white/[0.08]"
-                  : "border-[#E8EAED]"
+                  : "border-[#EDF1F6]"
               }`}
             >
               <div className="flex min-w-0 items-start gap-3">
@@ -20158,7 +20345,7 @@ step.id === "help";
               className={`border-b px-4 py-3 ${
                 darkMode
                   ? "border-white/[0.08] bg-white/[0.02]"
-                  : "border-[#E8EAED] bg-[#F8F9FA]"
+                  : "border-[#EDF1F6] bg-[#F8F9FA]"
               }`}
             >
               <p
@@ -20195,14 +20382,14 @@ step.id === "help";
                     className={`flex items-start gap-3 border-b px-4 py-3 last:border-b-0 ${
                       darkMode
                         ? "border-white/[0.08]"
-                        : "border-[#E8EAED]"
+                        : "border-[#EDF1F6]"
                     }`}
                   >
                     <span
                       className={`mt-0.5 flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[4px] border ${
                         darkMode
-                          ? "border-white bg-white text-[#202124]"
-                          : "border-[#202124] bg-[#202124] text-white"
+                          ? "border-white bg-white text-[#111827]"
+                          : "border-[#111827] bg-[#111827] text-white"
                       }`}
                     >
                       <Check
@@ -20233,7 +20420,7 @@ step.id === "help";
               className={`flex items-center justify-between gap-3 border-t px-4 py-3 ${
                 darkMode
                   ? "border-white/[0.08] bg-white/[0.02]"
-                  : "border-[#E8EAED] bg-[#F8F9FA]"
+                  : "border-[#EDF1F6] bg-[#F8F9FA]"
               }`}
             >
               <p
@@ -20256,8 +20443,8 @@ step.id === "help";
                   disabled
                   className={`h-8 rounded-[7px] px-3 text-[9px] font-[700] ${
                     darkMode
-                      ? "bg-white text-[#202124]"
-                      : "bg-[#202124] text-white"
+                      ? "bg-white text-[#111827]"
+                      : "bg-[#111827] text-white"
                   }`}
                 >
                   Add selected (3)
@@ -20336,8 +20523,8 @@ step.id === "help";
                       <span
                         className={`mt-0.5 flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full ${
                           darkMode
-                            ? "bg-white text-[#202124]"
-                            : "bg-[#202124] text-white"
+                            ? "bg-white text-[#111827]"
+                            : "bg-[#111827] text-white"
                         }`}
                       >
                         <Check
@@ -20393,7 +20580,7 @@ step.id === "help";
               className={`flex items-center justify-between border-b px-4 py-3 ${
                 darkMode
                   ? "border-white/[0.08]"
-                  : "border-[#E8EAED]"
+                  : "border-[#EDF1F6]"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -20444,8 +20631,8 @@ step.id === "help";
                     <span
                       className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-[700] ${
                         darkMode
-                          ? "bg-white text-[#202124]"
-                          : "bg-[#202124] text-white"
+                          ? "bg-white text-[#111827]"
+                          : "bg-[#111827] text-white"
                       }`}
                     >
                       {index + 1}
@@ -20473,7 +20660,7 @@ step.id === "help";
               className={`border-t px-4 py-3 ${
                 darkMode
                   ? "border-white/[0.08] bg-white/[0.02]"
-                  : "border-[#E8EAED] bg-[#F8F9FA]"
+                  : "border-[#EDF1F6] bg-[#F8F9FA]"
               }`}
             >
               <p
@@ -20613,7 +20800,7 @@ step.id === "help";
               className={`border-b px-4 py-3 ${
                 darkMode
                   ? "border-white/[0.08]"
-                  : "border-[#E8EAED]"
+                  : "border-[#EDF1F6]"
               }`}
             >
               <p
@@ -20635,7 +20822,7 @@ step.id === "help";
                     className={`grid grid-cols-[96px_minmax(0,1fr)_36px] items-center gap-2 border-b px-4 py-2.5 last:border-b-0 ${
                       darkMode
                         ? "border-white/[0.08]"
-                        : "border-[#E8EAED]"
+                        : "border-[#EDF1F6]"
                     }`}
                   >
                     <p
@@ -20664,7 +20851,7 @@ step.id === "help";
               className={`flex items-start gap-3 border-t px-4 py-3 ${
                 darkMode
                   ? "border-white/[0.08] bg-white/[0.02]"
-                  : "border-[#E8EAED] bg-[#F8F9FA]"
+                  : "border-[#EDF1F6] bg-[#F8F9FA]"
               }`}
             >
               <PencilLine
@@ -20831,7 +21018,7 @@ return (
                   className={`h-[5px] overflow-hidden rounded-full ${
                     darkMode
                       ? "bg-white/[0.09]"
-                      : "bg-[#E8EAED]"
+                      : "bg-[#EDF1F6]"
                   }`}
                 >
                   <motion.div
@@ -20928,11 +21115,11 @@ return (
                     className={`w-full max-w-[16px] rounded-t-[4px] ${
                       index === 1
                         ? darkMode
-                          ? "bg-violet-300"
-                          : "bg-violet-600"
+                          ? "bg-blue-300"
+                          : "bg-blue-600"
                         : darkMode
                         ? "bg-white/22"
-                        : "bg-[#DADCE0]"
+                        : "bg-[#E2E8F0]"
                     }`}
                   />
                 </div>
@@ -20964,16 +21151,16 @@ return (
       }}
       className={`rounded-[12px] border p-3.5 ${
         darkMode
-          ? "border-violet-300/15 bg-violet-300/[0.065]"
-          : "border-violet-200 bg-violet-50"
+          ? "border-blue-300/15 bg-blue-300/[0.065]"
+          : "border-blue-200 bg-blue-50"
       }`}
     >
       <div className="flex items-start gap-3">
         <div
           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] border ${
             darkMode
-              ? "border-violet-300/15 bg-violet-300/[0.08] text-violet-200"
-              : "border-violet-200 bg-white text-violet-700"
+              ? "border-blue-300/15 bg-blue-300/[0.08] text-blue-200"
+              : "border-blue-200 bg-white text-blue-700"
           }`}
         >
           <Sparkles
@@ -20986,8 +21173,8 @@ return (
           <p
             className={`text-[8px] font-[750] uppercase tracking-[0.1em] ${
               darkMode
-                ? "text-violet-200/60"
-                : "text-violet-700/65"
+                ? "text-blue-200/60"
+                : "text-blue-700/65"
             }`}
           >
             AI recommendation
@@ -20996,8 +21183,8 @@ return (
           <p
             className={`mt-1.5 text-[10px] font-[600] leading-4 ${
               darkMode
-                ? "text-violet-100/90"
-                : "text-violet-900"
+                ? "text-blue-100/90"
+                : "text-blue-900"
             }`}
           >
             Protect late-morning time
@@ -21146,7 +21333,7 @@ performance Insights.
           className={`flex shrink-0 items-center justify-between border-b px-5 py-3.5 ${
             darkMode
               ? "border-white/[0.09]"
-              : "border-[#E8EAED]"
+              : "border-[#EDF1F6]"
           }`}
         >
           <div className="flex items-center gap-3">
@@ -21175,7 +21362,7 @@ performance Insights.
             className={`text-[10px] font-[650] transition ${
               darkMode
                 ? "text-white/48 hover:text-white"
-                : "text-[#5F6368] hover:text-[#202124]"
+                : "text-[#667085] hover:text-[#111827]"
             }`}
           >
             Skip tour
@@ -21190,7 +21377,7 @@ performance Insights.
                 className={`flex h-10 w-10 items-center justify-center rounded-[10px] border ${
                   darkMode
                     ? "border-white/[0.10] bg-white/[0.05] text-white/72"
-                    : "border-[#DADCE0] bg-[#F1F3F4] text-[#3C4043]"
+                    : "border-[#E2E8F0] bg-[#F2F5F9] text-[#3C4043]"
                 }`}
               >
                 {renderStepIcon()}
@@ -21236,10 +21423,10 @@ performance Insights.
                     index <= stepIndex
                       ? darkMode
                         ? "bg-white"
-                        : "bg-[#202124]"
+                        : "bg-[#111827]"
                       : darkMode
                       ? "bg-white/[0.12]"
-                      : "bg-[#DADCE0]"
+                      : "bg-[#E2E8F0]"
                   }`}
                 />
               )
@@ -21252,7 +21439,7 @@ performance Insights.
           className={`flex shrink-0 items-center justify-between gap-3 border-t px-5 py-3.5 ${
             darkMode
               ? "border-white/[0.09] bg-white/[0.025]"
-              : "border-[#E8EAED] bg-[#F8F9FA]"
+              : "border-[#EDF1F6] bg-[#F8F9FA]"
           }`}
         >
           <button
@@ -21264,7 +21451,7 @@ performance Insights.
                 ? "invisible"
                 : darkMode
                 ? "border-white/[0.10] text-white/62 hover:bg-white/[0.06] hover:text-white"
-                : "border-[#DADCE0] bg-white text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124]"
+                : "border-[#E2E8F0] bg-white text-[#667085] hover:bg-[#F2F5F9] hover:text-[#111827]"
             }`}
           >
             Back
@@ -21276,8 +21463,8 @@ performance Insights.
             onClick={goToNextStep}
             className={`inline-flex h-9 items-center justify-center gap-2 rounded-[8px] px-4 text-[10px] font-[700] transition active:scale-[0.98] ${
               darkMode
-                ? "bg-white text-[#202124] hover:bg-white/90"
-                : "bg-[#202124] text-white hover:bg-[#303134]"
+                ? "bg-white text-[#111827] hover:bg-white/90"
+                : "bg-[#111827] text-white hover:bg-[#303134]"
             }`}
           >
             {isLastStep
@@ -21336,11 +21523,11 @@ function ClipboardAssistPrompt({
 
   const panelBorder = darkMode
     ? "border-white/[0.12]"
-    : "border-[#D4D4CF]";
+    : "border-[#D6DEE9]";
 
   const rowBorder = darkMode
     ? "border-white/[0.08]"
-    : "border-[#E8E9ED]";
+    : "border-[#EDF1F6]";
 
   const panelSurface = darkMode
     ? "bg-[#171717] text-white"
@@ -21348,11 +21535,11 @@ function ClipboardAssistPrompt({
 
   const secondarySurface = darkMode
     ? "bg-white/[0.035]"
-    : "bg-[#FAFAFB]";
+    : "bg-[#FBFCFE]";
 
   const mutedText = darkMode
     ? "text-white/48"
-    : "text-[#6B6F7B]";
+    : "text-[#667085]";
 
   const getPriorityClass = (priority: string) => {
     if (priority === "High") {
@@ -21422,15 +21609,15 @@ function ClipboardAssistPrompt({
         >
           <div className="flex min-w-0 items-start gap-3.5">
             <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] border ${
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border ${
                 darkMode
-                  ? "border-white/[0.10] bg-white/[0.05] text-white"
-                  : "border-[#DDDDE3] bg-[#F7F8FA] text-[#252933]"
+                  ? "border-white/[0.10] bg-white/[0.04]"
+                  : "border-blue-100 bg-blue-50/60"
               }`}
             >
-              <Sparkles
-                size={17}
-                strokeWidth={1.7}
+              <MomentuhmIllustration
+                name="clipboard-extraction"
+                className="h-11 w-11"
               />
             </div>
 
@@ -21446,7 +21633,7 @@ function ClipboardAssistPrompt({
                 className={`mt-1 text-[20px] font-[750] leading-tight tracking-[-0.04em] ${
                   darkMode
                     ? "text-white"
-                    : "text-[#17191F]"
+                    : "text-[#111827]"
                 }`}
               >
                 {loading
@@ -21478,7 +21665,7 @@ function ClipboardAssistPrompt({
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border transition ${
               darkMode
                 ? "border-white/[0.10] text-white/48 hover:bg-white/[0.06] hover:text-white"
-                : "border-[#DDDDE3] text-[#6B6F7B] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                : "border-[#E1E7EF] text-[#667085] hover:bg-[#F6F8FB] hover:text-[#202939]"
             }`}
           >
             <X
@@ -21499,7 +21686,7 @@ function ClipboardAssistPrompt({
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] border ${
                     darkMode
                       ? "border-white/[0.10] bg-white/[0.04]"
-                      : "border-[#DDDDE3] bg-white"
+                      : "border-[#E1E7EF] bg-white"
                   }`}
                 >
                   <Sparkles
@@ -21508,7 +21695,7 @@ function ClipboardAssistPrompt({
                     className={
                       darkMode
                         ? "text-white/60"
-                        : "text-[#5F6572]"
+                        : "text-[#667085]"
                     }
                   />
                 </div>
@@ -21518,7 +21705,7 @@ function ClipboardAssistPrompt({
                     className={`text-[12px] font-[650] ${
                       darkMode
                         ? "text-white/82"
-                        : "text-[#252933]"
+                        : "text-[#202939]"
                     }`}
                   >
                     Extracting possible tasks
@@ -21598,7 +21785,7 @@ function ClipboardAssistPrompt({
                   className={`flex w-full items-start gap-3 border-b px-5 py-4 text-left transition last:border-b-0 sm:px-6 ${
                     darkMode
                       ? "border-white/[0.08] hover:bg-white/[0.025]"
-                      : "border-[#E8E9ED] hover:bg-[#FBFBFC]"
+                      : "border-[#EDF1F6] hover:bg-[#FBFBFC]"
                   }`}
                 >
                   <span
@@ -21610,7 +21797,7 @@ function ClipboardAssistPrompt({
                           : "border-[#181818] bg-[#181818] text-white"
                         : darkMode
                         ? "border-white/38 text-transparent"
-                        : "border-[#9297A1] text-transparent"
+                        : "border-[#98A2B3] text-transparent"
                     }`}
                   >
                     <Check
@@ -21624,7 +21811,7 @@ function ClipboardAssistPrompt({
                       className={`text-[13px] font-[650] leading-5 tracking-[-0.015em] ${
                         darkMode
                           ? "text-white/90"
-                          : "text-[#20232B]"
+                          : "text-[#182033]"
                       }`}
                     >
                       {task.title}
@@ -21643,7 +21830,7 @@ function ClipboardAssistPrompt({
                         className={`rounded-[6px] border px-2 py-1 text-[10px] font-[600] ${
                           darkMode
                             ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-                            : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                            : "border-[#E1E7EF] bg-[#F8FAFC] text-[#667085]"
                         }`}
                       >
                         {task.category || "No category"}
@@ -21654,7 +21841,7 @@ function ClipboardAssistPrompt({
                           className={`inline-flex items-center gap-1.5 rounded-[6px] border px-2 py-1 text-[10px] font-[600] ${
                             darkMode
                               ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-                              : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                              : "border-[#E1E7EF] bg-[#F8FAFC] text-[#667085]"
                           }`}
                         >
                           <Calendar
@@ -21673,7 +21860,7 @@ function ClipboardAssistPrompt({
                           className={`rounded-[6px] border px-2 py-1 text-[10px] font-[600] ${
                             darkMode
                               ? "border-white/[0.10] text-white/50"
-                              : "border-[#DDDDE3] text-[#5F6572]"
+                              : "border-[#E1E7EF] text-[#667085]"
                           }`}
                         >
                           Follow-up
@@ -21799,7 +21986,7 @@ function ClipboardAssistPrompt({
               className={`h-10 w-full rounded-[8px] border px-3 text-[12px] font-[550] outline-none transition ${
                 darkMode
                   ? "border-white/[0.14] bg-white/[0.04] text-white placeholder:text-white/30 focus:border-white/[0.30]"
-                  : "border-[#C9CBD1] bg-white text-[#252933] placeholder:text-[#80868B] focus:border-[#8F939C]"
+                  : "border-[#C9CBD1] bg-white text-[#202939] placeholder:text-[#80868B] focus:border-[#8F939C]"
               }`}
             />
           </div>
@@ -21865,7 +22052,7 @@ function ClipboardAssistPrompt({
         className={`h-9 rounded-[8px] border px-3.5 text-[11px] font-[650] transition ${
           darkMode
             ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
-            : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+            : "border-[#E1E7EF] bg-white text-[#667085] hover:bg-[#F6F8FB] hover:text-[#202939]"
         }`}
       >
         Dismiss
@@ -21877,7 +22064,7 @@ function ClipboardAssistPrompt({
         className={`h-9 rounded-[8px] border px-3.5 text-[11px] font-[650] transition ${
           darkMode
             ? "border-white/[0.12] bg-white/[0.05] text-white/72 hover:bg-white/[0.08] hover:text-white"
-            : "border-[#CFCFC9] bg-white text-[#353A45] hover:bg-[#F4F5F7]"
+            : "border-[#CFCFC9] bg-white text-[#353A45] hover:bg-[#F6F8FB]"
         }`}
       >
         Add copied text
@@ -21904,11 +22091,11 @@ function ClipboardAssistPrompt({
                 ? "cursor-not-allowed opacity-30"
                 : showSubtaskComposer
                 ? darkMode
-                  ? "border-violet-300/25 bg-violet-300/10 text-violet-200"
-                  : "border-violet-200 bg-violet-50 text-violet-700"
+                  ? "border-blue-300/25 bg-blue-300/10 text-blue-200"
+                  : "border-blue-200 bg-blue-50 text-blue-700"
                 : darkMode
                 ? "border-white/[0.12] text-white/68 hover:bg-white/[0.06]"
-                : "border-[#CFCFC9] bg-white text-[#353A45] hover:bg-[#F4F5F7]"
+                : "border-[#CFCFC9] bg-white text-[#353A45] hover:bg-[#F6F8FB]"
             }`}
           >
             <ListChecks
@@ -22008,12 +22195,12 @@ function DueTasksReminderPopup({
   };
 
   const panelSurface = darkMode
-    ? "border-white/[0.11] bg-[#17181C] text-[#F1F3F4]"
-    : "border-[#DADCE0] bg-white text-[#202124]";
+    ? "border-white/[0.11] bg-[#17181C] text-[#F2F5F9]"
+    : "border-[#E2E8F0] bg-white text-[#111827]";
 
   const rowBorder = darkMode
     ? "border-white/[0.08]"
-    : "border-[#E8EAED]";
+    : "border-[#EDF1F6]";
 
   const secondarySurface = darkMode
     ? "bg-white/[0.025]"
@@ -22021,11 +22208,11 @@ function DueTasksReminderPopup({
 
   const iconSurface = darkMode
     ? "border-white/[0.10] bg-white/[0.055] text-white/72"
-    : "border-[#DADCE0] bg-[#F1F3F4] text-[#3C4043]";
+    : "border-[#E2E8F0] bg-[#F2F5F9] text-[#3C4043]";
 
   const mutedText = darkMode
     ? "text-white/48"
-    : "text-[#5F6368]";
+    : "text-[#667085]";
 
   const primaryTextColor =
     getAccessibleTextColor(themeColor);
@@ -22093,11 +22280,11 @@ function DueTasksReminderPopup({
         >
           <div className="flex min-w-0 items-start gap-3.5">
             <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border ${iconSurface}`}
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border ${iconSurface}`}
             >
-              <Clock3
-                size={18}
-                strokeWidth={1.8}
+              <MomentuhmIllustration
+                name="reminder-clock"
+                className="h-11 w-11"
               />
             </div>
 
@@ -22134,7 +22321,7 @@ function DueTasksReminderPopup({
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border transition ${
               darkMode
                 ? "border-white/[0.10] text-white/45 hover:bg-white/[0.06] hover:text-white"
-                : "border-[#DADCE0] text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124]"
+                : "border-[#E2E8F0] text-[#667085] hover:bg-[#F2F5F9] hover:text-[#111827]"
             }`}
           >
             <X
@@ -22162,7 +22349,7 @@ function DueTasksReminderPopup({
                 className={`grid w-full grid-cols-[10px_minmax(0,1fr)_auto_16px] items-center gap-3 border-b px-5 py-3.5 text-left transition last:border-b-0 sm:px-6 ${
                   darkMode
                     ? "border-white/[0.08] hover:bg-white/[0.035]"
-                    : "border-[#E8EAED] hover:bg-[#F8F9FA]"
+                    : "border-[#EDF1F6] hover:bg-[#F8F9FA]"
                 }`}
               >
                 <span
@@ -22176,7 +22363,7 @@ function DueTasksReminderPopup({
                     className={`truncate text-[12.5px] font-[630] leading-5 tracking-[-0.012em] ${
                       darkMode
                         ? "text-white/88"
-                        : "text-[#202124]"
+                        : "text-[#111827]"
                     }`}
                   >
                     {task.title}
@@ -22209,7 +22396,7 @@ function DueTasksReminderPopup({
                   className={`shrink-0 rounded-[6px] border px-2 py-1 text-[9px] font-[650] ${
                     darkMode
                       ? "border-white/[0.10] bg-white/[0.045] text-white/58"
-                      : "border-[#DADCE0] bg-[#F1F3F4] text-[#5F6368]"
+                      : "border-[#E2E8F0] bg-[#F2F5F9] text-[#667085]"
                   }`}
                 >
                   Today
@@ -22333,17 +22520,14 @@ function ExtractTasksModal({
         >
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <Sparkles
-                size={14}
-                strokeWidth={1.6}
-                className={
-                  darkMode ? "text-white/42" : "text-[#181818]/42"
-                }
+              <MomentuhmIllustration
+                name="clipboard-extraction"
+                className="h-6 w-6 shrink-0"
               />
 
               <p
                 className={`text-[10px] font-[700] uppercase tracking-[0.16em] ${
-                  darkMode ? "text-white/38" : "text-[#6F6F6A]"
+                  darkMode ? "text-white/38" : "text-[#667085]"
                 }`}
               >
                 Momentuhm Capture
@@ -22360,7 +22544,7 @@ function ExtractTasksModal({
 
             <p
               className={`mt-2 max-w-[540px] text-[13px] font-[500] leading-5 ${
-                darkMode ? "text-white/42" : "text-[#6F6F6A]"
+                darkMode ? "text-white/42" : "text-[#667085]"
               }`}
             >
               Paste an email, message, or meeting note. Momentuhm will identify
@@ -22388,7 +22572,7 @@ function ExtractTasksModal({
             <div className="mb-2 flex items-center justify-between gap-4">
               <label
                 className={`text-[10px] font-[700] uppercase tracking-[0.14em] ${
-                  darkMode ? "text-white/35" : "text-[#6F6F6A]"
+                  darkMode ? "text-white/35" : "text-[#667085]"
                 }`}
               >
                 Source text
@@ -22396,7 +22580,7 @@ function ExtractTasksModal({
 
               <span
                 className={`hidden text-[10px] font-[500] sm:block ${
-                  darkMode ? "text-white/68" : "text-[#6F6F6A]"
+                  darkMode ? "text-white/68" : "text-[#667085]"
                 }`}
               >
                 Ctrl / ⌘ + Enter
@@ -22439,7 +22623,7 @@ function ExtractTasksModal({
             <div className="mt-4 flex items-center justify-between gap-4">
               <p
                 className={`hidden text-[11px] font-[500] sm:block ${
-                  darkMode ? "text-white/28" : "text-[#6F6F6A]"
+                  darkMode ? "text-white/28" : "text-[#667085]"
                 }`}
               >
                 You can review everything before adding it.
@@ -22483,7 +22667,7 @@ function ExtractTasksModal({
 
                   <p
                     className={`mt-1 text-[11px] font-[500] ${
-                      darkMode ? "text-white/35" : "text-[#6F6F6A]"
+                      darkMode ? "text-white/35" : "text-[#667085]"
                     }`}
                   >
                     Select the actions you want to add.
@@ -22492,7 +22676,7 @@ function ExtractTasksModal({
 
                 <span
                   className={`text-[11px] font-[600] ${
-                    darkMode ? "text-white/42" : "text-[#6F6F6A]"
+                    darkMode ? "text-white/42" : "text-[#667085]"
                   }`}
                 >
                   {selectedCount} of {extractedTasks.length}
@@ -22555,7 +22739,7 @@ function ExtractTasksModal({
 
                         <div
                           className={`mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-[600] ${
-                            darkMode ? "text-white/35" : "text-[#6F6F6A]"
+                            darkMode ? "text-white/35" : "text-[#667085]"
                           }`}
                         >
                           <span>{task.category}</span>
@@ -22584,7 +22768,7 @@ function ExtractTasksModal({
                         {task.reason && (
                           <p
                             className={`mt-1.5 line-clamp-2 text-[11px] font-[500] leading-4 ${
-                              darkMode ? "text-white/30" : "text-[#6F6F6A]"
+                              darkMode ? "text-white/30" : "text-[#667085]"
                             }`}
                           >
                             {task.reason}
@@ -22612,7 +22796,7 @@ function ExtractTasksModal({
               className={`h-9 text-[12px] font-[600] transition ${
                 darkMode
                   ? "text-white/42 hover:text-white"
-                  : "text-[#6F6F6A] hover:text-[#181818]"
+                  : "text-[#667085] hover:text-[#181818]"
               }`}
             >
               Cancel
@@ -22662,11 +22846,11 @@ function SuggestionsReviewModal({
 
   const panelBorder = darkMode
     ? "border-white/[0.12]"
-    : "border-[#D4D4CF]";
+    : "border-[#D6DEE9]";
 
   const rowBorder = darkMode
     ? "border-white/[0.08]"
-    : "border-[#E8E9ED]";
+    : "border-[#EDF1F6]";
 
   const panelSurface = darkMode
     ? "bg-[#171717] text-white"
@@ -22674,11 +22858,11 @@ function SuggestionsReviewModal({
 
   const secondarySurface = darkMode
     ? "bg-white/[0.035]"
-    : "bg-[#FAFAFB]";
+    : "bg-[#FBFCFE]";
 
   const mutedText = darkMode
     ? "text-white/48"
-    : "text-[#6B6F7B]";
+    : "text-[#667085]";
 
   return (
     <motion.div
@@ -22732,13 +22916,16 @@ function SuggestionsReviewModal({
         >
           <div className="flex min-w-0 items-start gap-3.5">
             <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] border ${
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border ${
                 darkMode
-                  ? "border-white/[0.10] bg-white/[0.05] text-white"
-                  : "border-[#DDDDE3] bg-[#F7F8FA] text-[#252933]"
+                  ? "border-white/[0.10] bg-white/[0.04]"
+                  : "border-blue-100 bg-blue-50/60"
               }`}
             >
-              <Sparkles size={17} strokeWidth={1.7} />
+              <MomentuhmIllustration
+                name="ai-suggestions"
+                className="h-11 w-11"
+              />
             </div>
 
             <div className="min-w-0">
@@ -22746,7 +22933,7 @@ function SuggestionsReviewModal({
                 <h2
                   id="suggestions-modal-title"
                   className={`text-[22px] font-[750] leading-tight tracking-[-0.04em] ${
-                    darkMode ? "text-white" : "text-[#17191F]"
+                    darkMode ? "text-white" : "text-[#111827]"
                   }`}
                 >
                   Review suggested dates
@@ -22782,7 +22969,7 @@ function SuggestionsReviewModal({
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border transition ${
               darkMode
                 ? "border-white/[0.10] text-white/48 hover:bg-white/[0.06] hover:text-white"
-                : "border-[#DDDDE3] text-[#6B6F7B] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                : "border-[#E1E7EF] text-[#667085] hover:bg-[#F6F8FB] hover:text-[#202939]"
             }`}
           >
             <X size={17} strokeWidth={1.7} />
@@ -22819,19 +23006,14 @@ function SuggestionsReviewModal({
           {tasks.length === 0 ? (
             <div className="flex min-h-[300px] items-center justify-center px-6 py-12 text-center">
               <div className="max-w-[360px]">
-                <div
-                  className={`mx-auto flex h-11 w-11 items-center justify-center rounded-[10px] border ${
-                    darkMode
-                      ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-                      : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
-                  }`}
-                >
-                  <Check size={19} strokeWidth={1.8} />
-                </div>
+                <OptionAEmptyIllustration
+                  type="reviewed"
+                  darkMode={darkMode}
+                />
 
                 <h3
                   className={`mt-4 text-[16px] font-[700] ${
-                    darkMode ? "text-white" : "text-[#17191F]"
+                    darkMode ? "text-white" : "text-[#111827]"
                   }`}
                 >
                   Everything is reviewed
@@ -22897,7 +23079,7 @@ function SuggestionsReviewModal({
                         className={`block max-w-full text-left text-[13px] font-[680] leading-5 tracking-[-0.015em] transition hover:opacity-70 ${
                           darkMode
                             ? "text-white/90"
-                            : "text-[#20232B]"
+                            : "text-[#182033]"
                         }`}
                       >
                         {task.title}
@@ -22914,7 +23096,7 @@ function SuggestionsReviewModal({
                           className={`rounded-[6px] border px-2 py-1 text-[10px] font-[600] ${
                             darkMode
                               ? "border-white/[0.10] bg-white/[0.04] text-white/55"
-                              : "border-[#DDDDE3] bg-[#F7F8FA] text-[#5F6572]"
+                              : "border-[#E1E7EF] bg-[#F8FAFC] text-[#667085]"
                           }`}
                         >
                           {task.category || "No category"}
@@ -22943,7 +23125,7 @@ function SuggestionsReviewModal({
                             className={`rounded-[6px] border px-2 py-1 text-[10px] font-[600] ${
                               darkMode
                                 ? "border-white/[0.10] text-white/50"
-                                : "border-[#DDDDE3] text-[#5F6572]"
+                                : "border-[#E1E7EF] text-[#667085]"
                             }`}
                           >
                             Follow-up
@@ -22989,7 +23171,7 @@ function SuggestionsReviewModal({
                         className={`inline-flex h-9 items-center justify-center gap-2 rounded-[8px] border px-3 text-[11px] font-[650] transition ${
                           darkMode
                             ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
-                            : "border-[#DDDDE3] text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                            : "border-[#E1E7EF] text-[#667085] hover:bg-[#F6F8FB] hover:text-[#202939]"
                         }`}
                       >
                         <PencilLine
@@ -23024,7 +23206,7 @@ function SuggestionsReviewModal({
             className={`h-9 rounded-[8px] border px-3.5 text-[11px] font-[650] transition ${
               darkMode
                 ? "border-white/[0.10] text-white/58 hover:bg-white/[0.06] hover:text-white"
-                : "border-[#DDDDE3] bg-white text-[#5F6572] hover:bg-[#F4F5F7] hover:text-[#252933]"
+                : "border-[#E1E7EF] bg-white text-[#667085] hover:bg-[#F6F8FB] hover:text-[#202939]"
             }`}
           >
             Review later
@@ -23458,349 +23640,270 @@ const restoreTask = () => {
     deleteTaskEverywhere(selectedTask.id);
   };
 
-  const fieldLabelClass = `mb-2 block text-[10px] font-[750] uppercase tracking-[0.14em] ${
-    darkMode ? "text-white/55" : "text-[#6F6F6A]"
-  }`;
-
-  const fieldClass = `w-full border px-3 text-[13px] font-[550] outline-none transition ${
+  const fieldLabelClass = `mb-1.5 block text-[10px] font-[750] uppercase tracking-[0.12em] ${
     darkMode
-      ? "border-white/[0.24] bg-[#171717] text-white placeholder:text-white/40 hover:border-white/[0.38] focus:border-white/[0.70]"
-      : "border-[#A8A8A2] bg-white text-[#181818] placeholder:text-[#777772] hover:border-[#777772] focus:border-[#181818]"
+      ? "text-white/48"
+      : "text-[#64748B]"
   }`;
-
+  
+  const fieldClass = `w-full border px-3.5 text-[13px] font-[550] outline-none transition duration-150 ${
+    darkMode
+      ? "border-white/[0.14] bg-[#191919] text-white placeholder:text-white/32 hover:border-white/[0.24] focus:border-blue-300/55 focus:ring-4 focus:ring-blue-400/10"
+      : "border-[#D7E0EC] bg-white text-[#172033] placeholder:text-[#94A3B8] hover:border-[#B8C6D9] focus:border-[#78AEEF] focus:ring-4 focus:ring-blue-500/10"
+  }`;
+  
   const mutedTextClass = darkMode
-    ? "text-white/55"
-    : "text-[#6F6F6A]";
-
+    ? "text-white/50"
+    : "text-[#64748B]";
+  
   const dividerClass = darkMode
-    ? "border-white/[0.12]"
-    : "border-[#D4D4CF]";
+    ? "border-white/[0.09]"
+    : "border-[#E4EAF2]";
+  
+  const getSegmentButtonClass = (
+    isActive: boolean
+  ) => {
+    return `h-10 border text-[11px] font-[700] transition duration-150 first:rounded-l-[9px] last:rounded-r-[9px] ${
+      isActive
+        ? darkMode
+          ? "border-blue-300/25 bg-blue-300/10 text-blue-200"
+          : "border-blue-200 bg-blue-50 text-blue-700"
+        : darkMode
+        ? "border-white/[0.12] bg-[#191919] text-white/52 hover:bg-white/[0.04] hover:text-white"
+        : "border-[#DCE4EE] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#334155]"
+    }`;
+  };
 
   return (
     <motion.div
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  exit={{ opacity: 0 }}
-  transition={{
-    duration: 0.28,
-    ease: [0.22, 1, 0.36, 1],
-  }}
-  onClick={closeWithoutSaving}
-      className="fixed inset-0 z-[200] flex h-[100dvh] max-h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-black/35 p-0 backdrop-blur-[2px] sm:items-center sm:p-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{
+        duration: 0.22,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      onClick={closeWithoutSaving}
+      className="fixed inset-0 z-[200] flex h-[100dvh] max-h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-[#10213A]/45 p-0 backdrop-blur-[4px] sm:items-center sm:p-6"
     >
-    <motion.div
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="edit-task-modal-title"
-  data-testid="edit-task-modal"
-  initial={{
-    opacity: 0,
-    x: "0%",
-    y: "32vh",
-    scaleX: 0.12,
-    scaleY: 0.04,
-    skewY: 0,
-    clipPath: "inset(88% 44% 0% 44% round 18px)",
-    filter: "blur(5px)",
-  }}
-  animate={{
-    opacity: 1,
-    x: "0%",
-    y: "0vh",
-    scaleX: 1,
-    scaleY: 1,
-    skewY: 0,
-    clipPath: "inset(0% 0% 0% 0% round 10px)",
-    filter: "blur(0px)",
-  }}
-  exit={{
-    opacity: 0,
-    x: "0%",
-    y: "32vh",
-    scaleX: 0.12,
-    scaleY: 0.04,
-    skewY: 0,
-    clipPath: "inset(88% 44% 0% 44% round 18px)",
-    filter: "blur(5px)",
-  }}
-  transition={{
-    opacity: {
-      duration: 0.3,
-      ease: [0.22, 1, 0.36, 1],
-    },
-  
-    x: {
-      type: "spring",
-      stiffness: 125,
-      damping: 23,
-      mass: 1.05,
-    },
-  
-    y: {
-      type: "spring",
-      stiffness: 112,
-      damping: 22,
-      mass: 1.08,
-    },
-  
-    scaleX: {
-      type: "spring",
-      stiffness: 132,
-      damping: 22,
-      mass: 1.05,
-    },
-  
-    scaleY: {
-      type: "spring",
-      stiffness: 105,
-      damping: 21,
-      mass: 1.12,
-    },
-  
-    skewY: {
-      duration: 0.58,
-      ease: [0.22, 1, 0.36, 1],
-    },
-  
-    clipPath: {
-      duration: 0.65,
-      ease: [0.16, 1, 0.3, 1],
-    },
-  
-    filter: {
-      duration: 0.46,
-      ease: "easeOut",
-    },
-  }}
-  style={{
-    transformOrigin: "50% 100%",
-  }}
-  onClick={(event) => event.stopPropagation()}
-  className={`will-change-[transform,clip-path,filter] flex h-full max-h-none w-full flex-col overflow-hidden border shadow-[0_24px_80px_rgba(0,0,0,0.20)] sm:h-auto sm:max-h-[92vh] sm:max-w-[1120px] sm:rounded-[10px] ${
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-task-modal-title"
+        data-testid="edit-task-modal"
+        initial={{
+          opacity: 0,
+          y: 18,
+          scale: 0.985,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          scale: 1,
+        }}
+        exit={{
+          opacity: 0,
+          y: 12,
+          scale: 0.99,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 380,
+          damping: 32,
+          mass: 0.85,
+        }}
+        onClick={(event) => event.stopPropagation()}
+        className={`flex h-full max-h-none w-full flex-col overflow-hidden border shadow-[0_24px_70px_rgba(15,23,42,0.18)] sm:h-[86vh] sm:max-h-[760px] sm:max-w-[1080px] sm:rounded-[20px] ${
           darkMode
-            ? "border-white/[0.14] bg-[#151515] text-white"
-            : "border-[#CFCFCA] bg-[#FAFAF8] text-[#181818]"
+            ? "border-white/[0.10] bg-[#151515] text-white"
+            : "border-[#DCE5F0] bg-white text-[#172033]"
         }`}
       >
         {/* Header */}
         <header
-  className={`relative flex shrink-0 items-start justify-between gap-4 border-b px-4 py-4 sm:gap-6 sm:px-7 sm:py-5 ${dividerClass}`}
->
-<div className="min-w-0 pr-10 sm:pr-0">
+          className={`relative flex shrink-0 items-start justify-between gap-4 border-b px-4 py-3.5 sm:items-center sm:px-6 sm:py-4 ${
+            darkMode ? "bg-[#151515]" : "bg-white"
+          } ${dividerClass}`}
+        >
+          <div className="min-w-0 pr-10 sm:pr-0">
             <h2
               id="edit-task-modal-title"
-              className={`translate-y-[7px] whitespace-nowrap text-[22px] font-[750] leading-none tracking-[-0.045em] sm:translate-y-0 sm:text-[24px] ${
-                darkMode ? "text-white" : "text-[#181818]"
+              className={`translate-y-[5px] whitespace-nowrap text-[21px] font-[760] leading-none tracking-[-0.04em] sm:translate-y-0 sm:text-[22px] ${
+                darkMode ? "text-white" : "text-[#172033]"
               }`}
             >
               Edit Task
             </h2>
 
             <p
-  className={`mt-2 hidden text-[12px] font-[500] leading-5 sm:block ${mutedTextClass}`}
->
-  Edit the task details on the left. Break execution into steps on
-  the right.
-</p>
+              className={`mt-1.5 hidden text-[11px] font-[500] leading-4 sm:block ${mutedTextClass}`}
+            >
+              Update the details and break the task into manageable steps.
+            </p>
           </div>
 
-          <div className="flex shrink-0 items-start gap-3">
-  {!selectedTask.completed && (
-    <div className="hidden items-center gap-3 sm:flex">
-    <button
-  type="button"
-  data-testid={
-    selectedTask.isBacklog
-      ? "move-task-to-tasks-button"
-      : "move-task-to-backlog-button"
-  }
-  onClick={
-    moveTaskBetweenTasksAndBacklog
-  }
-  aria-label={
-    selectedTask.isBacklog
-      ? "Move task to Tasks"
-      : "Move task to Backlog"
-  }
-  title={
-    selectedTask.isBacklog
-      ? "Move to Tasks"
-      : "Move to Backlog"
-  }
-  className={`inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border bg-transparent px-3 text-[11px] font-[700] transition ${
-    darkMode
-      ? "border-white/[0.20] text-white/72 hover:border-white/40 hover:bg-white/[0.06] hover:text-white"
-      : "border-[#B8B8B2] text-[#555550] hover:border-[#777772] hover:bg-black/[0.035] hover:text-[#181818]"
-  }`}
->
-  {selectedTask.isBacklog ? (
-    <ListChecks
-      size={13}
-      strokeWidth={1.8}
-    />
-  ) : (
-    <List
-      size={13}
-      strokeWidth={1.8}
-    />
-  )}
+          <div className="flex shrink-0 items-center gap-2">
+            {!selectedTask.completed && (
+              <div className="hidden items-center gap-2 sm:flex">
+                <button
+                  type="button"
+                  data-testid={
+                    selectedTask.isBacklog
+                      ? "move-task-to-tasks-button"
+                      : "move-task-to-backlog-button"
+                  }
+                  onClick={moveTaskBetweenTasksAndBacklog}
+                  aria-label={
+                    selectedTask.isBacklog
+                      ? "Move task to Tasks"
+                      : "Move task to Backlog"
+                  }
+                  title={
+                    selectedTask.isBacklog
+                      ? "Move to Tasks"
+                      : "Move to Backlog"
+                  }
+                  className={`inline-flex h-8 items-center justify-center gap-2 rounded-[8px] border px-2.5 text-[10.5px] font-[700] transition ${
+                    darkMode
+                      ? "border-white/[0.13] bg-white/[0.03] text-white/64 hover:bg-white/[0.07] hover:text-white"
+                      : "border-[#DCE5EF] bg-white text-[#53657C] hover:border-[#B9CBE0] hover:bg-[#F8FAFC] hover:text-[#1E4F8D]"
+                  }`}
+                >
+                  {selectedTask.isBacklog ? (
+                    <ListChecks size={13} strokeWidth={1.8} />
+                  ) : (
+                    <List size={13} strokeWidth={1.8} />
+                  )}
 
-  {selectedTask.isBacklog
-    ? "Move to Tasks"
-    : "Move to backlog"}
-</button>
+                  {selectedTask.isBacklog
+                    ? "Move to Tasks"
+                    : "Move to backlog"}
+                </button>
 
-      <button
-        type="button"
-        data-testid="mark-task-complete-button"
-        onClick={() =>
-          saveTaskChanges({
-            ...selectedTask,
-            statusBeforeCompletion:
-              getRestorableTaskStatus(
-                selectedTask.status
-              ),
-            status: "Done",
-            completed: true,
-            completedAt:
-              selectedTask.completedAt ||
-              new Date().toISOString(),
-          })
-        }
-        className={`inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border bg-transparent px-3 text-[11px] font-[700] transition ${
-          darkMode
-            ? "border-white/[0.20] text-white/72 hover:border-white/40 hover:bg-white/[0.06] hover:text-white"
-            : "border-[#B8B8B2] text-[#555550] hover:border-[#777772] hover:bg-black/[0.035] hover:text-[#181818]"
-        }`}
-      >
-        <Check
-          size={13}
-          strokeWidth={2}
-        />
+                <button
+                  type="button"
+                  data-testid="mark-task-complete-button"
+                  onClick={() =>
+                    saveTaskChanges({
+                      ...selectedTask,
+                      statusBeforeCompletion:
+                        getRestorableTaskStatus(selectedTask.status),
+                      status: "Done",
+                      completed: true,
+                      completedAt:
+                        selectedTask.completedAt ||
+                        new Date().toISOString(),
+                    })
+                  }
+                  className={`inline-flex h-8 items-center justify-center gap-2 rounded-[8px] border px-2.5 text-[10.5px] font-[700] transition ${
+                    darkMode
+                      ? "border-emerald-300/18 bg-emerald-300/[0.07] text-emerald-200 hover:bg-emerald-300/[0.12]"
+                      : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100"
+                  }`}
+                >
+                  <Check size={13} strokeWidth={2} />
+                  Mark complete
+                </button>
+              </div>
+            )}
 
-        Mark this complete
-      </button>
-    </div>
-  )}
-
-  <button
-    type="button"
-    data-testid="close-task-edit-button"
-    onClick={closeWithoutSaving}
-    aria-label="Close edit task"
-    title="Close"
-    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition sm:rounded-[6px] ${
-      darkMode
-        ? "bg-white/[0.06] text-white/55 hover:bg-white/[0.10] hover:text-white sm:bg-transparent"
-        : "bg-[#F1F3F4] text-[#5F6368] hover:bg-[#E8EAED] hover:text-[#202124] sm:bg-transparent"
-    }`}
-  >
-    <X
-      size={18}
-      strokeWidth={1.7}
-    />
-  </button>
-</div>
+            <button
+              type="button"
+              data-testid="close-task-edit-button"
+              onClick={closeWithoutSaving}
+              aria-label="Close edit task"
+              title="Close"
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition sm:rounded-[8px] ${
+                darkMode
+                  ? "bg-white/[0.05] text-white/52 hover:bg-white/[0.09] hover:text-white sm:bg-transparent"
+                  : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800 sm:bg-transparent"
+              }`}
+            >
+              <X size={18} strokeWidth={1.7} />
+            </button>
+          </div>
         </header>
 
         {/* Mobile modal tabs */}
-<div
-  role="tablist"
-  aria-label="Edit task sections"
-  className={`grid shrink-0 grid-cols-2 border-b sm:hidden ${dividerClass}`}
->
-  <button
-    type="button"
-    role="tab"
-    aria-selected={
-      mobileEditTab === "details"
-    }
-    onClick={() =>
-      setMobileEditTab("details")
-    }
-    className={`relative flex h-12 items-center justify-center text-[12px] font-[700] transition ${
-      mobileEditTab === "details"
-        ? darkMode
-          ? "text-violet-300"
-          : "text-violet-700"
-        : mutedTextClass
-    }`}
-  >
-    Details
+        <div
+          role="tablist"
+          aria-label="Edit task sections"
+          className={`grid shrink-0 grid-cols-2 border-b sm:hidden ${dividerClass}`}
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobileEditTab === "details"}
+            onClick={() => setMobileEditTab("details")}
+            className={`relative flex h-11 items-center justify-center text-[11.5px] font-[700] transition ${
+              mobileEditTab === "details"
+                ? darkMode
+                  ? "text-blue-300"
+                  : "text-blue-700"
+                : mutedTextClass
+            }`}
+          >
+            Details
 
-    {mobileEditTab === "details" && (
-      <span
-        aria-hidden="true"
-        className={`absolute bottom-0 left-6 right-6 h-[2px] rounded-full ${
-          darkMode
-            ? "bg-violet-300"
-            : "bg-violet-600"
-        }`}
-      />
-    )}
-  </button>
+            {mobileEditTab === "details" && (
+              <span
+                aria-hidden="true"
+                className={`absolute bottom-0 left-6 right-6 h-[2px] rounded-full ${
+                  darkMode ? "bg-blue-300" : "bg-blue-600"
+                }`}
+              />
+            )}
+          </button>
 
-  <button
-    type="button"
-    role="tab"
-    aria-selected={
-      mobileEditTab === "steps"
-    }
-    onClick={() =>
-      setMobileEditTab("steps")
-    }
-    className={`relative flex h-12 items-center justify-center gap-1.5 text-[12px] font-[700] transition ${
-      mobileEditTab === "steps"
-        ? darkMode
-          ? "text-violet-300"
-          : "text-violet-700"
-        : mutedTextClass
-    }`}
-  >
-    Steps
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobileEditTab === "steps"}
+            onClick={() => setMobileEditTab("steps")}
+            className={`relative flex h-11 items-center justify-center gap-1.5 text-[11.5px] font-[700] transition ${
+              mobileEditTab === "steps"
+                ? darkMode
+                  ? "text-blue-300"
+                  : "text-blue-700"
+                : mutedTextClass
+            }`}
+          >
+            Steps
 
-    <span
-      className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[9px] font-[700] ${
-        darkMode
-          ? "bg-white/[0.08] text-white/60"
-          : "bg-[#EEEAFB] text-violet-700"
-      }`}
-    >
-      {stepProgress.total}
-    </span>
+            <span
+              className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[9px] font-[700] ${
+                darkMode
+                  ? "bg-white/[0.08] text-white/60"
+                  : "bg-[#EAF2FF] text-blue-700"
+              }`}
+            >
+              {stepProgress.total}
+            </span>
 
-    {mobileEditTab === "steps" && (
-      <span
-        aria-hidden="true"
-        className={`absolute bottom-0 left-6 right-6 h-[2px] rounded-full ${
-          darkMode
-            ? "bg-violet-300"
-            : "bg-violet-600"
-        }`}
-      />
-    )}
-  </button>
-</div>
+            {mobileEditTab === "steps" && (
+              <span
+                aria-hidden="true"
+                className={`absolute bottom-0 left-6 right-6 h-[2px] rounded-full ${
+                  darkMode ? "bg-blue-300" : "bg-blue-600"
+                }`}
+              />
+            )}
+          </button>
+        </div>
 
         {/* Scrollable content */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div className="grid min-h-full grid-cols-1 lg:grid-cols-[minmax(0,0.95fr)_1px_minmax(0,1.05fr)]">
+          <div className="grid min-h-full grid-cols-1 lg:grid-cols-[minmax(0,0.94fr)_1px_minmax(0,1.06fr)]">
             {/* Task details */}
-            {/* Task details */}
-<section
-  className={`px-4 py-5 sm:block sm:px-7 sm:py-6 ${
-    mobileEditTab === "details"
-      ? "block"
-      : "hidden"
-  }`}
->
-              <div className="space-y-5">
+            <section
+              className={`px-4 py-4 sm:block sm:px-6 sm:py-5 ${
+                mobileEditTab === "details" ? "block" : "hidden"
+              }`}
+            >
+              <div className="space-y-4">
                 {/* Title */}
                 <div>
-                  <label
-                    htmlFor="task-title"
-                    className={fieldLabelClass}
-                  >
+                  <label htmlFor="task-title" className={fieldLabelClass}>
                     Title
                   </label>
 
@@ -23815,27 +23918,18 @@ const restoreTask = () => {
                       })
                     }
                     placeholder="What needs to get done?"
-                    className={`h-10 min-h-0 rounded-[7px] py-0 leading-none sm:h-11 ${fieldClass}`}
+                    className={`h-10 min-h-0 rounded-[9px] py-0 leading-none ${fieldClass}`}
                   />
                 </div>
 
                 {/* Priority and status */}
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <fieldset>
-                    <legend className={fieldLabelClass}>
-                      Priority
-                    </legend>
+                    <legend className={fieldLabelClass}>Priority</legend>
 
-                    <div
-                      className={`grid h-11 grid-cols-3 overflow-hidden rounded-[7px] border ${
-                        darkMode
-                          ? "border-white/[0.24]"
-                          : "border-[#A8A8A2]"
-                      }`}
-                    >
-                      {priorityOptions.map((priority, index) => {
-                        const isActive =
-                          selectedTask.priority === priority;
+                    <div className="grid grid-cols-3">
+                      {priorityOptions.map((priority) => {
+                        const isActive = selectedTask.priority === priority;
 
                         return (
                           <button
@@ -23849,19 +23943,11 @@ const restoreTask = () => {
                                 priority,
                               })
                             }
-                            className={`border-r text-[11px] font-[700] transition last:border-r-0 ${dividerClass} ${
+                            className={`${getSegmentButtonClass(
                               isActive
-                                ? darkMode
-                                  ? "bg-white text-[#181818]"
-                                  : "bg-[#181818] text-white"
-                                : darkMode
-                                ? "bg-transparent text-white/55 hover:bg-white/[0.05] hover:text-white"
-                                : "bg-transparent text-[#6F6F6A] hover:bg-black/[0.035] hover:text-[#181818]"
-                            }`}
+                            )} -ml-px first:ml-0`}
                           >
-                            {priority === "Medium"
-                              ? "Mid"
-                              : priority}
+                            {priority === "Medium" ? "Mid" : priority}
                           </button>
                         );
                       })}
@@ -23869,206 +23955,180 @@ const restoreTask = () => {
                   </fieldset>
 
                   <fieldset>
-                    <legend className={fieldLabelClass}>
-                      Status
-                    </legend>
+                    <legend className={fieldLabelClass}>Status</legend>
 
-                    <div
-                      className={`grid h-11 grid-cols-4 overflow-hidden rounded-[7px] border ${
-                        darkMode
-                          ? "border-white/[0.24]"
-                          : "border-[#A8A8A2]"
-                      }`}
-                    >
+                    <div className="grid grid-cols-4">
+                      {statusOptions.map((status) => {
+                        const currentStatus = normalizeTaskStatus(
+                          selectedTask.status
+                        );
 
-{statusOptions.map((status) => {
-const currentStatus =
-  normalizeTaskStatus(
-    selectedTask.status
-  );
+                        const isActive = currentStatus === status;
 
-const isActive =
-  currentStatus === status;
-
-return (
-  <button
-    key={status}
-    type="button"
-    data-testid={`task-status-${status.toLowerCase().replace(/\s+/g, "-")}`}
-    aria-pressed={isActive}
-    onClick={() =>
-      setSelectedTask({
-        ...selectedTask,
-        status,
-      })
-    }
-    className={`border-r px-1 text-[9.5px] font-[700] leading-[12px] transition last:border-r-0 ${dividerClass} ${
-      isActive
-        ? darkMode
-          ? "bg-white text-[#181818]"
-          : "bg-[#181818] text-white"
-        : darkMode
-        ? "bg-transparent text-white/55 hover:bg-white/[0.05] hover:text-white"
-        : "bg-transparent text-[#6F6F6A] hover:bg-black/[0.035] hover:text-[#181818]"
-    }`}
-  >
-    {getTaskStatusLabel(status)}
-  </button>
-);
-})}
-
+                        return (
+                          <button
+                            key={status}
+                            type="button"
+                            data-testid={`task-status-${status
+                              .toLowerCase()
+                              .replace(/\s+/g, "-")}`}
+                            aria-pressed={isActive}
+                            onClick={() =>
+                              setSelectedTask({
+                                ...selectedTask,
+                                status,
+                              })
+                            }
+                            className={`${getSegmentButtonClass(
+                              isActive
+                            )} -ml-px px-1 text-[9.5px] leading-[12px] first:ml-0`}
+                          >
+                            {getTaskStatusLabel(status)}
+                          </button>
+                        );
+                      })}
                     </div>
                   </fieldset>
                 </div>
 
+                {/* Task placement controls */}
+                <div
+                  className={`overflow-hidden rounded-[11px] border ${
+                    darkMode
+                      ? "border-white/[0.11] bg-[#171717]"
+                      : "border-[#E1E8F1] bg-white"
+                  }`}
+                >
+                  {/* Focus */}
+                  <div
+                    className={`flex min-h-[58px] items-center justify-between gap-4 border-b px-3.5 py-2.5 ${dividerClass}`}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Target
+                          size={15}
+                          strokeWidth={1.7}
+                          className={
+                            isTaskInFocus
+                              ? darkMode
+                                ? "text-blue-300"
+                                : "text-blue-600"
+                              : darkMode
+                              ? "text-white/45"
+                              : "text-[#64748B]"
+                          }
+                        />
 
-{/* Focus mode */}
-<div
-  className={`flex items-center justify-between gap-4 rounded-[7px] border px-3 py-3 ${
-    darkMode
-      ? "border-white/[0.24] bg-[#171717]"
-      : "border-[#A8A8A2] bg-white"
-  }`}
->
-  <div className="min-w-0">
-    <div className="flex items-center gap-2">
-      <Target
-        size={15}
-        strokeWidth={1.7}
-        className={
-          isTaskInFocus
-            ? darkMode
-              ? "text-emerald-300"
-              : "text-emerald-600"
-            : darkMode
-            ? "text-white/55"
-            : "text-[#6F6F6A]"
-        }
-      />
+                        <p
+                          className={`text-[12px] font-[700] ${
+                            darkMode ? "text-white" : "text-[#172033]"
+                          }`}
+                        >
+                          Focus stack
+                        </p>
+                      </div>
 
-      <p
-        className={`text-[12px] font-[700] ${
-          darkMode ? "text-white" : "text-[#181818]"
-        }`}
-      >
-        Focus mode
-      </p>
-    </div>
+                      <p
+                        className={`mt-0.5 truncate text-[10.5px] font-[500] leading-4 ${mutedTextClass}`}
+                      >
+                        {isTaskInFocus
+                          ? "Included in your current Focus stack."
+                          : isFocusStackFull
+                          ? "Your Focus stack already has three tasks."
+                          : "Keep this task among your strongest next actions."}
+                      </p>
+                    </div>
 
-    <p
-      className={`mt-1 text-[11px] font-[500] leading-4 ${
-        darkMode
-          ? "text-white/55"
-          : "text-[#6F6F6A]"
-      }`}
-    >
-      {isTaskInFocus
-        ? "This task is currently in your Focus stack."
-        : isFocusStackFull
-        ? "Your Focus stack already contains three tasks."
-        : "Add this task to your current Focus stack."}
-    </p>
-  </div>
+                    <button
+                      type="button"
+                      data-testid="toggle-task-focus-button"
+                      onClick={toggleTaskFocus}
+                      disabled={isFocusStackFull}
+                      aria-pressed={isTaskInFocus}
+                      className={`h-8 shrink-0 rounded-[8px] border px-3 text-[10.5px] font-[700] transition ${
+                        isFocusStackFull
+                          ? "cursor-not-allowed opacity-35"
+                          : isTaskInFocus
+                          ? darkMode
+                            ? "border-white/[0.13] bg-white/[0.05] text-white/70 hover:bg-white/[0.08]"
+                            : "border-[#DDE5EF] bg-[#F8FAFC] text-[#475569] hover:bg-[#F1F5F9]"
+                          : darkMode
+                          ? "border-blue-300/25 bg-blue-300/10 text-blue-200 hover:bg-blue-300/15"
+                          : "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                      }`}
+                    >
+                      {isTaskInFocus
+                        ? "Remove"
+                        : isFocusStackFull
+                        ? "Full"
+                        : "Add"}
+                    </button>
+                  </div>
 
-  <button
-    type="button"
-    data-testid="toggle-task-focus-button"
-    onClick={toggleTaskFocus}
-    disabled={isFocusStackFull}
-    aria-pressed={isTaskInFocus}
-    className={`h-9 shrink-0 rounded-[7px] border px-3 text-[11px] font-[700] transition ${
-      isFocusStackFull
-        ? "cursor-not-allowed opacity-35"
-        : isTaskInFocus
-        ? darkMode
-          ? "border-red-300/20 bg-red-300/[0.08] text-red-200 hover:bg-red-300/[0.12]"
-          : "border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
-        : darkMode
-        ? "border-white bg-white text-[#181818] hover:bg-white/90"
-        : "border-[#181818] bg-[#181818] text-white hover:bg-[#2A2A2A]"
-    }`}
-  >
-    {isTaskInFocus
-      ? "Remove"
-      : isFocusStackFull
-      ? "Focus stack full"
-      : "Add to focus"}
-  </button>
-</div>
+                  {/* Pin */}
+                  <div className="flex min-h-[58px] items-center justify-between gap-4 px-3.5 py-2.5">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Star
+                          size={15}
+                          strokeWidth={1.7}
+                          fill={selectedTask.pinned ? "currentColor" : "none"}
+                          className={
+                            selectedTask.pinned
+                              ? darkMode
+                                ? "text-lime-300"
+                                : "text-lime-600"
+                              : darkMode
+                              ? "text-white/45"
+                              : "text-[#64748B]"
+                          }
+                        />
 
+                        <p
+                          className={`text-[12px] font-[700] ${
+                            darkMode ? "text-white" : "text-[#172033]"
+                          }`}
+                        >
+                          Pin task
+                        </p>
+                      </div>
 
-{/* Pin task */}
-<div
-className={`flex items-center justify-between gap-4 rounded-[7px] border px-3 py-3 ${
-  darkMode
-    ? "border-white/[0.24] bg-[#171717]"
-    : "border-[#A8A8A2] bg-white"
-}`}
->
-<div className="min-w-0">
-  <div className="flex items-center gap-2">
-    <Star
-      size={15}
-      strokeWidth={1.7}
-      fill={selectedTask.pinned ? "currentColor" : "none"}
-      className={
-        selectedTask.pinned
-          ? darkMode
-            ? "text-white"
-            : "text-[#181818]"
-          : darkMode
-          ? "text-white/55"
-          : "text-[#6F6F6A]"
-      }
-    />
+                      <p
+                        className={`mt-0.5 truncate text-[10.5px] font-[500] leading-4 ${mutedTextClass}`}
+                      >
+                        {selectedTask.pinned
+                          ? "This task stays at the top of the list."
+                          : "Keep this task visible at the top of the list."}
+                      </p>
+                    </div>
 
-    <p
-      className={`text-[12px] font-[700] ${
-        darkMode ? "text-white" : "text-[#181818]"
-      }`}
-    >
-      Pin task
-    </p>
-  </div>
+                    <button
+                      type="button"
+                      data-testid="toggle-task-pin-button"
+                      onClick={() =>
+                        setSelectedTask({
+                          ...selectedTask,
+                          pinned: !selectedTask.pinned,
+                        })
+                      }
+                      aria-pressed={Boolean(selectedTask.pinned)}
+                      className={`h-8 shrink-0 rounded-[8px] border px-3 text-[10.5px] font-[700] transition ${
+                        selectedTask.pinned
+                          ? darkMode
+                            ? "border-lime-300/20 bg-lime-300/10 text-lime-200"
+                            : "border-lime-300 bg-lime-50 text-lime-700"
+                          : darkMode
+                          ? "border-white/[0.13] bg-white/[0.04] text-white/65 hover:bg-white/[0.08]"
+                          : "border-[#DDE5EF] bg-[#F8FAFC] text-[#475569] hover:bg-[#F1F5F9]"
+                      }`}
+                    >
+                      {selectedTask.pinned ? "Pinned" : "Pin"}
+                    </button>
+                  </div>
+                </div>
 
-  <p
-    className={`mt-1 text-[11px] font-[500] leading-4 ${
-      darkMode
-        ? "text-white/55"
-        : "text-[#6F6F6A]"
-    }`}
-  >
-    {selectedTask.pinned
-      ? "This task will stay above other tasks."
-      : "Keep this task at the top of your list."}
-  </p>
-</div>
-
-<button
-  type="button"
-  data-testid="toggle-task-pin-button"
-  onClick={() =>
-    setSelectedTask({
-      ...selectedTask,
-      pinned: !selectedTask.pinned,
-    })
-  }
-  aria-pressed={Boolean(selectedTask.pinned)}
-  className={`h-9 shrink-0 rounded-[7px] border px-3 text-[11px] font-[700] transition ${
-    selectedTask.pinned
-      ? darkMode
-        ? "border-white bg-white text-[#181818]"
-        : "border-[#181818] bg-[#181818] text-white"
-      : darkMode
-      ? "border-white/[0.24] text-white/65 hover:bg-white/[0.06] hover:text-white"
-      : "border-[#A8A8A2] text-[#6F6F6A] hover:bg-black/[0.035] hover:text-[#181818]"
-  }`}
->
-  {selectedTask.pinned ? "Pinned" : "Pin to top"}
-</button>
-</div>
                 {/* Date and category */}
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label
                       htmlFor="task-due-date"
@@ -24078,108 +24138,84 @@ className={`flex items-center justify-between gap-4 rounded-[7px] border px-3 py
                     </label>
 
                     <div
-  className={`h-11 w-full overflow-hidden rounded-[7px] border ${
-    darkMode
-      ? "border-white/[0.35] bg-[#202020]"
-      : "border-[#868681] bg-white"
-  }`}
->
-  <input
-    id="task-due-date"
-    data-testid="task-due-date-input"
-    type="date"
-    value={
-      selectedTask.dueDate ||
-      selectedTask.suggestedDueDate ||
-      ""
-    }
-    onChange={(event) =>
-      setSelectedTask({
-        ...selectedTask,
-        dueDate:
-          event.target.value ||
-          undefined,
-        suggestedDueDate:
-          undefined,
-        aiReason:
-          event.target.value
-            ? "You manually scheduled this task."
-            : undefined,
-        aiConfidence:
-          event.target.value
-            ? 1
-            : 0,
-      })
-    }
-    style={{
-      colorScheme: darkMode
-        ? "dark"
-        : "light",
-      textAlign: "left",
-    }}
-    className={`block h-full w-full min-w-0 border-0 bg-transparent px-3 py-0 text-left text-[12px] font-[650] leading-none outline-none ${
-      darkMode
-        ? "text-white"
-        : "text-[#181818]"
-    }`}
-  />
-</div>
+                      className={`h-10 w-full overflow-hidden rounded-[9px] border ${
+                        darkMode
+                          ? "border-white/[0.14] bg-[#191919]"
+                          : "border-[#D7E0EC] bg-white"
+                      }`}
+                    >
+                      <input
+                        id="task-due-date"
+                        data-testid="task-due-date-input"
+                        type="date"
+                        value={
+                          selectedTask.dueDate ||
+                          selectedTask.suggestedDueDate ||
+                          ""
+                        }
+                        onChange={(event) =>
+                          setSelectedTask({
+                            ...selectedTask,
+                            dueDate: event.target.value || undefined,
+                            suggestedDueDate: undefined,
+                            aiReason: event.target.value
+                              ? "You manually scheduled this task."
+                              : undefined,
+                            aiConfidence: event.target.value ? 1 : 0,
+                          })
+                        }
+                        style={{
+                          colorScheme: darkMode ? "dark" : "light",
+                          textAlign: "left",
+                        }}
+                        className={`block h-full w-full min-w-0 border-0 bg-transparent px-3.5 py-0 text-left text-[12px] font-[600] leading-none outline-none ${
+                          darkMode ? "text-white" : "text-[#172033]"
+                        }`}
+                      />
+                    </div>
                   </div>
 
                   <div>
-                    <label
-                      htmlFor="task-category"
-                      className={fieldLabelClass}
-                    >
+                    <label htmlFor="task-category" className={fieldLabelClass}>
                       Category
                     </label>
 
                     <div className="relative">
-                    <select
-id="task-category"
-data-testid="task-category-select"
-value={selectedTask.category || "-"}
-onChange={(event) =>
-  setSelectedTask({
-    ...selectedTask,
-    category: event.target.value,
-  })
-}
-className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
->
-{selectedTask.category === "-" && (
-  <option
-    value="-"
-    disabled
-    hidden
-  >
-    -
-  </option>
-)}
+                      <select
+                        id="task-category"
+                        data-testid="task-category-select"
+                        value={selectedTask.category || "-"}
+                        onChange={(event) =>
+                          setSelectedTask({
+                            ...selectedTask,
+                            category: event.target.value,
+                          })
+                        }
+                        className={`h-10 appearance-none rounded-[9px] pr-10 ${fieldClass}`}
+                      >
+                        {selectedTask.category === "-" && (
+                          <option value="-" disabled hidden>
+                            -
+                          </option>
+                        )}
 
-{categories
-  .filter(
-    (category: any) =>
-      category.title !== "-"
-  )
-  .map((category: any) => (
-    <option
-      key={category.id}
-      value={category.title}
-    >
-      {category.title}
-    </option>
-  ))}
-</select>
+                        {categories
+                          .filter(
+                            (category: any) => category.title !== "-"
+                          )
+                          .map((category: any) => (
+                            <option key={category.id} value={category.title}>
+                              {category.title}
+                            </option>
+                          ))}
+                      </select>
 
                       <ChevronDown
                         aria-hidden="true"
                         size={15}
                         strokeWidth={1.6}
                         className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${
-                          darkMode
-                            ? "text-white/55"
-                            : "text-[#6F6F6A]"
+                          darkMode ? "text-white/48" : "text-[#64748B]"
                         }`}
                       />
                     </div>
@@ -24188,10 +24224,7 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
 
                 {/* Why */}
                 <div>
-                  <label
-                    htmlFor="task-why"
-                    className={fieldLabelClass}
-                  >
+                  <label htmlFor="task-why" className={fieldLabelClass}>
                     Why it matters
                   </label>
 
@@ -24206,16 +24239,13 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
                       })
                     }
                     placeholder="Impact, outcome, or consequence..."
-                    className={`min-h-[78px] resize-none rounded-[7px] py-3 leading-5 ${fieldClass}`}
+                    className={`min-h-[70px] resize-none rounded-[9px] py-2.5 leading-5 ${fieldClass}`}
                   />
                 </div>
 
                 {/* Notes */}
                 <div>
-                  <label
-                    htmlFor="task-notes"
-                    className={fieldLabelClass}
-                  >
+                  <label htmlFor="task-notes" className={fieldLabelClass}>
                     Notes
                   </label>
 
@@ -24230,7 +24260,7 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
                       })
                     }
                     placeholder="Add context, links, blockers, or anything useful..."
-                    className={`min-h-[94px] resize-none rounded-[7px] py-3 leading-5 ${fieldClass}`}
+                    className={`min-h-[82px] resize-none rounded-[9px] py-2.5 leading-5 ${fieldClass}`}
                   />
                 </div>
 
@@ -24239,36 +24269,36 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
                   selectedTask.aiReason !==
                     "You manually scheduled this task." && (
                     <div
-                      className={`border-t pt-5 ${dividerClass}`}
+                      className={`rounded-[11px] border px-3.5 py-3 ${
+                        darkMode
+                          ? "border-blue-300/12 bg-blue-400/[0.045]"
+                          : "border-blue-100 bg-[#F8FBFF]"
+                      }`}
                     >
                       <div className="flex items-center justify-between gap-4">
                         <p
-                          className={`text-[10px] font-[750] uppercase tracking-[0.14em] ${mutedTextClass}`}
+                          className={`text-[9.5px] font-[750] uppercase tracking-[0.11em] ${mutedTextClass}`}
                         >
                           Momentuhm interpretation
                         </p>
 
-                        {typeof selectedTask.aiConfidence ===
-                          "number" && (
+                        {typeof selectedTask.aiConfidence === "number" && (
                           <span
-                            className={`text-[10px] font-[650] ${mutedTextClass}`}
+                            className={`text-[9.5px] font-[650] ${mutedTextClass}`}
                           >
-                            {Math.round(
-                              selectedTask.aiConfidence * 100
-                            )}
-                            % confidence
+                            {Math.round(selectedTask.aiConfidence * 100)}%
                           </span>
                         )}
                       </div>
 
                       <p
-                        className={`mt-2 text-[12px] font-[500] leading-5 ${mutedTextClass}`}
+                        className={`mt-1.5 text-[11px] font-[500] leading-[18px] ${mutedTextClass}`}
                       >
                         {selectedTask.aiReason}
                       </p>
 
                       <p
-                        className={`mt-3 text-[10px] font-[650] ${mutedTextClass}`}
+                        className={`mt-2 text-[9.5px] font-[650] ${mutedTextClass}`}
                       >
                         {selectedTask.priority === "Medium"
                           ? "Mid"
@@ -24279,13 +24309,9 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
                               selectedTask.suggestedDueDate
                             )}`
                           : selectedTask.dueDate
-                          ? ` · Due ${formatDueDate(
-                              selectedTask.dueDate
-                            )}`
+                          ? ` · Due ${formatDueDate(selectedTask.dueDate)}`
                           : ""}
-                        {hasFollowUpTag(selectedTask)
-                          ? " · Follow-up"
-                          : ""}
+                        {hasFollowUpTag(selectedTask) ? " · Follow-up" : ""}
                       </p>
                     </div>
                   )}
@@ -24298,31 +24324,29 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
               className={`hidden border-l lg:block ${dividerClass}`}
             />
 
-           {/* Subtasks */}
-<section
-  className={`px-4 py-5 sm:block sm:px-7 sm:py-6 lg:border-t-0 ${
-    mobileEditTab === "steps"
-      ? "block"
-      : "hidden"
-  } ${
-    darkMode
-      ? "border-white/[0.12]"
-      : "border-[#D4D4CF]"
-  }`}
->
+            {/* Subtasks */}
+            <section
+              className={`px-4 py-4 sm:block sm:px-6 sm:py-5 lg:border-t-0 ${
+                mobileEditTab === "steps" ? "block" : "hidden"
+              } ${
+                darkMode
+                  ? "border-white/[0.09] bg-[#151515]"
+                  : "border-[#E5EDF7] bg-[#FBFCFE]"
+              }`}
+            >
               {/* Subtask header */}
               <div className="flex items-start justify-between gap-5">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <ListChecks
-                      size={17}
+                      size={16}
                       strokeWidth={1.6}
                       className={mutedTextClass}
                     />
 
                     <h3
-                      className={`text-[13px] font-[750] uppercase tracking-[0.08em] ${
-                        darkMode ? "text-white" : "text-[#181818]"
+                      className={`text-[12.5px] font-[750] uppercase tracking-[0.075em] ${
+                        darkMode ? "text-white" : "text-[#172033]"
                       }`}
                     >
                       Subtasks
@@ -24330,23 +24354,23 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
                   </div>
 
                   <p
-                    className={`mt-2 text-[11px] font-[500] leading-5 ${mutedTextClass}`}
+                    className={`mt-1.5 text-[10.5px] font-[500] leading-[18px] ${mutedTextClass}`}
                   >
-                    Big tasks become lighter when the next step is clear.
+                    Big tasks feel lighter when the next step is clear.
                   </p>
                 </div>
 
                 <div className="shrink-0 text-right">
                   <p
-                    className={`text-[11px] font-[700] ${
-                      darkMode ? "text-white" : "text-[#181818]"
+                    className={`text-[10.5px] font-[700] tabular-nums ${
+                      darkMode ? "text-white" : "text-[#172033]"
                     }`}
                   >
                     {stepProgress.completed} / {stepProgress.total}
                   </p>
 
                   <p
-                    className={`mt-1 text-[10px] font-[600] ${mutedTextClass}`}
+                    className={`mt-0.5 text-[9.5px] font-[600] ${mutedTextClass}`}
                   >
                     {stepProgress.percent}%
                   </p>
@@ -24360,15 +24384,15 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={stepProgress.percent}
-                className={`mt-4 h-[2px] w-full ${
-                  darkMode
-                    ? "bg-white/[0.12]"
-                    : "bg-[#DEDED9]"
+                className={`mt-3 h-[2px] w-full overflow-hidden rounded-full ${
+                  darkMode ? "bg-white/[0.10]" : "bg-[#E7EEF8]"
                 }`}
               >
                 <div
-                  className={`h-full transition-[width] duration-500 ${
-                    darkMode ? "bg-white" : "bg-[#181818]"
+                  className={`h-full rounded-full transition-[width] duration-500 ${
+                    darkMode
+                      ? "bg-blue-300"
+                      : "bg-[linear-gradient(90deg,#1769FF,#6EC7FF)]"
                   }`}
                   style={{
                     width: `${stepProgress.percent}%`,
@@ -24377,60 +24401,44 @@ className={`h-11 appearance-none rounded-[7px] pr-10 ${fieldClass}`}
               </div>
 
               {/* Add subtask */}
-              <div className="mt-5 grid grid-cols-[minmax(0,1fr)_72px] gap-2">
-              <input
-data-testid="subtask-input"
-aria-label="New subtask"
-value={newStepTitle}
-onChange={(event) =>
-  setNewStepTitle(event.target.value)
-}
-onPaste={(event) => {
-  const pastedText =
-    event.clipboardData.getData("text");
+              <div className="mt-4 grid grid-cols-[minmax(0,1fr)_72px] gap-2">
+                <input
+                  data-testid="subtask-input"
+                  aria-label="New subtask"
+                  value={newStepTitle}
+                  onChange={(event) => setNewStepTitle(event.target.value)}
+                  onPaste={(event) => {
+                    const pastedText = event.clipboardData.getData("text");
+                    const pastedSubtasks = parseSubtaskList(pastedText);
 
-  const pastedSubtasks =
-    parseSubtaskList(pastedText);
+                    if (pastedSubtasks.length < 2) {
+                      return;
+                    }
 
-  /*
-   * A normal single-line paste continues behaving
-   * like an ordinary input paste.
-   */
-  if (pastedSubtasks.length < 2) {
-    return;
-  }
-
-  /*
-   * Prevent the browser from converting the full list
-   * into one input value.
-   */
-  event.preventDefault();
-
-  appendSubtasksToSelectedTask(
-    pastedSubtasks
-  );
-}}
-onKeyDown={(event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    addStepToSelectedTask();
-  }
-}}
-placeholder="Add or paste a list of subtasks..."
-className={`h-11 rounded-[7px] ${fieldClass}`}
-/>
+                    event.preventDefault();
+                    appendSubtasksToSelectedTask(pastedSubtasks);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addStepToSelectedTask();
+                    }
+                  }}
+                  placeholder="Add or paste a list of subtasks..."
+                  className={`h-10 rounded-[9px] ${fieldClass}`}
+                />
 
                 <button
                   type="button"
                   data-testid="add-subtask-button"
                   onClick={addStepToSelectedTask}
                   disabled={!newStepTitle.trim()}
-                  className={`h-11 rounded-[7px] border text-[12px] font-[700] transition ${
+                  className={`h-10 rounded-[9px] border text-[11px] font-[700] transition ${
                     !newStepTitle.trim()
                       ? "cursor-not-allowed opacity-35"
                       : darkMode
                       ? "border-white bg-white text-[#181818] hover:bg-white/90"
-                      : "border-[#181818] bg-[#181818] text-white hover:bg-[#2A2A2A]"
+                      : "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
                   }`}
                 >
                   Add
@@ -24440,394 +24448,290 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
               {/* Empty state */}
               {stepProgress.subtasks.length === 0 ? (
                 <div
-                  className={`mt-5 flex min-h-[170px] items-center justify-center border px-5 text-center ${
+                  className={`mt-4 flex min-h-[150px] items-center justify-center rounded-[12px] border px-5 text-center ${
                     darkMode
-                      ? "border-white/[0.14]"
-                      : "border-[#D4D4CF]"
+                      ? "border-white/[0.10] bg-white/[0.025]"
+                      : "border-[#E3EAF3] bg-[#F8FAFC]/75"
                   }`}
                 >
-                  <div>
-                    <List
-                      size={20}
-                      strokeWidth={1.4}
-                      className={`mx-auto ${mutedTextClass}`}
-                    />
-
-                    <p
-                      className={`mt-3 text-[12px] font-[650] ${
-                        darkMode ? "text-white" : "text-[#181818]"
+                  <div className="max-w-[270px]">
+                    <span
+                      className={`mx-auto flex h-9 w-9 items-center justify-center rounded-[10px] ${
+                        darkMode
+                          ? "bg-white/[0.05] text-white/50"
+                          : "bg-white text-[#64748B] shadow-[0_3px_10px_rgba(15,23,42,0.06)]"
                       }`}
                     >
-                      No steps yet.
+                      <ListChecks size={17} strokeWidth={1.5} />
+                    </span>
+
+                    <p
+                      className={`mt-3 text-[12px] font-[700] ${
+                        darkMode ? "text-white" : "text-[#172033]"
+                      }`}
+                    >
+                      No steps yet
                     </p>
 
                     <p
                       className={`mt-1 text-[11px] font-[500] leading-5 ${mutedTextClass}`}
                     >
-                      Add the first step to break this task down.
+                      Add one small next action to make this task easier to
+                      start.
                     </p>
                   </div>
                 </div>
               ) : (
                 <div
-                  className={`mt-5 border ${
+                  className={`mt-4 overflow-hidden rounded-[12px] border ${
                     darkMode
-                      ? "border-white/[0.14]"
-                      : "border-[#D4D4CF]"
+                      ? "border-white/[0.11] bg-[#171717]"
+                      : "border-[#E2E8F0] bg-white"
                   }`}
                 >
-                <AnimatePresence initial={false}>
-  {stepProgress.subtasks.map(
-    (
-      step: Subtask,
-      index: number
-    ) => {
-      const isDragging =
-        draggedStepId ===
-        step.id;
+                  <AnimatePresence initial={false}>
+                    {stepProgress.subtasks.map(
+                      (step: Subtask) => {
+                        const isDragging = draggedStepId === step.id;
 
-      const isDragTarget =
-        dragOverStepId ===
-          step.id &&
-        draggedStepId !==
-          step.id;
+                        const isDragTarget =
+                          dragOverStepId === step.id &&
+                          draggedStepId !== step.id;
 
-      return (
-        <motion.div
-          layout="position"
-          key={step.id}
-          data-testid="subtask-row"
-          data-subtask-id={
-            step.id
-          }
-          data-subtask-title={
-            step.title
-          }
-          draggable={
-            editingStepId !==
-            step.id
-          }
-          onDragStartCapture={(
-            event: React.DragEvent<HTMLDivElement>
-          ) => {
-            if (
-              editingStepId ===
-              step.id
-            ) {
-              event.preventDefault();
-              return;
-            }
+                        return (
+                          <motion.div
+                            layout="position"
+                            key={step.id}
+                            data-testid="subtask-row"
+                            data-subtask-id={step.id}
+                            data-subtask-title={step.title}
+                            draggable={editingStepId !== step.id}
+                            onDragStartCapture={(
+                              event: React.DragEvent<HTMLDivElement>
+                            ) => {
+                              if (editingStepId === step.id) {
+                                event.preventDefault();
+                                return;
+                              }
 
-            setDraggedStepId(
-              step.id
-            );
+                              setDraggedStepId(step.id);
+                              event.dataTransfer.effectAllowed = "move";
+                              event.dataTransfer.setData("text/plain", step.id);
+                            }}
+                            onDragOver={(
+                              event: React.DragEvent<HTMLDivElement>
+                            ) => {
+                              event.preventDefault();
+                              event.dataTransfer.dropEffect = "move";
 
-            event.dataTransfer.effectAllowed =
-              "move";
+                              if (
+                                draggedStepId &&
+                                draggedStepId !== step.id
+                              ) {
+                                setDragOverStepId(step.id);
+                              }
+                            }}
+                            onDragLeave={(
+                              event: React.DragEvent<HTMLDivElement>
+                            ) => {
+                              const nextElement = event.relatedTarget as
+                                | Node
+                                | null;
 
-            event.dataTransfer.setData(
-              "text/plain",
-              step.id
-            );
-          }}
-          onDragOver={(
-            event: React.DragEvent<HTMLDivElement>
-          ) => {
-            event.preventDefault();
+                              if (
+                                nextElement &&
+                                event.currentTarget.contains(nextElement)
+                              ) {
+                                return;
+                              }
 
-            event.dataTransfer.dropEffect =
-              "move";
+                              if (dragOverStepId === step.id) {
+                                setDragOverStepId(null);
+                              }
+                            }}
+                            onDrop={(
+                              event: React.DragEvent<HTMLDivElement>
+                            ) => {
+                              event.preventDefault();
 
-            if (
-              draggedStepId &&
-              draggedStepId !==
-                step.id
-            ) {
-              setDragOverStepId(
-                step.id
-              );
-            }
-          }}
-          onDragLeave={(
-            event: React.DragEvent<HTMLDivElement>
-          ) => {
-            const nextElement =
-              event.relatedTarget as
-                | Node
-                | null;
+                              const droppedStepId =
+                                draggedStepId ||
+                                event.dataTransfer.getData("text/plain");
 
-            if (
-              nextElement &&
-              event.currentTarget.contains(
-                nextElement
-              )
-            ) {
-              return;
-            }
+                              reorderSelectedSteps(droppedStepId, step.id);
+                              finishStepDrag();
+                            }}
+                            onDragEndCapture={finishStepDrag}
+                            animate={{
+                              opacity: isDragging ? 0.48 : 1,
+                              scale: isDragging ? 0.985 : 1,
+                            }}
+                            transition={{
+                              duration: 0.16,
+                            }}
+                            className={`relative grid min-h-[50px] grid-cols-[26px_32px_minmax(0,1fr)_32px_32px] items-start gap-1.5 border-b px-2 py-2 last:border-b-0 ${dividerClass} ${
+                              isDragging
+                                ? darkMode
+                                  ? "bg-white/[0.045]"
+                                  : "bg-black/[0.025]"
+                                : ""
+                            } ${
+                              isDragTarget
+                                ? darkMode
+                                  ? "before:absolute before:inset-x-2 before:top-0 before:h-[2px] before:rounded-full before:bg-blue-300"
+                                  : "before:absolute before:inset-x-2 before:top-0 before:h-[2px] before:rounded-full before:bg-blue-600"
+                                : ""
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              draggable={false}
+                              aria-label={`Drag to reorder ${step.title}`}
+                              title="Drag to reorder"
+                              className={`flex h-8 w-7 cursor-grab touch-none items-center justify-center rounded-[6px] transition active:cursor-grabbing ${
+                                darkMode
+                                  ? "text-white/28 hover:bg-white/[0.06] hover:text-white/70"
+                                  : "text-[#94A3B8] hover:bg-[#F1F5F9] hover:text-blue-700"
+                              }`}
+                              onMouseDown={() => {
+                                if (editingStepId === step.id) {
+                                  cancelEditingStep();
+                                }
+                              }}
+                            >
+                              <GripVertical size={14} strokeWidth={1.7} />
+                            </button>
 
-            if (
-              dragOverStepId ===
-              step.id
-            ) {
-              setDragOverStepId(
-                null
-              );
-            }
-          }}
-          onDrop={(
-            event: React.DragEvent<HTMLDivElement>
-          ) => {
-            event.preventDefault();
+                            <button
+                              type="button"
+                              draggable={false}
+                              data-testid="toggle-subtask-button"
+                              data-subtask-id={step.id}
+                              onClick={() => toggleSelectedStep(step.id)}
+                              aria-label={
+                                step.completed
+                                  ? `Mark ${step.title} incomplete`
+                                  : `Complete ${step.title}`
+                              }
+                              className={`flex h-8 w-8 items-center justify-center rounded-[6px] transition ${
+                                darkMode
+                                  ? "text-white/55 hover:bg-white/[0.06] hover:text-white"
+                                  : "text-[#64748B] hover:bg-[#F1F5F9] hover:text-blue-700"
+                              }`}
+                            >
+                              {step.completed ? (
+                                <span
+                                  className={`flex h-[17px] w-[17px] items-center justify-center rounded-[4px] border ${
+                                    darkMode
+                                      ? "border-blue-300 bg-blue-300 text-[#181818]"
+                                      : "border-blue-600 bg-blue-600 text-white"
+                                  }`}
+                                >
+                                  <Check size={11} strokeWidth={2.4} />
+                                </span>
+                              ) : (
+                                <span
+                                  className={`h-[17px] w-[17px] rounded-[4px] border ${
+                                    darkMode
+                                      ? "border-white/45"
+                                      : "border-[#9CB0C8]"
+                                  }`}
+                                />
+                              )}
+                            </button>
 
-            const droppedStepId =
-              draggedStepId ||
-              event.dataTransfer.getData(
-                "text/plain"
-              );
+                            {editingStepId === step.id ? (
+                              <input
+                                autoFocus
+                                draggable={false}
+                                data-testid="edit-subtask-input"
+                                data-subtask-id={step.id}
+                                value={editingStepTitle}
+                                onChange={(event) =>
+                                  setEditingStepTitle(event.target.value)
+                                }
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter") {
+                                    event.preventDefault();
+                                    saveEditedStep();
+                                  }
 
-            reorderSelectedSteps(
-              droppedStepId,
-              step.id
-            );
+                                  if (event.key === "Escape") {
+                                    event.stopPropagation();
+                                    cancelEditingStep();
+                                  }
+                                }}
+                                onBlur={saveEditedStep}
+                                className={`h-8 rounded-[7px] text-[11.5px] ${fieldClass}`}
+                              />
+                            ) : (
+                              <button
+                              type="button"
+                              draggable={false}
+                              data-testid="subtask-title-button"
+                              data-subtask-id={step.id}
+                              onClick={() => startEditingStep(step)}
+                              className={`block w-full min-w-0 whitespace-normal py-2.5 pr-2 text-left text-[11.5px] font-[550] leading-[18px] [overflow-wrap:anywhere] ${
+                                step.completed
+                                  ? darkMode
+                                    ? "text-white/38 line-through decoration-white/28"
+                                    : "text-[#8A96A8] line-through decoration-blue-300/45"
+                                  : darkMode
+                                  ? "text-white/82"
+                                  : "text-[#172033]"
+                              }`}
+                            >
+                              {step.title}
+                            </button>
+                            )}
 
-            finishStepDrag();
-          }}
-          onDragEndCapture={
-            finishStepDrag
-          }
-          animate={{
-            opacity: isDragging
-              ? 0.48
-              : 1,
+                            <button
+                              type="button"
+                              draggable={false}
+                              data-testid="edit-subtask-button"
+                              data-subtask-id={step.id}
+                              onClick={() => startEditingStep(step)}
+                              aria-label={`Edit ${step.title}`}
+                              title="Edit subtask"
+                              className={`flex h-8 w-8 items-center justify-center rounded-[6px] transition ${
+                                darkMode
+                                  ? "text-white/38 hover:bg-white/[0.06] hover:text-white"
+                                  : "text-[#8795A8] hover:bg-[#F1F5F9] hover:text-blue-700"
+                              }`}
+                            >
+                              <PencilLine size={13} strokeWidth={1.6} />
+                            </button>
 
-            scale: isDragging
-              ? 0.985
-              : 1,
-          }}
-          transition={{
-            duration: 0.16,
-          }}
-          className={`relative grid min-h-[54px] grid-cols-[28px_36px_minmax(0,1fr)_34px_34px] items-center gap-2 border-b px-2 last:border-b-0 ${dividerClass} ${
-            isDragging
-              ? darkMode
-                ? "bg-white/[0.045]"
-                : "bg-black/[0.025]"
-              : ""
-          } ${
-            isDragTarget
-              ? darkMode
-                ? "before:absolute before:inset-x-2 before:top-0 before:h-[2px] before:rounded-full before:bg-violet-300"
-                : "before:absolute before:inset-x-2 before:top-0 before:h-[2px] before:rounded-full before:bg-violet-600"
-              : ""
-          }`}
-        >
-          <button
-            type="button"
-            draggable={false}
-            aria-label={`Drag to reorder ${step.title}`}
-            title="Drag to reorder"
-            className={`flex h-8 w-7 cursor-grab touch-none items-center justify-center rounded-[5px] transition active:cursor-grabbing ${
-              darkMode
-                ? "text-white/30 hover:bg-white/[0.06] hover:text-white/70"
-                : "text-[#9A9A94] hover:bg-black/[0.04] hover:text-[#555550]"
-            }`}
-            onMouseDown={() => {
-              if (
-                editingStepId ===
-                step.id
-              ) {
-                cancelEditingStep();
-              }
-            }}
-          >
-            <GripVertical
-              size={15}
-              strokeWidth={1.7}
-            />
-          </button>
-
-          <button
-            type="button"
-            draggable={false}
-            data-testid="toggle-subtask-button"
-            data-subtask-id={
-              step.id
-            }
-            onClick={() =>
-              toggleSelectedStep(
-                step.id
-              )
-            }
-            aria-label={
-              step.completed
-                ? `Mark ${step.title} incomplete`
-                : `Complete ${step.title}`
-            }
-            className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
-              darkMode
-                ? "text-white/55 hover:bg-white/[0.06] hover:text-white"
-                : "text-[#6F6F6A] hover:bg-black/[0.04] hover:text-[#181818]"
-            }`}
-          >
-            {step.completed ? (
-              <span
-                className={`flex h-[18px] w-[18px] items-center justify-center border ${
-                  darkMode
-                    ? "border-white bg-white text-[#181818]"
-                    : "border-[#181818] bg-[#181818] text-white"
-                }`}
-              >
-                <Check
-                  size={12}
-                  strokeWidth={2.4}
-                />
-              </span>
-            ) : (
-              <span
-                className={`h-[18px] w-[18px] border ${
-                  darkMode
-                    ? "border-white/55"
-                    : "border-[#777772]"
-                }`}
-              />
-            )}
-          </button>
-
-          {editingStepId ===
-          step.id ? (
-            <input
-              autoFocus
-              draggable={false}
-              data-testid="edit-subtask-input"
-              data-subtask-id={
-                step.id
-              }
-              value={
-                editingStepTitle
-              }
-              onChange={(
-                event
-              ) =>
-                setEditingStepTitle(
-                  event.target.value
-                )
-              }
-              onKeyDown={(
-                event
-              ) => {
-                if (
-                  event.key ===
-                  "Enter"
-                ) {
-                  event.preventDefault();
-                  saveEditedStep();
-                }
-
-                if (
-                  event.key ===
-                  "Escape"
-                ) {
-                  event.stopPropagation();
-                  cancelEditingStep();
-                }
-              }}
-              onBlur={
-                saveEditedStep
-              }
-              className={`h-9 rounded-[6px] ${fieldClass}`}
-            />
-          ) : (
-            <button
-              type="button"
-              draggable={false}
-              data-testid="subtask-title-button"
-              data-subtask-id={
-                step.id
-              }
-              onClick={() =>
-                startEditingStep(
-                  step
-                )
-              }
-              className={`min-w-0 py-3 text-left text-[12px] font-[550] leading-5 ${
-                step.completed
-                  ? darkMode
-                    ? "text-white/40 line-through decoration-white/30"
-                    : "text-[#777772] line-through decoration-black/25"
-                  : darkMode
-                  ? "text-white/82"
-                  : "text-[#181818]"
-              }`}
-            >
-              {step.title}
-            </button>
-          )}
-
-          <button
-            type="button"
-            draggable={false}
-            data-testid="edit-subtask-button"
-            data-subtask-id={
-              step.id
-            }
-            onClick={() =>
-              startEditingStep(
-                step
-              )
-            }
-            aria-label={`Edit ${step.title}`}
-            title="Edit subtask"
-            className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
-              darkMode
-                ? "text-white/45 hover:bg-white/[0.06] hover:text-white"
-                : "text-[#777772] hover:bg-black/[0.04] hover:text-[#181818]"
-            }`}
-          >
-            <PencilLine
-              size={14}
-              strokeWidth={1.6}
-            />
-          </button>
-
-          <button
-            type="button"
-            draggable={false}
-            data-testid="delete-subtask-button"
-            data-subtask-id={
-              step.id
-            }
-            onClick={() =>
-              deleteSelectedStep(
-                step.id
-              )
-            }
-            aria-label={`Delete ${step.title}`}
-            title="Delete subtask"
-            className={`flex h-8 w-8 items-center justify-center rounded-[5px] transition ${
-              darkMode
-                ? "text-white/40 hover:bg-white/[0.06] hover:text-white"
-                : "text-[#777772] hover:bg-black/[0.04] hover:text-[#181818]"
-            }`}
-          >
-            <Trash2
-              size={14}
-              strokeWidth={1.6}
-            />
-          </button>
-        </motion.div>
-      );
-    }
-  )}
-</AnimatePresence>
+                            <button
+                              type="button"
+                              draggable={false}
+                              data-testid="delete-subtask-button"
+                              data-subtask-id={step.id}
+                              onClick={() => deleteSelectedStep(step.id)}
+                              aria-label={`Delete ${step.title}`}
+                              title="Delete subtask"
+                              className={`flex h-8 w-8 items-center justify-center rounded-[6px] transition ${
+                                darkMode
+                                  ? "text-white/34 hover:bg-red-400/10 hover:text-red-300"
+                                  : "text-[#8795A8] hover:bg-red-50 hover:text-red-600"
+                              }`}
+                            >
+                              <Trash2 size={13} strokeWidth={1.6} />
+                            </button>
+                          </motion.div>
+                        );
+                      }
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 
               {stepProgress.allComplete && (
                 <p
-                  className={`mt-4 border-l-2 pl-3 text-[11px] font-[550] leading-5 ${
+                  className={`mt-3 border-l-2 pl-3 text-[10.5px] font-[550] leading-[18px] ${
                     darkMode
-                      ? "border-white/45 text-white/60"
-                      : "border-[#777772] text-[#555550]"
+                      ? "border-emerald-300/55 text-white/58"
+                      : "border-lime-500 text-lime-800"
                   }`}
                 >
                   All subtasks are complete. Mark the parent task complete when
@@ -24840,7 +24744,9 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
 
         {/* Footer */}
         <footer
-          className={`flex shrink-0 flex-col-reverse gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-4 ${dividerClass}`}
+          className={`flex shrink-0 flex-col-reverse gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 ${
+            darkMode ? "bg-[#151515]" : "bg-white"
+          } ${dividerClass}`}
         >
           <div className="hidden items-center gap-4 sm:flex">
             {selectedTask.completed && (
@@ -24848,10 +24754,10 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
                 type="button"
                 data-testid="restore-task-from-modal-button"
                 onClick={restoreTask}
-                className={`flex h-10 items-center gap-2 text-[12px] font-[650] transition ${
+                className={`flex h-9 items-center gap-2 text-[11px] font-[650] transition ${
                   darkMode
                     ? "text-white/55 hover:text-white"
-                    : "text-[#6F6F6A] hover:text-[#181818]"
+                    : "text-blue-600 hover:text-blue-800"
                 }`}
               >
                 <RotateCcw size={14} strokeWidth={1.7} />
@@ -24863,10 +24769,10 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
               type="button"
               data-testid="delete-task-button"
               onClick={deleteTask}
-              className={`flex h-10 items-center gap-2 text-[12px] font-[650] transition ${
+              className={`flex h-9 items-center gap-2 text-[11px] font-[650] transition ${
                 darkMode
-                  ? "text-white/45 hover:text-white"
-                  : "text-[#777772] hover:text-[#181818]"
+                  ? "text-white/42 hover:text-red-300"
+                  : "text-red-500 hover:text-red-600"
               }`}
             >
               <Trash2 size={14} strokeWidth={1.6} />
@@ -24874,15 +24780,15 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
             </button>
           </div>
 
-          <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
+          <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
             <button
               type="button"
               data-testid="cancel-task-edit-button"
               onClick={closeWithoutSaving}
-              className={`hidden h-10 rounded-[7px] px-4 text-[12px] font-[650] transition sm:block ${
+              className={`hidden h-9 rounded-[9px] px-3.5 text-[11px] font-[650] transition sm:block ${
                 darkMode
-                  ? "text-white/55 hover:bg-white/[0.06] hover:text-white"
-                  : "text-[#6F6F6A] hover:bg-black/[0.035] hover:text-[#181818]"
+                  ? "text-white/52 hover:bg-white/[0.06] hover:text-white"
+                  : "text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#172033]"
               }`}
             >
               Cancel
@@ -24893,15 +24799,15 @@ className={`h-11 rounded-[7px] ${fieldClass}`}
               data-testid="save-task-changes-button"
               onClick={saveAndClose}
               disabled={!selectedTask?.title?.trim()}
-              className={`h-12 w-full rounded-[10px] px-5 text-[13px] font-[700] transition active:scale-[0.99] sm:h-10 sm:w-auto sm:min-w-[76px] sm:rounded-[7px] sm:text-[12px] ${
+              className={`h-11 w-full rounded-[10px] px-5 text-[13px] font-[700] transition active:scale-[0.99] sm:h-9 sm:w-auto sm:min-w-[106px] sm:rounded-[9px] sm:text-[11px] ${
                 !selectedTask?.title?.trim()
                   ? "cursor-not-allowed opacity-35"
                   : darkMode
                   ? "bg-white text-[#181818] hover:bg-white/90"
-                  : "bg-[#181818] text-white hover:bg-[#2A2A2A]"
+                  : "bg-blue-600 text-white shadow-[0_7px_18px_rgba(37,99,235,0.20)] hover:bg-blue-700"
               }`}
             >
-               Save changes
+              Save changes
             </button>
           </div>
         </footer>

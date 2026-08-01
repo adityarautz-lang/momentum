@@ -2,7 +2,6 @@
 
 import {
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -46,177 +45,138 @@ const inter = Inter({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-const HERO_TASK = "Prepare the quarterly client review";
+const RAW_MESSAGE =
+  "Need to finish the deck, reply to Rhea, book the dentist, send the budget by Thursday, and figure out what to do first.";
 
-const CLIPBOARD_SOURCE =
-  "Please send the revised budget by Thursday, book the vendor review, and follow up with Maya next week.";
-
-const CLIPBOARD_TASKS = [
-  {
-    title: "Send the revised budget",
-    meta: "High priority - Thursday",
-  },
-  {
-    title: "Book the vendor review",
-    meta: "Medium priority - Tomorrow",
-  },
-  {
-    title: "Follow up with Maya",
-    meta: "Medium priority - Next week",
-  },
+const EXTRACTED_TASKS = [
+  { title: "Send the revised budget", meta: "Due Thursday", tone: "hot" },
+  { title: "Finish the project deck", meta: "45 min", tone: "violet" },
+  { title: "Reply to Rhea", meta: "10 min", tone: "yellow" },
+  { title: "Book the dentist", meta: "Personal", tone: "green" },
 ];
 
 const FOCUS_TASKS = [
   {
-    title: "Send revised client budget",
-    reason: "Deadline and external dependency",
-    priority: "High",
+    title: "Send the revised budget",
+    reason: "Deadline + someone else is waiting",
+    time: "25 min",
   },
   {
-    title: "Review launch risks",
-    reason: "Could block the release",
-    priority: "High",
+    title: "Finish the project deck",
+    reason: "Highest-impact work left today",
+    time: "45 min",
   },
   {
-    title: "Book vendor review",
-    reason: "Depends on another person's availability",
-    priority: "Medium",
+    title: "Reply to Rhea",
+    reason: "Quick follow-up that closes a loop",
+    time: "10 min",
   },
 ];
 
-const PRODUCT_MODULES = [
+const SCENARIOS = [
   {
-    icon: Sparkles,
-    title: "Smart task assistance",
-    description:
-      "Turn a rough task into a useful first draft with priority, timing, category, and context.",
+    tag: "THE GROUP CHAT",
+    title: "One message. Six hidden tasks.",
+    copy: "Paste the whole thing. Momentuhm separates the actions before you add anything.",
+    accent: "coral",
   },
   {
+    tag: "THE SUNDAY SCARIES",
+    title: "Everything feels equally urgent.",
+    copy: "See what is due, what is blocking someone, and what can realistically fit today.",
+    accent: "yellow",
+  },
+  {
+    tag: "THE BUSY DAY",
+    title: "A lot got done. Nothing moved.",
+    copy: "Track meaningful progress, not just the number of tiny boxes you checked.",
+    accent: "green",
+  },
+  {
+    tag: "THE BRAIN DUMP",
+    title: "Your notes are not a plan yet.",
+    copy: "Turn rough thoughts into editable tasks with dates, priority, context, and a clear first step.",
+    accent: "violet",
+  },
+];
+
+const FEATURE_CARDS = [
+  {
     icon: ClipboardCheck,
-    title: "Clipboard Assist",
-    description:
-      "Detect actionable work inside copied messages, emails, and notes before anything is added.",
+    eyebrow: "Clipboard Assist",
+    title: "Copy chaos. Paste actions.",
+    copy: "Momentuhm detects useful work inside messages, emails, meeting notes, and long brain dumps.",
+    className: "featureWide",
   },
   {
     icon: Target,
-    title: "Focus stack",
-    description:
-      "Surface the strongest next moves using urgency, impact, dependencies, and the time left today.",
+    eyebrow: "Focus stack",
+    title: "A shorter list you can actually start.",
+    copy: "Your strongest next tasks are ranked using urgency, impact, dependencies, and time left.",
+    className: "featureTall",
   },
   {
-    icon: TrendingUp,
-    title: "Progress intelligence",
-    description:
-      "See completion patterns, useful momentum, and where your time is actually going.",
+    icon: Sparkles,
+    eyebrow: "Smart Assist",
+    title: "Rough task in. Useful structure out.",
+    copy: "Get an editable first draft of the priority, timing, category, and why the task matters.",
+    className: "featureStandard",
   },
   {
     icon: Layers3,
-    title: "Tasks and backlog",
-    description:
-      "Keep current commitments visible while moving non-active work out of the way without losing it.",
+    eyebrow: "Tasks + backlog",
+    title: "Keep now separate from not now.",
+    copy: "Move non-active work out of sight without losing it or pretending it no longer matters.",
+    className: "featureStandard",
   },
   {
-    icon: ShieldCheck,
-    title: "You stay in control",
-    description:
-      "Every AI suggestion remains editable. Momentuhm prepares the draft; you make the decision.",
+    icon: TrendingUp,
+    eyebrow: "Progress intelligence",
+    title: "See momentum without gamifying your life.",
+    copy: "Understand what moved, what stalled, and how your attention is being used across the day.",
+    className: "featureWide",
   },
 ];
 
-type DemoControllerOptions = {
-  stepCount: number;
-  durations: number[];
-  initialStep?: number;
-  finalStep?: number;
+type AutoStepOptions = {
+  count: number;
+  interval?: number;
   threshold?: number;
 };
 
-function useDemoController({
-  stepCount,
-  durations,
-  initialStep = 0,
-  finalStep = stepCount - 1,
-  threshold = 0.3,
-}: DemoControllerOptions) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const inView = useInView(containerRef, {
-    amount: threshold,
-    margin: "-8% 0px -8% 0px",
-  });
-  const prefersReducedMotion = Boolean(useReducedMotion());
-  const [step, setStep] = useState(
-    prefersReducedMotion ? finalStep : initialStep
-  );
-  const wasVisibleRef = useRef(false);
+function useAutoStep({
+  count,
+  interval = 1700,
+  threshold = 0.25,
+}: AutoStepOptions) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const inView = useInView(ref, { amount: threshold });
+  const reducedMotion = Boolean(useReducedMotion());
+  const [step, setStep] = useState(reducedMotion ? count - 1 : 0);
 
   useEffect(() => {
-    if (prefersReducedMotion) {
-      setStep(finalStep);
+    if (reducedMotion) {
+      setStep(count - 1);
       return;
     }
 
-    if (inView && !wasVisibleRef.current) {
-      setStep(initialStep);
-    }
+    if (!inView) return;
 
-    wasVisibleRef.current = inView;
-  }, [finalStep, inView, initialStep, prefersReducedMotion]);
+    const timer = window.setInterval(() => {
+      setStep((current) => (current + 1) % count);
+    }, interval);
 
-  useEffect(() => {
-    if (prefersReducedMotion || !inView) {
-      return;
-    }
+    return () => window.clearInterval(timer);
+  }, [count, inView, interval, reducedMotion]);
 
-    const timeout = window.setTimeout(() => {
-      setStep((currentStep) => (currentStep + 1) % stepCount);
-    }, durations[step] ?? 1200);
-
-    return () => window.clearTimeout(timeout);
-  }, [durations, inView, prefersReducedMotion, step, stepCount]);
-
-  return {
-    containerRef,
-    step,
-    prefersReducedMotion,
-  };
-}
-
-function useTypewriter(
-  text: string,
-  active: boolean,
-  speed = 34
-) {
-  const [typedText, setTypedText] = useState(active ? "" : text);
-
-  useEffect(() => {
-    if (!active) {
-      setTypedText("");
-      return;
-    }
-
-    let index = 0;
-    setTypedText("");
-
-    const interval = window.setInterval(() => {
-      index += 1;
-      setTypedText(text.slice(0, index));
-
-      if (index >= text.length) {
-        window.clearInterval(interval);
-      }
-    }, speed);
-
-    return () => window.clearInterval(interval);
-  }, [active, speed, text]);
-
-  return typedText;
+  return { ref, step, reducedMotion };
 }
 
 function LogoMark() {
   return (
     <span className={styles.logoMark} aria-hidden="true">
-      <span className={styles.logoMarkInner}>
-        <Zap size={15} strokeWidth={2.2} />
+      <span className={styles.logoBolt}>
+        <Zap size={15} strokeWidth={2.4} />
       </span>
     </span>
   );
@@ -231,865 +191,27 @@ function Brand() {
   );
 }
 
-function DemoWindow({
-  children,
-  label = "Live product preview",
-  className = "",
-}: {
-  children: ReactNode;
-  label?: string;
-  className?: string;
-}) {
-  return (
-    <div className={`${styles.demoWindow} ${className}`}>
-      <div className={styles.demoWindowTopbar}>
-        <div className={styles.windowDots} aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
-        <div className={styles.windowLabel}>
-          <span className={styles.liveDot} />
-          {label}
-        </div>
-        <div className={styles.windowStatus}>Momentuhm</div>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function MiniPill({
-  children,
-  tone = "neutral",
-}: {
-  children: ReactNode;
-  tone?: "neutral" | "violet" | "red" | "orange" | "green" | "blue";
-}) {
-  return (
-    <span className={`${styles.miniPill} ${styles[`miniPill_${tone}`]}`}>
-      {children}
-    </span>
-  );
-}
-
-function HeroProductDemo() {
-  const durations = useMemo(
-    () => [650, 1850, 900, 850, 1200, 1850],
-    []
-  );
-  const { containerRef, step, prefersReducedMotion } = useDemoController({
-    stepCount: 6,
-    durations,
-    finalStep: 5,
-    threshold: 0.2,
-  });
-
-  const typingActive = step >= 1 || prefersReducedMotion;
-  const typedTask = useTypewriter(
-    HERO_TASK,
-    typingActive,
-    prefersReducedMotion ? 1 : 31
-  );
-
-  const showThinking = step === 2;
-  const showSuggestions = step >= 3 || prefersReducedMotion;
-  const showTask = step >= 4 || prefersReducedMotion;
-  const showFocus = step >= 5 || prefersReducedMotion;
-
-  return (
-    <div ref={containerRef} className={styles.heroDemoWrap}>
-      <div className={styles.heroDemoGlow} aria-hidden="true" />
-      <DemoWindow label="Demo" className={styles.heroWindow}>
-        <div className={styles.heroAppShell}>
-          <aside className={styles.heroSidebar}>
-            <div className={styles.sidebarBrandLine}>
-              <LogoMark />
-              <span>Momentuhm</span>
-            </div>
-
-            <div className={styles.sidebarNav}>
-              <div className={`${styles.sidebarItem} ${styles.sidebarItemActive}`}>
-                <ListChecks size={15} />
-                Today
-              </div>
-              <div className={styles.sidebarItem}>
-                <Target size={15} />
-                Focus
-              </div>
-              <div className={styles.sidebarItem}>
-                <CalendarDays size={15} />
-                Upcoming
-              </div>
-            </div>
-
-            <div className={styles.sidebarSpacer} />
-            <div className={styles.sidebarHint}>
-              <Sparkles size={14} />
-              AI suggestions are editable
-            </div>
-          </aside>
-
-          <div className={styles.heroWorkspace}>
-            <div className={styles.workspaceHeader}>
-              <div>
-                <p className={styles.workspaceEyebrow}>Friday, Jul 31</p>
-                <h3>Good evening.</h3>
-                <p>One clear step at a time.</p>
-              </div>
-
-              <div className={styles.heroMetrics}>
-                <div>
-                  <strong>5</strong>
-                  <span>Tasks</span>
-                </div>
-                <div>
-                  <strong>2</strong>
-                  <span>Done</span>
-                </div>
-                <div>
-                  <strong>40%</strong>
-                  <span>Progress</span>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.heroColumns}>
-              <section className={styles.planningColumn}>
-                <div className={styles.captureBox}>
-                  <button type="button" tabIndex={-1} aria-hidden="true">
-                    <Plus size={17} />
-                  </button>
-                  <div className={styles.captureText}>
-                    {typedTask || (
-                      <span className={styles.placeholderText}>
-                        Add a task. Momentuhm will organize it.
-                      </span>
-                    )}
-                    {typingActive && typedTask.length < HERO_TASK.length && (
-                      <span className={styles.typingCaret} />
-                    )}
-                  </div>
-                  <Sparkles size={16} className={styles.captureSparkle} />
-                </div>
-
-                <AnimatePresence mode="wait" initial={false}>
-                  {showThinking && (
-                    <motion.div
-                      key="thinking"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
-                      className={styles.thinkingRow}
-                    >
-                      <span className={styles.thinkingOrb}>
-                        <Sparkles size={13} />
-                      </span>
-                      <span>Momentuhm is organizing this task...</span>
-                      <span className={styles.thinkingDots}>
-                        <i />
-                        <i />
-                        <i />
-                      </span>
-                    </motion.div>
-                  )}
-
-                  {showSuggestions && !showTask && (
-                    <motion.div
-                      key="suggestions"
-                      initial={{ opacity: 0, y: 10, scale: 0.985 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -6 }}
-                      className={styles.suggestionPanel}
-                    >
-                      <div className={styles.suggestionHeader}>
-                        <span>
-                          <Sparkles size={13} />
-                          Suggested structure
-                        </span>
-                        <MiniPill tone="violet">AI draft</MiniPill>
-                      </div>
-
-                      <div className={styles.suggestionGrid}>
-                        <div>
-                          <span>Priority</span>
-                          <strong>High</strong>
-                        </div>
-                        <div>
-                          <span>Due</span>
-                          <strong>Tomorrow</strong>
-                        </div>
-                        <div>
-                          <span>Category</span>
-                          <strong>Project Delivery</strong>
-                        </div>
-                      </div>
-
-                      <p>
-                        Completing this early keeps the client decision from
-                        being blocked.
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className={styles.taskPanel}>
-                  <div className={styles.taskPanelHeader}>
-                    <div>
-                      <strong>Tasks</strong>
-                      <span>4 active</span>
-                    </div>
-                    <MiniPill>Sorted by date</MiniPill>
-                  </div>
-
-                  <AnimatePresence initial={false}>
-                    {showTask && (
-                      <motion.div
-                        key="hero-new-task"
-                        initial={{ opacity: 0, y: -10, backgroundColor: "#f3edff" }}
-                        animate={{ opacity: 1, y: 0, backgroundColor: "#ffffff" }}
-                        transition={{ duration: 0.55 }}
-                        className={styles.taskRow}
-                      >
-                        <span className={styles.taskCheckbox} />
-                        <div className={styles.taskContent}>
-                          <strong>{HERO_TASK}</strong>
-                          <span>Product / Project Delivery</span>
-                        </div>
-                        <MiniPill tone="red">High</MiniPill>
-                        <span className={styles.taskDue}>Tomorrow</span>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <div className={`${styles.taskRow} ${styles.taskRowMuted}`}>
-                    <span className={styles.taskCheckbox} />
-                    <div className={styles.taskContent}>
-                      <strong>Review launch risks</strong>
-                      <span>Planning & Prioritization</span>
-                    </div>
-                    <MiniPill tone="orange">Medium</MiniPill>
-                    <span className={styles.taskDue}>Today</span>
-                  </div>
-
-                  <div className={`${styles.taskRow} ${styles.taskRowMuted}`}>
-                    <span className={styles.taskCheckbox} />
-                    <div className={styles.taskContent}>
-                      <strong>Send revised client budget</strong>
-                      <span>Communication & Follow-ups</span>
-                    </div>
-                    <MiniPill tone="red">High</MiniPill>
-                    <span className={styles.taskDue}>Today</span>
-                  </div>
-                </div>
-              </section>
-
-              <aside className={styles.focusColumn}>
-                <div className={styles.focusHeader}>
-                  <span className={styles.focusIcon}>
-                    <Target size={16} />
-                  </span>
-                  <div>
-                    <p>AI Focus</p>
-                    <h4>Your strongest next moves</h4>
-                  </div>
-                </div>
-
-                <div className={styles.focusStack}>
-                  <AnimatePresence initial={false}>
-                    {showFocus && (
-                      <motion.div
-                        key="focus-added"
-                        initial={{ opacity: 0, x: 18, scale: 0.98 }}
-                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                        className={`${styles.focusTask} ${styles.focusTaskActive}`}
-                      >
-                        <span className={styles.focusNumber}>1</span>
-                        <div>
-                          <strong>{HERO_TASK}</strong>
-                          <span>Client decision dependency</span>
-                        </div>
-                        <ChevronRight size={15} />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <div className={styles.focusTask}>
-                    <span className={styles.focusNumber}>{showFocus ? 2 : 1}</span>
-                    <div>
-                      <strong>Send revised client budget</strong>
-                      <span>Deadline and external dependency</span>
-                    </div>
-                    <ChevronRight size={15} />
-                  </div>
-
-                  <div className={styles.focusTask}>
-                    <span className={styles.focusNumber}>{showFocus ? 3 : 2}</span>
-                    <div>
-                      <strong>Review launch risks</strong>
-                      <span>Could block the release</span>
-                    </div>
-                    <ChevronRight size={15} />
-                  </div>
-                </div>
-
-                <div className={styles.dayCard}>
-                  <div>
-                    <Clock3 size={15} />
-                    <span>Time left today</span>
-                  </div>
-                  <strong>1h 45m</strong>
-                  <div className={styles.dayProgress}>
-                    <span />
-                  </div>
-                  <p>Keep the stack intentionally small.</p>
-                </div>
-              </aside>
-            </div>
-          </div>
-        </div>
-        </DemoWindow>
-
-        <div className={styles.demoFlow} aria-label="Momentuhm planning flow">
-  <div className={styles.demoFlowItem}>
-    <span className={styles.demoFlowIcon}>
-      <Sparkles size={15} />
-    </span>
-
-    <div>
-      <strong>Structure</strong>
-      <small>Priority, date and context</small>
-    </div>
-  </div>
-
-  <span className={styles.demoFlowArrow} aria-hidden="true">
-    →
-  </span>
-
-  <div className={styles.demoFlowItem}>
-    <span className={styles.demoFlowIcon}>
-      <Target size={15} />
-    </span>
-
-    <div>
-      <strong>Focus</strong>
-      <small>The strongest next moves</small>
-    </div>
-  </div>
-
-  <span className={styles.demoFlowArrow} aria-hidden="true">
-    →
-  </span>
-
-  <div className={styles.demoFlowItem}>
-    <span className={styles.demoFlowIcon}>
-      <TrendingUp size={15} />
-    </span>
-
-    <div>
-      <strong>Progress</strong>
-      <small>Updates as work is completed</small>
-    </div>
-  </div>
-</div>
-
-<div className={styles.demoCaption}>
-  <span className={styles.liveDot} />
-  Live interface demonstration
-</div>
-    </div>
-  );
-}
-
-function SmartAssistDemo() {
-  const durations = useMemo(() => [700, 1750, 850, 1700], []);
-  const { containerRef, step, prefersReducedMotion } = useDemoController({
-    stepCount: 4,
-    durations,
-    finalStep: 3,
-  });
-  const typing = step >= 1 || prefersReducedMotion;
-  const typedTask = useTypewriter(
-    HERO_TASK,
-    typing,
-    prefersReducedMotion ? 1 : 30
-  );
-  const showAnalysis = step === 2;
-  const showResult = step >= 3 || prefersReducedMotion;
-
-  return (
-    <div ref={containerRef} className={styles.featureDemo}>
-      <div className={styles.miniCapture}>
-        <span className={styles.capturePlus}>
-          <Plus size={16} />
-        </span>
-        <span className={styles.miniCaptureText}>
-          {typedTask || "Add a task..."}
-          {typing && typedTask.length < HERO_TASK.length && (
-            <span className={styles.typingCaret} />
-          )}
-        </span>
-        <Sparkles size={15} />
-      </div>
-
-      <div className={styles.miniDemoStage}>
-        <AnimatePresence mode="wait" initial={false}>
-          {showAnalysis && (
-            <motion.div
-              key="smart-thinking"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              className={styles.smartThinking}
-            >
-              <span className={styles.thinkingOrb}>
-                <Sparkles size={12} />
-              </span>
-              Momentuhm is finding useful structure...
-            </motion.div>
-          )}
-
-          {showResult && (
-            <motion.div
-              key="smart-result"
-              initial={{ opacity: 0, y: 10, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              className={styles.smartResult}
-            >
-              <div className={styles.smartResultHeader}>
-                <span>Suggested details</span>
-                <MiniPill tone="violet">Editable</MiniPill>
-              </div>
-              <div className={styles.smartResultRows}>
-                <div>
-                  <span>Priority</span>
-                  <MiniPill tone="red">High</MiniPill>
-                </div>
-                <div>
-                  <span>Due date</span>
-                  <strong>Tomorrow</strong>
-                </div>
-                <div>
-                  <span>Category</span>
-                  <strong>Project Delivery</strong>
-                </div>
-              </div>
-              <p>Completing this early keeps the client decision moving.</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-
-function ClipboardAssistDemo() {
-  const durations = useMemo(() => [850, 1100, 1300, 1650], []);
-  const { containerRef, step, prefersReducedMotion } = useDemoController({
-    stepCount: 4,
-    durations,
-    finalStep: 3,
-  });
-  const showSource = step >= 1 || prefersReducedMotion;
-  const showTasks = step >= 2 || prefersReducedMotion;
-  const showGrouped = step >= 3 || prefersReducedMotion;
-
-  return (
-    <div ref={containerRef} className={styles.featureDemo}>
-      <div className={styles.clipboardHeader}>
-        <span className={styles.featureDemoIcon}>
-          <ClipboardCheck size={16} />
-        </span>
-        <div>
-          <strong>Clipboard Assist</strong>
-          <span>{showTasks ? "3 possible tasks found" : "Watching for useful copied text"}</span>
-        </div>
-        <MiniPill tone="violet">Preview</MiniPill>
-      </div>
-
-      <AnimatePresence initial={false}>
-        {showSource && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className={styles.clipboardSource}
-          >
-            <span>Copied text</span>
-            <p>{CLIPBOARD_SOURCE}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className={styles.clipboardTasks}>
-        <AnimatePresence initial={false}>
-          {showTasks &&
-            CLIPBOARD_TASKS.map((task, index) => (
-              <motion.div
-                key={task.title}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.09 }}
-                className={styles.clipboardTask}
-              >
-                <span className={styles.selectedCheckbox}>
-                  <Check size={11} />
-                </span>
-                <div>
-                  <strong>{task.title}</strong>
-                  <span>{task.meta}</span>
-                </div>
-              </motion.div>
-            ))}
-        </AnimatePresence>
-      </div>
-
-      <AnimatePresence initial={false}>
-        {showGrouped && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={styles.groupResult}
-          >
-            <div>
-              <Layers3 size={15} />
-              <span>
-                <strong>Client follow-up bundle</strong>
-                <small>Created with 3 subtasks</small>
-              </span>
-            </div>
-            <CheckCircle2 size={18} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function FocusStackDemo() {
-  const durations = useMemo(() => [900, 900, 900, 1500], []);
-  const { containerRef, step, prefersReducedMotion } = useDemoController({
-    stepCount: 4,
-    durations,
-    finalStep: 3,
-  });
-  const visibleCount = prefersReducedMotion ? 3 : Math.min(step, 3);
-
-  return (
-    <div ref={containerRef} className={styles.featureDemo}>
-      <div className={styles.focusDemoTop}>
-        <div>
-          <span className={styles.featureDemoIcon}>
-            <Target size={16} />
-          </span>
-          <div>
-            <strong>Focus stack</strong>
-            <span>Keep the day intentionally small</span>
-          </div>
-        </div>
-        <MiniPill>{visibleCount}/3</MiniPill>
-      </div>
-
-      <div className={styles.focusDemoList}>
-        <AnimatePresence initial={false}>
-          {FOCUS_TASKS.slice(0, visibleCount).map((task, index) => (
-            <motion.div
-              layout
-              key={task.title}
-              initial={{ opacity: 0, y: 12, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ type: "spring", stiffness: 320, damping: 28 }}
-              className={styles.focusDemoTask}
-            >
-              <GripVertical size={14} className={styles.grip} />
-              <span className={styles.focusRank}>{index + 1}</span>
-              <div>
-                <strong>{task.title}</strong>
-                <span>{task.reason}</span>
-              </div>
-              <MiniPill tone={task.priority === "High" ? "red" : "orange"}>
-                {task.priority}
-              </MiniPill>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
-      <div className={styles.focusDemoFooter}>
-        <BrainCircuit size={15} />
-        <p>
-          Ranked using impact, urgency, dependencies, and remaining time.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function ProgressDemo() {
-  const durations = useMemo(() => [900, 900, 900, 1700], []);
-  const { containerRef, step, prefersReducedMotion } = useDemoController({
-    stepCount: 4,
-    durations,
-    finalStep: 3,
-  });
-  const completed = prefersReducedMotion ? 4 : Math.min(step + 1, 4);
-  const total = 5;
-  const percentage = Math.round((completed / total) * 100);
-
-  return (
-    <div ref={containerRef} className={styles.featureDemo}>
-      <div className={styles.progressMetrics}>
-        <div>
-          <span>Tasks</span>
-          <strong>5</strong>
-        </div>
-        <div>
-          <span>Completed</span>
-          <motion.strong key={completed} initial={{ y: 6 }} animate={{ y: 0 }}>
-            {completed}
-          </motion.strong>
-        </div>
-        <div>
-          <span>Progress</span>
-          <motion.strong key={percentage} initial={{ y: 6 }} animate={{ y: 0 }}>
-            {percentage}%
-          </motion.strong>
-        </div>
-      </div>
-
-      <div className={styles.progressBarLarge}>
-        <motion.span
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-        />
-      </div>
-
-      <div className={styles.completionList}>
-        {["Send revised budget", "Review launch risks", "Confirm launch owner", "Book vendor review"].map(
-          (task, index) => {
-            const isDone = index < completed;
-
-            return (
-              <motion.div
-                key={task}
-                animate={{ opacity: isDone ? 1 : 0.46 }}
-                className={styles.completionRow}
-              >
-                <span className={isDone ? styles.doneCheckbox : styles.emptyCheckbox}>
-                  {isDone && <Check size={11} />}
-                </span>
-                <span className={isDone ? styles.completedText : ""}>{task}</span>
-                {isDone && <small>Done</small>}
-              </motion.div>
-            );
-          }
-        )}
-      </div>
-
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={completed}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={styles.momentumMessage}
-        >
-          <TrendingUp size={15} />
-          <span>
-            {percentage >= 80
-              ? "Excellent momentum. Finish strong."
-              : percentage >= 60
-              ? "Great progress. Keep moving."
-              : "A clear start is already progress."}
-          </span>
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function FeatureCard({
-  number,
-  eyebrow,
-  title,
-  description,
-  children,
-}: {
-  number: string;
-  eyebrow: string;
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
-  return (
-    <article className={styles.featureCard}>
-      <div className={styles.featureCardCopy}>
-        <div className={styles.featureCardMeta}>
-          <span>{number}</span>
-          <p>{eyebrow}</p>
-        </div>
-        <h3>{title}</h3>
-        <p>{description}</p>
-      </div>
-      <div className={styles.featureCardDemo}>{children}</div>
-    </article>
-  );
-}
-
-function PlanningEngineSection() {
-  const [activeSignal, setActiveSignal] = useState(0);
-  const sectionRef = useRef<HTMLDivElement | null>(null);
-  const inView = useInView(sectionRef, { amount: 0.35 });
-  const reduceMotion = Boolean(useReducedMotion());
-
-  const signals = useMemo(
-    () => [
-      {
-        icon: CalendarDays,
-        label: "Timing",
-        detail: "Tomorrow",
-      },
-      {
-        icon: Zap,
-        label: "Urgency",
-        detail: "High",
-      },
-      {
-        icon: Layers3,
-        label: "Dependency",
-        detail: "Client decision",
-      },
-      {
-        icon: Clock3,
-        label: "Capacity",
-        detail: "1h 45m left",
-      },
-    ],
-    []
-  );
-
-  useEffect(() => {
-    if (!inView || reduceMotion) {
-      if (reduceMotion) setActiveSignal(signals.length - 1);
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      setActiveSignal((current) => (current + 1) % signals.length);
-    }, 1100);
-
-    return () => window.clearInterval(interval);
-  }, [inView, reduceMotion, signals.length]);
-
-  return (
-    <section id="why" className={styles.engineSection}>
-      <div className={styles.sectionShell}>
-        <div className={styles.engineGrid}>
-          <div className={styles.engineCopy}>
-            <span className={styles.sectionEyebrow}>A planning layer, not another list</span>
-            <h2>Momentuhm helps decide what deserves attention now.</h2>
-            <p>
-              Traditional task managers store work. Momentuhm adds a practical
-              reasoning layer: it reads timing, urgency, dependencies, impact,
-              and the capacity left in your day.
-            </p>
-
-            <div className={styles.enginePoints}>
-              <div>
-                <CheckCircle2 size={17} />
-                <span>Suggestions are transparent and editable.</span>
-              </div>
-              <div>
-                <CheckCircle2 size={17} />
-                <span>No task is moved or completed without your action.</span>
-              </div>
-              <div>
-                <CheckCircle2 size={17} />
-                <span>The system learns from your planning decisions over time.</span>
-              </div>
-            </div>
-          </div>
-
-          <div ref={sectionRef} className={styles.engineConsole}>
-            <div className={styles.engineConsoleTop}>
-              <span>
-                <BrainCircuit size={16} />
-                Planning engine
-              </span>
-              <MiniPill tone="green">Active</MiniPill>
-            </div>
-
-            <div className={styles.engineTask}>
-              <span className={styles.engineTaskIcon}>
-                <ListChecks size={16} />
-              </span>
-              <div>
-                <span>Task under review</span>
-                <strong>{HERO_TASK}</strong>
-              </div>
-            </div>
-
-            <div className={styles.signalGrid}>
-              {signals.map((signal, index) => {
-                const Icon = signal.icon;
-                const active = reduceMotion || index <= activeSignal;
-
-                return (
-                  <motion.div
-                    key={signal.label}
-                    animate={{
-                      opacity: active ? 1 : 0.35,
-                      borderColor: active ? "rgba(174, 130, 255, 0.42)" : "rgba(255, 255, 255, 0.08)",
-                    }}
-                    className={styles.signalCard}
-                  >
-                    <Icon size={15} />
-                    <span>{signal.label}</span>
-                    <strong>{active ? signal.detail : "Reading..."}</strong>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            <motion.div
-              animate={{ opacity: activeSignal >= signals.length - 1 || reduceMotion ? 1 : 0.35 }}
-              className={styles.engineDecision}
-            >
-              <div>
-                <Sparkles size={16} />
-                <span>Suggested action</span>
-              </div>
-              <strong>Add to Focus and schedule for tomorrow</strong>
-              <p>
-                This task has a near-term dependency and can unblock a client decision.
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function Header() {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!mobileOpen) return;
+    if (!menuOpen) return;
 
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMobileOpen(false);
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
     };
 
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [mobileOpen]);
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [menuOpen]);
 
   return (
-    <header className={styles.siteHeader}>
+    <header className={styles.header}>
       <div className={styles.headerInner}>
         <Brand />
 
         <nav className={styles.desktopNav} aria-label="Primary navigation">
-          <a href="#how-it-works">How it works</a>
+          <a href="#how">How it works</a>
           <a href="#features">Features</a>
           <a href="#why">Why Momentuhm</a>
         </nav>
@@ -1106,17 +228,17 @@ function Header() {
 
         <button
           type="button"
-          className={styles.mobileMenuButton}
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen((current) => !current)}
+          className={styles.menuButton}
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((current) => !current)}
         >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
       <AnimatePresence initial={false}>
-        {mobileOpen && (
+        {menuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -1124,16 +246,16 @@ function Header() {
             className={styles.mobileMenu}
           >
             <nav aria-label="Mobile navigation">
-              <a href="#how-it-works" onClick={() => setMobileOpen(false)}>
+              <a href="#how" onClick={() => setMenuOpen(false)}>
                 How it works
               </a>
-              <a href="#features" onClick={() => setMobileOpen(false)}>
+              <a href="#features" onClick={() => setMenuOpen(false)}>
                 Features
               </a>
-              <a href="#why" onClick={() => setMobileOpen(false)}>
+              <a href="#why" onClick={() => setMenuOpen(false)}>
                 Why Momentuhm
               </a>
-              <Link href="/sign-in" onClick={() => setMobileOpen(false)}>
+              <Link href="/sign-in" onClick={() => setMenuOpen(false)}>
                 Sign in
               </Link>
               <Link href="/sign-up" className={styles.mobileCta}>
@@ -1147,320 +269,942 @@ function Header() {
   );
 }
 
+function BrowserFrame({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.browserFrame}>
+      <div className={styles.browserBar}>
+        <div className={styles.browserDots} aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className={styles.browserStatus}>
+          <span className={styles.liveDot} />
+          Live product flow
+        </div>
+        <span className={styles.browserBrand}>Momentuhm</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function HeroDemo() {
+  const { ref, step, reducedMotion } = useAutoStep({
+    count: 4,
+    interval: 1850,
+    threshold: 0.18,
+  });
+
+  const activeStep = reducedMotion ? 3 : step;
+
+  return (
+    <div ref={ref} className={styles.heroVisualWrap}>
+      <span className={styles.heroSticker}>18 tabs open</span>
+      <span className={styles.heroDoodle} aria-hidden="true">
+        ↓
+      </span>
+
+      <BrowserFrame>
+        <div className={styles.heroDemo}>
+          <div className={styles.demoSidebar}>
+            <div className={styles.demoBrandLine}>
+              <LogoMark />
+              <strong>Momentuhm</strong>
+            </div>
+            <div className={styles.demoNavItemActive}>
+              <ListChecks size={15} /> Today
+            </div>
+            <div className={styles.demoNavItem}>
+              <Target size={15} /> Focus
+            </div>
+            <div className={styles.demoNavItem}>
+              <CalendarDays size={15} /> Upcoming
+            </div>
+            <div className={styles.demoSidebarNote}>
+              <Sparkles size={14} />
+              <span>Suggestions stay editable.</span>
+            </div>
+          </div>
+
+          <div className={styles.demoCanvas}>
+            <div className={styles.demoCanvasTop}>
+              <div>
+                <span>Tuesday, 6:42 PM</span>
+                <h3>Let&apos;s clear the fog.</h3>
+              </div>
+              <div className={styles.demoProgressPill}>
+                <TrendingUp size={14} />
+                <span>3 useful moves</span>
+              </div>
+            </div>
+
+            <div className={styles.demoColumns}>
+              <section className={styles.chaosPanel}>
+                <div className={styles.panelLabel}>
+                  <span>01</span>
+                  Drop in the mess
+                </div>
+
+                <motion.div
+                  animate={{
+                    borderColor:
+                      activeStep === 0 ? "#17171a" : "rgba(23, 23, 26, 0.15)",
+                    boxShadow:
+                      activeStep === 0
+                        ? "5px 5px 0 rgba(23, 23, 26, 1)"
+                        : "0 0 0 rgba(23, 23, 26, 0)",
+                  }}
+                  className={styles.messageCard}
+                >
+                  <div className={styles.messageMeta}>
+                    <span>Copied message</span>
+                    <ClipboardCheck size={15} />
+                  </div>
+                  <p>{RAW_MESSAGE}</p>
+                </motion.div>
+
+                <div className={styles.looseNotes} aria-hidden="true">
+                  <span className={styles.looseNoteOne}>Dentist!</span>
+                  <span className={styles.looseNoteTwo}>Deck due?</span>
+                  <span className={styles.looseNoteThree}>Reply today</span>
+                </div>
+
+                <AnimatePresence mode="wait" initial={false}>
+                  {activeStep === 1 && (
+                    <motion.div
+                      key="reading"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className={styles.aiReading}
+                    >
+                      <span className={styles.aiOrb}>
+                        <Sparkles size={14} />
+                      </span>
+                      <div>
+                        <strong>Finding the actual work…</strong>
+                        <span>Dates, dependencies, quick wins</span>
+                      </div>
+                      <span className={styles.loadingDots}>
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </section>
+
+              <section className={styles.planPanel}>
+                <div className={styles.panelLabel}>
+                  <span>02</span>
+                  Get a plan you can start
+                </div>
+
+                <div className={styles.extractedList}>
+                  {EXTRACTED_TASKS.map((task, index) => {
+                    const visible = activeStep >= 2 || reducedMotion;
+
+                    return (
+                      <motion.div
+                        key={task.title}
+                        initial={false}
+                        animate={{
+                          opacity: visible ? 1 : 0.23,
+                          y: visible ? 0 : 8,
+                        }}
+                        transition={{ delay: visible ? index * 0.07 : 0 }}
+                        className={styles.extractedTask}
+                      >
+                        <span className={styles.taskCheckbox} />
+                        <div>
+                          <strong>{task.title}</strong>
+                          <span>{task.meta}</span>
+                        </div>
+                        <span
+                          className={`${styles.taskTone} ${styles[`taskTone_${task.tone}`]}`}
+                        />
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                <motion.div
+                  initial={false}
+                  animate={{
+                    opacity: activeStep >= 3 ? 1 : 0.24,
+                    scale: activeStep >= 3 ? 1 : 0.98,
+                  }}
+                  className={styles.startHereCard}
+                >
+                  <div className={styles.startHereHeader}>
+                    <span>
+                      <Target size={15} /> Start here
+                    </span>
+                    <small>25 min</small>
+                  </div>
+                  <strong>Send the revised budget</strong>
+                  <p>It is due first and blocks someone else&apos;s work.</p>
+                  <div className={styles.startAction}>
+                    Begin task
+                    <ArrowRight size={14} />
+                  </div>
+                </motion.div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </BrowserFrame>
+
+      <div className={styles.demoStepRail} aria-label="Demo progress">
+        {["Paste", "Understand", "Organize", "Start"].map((label, index) => (
+          <div
+            key={label}
+            className={index === activeStep ? styles.demoStepActive : styles.demoStep}
+          >
+            <span>{index + 1}</span>
+            <strong>{label}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ScenarioCard({
+  tag,
+  title,
+  copy,
+  accent,
+  index,
+}: {
+  tag: string;
+  title: string;
+  copy: string;
+  accent: string;
+  index: number;
+}) {
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ delay: index * 0.06, duration: 0.45 }}
+      className={`${styles.scenarioCard} ${styles[`scenario_${accent}`]}`}
+    >
+      <span className={styles.scenarioNumber}>0{index + 1}</span>
+      <div>
+        <span className={styles.scenarioTag}>{tag}</span>
+        <h3>{title}</h3>
+        <p>{copy}</p>
+      </div>
+    </motion.article>
+  );
+}
+
+function ProblemSection() {
+  return (
+    <section id="why" className={styles.problemSection}>
+      <div className={styles.shell}>
+        <div className={styles.problemHeading}>
+          <div>
+            <span className={styles.sectionKicker}>THE REAL BLOCKER</span>
+            <h2>
+              Procrastination often starts <em>before</em> the work does.
+            </h2>
+          </div>
+          <p>
+            When ten things feel urgent, your brain keeps negotiating instead of
+            beginning. Momentuhm narrows the field until one useful action is
+            obvious.
+          </p>
+        </div>
+
+        <div className={styles.scenarioGrid}>
+          {SCENARIOS.map((scenario, index) => (
+            <ScenarioCard key={scenario.title} {...scenario} index={index} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ClipboardFlow() {
+  const { ref, step, reducedMotion } = useAutoStep({ count: 3, interval: 1800 });
+  const activeStep = reducedMotion ? 2 : step;
+
+  return (
+    <div ref={ref} className={styles.clipboardFlow}>
+      <div className={styles.clipboardSourceCard}>
+        <div className={styles.clipboardCardTop}>
+          <span>Copied from a message</span>
+          <ClipboardCheck size={16} />
+        </div>
+        <p>
+          “Can you update the numbers before Thursday, ask Dev about the missing
+          file, and schedule the review for next week?”
+        </p>
+        <motion.span
+          animate={{ width: activeStep >= 1 ? "100%" : "18%" }}
+          className={styles.scanLine}
+        />
+      </div>
+
+      <div className={styles.flowArrow} aria-hidden="true">
+        <ArrowRight size={23} />
+      </div>
+
+      <div className={styles.clipboardResultCard}>
+        <div className={styles.clipboardResultTop}>
+          <div>
+            <span className={styles.aiOrbSmall}>
+              <Sparkles size={13} />
+            </span>
+            <div>
+              <strong>3 tasks found</strong>
+              <span>Review before adding</span>
+            </div>
+          </div>
+          <span className={styles.editableBadge}>Editable</span>
+        </div>
+
+        {[
+          ["Update the numbers", "Thursday"],
+          ["Ask Dev for the missing file", "Dependency"],
+          ["Schedule the review", "Next week"],
+        ].map(([title, meta], index) => (
+          <motion.div
+            key={title}
+            initial={false}
+            animate={{
+              opacity: activeStep >= 1 ? 1 : 0.22,
+              x: activeStep >= 1 ? 0 : 12,
+            }}
+            transition={{ delay: index * 0.08 }}
+            className={styles.clipboardResultRow}
+          >
+            <span className={styles.checkedBox}>
+              <Check size={11} />
+            </span>
+            <div>
+              <strong>{title}</strong>
+              <span>{meta}</span>
+            </div>
+          </motion.div>
+        ))}
+
+        <motion.div
+          initial={false}
+          animate={{ opacity: activeStep >= 2 ? 1 : 0.2 }}
+          className={styles.clipboardActions}
+        >
+          <button type="button" tabIndex={-1}>
+            Group as subtasks
+          </button>
+          <button type="button" tabIndex={-1}>
+            Add selected
+          </button>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+function HowSection() {
+  return (
+    <section id="how" className={styles.howSection}>
+      <div className={styles.shell}>
+        <div className={styles.howTop}>
+          <div>
+            <span className={styles.sectionKicker}>FROM MESS TO MOTION</span>
+            <h2>Paste it. Shape it. Start it.</h2>
+          </div>
+          <p>
+            Momentuhm does not ask you to build a perfect productivity system.
+            Give it what you already have, then make the final call.
+          </p>
+        </div>
+
+        <div className={styles.howGrid}>
+          <div className={styles.howSteps}>
+            {[
+              {
+                number: "01",
+                icon: ClipboardCheck,
+                title: "Capture the messy version",
+                copy: "Paste a message, add a rough task, or dump the whole list exactly as it exists in your head.",
+              },
+              {
+                number: "02",
+                icon: BrainCircuit,
+                title: "Let Momentuhm find the shape",
+                copy: "AI extracts actions, suggests useful details, and spots deadlines or dependencies you might miss.",
+              },
+              {
+                number: "03",
+                icon: Target,
+                title: "Choose one useful place to begin",
+                copy: "Review the focus stack, edit anything you disagree with, and start without another planning session.",
+              },
+            ].map((item, index) => {
+              const Icon = item.icon;
+
+              return (
+                <motion.article
+                  key={item.title}
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, amount: 0.35 }}
+                  transition={{ delay: index * 0.08 }}
+                  className={styles.howStep}
+                >
+                  <span className={styles.howStepNumber}>{item.number}</span>
+                  <span className={styles.howStepIcon}>
+                    <Icon size={19} />
+                  </span>
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.copy}</p>
+                  </div>
+                </motion.article>
+              );
+            })}
+          </div>
+
+          <ClipboardFlow />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FocusSection() {
+  const { ref, step, reducedMotion } = useAutoStep({ count: 4, interval: 1450 });
+  const visibleCount = reducedMotion ? 3 : Math.min(step, 3);
+
+  return (
+    <section className={styles.focusSection}>
+      <div className={styles.focusNoise} aria-hidden="true" />
+      <div className={styles.shell}>
+        <div className={styles.focusGrid}>
+          <div className={styles.focusCopy}>
+            <span className={styles.darkKicker}>SMALL ON PURPOSE</span>
+            <h2>Your focus list should not look like your entire life.</h2>
+            <p>
+              A long list creates guilt. A short, reasoned stack creates motion.
+              Momentuhm shows the few tasks that deserve attention now—and why.
+            </p>
+
+            <div className={styles.focusChecks}>
+              <div>
+                <CheckCircle2 size={18} />
+                Ranked using urgency, impact, dependencies, and capacity
+              </div>
+              <div>
+                <CheckCircle2 size={18} />
+                Reorder, remove, or replace any suggestion
+              </div>
+              <div>
+                <CheckCircle2 size={18} />
+                Nothing is completed or moved without you
+              </div>
+            </div>
+          </div>
+
+          <div ref={ref} className={styles.focusConsole}>
+            <div className={styles.focusConsoleTop}>
+              <div>
+                <span className={styles.focusConsoleIcon}>
+                  <Focus size={17} />
+                </span>
+                <div>
+                  <span>Today&apos;s focus</span>
+                  <strong>Do less. Move more.</strong>
+                </div>
+              </div>
+              <span className={styles.capacityPill}>
+                <Clock3 size={13} /> 1h 20m
+              </span>
+            </div>
+
+            <div className={styles.focusList}>
+              <AnimatePresence initial={false}>
+                {FOCUS_TASKS.slice(0, visibleCount).map((task, index) => (
+                  <motion.div
+                    layout
+                    key={task.title}
+                    initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    className={`${styles.focusTask} ${
+                      index === 0 ? styles.focusTaskFirst : ""
+                    }`}
+                  >
+                    <GripVertical size={15} className={styles.gripIcon} />
+                    <span className={styles.focusRank}>{index + 1}</span>
+                    <div>
+                      <strong>{task.title}</strong>
+                      <span>{task.reason}</span>
+                    </div>
+                    <small>{task.time}</small>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            <div className={styles.focusConsoleFooter}>
+              <div>
+                <span>Capacity used</span>
+                <strong>{visibleCount === 0 ? 0 : visibleCount === 1 ? 31 : visibleCount === 2 ? 87 : 100}%</strong>
+              </div>
+              <div className={styles.capacityBar}>
+                <motion.span
+                  animate={{
+                    width:
+                      visibleCount === 0
+                        ? "0%"
+                        : visibleCount === 1
+                        ? "31%"
+                        : visibleCount === 2
+                        ? "87%"
+                        : "100%",
+                  }}
+                />
+              </div>
+              <p>Enough to make progress. Small enough to begin.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FeatureVisual({ title }: { title: string }) {
+  if (title === "Copy chaos. Paste actions.") {
+    return (
+      <div className={styles.featureClipboardVisual}>
+        <div className={styles.featureMessageBubble}>
+          Can you update the deck, message Aisha, and book the room for Friday?
+        </div>
+        <div className={styles.featureExtractedMini}>
+          {["Update the deck", "Message Aisha", "Book the room"].map((task) => (
+            <div key={task}>
+              <span className={styles.checkedBox}>
+                <Check size={10} />
+              </span>
+              {task}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (title === "A shorter list you can actually start.") {
+    return (
+      <div className={styles.featureFocusVisual}>
+        {FOCUS_TASKS.map((task, index) => (
+          <div key={task.title}>
+            <span>{index + 1}</span>
+            <div>
+              <strong>{task.title}</strong>
+              <small>{task.time}</small>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (title === "Rough task in. Useful structure out.") {
+    return (
+      <div className={styles.featureAssistVisual}>
+        <div className={styles.roughTaskRow}>
+          <Plus size={15} />
+          <span>sort presentation thing</span>
+          <Sparkles size={15} />
+        </div>
+        <div className={styles.assistDetails}>
+          <div>
+            <span>Priority</span>
+            <strong>High</strong>
+          </div>
+          <div>
+            <span>Due</span>
+            <strong>Tomorrow</strong>
+          </div>
+          <p>Finish the presentation outline before tomorrow&apos;s team review.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (title === "Keep now separate from not now.") {
+    return (
+      <div className={styles.featureBacklogVisual}>
+        <div>
+          <span>NOW</span>
+          <strong>3 tasks</strong>
+        </div>
+        <ArrowRight size={18} />
+        <div>
+          <span>NOT NOW</span>
+          <strong>Backlog</strong>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.featureProgressVisual}>
+      <div className={styles.progressNumbers}>
+        <div>
+          <span>Finished</span>
+          <strong>6</strong>
+        </div>
+        <div>
+          <span>Meaningful</span>
+          <strong>4</strong>
+        </div>
+        <div>
+          <span>Momentum</span>
+          <strong>↑</strong>
+        </div>
+      </div>
+      <div className={styles.progressLine}>
+        <span />
+      </div>
+      <p>
+        You moved two high-impact tasks before spending time on low-value work.
+      </p>
+    </div>
+  );
+}
+
+function FeaturesSection() {
+  return (
+    <section id="features" className={styles.featuresSection}>
+      <div className={styles.shell}>
+        <div className={styles.featuresHeading}>
+          <div>
+            <span className={styles.sectionKicker}>BUILT FOR REAL-LIFE CHAOS</span>
+            <h2>Not another perfect system you have to maintain.</h2>
+          </div>
+          <p>
+            Momentuhm meets you where the work already is, then helps you turn it
+            into something clear, editable, and possible today.
+          </p>
+        </div>
+
+        <div className={styles.bentoGrid}>
+          {FEATURE_CARDS.map((feature, index) => {
+            const Icon = feature.icon;
+
+            return (
+              <motion.article
+                key={feature.title}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ delay: index * 0.05, duration: 0.45 }}
+                className={`${styles.featureCard} ${styles[feature.className]}`}
+              >
+                <div className={styles.featureCardCopy}>
+                  <span className={styles.featureIcon}>
+                    <Icon size={19} />
+                  </span>
+                  <span className={styles.featureEyebrow}>{feature.eyebrow}</span>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.copy}</p>
+                </div>
+                <FeatureVisual title={feature.title} />
+              </motion.article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ControlSection() {
+  const [activeChoice, setActiveChoice] = useState("High");
+
+  return (
+    <section className={styles.controlSection}>
+      <div className={styles.shell}>
+        <div className={styles.controlCard}>
+          <div className={styles.controlCopy}>
+            <span className={styles.sectionKicker}>HELPFUL AI. ZERO AUTOPILOT.</span>
+            <h2>Momentuhm prepares the draft. You keep the final say.</h2>
+            <p>
+              Change the priority, due date, category, explanation, or focus
+              placement. The AI should reduce planning friction—not quietly run
+              your day.
+            </p>
+
+            <div className={styles.controlPrinciples}>
+              <span>
+                <ShieldCheck size={16} /> Suggestions are visible
+              </span>
+              <span>
+                <CheckCircle2 size={16} /> Every detail stays editable
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.controlVisual}>
+            <span className={styles.controlSticker}>your call</span>
+            <div className={styles.editCard}>
+              <div className={styles.editCardTop}>
+                <div>
+                  <span>Edit task</span>
+                  <strong>Finish the project deck</strong>
+                </div>
+                <X size={16} />
+              </div>
+
+              <div className={styles.editSection}>
+                <span className={styles.editLabel}>PRIORITY</span>
+                <div className={styles.choiceRow}>
+                  {["Low", "Medium", "High"].map((choice) => (
+                    <button
+                      key={choice}
+                      type="button"
+                      className={
+                        activeChoice === choice ? styles.choiceActive : styles.choice
+                      }
+                      onClick={() => setActiveChoice(choice)}
+                    >
+                      {choice}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.editRows}>
+                {[
+                  ["Due date", "Tomorrow"],
+                  ["Category", "Project work"],
+                  ["Why it matters", "Team review is blocked"],
+                  ["Focus stack", "Included"],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <span>{label}</span>
+                    <strong>{value}</strong>
+                    <ChevronRight size={14} />
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.editFooter}>
+                <button type="button" tabIndex={-1}>
+                  Cancel
+                </button>
+                <button type="button" tabIndex={-1}>
+                  Save my changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalCta() {
+  return (
+    <section className={styles.finalSection}>
+      <div className={styles.shell}>
+        <div className={styles.finalCard}>
+          <div className={styles.finalBurst} aria-hidden="true" />
+          <span className={styles.finalSticker}>No perfect mood required</span>
+          <div className={styles.finalCopy}>
+            <span className={styles.finalIcon}>
+              <Zap size={21} />
+            </span>
+            <h2>Start before motivation shows up.</h2>
+            <p>
+              Give Momentuhm the messy list. Get back one clear place to begin.
+            </p>
+            <div className={styles.finalActions}>
+              <Link href="/sign-up" className={styles.finalPrimary}>
+                Build my plan
+                <ArrowRight size={17} />
+              </Link>
+              <Link href="/sign-in" className={styles.finalSecondary}>
+                Sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className={styles.footer}>
+      <div className={styles.shell}>
+        <div className={styles.footerTop}>
+          <div className={styles.footerBrand}>
+            <Brand />
+            <p>Less deciding. More starting. Better momentum.</p>
+          </div>
+
+          <div className={styles.footerLinks}>
+            <div>
+              <strong>Product</strong>
+              <a href="#how">How it works</a>
+              <a href="#features">Features</a>
+              <a href="#why">Why Momentuhm</a>
+            </div>
+            <div>
+              <strong>Account</strong>
+              <Link href="/sign-in">Sign in</Link>
+              <Link href="/sign-up">Create account</Link>
+            </div>
+            <div>
+              <strong>Legal</strong>
+              <Link href="/privacy">Privacy</Link>
+              <Link href="/terms">Terms</Link>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.footerBottom}>
+          <span>© 2026 Momentuhm. All rights reserved.</span>
+          <span>Built for the days your brain has too many tabs open.</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 export default function LandingPage() {
   return (
     <main className={`${inter.className} ${styles.page}`}>
       <Header />
 
       <section className={styles.heroSection}>
-        <div className={styles.heroBackdrop} aria-hidden="true">
+        <div className={styles.heroBackground} aria-hidden="true">
           <span className={styles.heroOrbOne} />
           <span className={styles.heroOrbTwo} />
           <span className={styles.heroGrid} />
         </div>
 
-        <div className={styles.sectionShell}>
-          <div className={styles.heroCopy}>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className={styles.heroEyebrow}
-            >
-              <span className={styles.eyebrowIcon}>
-                <Sparkles size={14} />
-              </span>
-              AI planning that keeps you in control
-            </motion.div>
+        <div className={styles.shell}>
+          <div className={styles.heroGridLayout}>
+            <div className={styles.heroCopy}>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45 }}
+                className={styles.heroEyebrow}
+              >
+                <span>
+                  <Sparkles size={14} />
+                </span>
+                For days when everything feels important
+              </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.05 }}
-            >
-              Turn scattered work into a clear next move.
-            </motion.h1>
+              <motion.h1
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.05 }}
+              >
+                Too much to do.
+                <br />
+                No clue where to <em>start?</em>
+              </motion.h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.11 }}
-              className={styles.heroLead}
-            >
-              Momentuhm organizes tasks, extracts actions from copied text,
-              builds a focused plan, and helps you understand your progress -
-              without taking control away from you.
-            </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.1 }}
+                className={styles.heroLead}
+              >
+                Drop in your tasks, messages, and messy notes. Momentuhm turns
+                the chaos into a focused plan and shows you what deserves your
+                attention first—without taking control away from you.
+              </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.17 }}
-              className={styles.heroActions}
-            >
-              <Link href="/sign-up" className={styles.primaryCta}>
-                Start planning free
-                <ArrowRight size={17} />
-              </Link>
-              <a href="#how-it-works" className={styles.secondaryCta}>
-  Watch live demos
-  <ChevronRight size={17} />
-</a>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.7, delay: 0.25 }}
-              className={styles.heroProof}
-            >
-              <span>
-                <Check size={14} /> No credit card
-              </span>
-              <span>
-                <Check size={14} /> Suggestions stay editable
-              </span>
-              <span>
-                <Check size={14} /> Works on desktop and mobile
-              </span>
-            </motion.div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <HeroProductDemo />
-          </motion.div>
-        </div>
-      </section>
-
-      <section className={styles.workflowStrip} aria-label="Momentuhm workflow">
-        <div className={styles.sectionShell}>
-          <p>From capture to completion</p>
-          <div className={styles.workflowSteps}>
-            {[
-              ["01", "Capture"],
-              ["02", "Organize"],
-              ["03", "Focus"],
-              ["04", "Complete"],
-              ["05", "Learn"],
-            ].map(([number, label], index) => (
-              <div key={label} className={styles.workflowStep}>
-                <span>{number}</span>
-                <strong>{label}</strong>
-                {index < 4 && <ChevronRight size={14} />}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="how-it-works" className={styles.featuresSection}>
-        <div className={styles.sectionShell}>
-          <div className={styles.sectionHeading}>
-            <span className={styles.sectionEyebrow}>See the product work</span>
-            <h2>Not screenshots. Not recorded videos. Live interface demos.</h2>
-            <p>
-              Each preview below is built from the same kind of React state,
-              timing, and interface patterns used inside Momentuhm.
-            </p>
-          </div>
-
-          <div className={styles.featureGrid}>
-            <FeatureCard
-              number="01"
-              eyebrow="Smart Assist"
-              title="Add a rough task. Get useful structure."
-              description="Momentuhm prepares a sensible first draft with priority, timing, category, and why the task matters."
-            >
-              <SmartAssistDemo />
-            </FeatureCard>
-
-            <FeatureCard
-              number="02"
-              eyebrow="Clipboard Assist"
-              title="Copied text becomes actionable work."
-              description="Separate tasks from an email or message, review them, or group the actions beneath one parent task."
-            >
-              <ClipboardAssistDemo />
-            </FeatureCard>
-
-            <FeatureCard
-              number="03"
-              eyebrow="AI Focus"
-              title="Find the strongest next moves."
-              description="Build a small execution stack using urgency, impact, dependencies, and the time remaining in your day."
-            >
-              <FocusStackDemo />
-            </FeatureCard>
-
-            <FeatureCard
-              number="04"
-              eyebrow="Daily intelligence"
-              title="See progress without turning work into noise."
-              description="Understand completion, momentum, and the shape of your day in a way that helps the next decision."
-            >
-              <ProgressDemo />
-            </FeatureCard>
-          </div>
-        </div>
-      </section>
-
-      <PlanningEngineSection />
-
-      <section id="features" className={styles.modulesSection}>
-        <div className={styles.sectionShell}>
-          <div className={styles.modulesHeading}>
-            <div>
-              <span className={styles.sectionEyebrow}>One connected workflow</span>
-              <h2>Everything needed to move from open loops to finished work.</h2>
-            </div>
-            <p>
-              Momentuhm is designed around a simple system: capture clearly,
-              choose deliberately, execute a small stack, and learn from what
-              actually gets completed.
-            </p>
-          </div>
-
-          <div className={styles.moduleGrid}>
-            {PRODUCT_MODULES.map((module, index) => {
-              const Icon = module.icon;
-
-              return (
-                <motion.article
-                  key={module.title}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ delay: index * 0.04, duration: 0.45 }}
-                  className={styles.moduleCard}
-                >
-                  <span className={styles.moduleIcon}>
-                    <Icon size={19} />
-                  </span>
-                  <h3>{module.title}</h3>
-                  <p>{module.description}</p>
-                </motion.article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.controlSection}>
-        <div className={styles.sectionShell}>
-          <div className={styles.controlCard}>
-            <div className={styles.controlCopy}>
-              <span className={styles.sectionEyebrow}>Human judgment stays central</span>
-              <h2>AI prepares. You decide.</h2>
-              <p>
-                Change the priority, date, category, reasoning, Focus placement,
-                or any other detail. Suggestions are there to reduce planning
-                effort, not to silently run your day.
-              </p>
-              <Link href="/sign-up" className={styles.textLink}>
-                Try the planning workflow
-                <ArrowRight size={16} />
-              </Link>
-            </div>
-
-            <div className={styles.controlVisual}>
-              <div className={styles.editPanel}>
-                <div className={styles.editPanelTop}>
-                  <span>Edit task</span>
-                  <X size={15} />
-                </div>
-                {[
-                  ["Priority", "High"],
-                  ["Due date", "Tomorrow"],
-                  ["Category", "Project Delivery"],
-                  ["Why it matters", "Client decision dependency"],
-                  ["Focus", "Included"],
-                ].map(([label, value], index) => (
-                  <motion.div
-                    key={label}
-                    initial={{ opacity: 0, x: 8 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.08 + index * 0.06 }}
-                    className={styles.editRow}
-                  >
-                    <span>{label}</span>
-                    <strong>{value}</strong>
-                    <ChevronRight size={14} />
-                  </motion.div>
-                ))}
-                <div className={styles.editActions}>
-                  <button type="button" tabIndex={-1}>Cancel</button>
-                  <button type="button" tabIndex={-1}>Save changes</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.finalCtaSection}>
-        <div className={styles.sectionShell}>
-          <div className={styles.finalCtaCard}>
-            <div className={styles.finalCtaGlow} aria-hidden="true" />
-            <div className={styles.finalCtaContent}>
-              <span className={styles.finalCtaIcon}>
-                <Sparkles size={20} />
-              </span>
-              <h2>Give the day a clearer shape.</h2>
-              <p>
-                Capture what is open, let Momentuhm prepare the structure, and
-                choose the next move with less planning friction.
-              </p>
-              <div className={styles.finalCtaActions}>
-                <Link href="/sign-up" className={styles.primaryCtaLight}>
-                  Start free
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.15 }}
+                className={styles.heroActions}
+              >
+                <Link href="/sign-up" className={styles.primaryCta}>
+                  Build my plan
                   <ArrowRight size={17} />
                 </Link>
-                <Link href="/sign-in" className={styles.secondaryCtaDark}>
-                  Sign in
-                </Link>
-              </div>
+                <a href="#how" className={styles.secondaryCta}>
+                  Watch the chaos clear
+                  <ChevronRight size={17} />
+                </a>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.22 }}
+                className={styles.heroProof}
+              >
+                <span>
+                  <Check size={14} /> Free to start
+                </span>
+                <span>
+                  <Check size={14} /> No credit card
+                </span>
+                <span>
+                  <Check size={14} /> Every suggestion editable
+                </span>
+              </motion.div>
             </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 22 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.14, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <HeroDemo />
+            </motion.div>
           </div>
         </div>
       </section>
 
-      <footer className={styles.footer}>
-        <div className={styles.sectionShell}>
-          <div className={styles.footerTop}>
-            <div>
-              <Brand />
-              <p>Clearer planning. Smaller focus. Better momentum.</p>
+      <section className={styles.marqueeSection} aria-label="Momentuhm inputs">
+        <div className={styles.marqueeTrack}>
+          {[0, 1].map((copy) => (
+            <div key={copy} aria-hidden={copy === 1}>
+              <span>MESSAGES</span>
+              <i>✦</i>
+              <span>EMAILS</span>
+              <i>✦</i>
+              <span>ROUGH TASKS</span>
+              <i>✦</i>
+              <span>BRAIN DUMPS</span>
+              <i>✦</i>
+              <span>ACTUAL NEXT STEPS</span>
+              <i>✦</i>
             </div>
-            <div className={styles.footerLinks}>
-              <div>
-                <strong>Product</strong>
-                <a href="#how-it-works">How it works</a>
-                <a href="#features">Features</a>
-                <a href="#why">Why Momentuhm</a>
-              </div>
-              <div>
-                <strong>Account</strong>
-                <Link href="/sign-in">Sign in</Link>
-                <Link href="/sign-up">Create account</Link>
-              </div>
-              <div>
-                <strong>Legal</strong>
-                <Link href="/privacy">Privacy</Link>
-                <Link href="/terms">Terms</Link>
-              </div>
-            </div>
-          </div>
-          <div className={styles.footerBottom}>
-            <span>© 2026 Momentuhm. All rights reserved.</span>
-            <span>Built for deliberate work.</span>
-          </div>
+          ))}
         </div>
-      </footer>
+      </section>
+
+      <ProblemSection />
+      <HowSection />
+      <FocusSection />
+      <FeaturesSection />
+      <ControlSection />
+      <FinalCta />
+      <Footer />
     </main>
   );
 }
