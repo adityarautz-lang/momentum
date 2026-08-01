@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 
 import styles from "./landing.module.css";
+import MomentuhmLogo from "@/components/MomentuhmLogo";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -185,8 +186,7 @@ function LogoMark() {
 function Brand() {
   return (
     <Link href="/" className={styles.brand} aria-label="Momentuhm home">
-      <LogoMark />
-      <span>Momentuhm</span>
+      <MomentuhmLogo darkMode={false} />
     </Link>
   );
 }
