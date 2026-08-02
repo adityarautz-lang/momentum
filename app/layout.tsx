@@ -14,12 +14,15 @@ export default function RootLayout({
   return (
     <ClerkProvider
       localization={{
+        formFieldHintText__optional: " ",
+
         signIn: {
           start: {
             title: "Welcome back",
             subtitle: "Sign in to continue",
           },
         },
+
         signUp: {
           start: {
             title: "Create your account",
