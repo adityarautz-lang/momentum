@@ -3077,4 +3077,106 @@
       transition-duration: 0.01ms !important;
     }
   }
-  
+
+  /* Final mobile layout for all three How It Works cards */
+@media (max-width: 720px) {
+  .howGrid {
+    display: block !important;
+  }
+
+  .howSteps {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 14px !important;
+  }
+
+  .howSteps .howStep {
+    display: grid !important;
+    grid-template-columns: 32px 44px minmax(0, 1fr) !important;
+    grid-template-areas:
+      "number icon empty"
+      "content content content" !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+
+    padding: 20px !important;
+    column-gap: 10px !important;
+    row-gap: 16px !important;
+
+    align-items: center !important;
+  }
+
+  .howSteps .howStepNumber {
+    grid-area: number !important;
+    position: static !important;
+
+    width: auto !important;
+    margin: 0 !important;
+
+    justify-self: start !important;
+    align-self: center !important;
+  }
+
+  .howSteps .howStepIcon {
+    grid-area: icon !important;
+    position: static !important;
+
+    margin: 0 !important;
+
+    justify-self: start !important;
+    align-self: center !important;
+  }
+
+  .howSteps .howStep > div {
+    grid-area: content !important;
+
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .howSteps .howStep h3 {
+    display: block !important;
+
+    width: 100% !important;
+    max-width: none !important;
+
+    margin: 0 0 10px !important;
+
+    font-size: 24px !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.035em !important;
+
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+  }
+
+  .howSteps .howStep p {
+    display: block !important;
+
+    width: 100% !important;
+    max-width: none !important;
+
+    margin: 0 !important;
+
+    font-size: 15px !important;
+    line-height: 1.55 !important;
+
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+  }
+
+  .clipboardFlow {
+    width: 100% !important;
+    margin-top: 24px !important;
+  }
+}
