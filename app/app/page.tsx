@@ -14993,31 +14993,41 @@ timelineCoordinates[
   currentTimelineIndex
 ];
 
-const completedTodayTimes =
-completedToday
-  .map((task: any) => {
-    if (!task.completedAt) {
-      return null;
-    }
 
-    const date = new Date(
-      task.completedAt
+/*
+ * Find the densest two-hour completion window.
+ *
+ * This avoids treating the first and last completion
+ * of the entire day as the user's productive period.
+ */
+const productiveWindow = useMemo(() => {
+  const completionTimes = completedToday
+    .map((task: any) => {
+      if (!task.completedAt) {
+        return null;
+      }
+
+      const completedDate = new Date(
+        task.completedAt
+      );
+
+      return Number.isNaN(
+        completedDate.getTime()
+      )
+        ? null
+        : completedDate;
+    })
+    .filter(
+      (date): date is Date =>
+        date !== null
+    )
+    .sort(
+      (dateA, dateB) =>
+        dateA.getTime() -
+        dateB.getTime()
     );
 
-    return Number.isNaN(
-      date.getTime()
-    )
-      ? null
-      : date;
-  })
-  .filter(Boolean) as Date[];
-
-const productiveWindow =
-useMemo(() => {
-  if (
-    completedTodayTimes.length ===
-    0
-  ) {
+  if (completionTimes.length === 0) {
     return {
       startLabel: "No completions yet",
       endLabel: "",
@@ -15025,20 +15035,103 @@ useMemo(() => {
     };
   }
 
-  const sortedTimes = [
-    ...completedTodayTimes,
-  ].sort(
-    (dateA, dateB) =>
-      dateA.getTime() -
-      dateB.getTime()
-  );
+  /*
+   * Use a rolling two-hour window because the
+   * momentum timeline is also divided into
+   * two-hour periods.
+   */
+  const peakWindowDuration =
+    2 * 60 * 60 * 1000;
 
-  const firstCompletion =
-    sortedTimes[0];
+  let windowStartIndex = 0;
 
-  const lastCompletion =
-    sortedTimes[
-      sortedTimes.length - 1
+  let bestStartIndex = 0;
+  let bestEndIndex = 0;
+
+  for (
+    let windowEndIndex = 0;
+    windowEndIndex <
+    completionTimes.length;
+    windowEndIndex += 1
+  ) {
+    while (
+      completionTimes[
+        windowEndIndex
+      ].getTime() -
+        completionTimes[
+          windowStartIndex
+        ].getTime() >
+      peakWindowDuration
+    ) {
+      windowStartIndex += 1;
+    }
+
+    const currentCount =
+      windowEndIndex -
+      windowStartIndex +
+      1;
+
+    const bestCount =
+      bestEndIndex -
+      bestStartIndex +
+      1;
+
+    const currentSpan =
+      completionTimes[
+        windowEndIndex
+      ].getTime() -
+      completionTimes[
+        windowStartIndex
+      ].getTime();
+
+    const bestSpan =
+      completionTimes[
+        bestEndIndex
+      ].getTime() -
+      completionTimes[
+        bestStartIndex
+      ].getTime();
+
+    /*
+     * Prefer:
+     * 1. The window containing more completions.
+     * 2. The tighter window when counts are equal.
+     * 3. The more recent window when both are equal.
+     */
+    const isBetterWindow =
+      currentCount > bestCount ||
+      (
+        currentCount === bestCount &&
+        currentSpan < bestSpan
+      ) ||
+      (
+        currentCount === bestCount &&
+        currentSpan === bestSpan &&
+        completionTimes[
+          windowEndIndex
+        ].getTime() >
+          completionTimes[
+            bestEndIndex
+          ].getTime()
+      );
+
+    if (isBetterWindow) {
+      bestStartIndex =
+        windowStartIndex;
+
+      bestEndIndex =
+        windowEndIndex;
+    }
+  }
+
+  const peakStart =
+    completionTimes[
+      bestStartIndex
+    ];
+
+  const peakEnd =
+    completionTimes[
+      bestEndIndex
     ];
 
   const formatTime = (
@@ -15049,20 +15142,24 @@ useMemo(() => {
       {
         hour: "numeric",
         minute: "2-digit",
+        hour12: true,
       }
     );
 
   return {
     startLabel:
-      formatTime(
-        firstCompletion
-      ),
+      formatTime(peakStart),
+
     endLabel:
-      formatTime(
-        lastCompletion
-      ),
+      peakEnd.getTime() ===
+      peakStart.getTime()
+        ? ""
+        : formatTime(peakEnd),
+
     count:
-      sortedTimes.length,
+      bestEndIndex -
+      bestStartIndex +
+      1,
   };
 }, [completedToday]);
 
@@ -15192,7 +15289,7 @@ completedToday.length === 0
       headline: `You closed ${completedToday.length} important tasks today.`,
       message:
         productiveWindow.endLabel
-          ? `Your strongest visible progress occurred between ${productiveWindow.startLabel} and ${productiveWindow.endLabel}.`
+          ? `${productiveWindow.count} of today’s completions clustered between ${productiveWindow.startLabel} and ${productiveWindow.endLabel}.`
           : "You have built strong momentum across the day.",
     }
   : {
@@ -15204,7 +15301,7 @@ completedToday.length === 0
       } so far.`,
       message:
         productiveWindow.endLabel
-          ? `Your visible progress currently spans ${productiveWindow.startLabel} to ${productiveWindow.endLabel}.`
+          ? `Your strongest completion window was ${productiveWindow.startLabel} to ${productiveWindow.endLabel}.`
           : "Keep protecting the pace you have started.",
     };
   
@@ -16244,15 +16341,13 @@ Now
                       : "text-[#667085]"
                   }`}
                 >
-                  {productiveWindow.count >
-                  0
-                    ? `You completed ${productiveWindow.count} task${
-                        productiveWindow.count ===
-                        1
-                          ? ""
-                          : "s"
-                      } in this visible window.`
-                    : "Complete tasks to reveal your strongest window."}
+               {productiveWindow.count > 0
+  ? `${productiveWindow.count} task${
+      productiveWindow.count === 1
+        ? ""
+        : "s"
+    } completed during this peak window.`
+  : "Complete tasks to reveal your strongest window."}
                 </p>
               </div>
 
