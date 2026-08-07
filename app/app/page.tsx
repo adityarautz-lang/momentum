@@ -321,15 +321,18 @@ const createNextRecurringTask = (
         })
       ),
 
-    /*
-     * A new occurrence should not
-     * automatically stay pinned/focused.
-     */
-    pinned:
-      false,
+   /*
+ * Keep the pin preference across the recurring series.
+ *
+ * Focus is handled separately through manualFocusTaskIds,
+ * so the future occurrence will NOT automatically enter
+ * the Focus stack.
+ */
+pinned:
+Boolean(task.pinned),
 
-    createdAt:
-      now,
+createdAt:
+now,
 
     aiReason:
       `Next ${recurrence} occurrence created automatically.`,
@@ -24372,6 +24375,210 @@ const restoreTask = () => {
                 </div>
 
                 {/* Priority and status */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <fieldset>
+                    <legend className={fieldLabelClass}>Priority</legend>
+
+                    <div className="grid grid-cols-3">
+                      {priorityOptions.map((priority) => {
+                        const isActive = selectedTask.priority === priority;
+
+                        return (
+                          <button
+                            key={priority}
+                            type="button"
+                            data-testid={`task-priority-${priority.toLowerCase()}`}
+                            aria-pressed={isActive}
+                            onClick={() =>
+                              setSelectedTask({
+                                ...selectedTask,
+                                priority,
+                              })
+                            }
+                            className={`${getSegmentButtonClass(
+                              isActive
+                            )} -ml-px first:ml-0`}
+                          >
+                            {priority === "Medium" ? "Mid" : priority}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+
+                  <fieldset>
+                    <legend className={fieldLabelClass}>Status</legend>
+
+                    <div className="grid grid-cols-4">
+                      {statusOptions.map((status) => {
+                        const currentStatus = normalizeTaskStatus(
+                          selectedTask.status
+                        );
+
+                        const isActive = currentStatus === status;
+
+                        return (
+                          <button
+                            key={status}
+                            type="button"
+                            data-testid={`task-status-${status
+                              .toLowerCase()
+                              .replace(/\s+/g, "-")}`}
+                            aria-pressed={isActive}
+                            onClick={() =>
+                              setSelectedTask({
+                                ...selectedTask,
+                                status,
+                              })
+                            }
+                            className={`${getSegmentButtonClass(
+                              isActive
+                            )} -ml-px px-1 text-[9.5px] leading-[12px] first:ml-0`}
+                          >
+                            {getTaskStatusLabel(status)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+                </div>
+
+                {/* Task placement controls */}
+                <div
+                  className={`overflow-hidden rounded-[11px] border ${
+                    darkMode
+                      ? "border-white/[0.11] bg-[#171717]"
+                      : "border-[#E1E8F1] bg-white"
+                  }`}
+                >
+                  {/* Focus */}
+                  <div
+                    className={`flex min-h-[58px] items-center justify-between gap-4 border-b px-3.5 py-2.5 ${dividerClass}`}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Target
+                          size={15}
+                          strokeWidth={1.7}
+                          className={
+                            isTaskInFocus
+                              ? darkMode
+                                ? "text-blue-300"
+                                : "text-blue-600"
+                              : darkMode
+                              ? "text-white/45"
+                              : "text-[#64748B]"
+                          }
+                        />
+
+                        <p
+                          className={`text-[12px] font-[700] ${
+                            darkMode ? "text-white" : "text-[#172033]"
+                          }`}
+                        >
+                          Focus stack
+                        </p>
+                      </div>
+
+                      <p
+                        className={`mt-0.5 truncate text-[10.5px] font-[500] leading-4 ${mutedTextClass}`}
+                      >
+                        {isTaskInFocus
+                          ? "Included in your current Focus stack."
+                          : isFocusStackFull
+                          ? "Your Focus stack already has three tasks."
+                          : "Keep this task among your strongest next actions."}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      data-testid="toggle-task-focus-button"
+                      onClick={toggleTaskFocus}
+                      disabled={isFocusStackFull}
+                      aria-pressed={isTaskInFocus}
+                      className={`h-8 shrink-0 rounded-[8px] border px-3 text-[10.5px] font-[700] transition ${
+                        isFocusStackFull
+                          ? "cursor-not-allowed opacity-35"
+                          : isTaskInFocus
+                          ? darkMode
+                            ? "border-white/[0.13] bg-white/[0.05] text-white/70 hover:bg-white/[0.08]"
+                            : "border-[#DDE5EF] bg-[#F8FAFC] text-[#475569] hover:bg-[#F1F5F9]"
+                          : darkMode
+                          ? "border-blue-300/25 bg-blue-300/10 text-blue-200 hover:bg-blue-300/15"
+                          : "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                      }`}
+                    >
+                      {isTaskInFocus
+                        ? "Remove"
+                        : isFocusStackFull
+                        ? "Full"
+                        : "Add"}
+                    </button>
+                  </div>
+
+                  {/* Pin */}
+                  <div className="flex min-h-[58px] items-center justify-between gap-4 px-3.5 py-2.5">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Star
+                          size={15}
+                          strokeWidth={1.7}
+                          fill={selectedTask.pinned ? "currentColor" : "none"}
+                          className={
+                            selectedTask.pinned
+                              ? darkMode
+                                ? "text-lime-300"
+                                : "text-lime-600"
+                              : darkMode
+                              ? "text-white/45"
+                              : "text-[#64748B]"
+                          }
+                        />
+
+                        <p
+                          className={`text-[12px] font-[700] ${
+                            darkMode ? "text-white" : "text-[#172033]"
+                          }`}
+                        >
+                          Pin task
+                        </p>
+                      </div>
+
+                      <p
+                        className={`mt-0.5 truncate text-[10.5px] font-[500] leading-4 ${mutedTextClass}`}
+                      >
+                        {selectedTask.pinned
+                          ? "This task stays at the top of the list."
+                          : "Keep this task visible at the top of the list."}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      data-testid="toggle-task-pin-button"
+                      onClick={() =>
+                        setSelectedTask({
+                          ...selectedTask,
+                          pinned: !selectedTask.pinned,
+                        })
+                      }
+                      aria-pressed={Boolean(selectedTask.pinned)}
+                      className={`h-8 shrink-0 rounded-[8px] border px-3 text-[10.5px] font-[700] transition ${
+                        selectedTask.pinned
+                          ? darkMode
+                            ? "border-lime-300/20 bg-lime-300/10 text-lime-200"
+                            : "border-lime-300 bg-lime-50 text-lime-700"
+                          : darkMode
+                          ? "border-white/[0.13] bg-white/[0.04] text-white/65 hover:bg-white/[0.08]"
+                          : "border-[#DDE5EF] bg-[#F8FAFC] text-[#475569] hover:bg-[#F1F5F9]"
+                      }`}
+                    >
+                      {selectedTask.pinned ? "Pinned" : "Pin"}
+                    </button>
+                  </div>
+                </div>
+
                         {/* Due date and recurrence */}
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
