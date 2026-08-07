@@ -109,6 +109,236 @@ type TaskStatus =
 | "Waiting"
 | "Done";
 
+type RecurrenceFrequency =
+  | "none"
+  | "daily"
+  | "monthly"
+  | "yearly";
+
+const normalizeRecurrence = (
+  value: unknown
+): RecurrenceFrequency => {
+  if (
+    value === "daily" ||
+    value === "monthly" ||
+    value === "yearly"
+  ) {
+    return value;
+  }
+
+  return "none";
+};
+
+const getNextRecurringDate = (
+  dueDate: string | undefined,
+  recurrence: RecurrenceFrequency
+) => {
+  if (!dueDate || recurrence === "none") {
+    return undefined;
+  }
+
+  const [year, month, day] =
+    dueDate.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return undefined;
+  }
+
+  /*
+   * Daily recurrence.
+   */
+  if (recurrence === "daily") {
+    const date = new Date(
+      year,
+      month - 1,
+      day
+    );
+
+    date.setDate(
+      date.getDate() + 1
+    );
+
+    return getLocalDateKey(date);
+  }
+
+  /*
+   * Monthly recurrence.
+   *
+   * Preserve the original day where possible.
+   * Example:
+   * Jan 31 -> Feb 28/29 -> Mar 31.
+   */
+  if (recurrence === "monthly") {
+    const nextMonth =
+      month === 12
+        ? 1
+        : month + 1;
+
+    const nextYear =
+      month === 12
+        ? year + 1
+        : year;
+
+    const lastDayOfNextMonth =
+      new Date(
+        nextYear,
+        nextMonth,
+        0
+      ).getDate();
+
+    const nextDay =
+      Math.min(
+        day,
+        lastDayOfNextMonth
+      );
+
+    return getLocalDateKey(
+      new Date(
+        nextYear,
+        nextMonth - 1,
+        nextDay
+      )
+    );
+  }
+
+  /*
+   * Yearly recurrence.
+   *
+   * Feb 29 becomes Feb 28 in
+   * non-leap years.
+   */
+  const nextYear =
+    year + 1;
+
+  const lastDayOfMonth =
+    new Date(
+      nextYear,
+      month,
+      0
+    ).getDate();
+
+  const nextDay =
+    Math.min(
+      day,
+      lastDayOfMonth
+    );
+
+  return getLocalDateKey(
+    new Date(
+      nextYear,
+      month - 1,
+      nextDay
+    )
+  );
+};
+
+const createNextRecurringTask = (
+  task: any
+) => {
+  const recurrence =
+    normalizeRecurrence(
+      task.recurrence
+    );
+
+  const currentDueDate =
+    task.dueDate ||
+    task.suggestedDueDate;
+
+  const nextDueDate =
+    getNextRecurringDate(
+      currentDueDate,
+      recurrence
+    );
+
+  if (
+    recurrence === "none" ||
+    !nextDueDate
+  ) {
+    return null;
+  }
+
+  const now =
+    new Date().toISOString();
+
+  const recurringSeriesId =
+    task.recurringSeriesId ||
+    task.id;
+
+  return {
+    ...task,
+
+    /*
+     * Every occurrence is a separate task.
+     */
+    id: crypto.randomUUID(),
+
+    recurringSeriesId,
+
+    recurrence,
+
+    /*
+     * Remember which occurrence generated this one.
+     */
+    previousOccurrenceId:
+      task.id,
+
+    dueDate:
+      nextDueDate,
+
+    suggestedDueDate:
+      undefined,
+
+    completed:
+      false,
+
+    completedAt:
+      undefined,
+
+    status:
+      "Not started" as TaskStatus,
+
+    statusBeforeCompletion:
+      undefined,
+
+    /*
+     * Carry the same subtasks forward,
+     * but reset every one to incomplete
+     * and give it a fresh ID.
+     */
+    subtasks:
+      getTaskSubtasks(task).map(
+        (subtask) => ({
+          ...subtask,
+
+          id:
+            crypto.randomUUID(),
+
+          completed:
+            false,
+
+          createdAt:
+            now,
+        })
+      ),
+
+    /*
+     * A new occurrence should not
+     * automatically stay pinned/focused.
+     */
+    pinned:
+      false,
+
+    createdAt:
+      now,
+
+    aiReason:
+      `Next ${recurrence} occurrence created automatically.`,
+
+    aiConfidence:
+      1,
+  };
+};
+
 const normalizeTaskStatus = (
 status: unknown
 ): TaskStatus => {
@@ -4082,12 +4312,19 @@ boostCacheKey,
       status: "Not started",
   
       tags: [],
+
+      recurrence:
+        "none" as RecurrenceFrequency,
+
+      recurringSeriesId:
+        undefined,
   
       subtasks: [],
   
       aiReason:
         initialWhy,
-  
+
+
       aiConfidence:
         manualWhy
           ? 0.95
@@ -5309,58 +5546,111 @@ boostCacheKey,
     setCategories(
       (previousCategories) =>
         previousCategories.map(
-          (category) => ({
-            ...category,
-  
-            tasks:
+          (category) => {
+            const taskExistsInCategory =
+              category.tasks.some(
+                (task: any) =>
+                  task.id === taskId
+              );
+
+            if (!taskExistsInCategory) {
+              return category;
+            }
+
+            /*
+             * Restoring a completed task should
+             * not create another occurrence.
+             */
+            if (isAlreadyCompleted) {
+              return {
+                ...category,
+
+                tasks:
+                  category.tasks.map(
+                    (task: any) =>
+                      task.id === taskId
+                        ? {
+                            ...task,
+
+                            completed:
+                              false,
+
+                            completedAt:
+                              undefined,
+
+                            status:
+                              getRestorableTaskStatus(
+                                task
+                                  .statusBeforeCompletion
+                              ),
+
+                            statusBeforeCompletion:
+                              undefined,
+                          }
+                        : task
+                  ),
+              };
+            }
+
+            const completedTask =
+              category.tasks.find(
+                (task: any) =>
+                  task.id === taskId
+              );
+
+            if (!completedTask) {
+              return category;
+            }
+
+            const nextRecurringTask =
+              createNextRecurringTask(
+                completedTask
+              );
+
+            const updatedTasks =
               category.tasks.map(
-                (task: any) => {
-                  if (
-                    task.id !== taskId
-                  ) {
-                    return task;
-                  }
-  
-                  if (
-                    isAlreadyCompleted
-                  ) {
-                    return {
-                      ...task,
-  
-                      completed: false,
-  
-                      completedAt:
-                        undefined,
-  
-                      status:
-                        getRestorableTaskStatus(
-                          task
-                            .statusBeforeCompletion
-                        ),
-  
-                      statusBeforeCompletion:
-                        undefined,
-                    };
-                  }
-  
-                  return {
-                    ...task,
-  
-                    completed: true,
-  
-                    completedAt,
-  
-                    statusBeforeCompletion:
-                      getRestorableTaskStatus(
-                        task.status
-                      ),
-  
-                    status:
-                      "Done",
-                  };
-                }
-              ),
-          })
+                (task: any) =>
+                  task.id === taskId
+                    ? {
+                        ...task,
+
+                        completed:
+                          true,
+
+                        completedAt,
+
+                        statusBeforeCompletion:
+                          getRestorableTaskStatus(
+                            task.status
+                          ),
+
+                        status:
+                          "Done",
+                      }
+                    : task
+              );
+
+            /*
+             * A recurring task gets a fresh
+             * active occurrence immediately.
+             */
+            if (nextRecurringTask) {
+              return {
+                ...category,
+
+                tasks: [
+                  nextRecurringTask,
+                  ...updatedTasks,
+                ],
+              };
+            }
+
+            return {
+              ...category,
+              tasks:
+                updatedTasks,
+            };
+          }
         )
     );
   
@@ -6963,11 +7253,29 @@ deferCount:
 nextDeferCount,
 
 tags: normalizeTaskTags(
-updatedTask.tags
+  updatedTask.tags
 ),
 
-      subtasks:
-        getTaskSubtasks(updatedTask),
+recurrence:
+  normalizeRecurrence(
+    updatedTask.recurrence
+  ),
+
+recurringSeriesId:
+  updatedTask.recurringSeriesId ||
+  (
+    normalizeRecurrence(
+      updatedTask.recurrence
+    ) !== "none"
+      ? updatedTask.id
+      : undefined
+  ),
+
+previousOccurrenceId:
+  updatedTask.previousOccurrenceId,
+
+subtasks:
+  getTaskSubtasks(updatedTask),
       whySuggestions:
         updatedTask.whySuggestions || [],
       selectedWhyIndex:
@@ -6993,39 +7301,85 @@ updatedTask.tags
         updatedTask.category ||
         visibleCategories[0]?.title ||
         "-";
+
+      /*
+       * Only create another occurrence when
+       * this save changes the task from
+       * active -> completed.
+       *
+       * Re-saving an already-completed task
+       * must not create duplicates.
+       */
+      const shouldCreateNextOccurrence =
+        completionChanged &&
+        completed &&
+        normalizeRecurrence(
+          savedTask.recurrence
+        ) !== "none";
+
+      const nextRecurringTask =
+        shouldCreateNextOccurrence
+          ? createNextRecurringTask(
+              savedTask
+            )
+          : null;
     
       const cleanedCategories =
         prev.map((category) => ({
           ...category,
-          tasks: category.tasks.filter(
-            (task: any) =>
-              task.id !== updatedTask.id
-          ),
+
+          tasks:
+            category.tasks.filter(
+              (task: any) =>
+                task.id !==
+                updatedTask.id
+            ),
         }));
     
       const targetExists =
         cleanedCategories.some(
           (category) =>
-            category.title === targetCategory
+            category.title ===
+            targetCategory
         );
     
       if (!targetExists) {
         return [
           ...cleanedCategories,
+
           {
-            id: crypto.randomUUID(),
+            id:
+              crypto.randomUUID(),
+
             title: "-",
-            tasks: [savedTask],
+
+            tasks: [
+              ...(nextRecurringTask
+                ? [
+                    nextRecurringTask,
+                  ]
+                : []),
+
+              savedTask,
+            ],
           },
         ];
       }
     
       return cleanedCategories.map(
         (category) =>
-          category.title === targetCategory
+          category.title ===
+          targetCategory
             ? {
                 ...category,
+
                 tasks: [
+                  ...(nextRecurringTask
+                    ? [
+                        nextRecurringTask,
+                      ]
+                    : []),
+
                   savedTask,
                   ...category.tasks,
                 ],
@@ -24018,212 +24372,8 @@ const restoreTask = () => {
                 </div>
 
                 {/* Priority and status */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <fieldset>
-                    <legend className={fieldLabelClass}>Priority</legend>
-
-                    <div className="grid grid-cols-3">
-                      {priorityOptions.map((priority) => {
-                        const isActive = selectedTask.priority === priority;
-
-                        return (
-                          <button
-                            key={priority}
-                            type="button"
-                            data-testid={`task-priority-${priority.toLowerCase()}`}
-                            aria-pressed={isActive}
-                            onClick={() =>
-                              setSelectedTask({
-                                ...selectedTask,
-                                priority,
-                              })
-                            }
-                            className={`${getSegmentButtonClass(
-                              isActive
-                            )} -ml-px first:ml-0`}
-                          >
-                            {priority === "Medium" ? "Mid" : priority}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </fieldset>
-
-                  <fieldset>
-                    <legend className={fieldLabelClass}>Status</legend>
-
-                    <div className="grid grid-cols-4">
-                      {statusOptions.map((status) => {
-                        const currentStatus = normalizeTaskStatus(
-                          selectedTask.status
-                        );
-
-                        const isActive = currentStatus === status;
-
-                        return (
-                          <button
-                            key={status}
-                            type="button"
-                            data-testid={`task-status-${status
-                              .toLowerCase()
-                              .replace(/\s+/g, "-")}`}
-                            aria-pressed={isActive}
-                            onClick={() =>
-                              setSelectedTask({
-                                ...selectedTask,
-                                status,
-                              })
-                            }
-                            className={`${getSegmentButtonClass(
-                              isActive
-                            )} -ml-px px-1 text-[9.5px] leading-[12px] first:ml-0`}
-                          >
-                            {getTaskStatusLabel(status)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </fieldset>
-                </div>
-
-                {/* Task placement controls */}
-                <div
-                  className={`overflow-hidden rounded-[11px] border ${
-                    darkMode
-                      ? "border-white/[0.11] bg-[#171717]"
-                      : "border-[#E1E8F1] bg-white"
-                  }`}
-                >
-                  {/* Focus */}
-                  <div
-                    className={`flex min-h-[58px] items-center justify-between gap-4 border-b px-3.5 py-2.5 ${dividerClass}`}
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <Target
-                          size={15}
-                          strokeWidth={1.7}
-                          className={
-                            isTaskInFocus
-                              ? darkMode
-                                ? "text-blue-300"
-                                : "text-blue-600"
-                              : darkMode
-                              ? "text-white/45"
-                              : "text-[#64748B]"
-                          }
-                        />
-
-                        <p
-                          className={`text-[12px] font-[700] ${
-                            darkMode ? "text-white" : "text-[#172033]"
-                          }`}
-                        >
-                          Focus stack
-                        </p>
-                      </div>
-
-                      <p
-                        className={`mt-0.5 truncate text-[10.5px] font-[500] leading-4 ${mutedTextClass}`}
-                      >
-                        {isTaskInFocus
-                          ? "Included in your current Focus stack."
-                          : isFocusStackFull
-                          ? "Your Focus stack already has three tasks."
-                          : "Keep this task among your strongest next actions."}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      data-testid="toggle-task-focus-button"
-                      onClick={toggleTaskFocus}
-                      disabled={isFocusStackFull}
-                      aria-pressed={isTaskInFocus}
-                      className={`h-8 shrink-0 rounded-[8px] border px-3 text-[10.5px] font-[700] transition ${
-                        isFocusStackFull
-                          ? "cursor-not-allowed opacity-35"
-                          : isTaskInFocus
-                          ? darkMode
-                            ? "border-white/[0.13] bg-white/[0.05] text-white/70 hover:bg-white/[0.08]"
-                            : "border-[#DDE5EF] bg-[#F8FAFC] text-[#475569] hover:bg-[#F1F5F9]"
-                          : darkMode
-                          ? "border-blue-300/25 bg-blue-300/10 text-blue-200 hover:bg-blue-300/15"
-                          : "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
-                      }`}
-                    >
-                      {isTaskInFocus
-                        ? "Remove"
-                        : isFocusStackFull
-                        ? "Full"
-                        : "Add"}
-                    </button>
-                  </div>
-
-                  {/* Pin */}
-                  <div className="flex min-h-[58px] items-center justify-between gap-4 px-3.5 py-2.5">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <Star
-                          size={15}
-                          strokeWidth={1.7}
-                          fill={selectedTask.pinned ? "currentColor" : "none"}
-                          className={
-                            selectedTask.pinned
-                              ? darkMode
-                                ? "text-lime-300"
-                                : "text-lime-600"
-                              : darkMode
-                              ? "text-white/45"
-                              : "text-[#64748B]"
-                          }
-                        />
-
-                        <p
-                          className={`text-[12px] font-[700] ${
-                            darkMode ? "text-white" : "text-[#172033]"
-                          }`}
-                        >
-                          Pin task
-                        </p>
-                      </div>
-
-                      <p
-                        className={`mt-0.5 truncate text-[10.5px] font-[500] leading-4 ${mutedTextClass}`}
-                      >
-                        {selectedTask.pinned
-                          ? "This task stays at the top of the list."
-                          : "Keep this task visible at the top of the list."}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      data-testid="toggle-task-pin-button"
-                      onClick={() =>
-                        setSelectedTask({
-                          ...selectedTask,
-                          pinned: !selectedTask.pinned,
-                        })
-                      }
-                      aria-pressed={Boolean(selectedTask.pinned)}
-                      className={`h-8 shrink-0 rounded-[8px] border px-3 text-[10.5px] font-[700] transition ${
-                        selectedTask.pinned
-                          ? darkMode
-                            ? "border-lime-300/20 bg-lime-300/10 text-lime-200"
-                            : "border-lime-300 bg-lime-50 text-lime-700"
-                          : darkMode
-                          ? "border-white/[0.13] bg-white/[0.04] text-white/65 hover:bg-white/[0.08]"
-                          : "border-[#DDE5EF] bg-[#F8FAFC] text-[#475569] hover:bg-[#F1F5F9]"
-                      }`}
-                    >
-                      {selectedTask.pinned ? "Pinned" : "Pin"}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Date and category */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        {/* Due date and recurrence */}
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label
                       htmlFor="task-due-date"
@@ -24251,58 +24401,104 @@ const restoreTask = () => {
                         onChange={(event) =>
                           setSelectedTask({
                             ...selectedTask,
-                            dueDate: event.target.value || undefined,
-                            suggestedDueDate: undefined,
-                            aiReason: event.target.value
-                              ? "You manually scheduled this task."
-                              : undefined,
-                            aiConfidence: event.target.value ? 1 : 0,
+
+                            dueDate:
+                              event.target.value ||
+                              undefined,
+
+                            suggestedDueDate:
+                              undefined,
+
+                            aiReason:
+                              event.target.value
+                                ? "You manually scheduled this task."
+                                : undefined,
+
+                            aiConfidence:
+                              event.target.value
+                                ? 1
+                                : 0,
                           })
                         }
                         style={{
-                          colorScheme: darkMode ? "dark" : "light",
-                          textAlign: "left",
+                          colorScheme:
+                            darkMode
+                              ? "dark"
+                              : "light",
+
+                          textAlign:
+                            "left",
                         }}
                         className={`block h-full w-full min-w-0 border-0 bg-transparent px-3.5 py-0 text-left text-[12px] font-[600] leading-none outline-none ${
-                          darkMode ? "text-white" : "text-[#172033]"
+                          darkMode
+                            ? "text-white"
+                            : "text-[#172033]"
                         }`}
                       />
                     </div>
                   </div>
 
+                  {/* Repeat */}
                   <div>
-                    <label htmlFor="task-category" className={fieldLabelClass}>
-                      Category
+                    <label
+                      htmlFor="task-recurrence"
+                      className={
+                        fieldLabelClass
+                      }
+                    >
+                      Repeat
                     </label>
 
                     <div className="relative">
                       <select
-                        id="task-category"
-                        data-testid="task-category-select"
-                        value={selectedTask.category || "-"}
-                        onChange={(event) =>
+                        id="task-recurrence"
+                        data-testid="task-recurrence-select"
+                        value={
+                          normalizeRecurrence(
+                            selectedTask.recurrence
+                          )
+                        }
+                        onChange={(
+                          event
+                        ) =>
                           setSelectedTask({
                             ...selectedTask,
-                            category: event.target.value,
+
+                            recurrence:
+                              event.target
+                                .value as RecurrenceFrequency,
+
+                            recurringSeriesId:
+                              event.target
+                                .value ===
+                              "none"
+                                ? undefined
+                                : selectedTask
+                                    .recurringSeriesId ||
+                                  selectedTask.id,
                           })
                         }
-                        className={`h-10 appearance-none rounded-[9px] pr-10 ${fieldClass}`}
+                        className={`h-10 w-full appearance-none rounded-[9px] border px-3.5 pr-10 text-[12px] font-[600] outline-none ${
+                          darkMode
+                            ? "border-white/[0.14] bg-[#191919] text-white"
+                            : "border-[#D7E0EC] bg-white text-[#172033]"
+                        }`}
                       >
-                        {selectedTask.category === "-" && (
-                          <option value="-" disabled hidden>
-                            -
-                          </option>
-                        )}
+                        <option value="none">
+                          Does not repeat
+                        </option>
 
-                        {categories
-                          .filter(
-                            (category: any) => category.title !== "-"
-                          )
-                          .map((category: any) => (
-                            <option key={category.id} value={category.title}>
-                              {category.title}
-                            </option>
-                          ))}
+                        <option value="daily">
+                          Daily
+                        </option>
+
+                        <option value="monthly">
+                          Monthly
+                        </option>
+
+                        <option value="yearly">
+                          Yearly
+                        </option>
                       </select>
 
                       <ChevronDown
@@ -24310,10 +24506,130 @@ const restoreTask = () => {
                         size={15}
                         strokeWidth={1.6}
                         className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${
-                          darkMode ? "text-white/48" : "text-[#64748B]"
+                          darkMode
+                            ? "text-white/48"
+                            : "text-[#64748B]"
                         }`}
                       />
                     </div>
+
+                    {normalizeRecurrence(
+                      selectedTask.recurrence
+                    ) !== "none" && (
+                      <p
+                        className={`mt-1.5 text-[9.5px] font-[500] leading-4 ${
+                          darkMode
+                            ? "text-white/42"
+                            : "text-[#667085]"
+                        }`}
+                      >
+                        {selectedTask.dueDate ||
+                        selectedTask.suggestedDueDate
+                          ? `Next task: ${
+                              getNextRecurringDate(
+                                selectedTask.dueDate ||
+                                  selectedTask.suggestedDueDate,
+                                normalizeRecurrence(
+                                  selectedTask.recurrence
+                                )
+                              )
+                                ? formatDueDate(
+                                    getNextRecurringDate(
+                                      selectedTask.dueDate ||
+                                        selectedTask.suggestedDueDate,
+                                      normalizeRecurrence(
+                                        selectedTask.recurrence
+                                      )
+                                    )
+                                  )
+                                : "—"
+                            }`
+                          : "Add a due date to use recurrence."}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label
+                    htmlFor="task-category"
+                    className={
+                      fieldLabelClass
+                    }
+                  >
+                    Category
+                  </label>
+
+                  <div className="relative">
+                    <select
+                      id="task-category"
+                      data-testid="task-category-select"
+                      value={
+                        selectedTask.category ||
+                        "-"
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setSelectedTask({
+                          ...selectedTask,
+
+                          category:
+                            event.target.value,
+                        })
+                      }
+                      className={`h-10 appearance-none rounded-[9px] pr-10 ${fieldClass}`}
+                    >
+                      {selectedTask.category ===
+                        "-" && (
+                        <option
+                          value="-"
+                          disabled
+                          hidden
+                        >
+                          -
+                        </option>
+                      )}
+
+                      {categories
+                        .filter(
+                          (
+                            category: any
+                          ) =>
+                            category.title !==
+                            "-"
+                        )
+                        .map(
+                          (
+                            category: any
+                          ) => (
+                            <option
+                              key={
+                                category.id
+                              }
+                              value={
+                                category.title
+                              }
+                            >
+                              {
+                                category.title
+                              }
+                            </option>
+                          )
+                        )}
+                    </select>
+
+                    <ChevronDown
+                      aria-hidden="true"
+                      size={15}
+                      strokeWidth={1.6}
+                      className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${
+                        darkMode
+                          ? "text-white/48"
+                          : "text-[#64748B]"
+                      }`}
+                    />
                   </div>
                 </div>
 
