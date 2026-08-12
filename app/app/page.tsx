@@ -2244,17 +2244,283 @@ return () => {
 }, []);
 
 /*
- * Keep Completed Today synchronized with categories.
+ * Keep Completed Today synchronized with categories
+ * AND automatically roll older completed tasks into
+ * Archive + Insights when the calendar day changes.
  *
- * Categories are the source of truth. This repairs any
- * mismatch caused by an interrupted save, an older saved
- * completedToday list, refresh, or another update path.
+ * Categories remain the source of truth.
  */
 useEffect(() => {
   if (!isLoaded) {
     return;
   }
 
+  /*
+   * ------------------------------------------------
+   * 1. Find completed tasks from PREVIOUS days
+   * ------------------------------------------------
+   *
+   * Important:
+   * Do NOT use completedToday here.
+   *
+   * At midnight completedToday will already stop
+   * including yesterday's tasks because its date
+   * filter changes. Therefore rollover must inspect
+   * categories directly.
+   */
+  const previousDayCompletedTasks =
+    categories.flatMap(
+      (category) =>
+        category.tasks
+          .filter((task: any) => {
+            if (
+              !task.completed ||
+              !task.completedAt
+            ) {
+              return false;
+            }
+
+            const completionDate =
+              getLocalDateKey(
+                task.completedAt
+              );
+
+            return (
+              Boolean(completionDate) &&
+              completionDate < todayDate
+            );
+          })
+          .map((task: any) => ({
+            ...task,
+
+            category:
+              category.title,
+          }))
+    );
+
+  /*
+   * ------------------------------------------------
+   * 2. Automatically archive previous-day completions
+   * ------------------------------------------------
+   */
+  if (
+    previousDayCompletedTasks.length > 0
+  ) {
+    markLocalChangesPending();
+
+    /*
+     * Add completed tasks to the visible Archive.
+     *
+     * Task ID protects against accidentally inserting
+     * the same archived task more than once.
+     */
+    setArchive(
+      (previousArchive) => {
+        const existingArchiveIds =
+          new Set(
+            previousArchive.map(
+              (task: any) =>
+                String(task.id)
+            )
+          );
+
+        const newArchiveItems =
+          previousDayCompletedTasks.filter(
+            (task: any) =>
+              !existingArchiveIds.has(
+                String(task.id)
+              )
+          );
+
+        if (
+          newArchiveItems.length === 0
+        ) {
+          return previousArchive;
+        }
+
+        return [
+          ...newArchiveItems,
+          ...previousArchive,
+        ].sort(
+          (
+            taskA: any,
+            taskB: any
+          ) =>
+            new Date(
+              taskB.completedAt || 0
+            ).getTime() -
+            new Date(
+              taskA.completedAt || 0
+            ).getTime()
+        );
+      }
+    );
+
+    /*
+     * ------------------------------------------------
+     * 3. Add each completion to Insights history
+     * ------------------------------------------------
+     *
+     * Insights use a completion-event ID rather than
+     * only the task ID.
+     *
+     * This is necessary for recurring tasks because
+     * every completed occurrence must count as its
+     * own historical completion.
+     */
+    const completedInsightItems =
+      previousDayCompletedTasks.map(
+        (task: any) => {
+          const completedAt =
+            task.completedAt;
+
+          return {
+            id: `${String(
+              task.id
+            )}:${completedAt}`,
+
+            sourceTaskId:
+              String(task.id),
+
+            title:
+              String(
+                task.title || ""
+              ),
+
+            category:
+              String(
+                task.category ||
+                  "No category"
+              ),
+
+            priority:
+              String(
+                task.priority ||
+                  "No priority"
+              ),
+
+            completedAt,
+
+            notes:
+              String(
+                task.notes || ""
+              ),
+
+            whyThisMatters:
+              String(
+                task.whyThisMatters ||
+                  ""
+              ),
+
+            aiReason:
+              String(
+                task.aiReason || ""
+              ),
+          };
+        }
+      );
+
+    setInsightsHistory(
+      (previousHistory) => {
+        const existingEventIds =
+          new Set(
+            previousHistory.map(
+              (item: any) =>
+                String(item.id)
+            )
+          );
+
+        const newHistoryItems =
+          completedInsightItems.filter(
+            (item) =>
+              !existingEventIds.has(
+                String(item.id)
+              )
+          );
+
+        if (
+          newHistoryItems.length === 0
+        ) {
+          return previousHistory;
+        }
+
+        return [
+          ...newHistoryItems,
+          ...previousHistory,
+        ].sort(
+          (
+            taskA: any,
+            taskB: any
+          ) =>
+            new Date(
+              taskB.completedAt || 0
+            ).getTime() -
+            new Date(
+              taskA.completedAt || 0
+            ).getTime()
+        );
+      }
+    );
+
+    /*
+     * ------------------------------------------------
+     * 4. Remove archived completed occurrences
+     *    from the live task categories
+     * ------------------------------------------------
+     *
+     * Active recurring occurrences are NOT affected
+     * because they have:
+     *
+     * completed: false
+     *
+     * and their own fresh task ID.
+     */
+    const completedIdsToArchive =
+      new Set(
+        previousDayCompletedTasks.map(
+          (task: any) =>
+            String(task.id)
+        )
+      );
+
+    setCategories(
+      (previousCategories) =>
+        previousCategories.map(
+          (category) => {
+            const remainingTasks =
+              category.tasks.filter(
+                (task: any) =>
+                  !completedIdsToArchive.has(
+                    String(task.id)
+                  )
+              );
+
+            if (
+              remainingTasks.length ===
+              category.tasks.length
+            ) {
+              return category;
+            }
+
+            return {
+              ...category,
+
+              tasks:
+                remainingTasks,
+            };
+          }
+        )
+    );
+  }
+
+  /*
+   * ------------------------------------------------
+   * 5. Rebuild Completed Today
+   * ------------------------------------------------
+   *
+   * Only tasks completed on the current calendar day
+   * remain in this section.
+   */
   const synchronizedCompletedTasks =
     getCompletedTodayFromCategories(
       categories
