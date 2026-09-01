@@ -5161,14 +5161,35 @@ boostCacheKey,
     }
   };
   
+  
   const dismissClipboardCandidate =
-    () => {
-      setShowClipboardPrompt(false);
-      setClipboardCandidate("");
-      setClipboardExtractedTasks([]);
-      setClipboardExtractError("");
-      setClipboardExtractLoading(false);
-    };
+  () => {
+    const normalizedText =
+      normalizeClipboardText(
+        clipboardCandidate
+      );
+
+    /*
+     * The user explicitly dismissed this clipboard
+     * item, so do not show it again on the next
+     * focus / visibility check.
+     */
+    if (normalizedText) {
+      lastClipboardTextRef.current =
+        normalizedText;
+
+      localStorage.setItem(
+        CLIPBOARD_HANDLED_KEY,
+        normalizedText
+      );
+    }
+
+    setShowClipboardPrompt(false);
+    setClipboardCandidate("");
+    setClipboardExtractedTasks([]);
+    setClipboardExtractError("");
+    setClipboardExtractLoading(false);
+  };
   
   const addClipboardCandidateAsTask =
     () => {
