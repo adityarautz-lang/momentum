@@ -1727,11 +1727,71 @@ const [
 ] = useState(false);
 
 /*
-* Prevents state loaded from the server from immediately
-* being written back to the server.
-*/
-const skipNextPersistRef =
-useRef(false);
+ * Signature of the exact persisted state most recently
+ * applied from the server.
+ *
+ * The persistence effect ignores only that exact snapshot.
+ * If the user changes anything after the server load,
+ * the signature changes and the local mutation is saved.
+ */
+const lastAppliedServerStateSignatureRef =
+  useRef<string | null>(null);
+
+  const createPersistedStateSignature = (
+    state: any
+  ) => {
+    return JSON.stringify({
+      categories:
+        state.categories ?? [],
+      darkMode:
+        state.darkMode ?? false,
+      themeColor:
+        state.themeColor ??
+        DEFAULT_THEME_COLOR,
+      todayTaskSortMode:
+        state.todayTaskSortMode ??
+        "date",
+      todayTaskGroupMode:
+        state.todayTaskGroupMode ??
+        "none",
+      priorityViewMode:
+        state.priorityViewMode ??
+        "list",
+      upcomingViewMode:
+        state.upcomingViewMode ??
+        "calendar",
+      enableAppSuggestions:
+        state.enableAppSuggestions ??
+        true,
+      enableAutoPriority:
+        state.enableAutoPriority ??
+        true,
+      enableClipboardAssist:
+        state.enableClipboardAssist ??
+        true,
+      archive:
+        state.archive ?? [],
+      insightsHistory:
+        state.insightsHistory ?? [],
+      completedToday:
+        state.completedToday ?? [],
+      dayEndTime:
+        normalizeDayEndTime(
+          state.dayEndTime
+        ),
+      userRole:
+        state.userRole ?? "",
+      manualFocusTaskIds:
+        state.manualFocusTaskIds ?? [],
+      planningEvents:
+        state.planningEvents ?? [],
+      userPlanningProfile:
+        state.userPlanningProfile ?? {},
+      hasCompletedTutorial:
+        state.hasCompletedTutorial ??
+        false,
+    });
+  };
 
 /*
 * Prevents multiple refresh requests from running together.
@@ -2651,13 +2711,18 @@ revisionConflictRef.current =
     savedState;
 
 /*
- * All state setters below belong to one remote update.
- * The persistence effect must ignore the resulting render.
+ * Remember the exact server snapshot being applied.
+ *
+ * The persistence effect will ignore this exact state,
+ * but any subsequent user mutation will produce a
+ * different signature and therefore WILL be saved.
  */
-skipNextPersistRef.current =
-  true;
+lastAppliedServerStateSignatureRef.current =
+  createPersistedStateSignature(
+    parsed
+  );
 
-  const loadedCategories =
+const loadedCategories =
   Array.isArray(parsed.categories) &&
   parsed.categories.length > 0
     ? parsed.categories.map(
@@ -2923,13 +2988,17 @@ const loadUserState =
       );
 
       if (!isCancelled) {
-        /*
-         * Do not allow this temporary fallback state
-         * to overwrite the user's existing server data.
-         */
-        skipNextPersistRef.current = true;
-      
-        resetToInitialState();
+    /*
+ * The server load failed.
+ *
+ * Do not allow the temporary fallback state to be
+ * mistaken for a user mutation and written over
+ * existing server data.
+ */
+lastAppliedServerStateSignatureRef.current =
+"__LOAD_FAILED_FALLBACK__";
+
+resetToInitialState();
       
         setArchiveToast(
           "Could not load your latest changes"
@@ -3242,236 +3311,85 @@ user?.id,
 /* ------------------------------------------------ */
 
 useEffect(() => {
-if (!isLoaded) return;
-if (!user?.id) return;
+  if (!isLoaded) return;
+  if (!user?.id) return;
 
-/*
- * This render came from server-loaded data.
- * It must not be written back immediately.
- */
-if (
-  skipNextPersistRef.current
-) {
-  skipNextPersistRef.current =
-    false;
-
-  localChangesPendingRef.current =
-    false;
-
-  return;
-}
-
-localChangeVersionRef.current +=
-  1;
-
-const changeVersion =
-  localChangeVersionRef.current;
-
-localChangesPendingRef.current =
-  true;
-
-if (
-  saveTimerRef.current !==
-  null
-) {
-  window.clearTimeout(
-    saveTimerRef.current
-  );
-}
-
-let retryAttempt = 0;
-
-const maximumRetryAttempts = 3;
-
-const scheduleSave = (
-  delay: number
-) => {
-  if (
-    saveTimerRef.current !==
-    null
-  ) {
-    window.clearTimeout(
-      saveTimerRef.current
-    );
-  }
-
-  saveTimerRef.current =
-    window.setTimeout(() => {
-      saveTimerRef.current =
-        null;
-
-      void persistState();
-    }, delay);
-};
-
-const persistState =
-  async () => {
-    /*
-     * Preserve save order by waiting for
-     * the active request to finish.
-     */
-    if (
-      saveInFlightRef.current
-    ) {
-      scheduleSave(250);
-      return;
-    }
-
-    saveInFlightRef.current =
-      true;
-
-    try {
-      const saveResult =
-      await (saveState as any)(
-        user.id,
-        {
-          categories,
-          darkMode,
-          themeColor,
-          todayTaskSortMode,
-          todayTaskGroupMode,
-          priorityViewMode,
-          upcomingViewMode,
-          enableAppSuggestions,
-          enableAutoPriority,
-          enableClipboardAssist,
-          archive,
-          insightsHistory,
-          completedToday,
-          dayEndTime,
-          userRole,
-          manualFocusTaskIds,
-          planningEvents,
-          userPlanningProfile,
-          hasCompletedTutorial,
-        } as any,
-        serverRevisionRef.current
-      );
-    
-    /*
-     * The server increments the revision only after
-     * successfully writing this state.
-     */
-    serverRevisionRef.current =
-    Number.isFinite(
-      Number(saveResult?.revision)
-    )
-      ? Number(saveResult.revision)
-      : serverRevisionRef.current;
-  
-  revisionConflictRef.current =
-    false;
-  
-  retryAttempt = 0;
-      /*
-       * An older save must not mark a newer
-       * local change as synchronized.
-       */
-      if (
-        localChangeVersionRef.current ===
-        changeVersion
-      ) {
-        localChangesPendingRef.current =
-          false;
-
-        lastSuccessfulSaveRef.current =
-          new Date().toISOString();
-      }
-    } catch (error) {
-      console.error(
-        "Failed to save Momentuhm state:",
-        error
-      );
-    
-      localChangesPendingRef.current =
-        true;
-    
-      const isRevisionConflict =
-        error instanceof Error &&
-        error.message ===
-          "STATE_REVISION_CONFLICT";
-    
-      /*
-       * Do not keep retrying an outdated snapshot.
-       *
-       * Retrying the same stale data would continue failing,
-       * and forcing it through would overwrite another device.
-       */
-      if (isRevisionConflict) {
-        revisionConflictRef.current =
-          true;
-      
-        /*
-         * The server rejected this stale snapshot.
-         *
-         * Stop retrying it because forcing the save could
-         * overwrite newer work from another device.
-         */
-        localChangesPendingRef.current =
-          false;
-      
-        if (
-          saveTimerRef.current !==
-          null
-        ) {
-          window.clearTimeout(
-            saveTimerRef.current
-          );
-      
-          saveTimerRef.current =
-            null;
-        }
-      
-        /*
-         * A revision conflict is too important for a
-         * temporary corner notification. Show a centred
-         * modal on both mobile and desktop.
-         */
-        setShowRevisionConflictModal(
-          true
-        );
-      
-        return;
-      }
-    
-      retryAttempt += 1;
-
-      /*
-       * Retry temporary failures without
-       * requiring another user action.
-       */
-      if (
-        retryAttempt <=
-        maximumRetryAttempts
-      ) {
-        const retryDelay =
-          retryAttempt * 2000;
-
-        scheduleSave(
-          retryDelay
-        );
-
-        setArchiveToast(
-          "Sync interrupted. Retrying..."
-        );
-      } else {
-        setArchiveToast(
-          "Changes could not be synced"
-        );
-      }
-
-      window.setTimeout(() => {
-        setArchiveToast("");
-      }, 3500);
-    } finally {
-      saveInFlightRef.current =
-        false;
-    }
+  const stateToPersist = {
+    categories,
+    darkMode,
+    themeColor,
+    todayTaskSortMode,
+    todayTaskGroupMode,
+    priorityViewMode,
+    upcomingViewMode,
+    enableAppSuggestions,
+    enableAutoPriority,
+    enableClipboardAssist,
+    archive,
+    insightsHistory,
+    completedToday,
+    dayEndTime,
+    userRole,
+    manualFocusTaskIds,
+    planningEvents,
+    userPlanningProfile,
+    hasCompletedTutorial,
   };
 
-scheduleSave(700);
+  const currentStateSignature =
+    createPersistedStateSignature(
+      stateToPersist
+    );
 
-return () => {
+  /*
+   * Ignore only the exact snapshot that was just
+   * loaded from the server.
+   *
+   * This is safer than skipNextPersistRef because a
+   * user action occurring immediately after hydration
+   * produces a different signature and cannot be
+   * accidentally skipped.
+   */
+  if (
+    lastAppliedServerStateSignatureRef.current &&
+    lastAppliedServerStateSignatureRef.current ===
+      currentStateSignature
+  ) {
+    lastAppliedServerStateSignatureRef.current =
+      null;
+
+    localChangesPendingRef.current =
+      false;
+
+    return;
+  }
+
+  /*
+   * A failed initial load deliberately installs a local
+   * fallback. Never write that fallback over server data.
+   */
+  if (
+    lastAppliedServerStateSignatureRef.current ===
+    "__LOAD_FAILED_FALLBACK__"
+  ) {
+    lastAppliedServerStateSignatureRef.current =
+      null;
+
+    localChangesPendingRef.current =
+      false;
+
+    return;
+  }
+
+  localChangeVersionRef.current +=
+    1;
+
+  const changeVersion =
+    localChangeVersionRef.current;
+
+  localChangesPendingRef.current =
+    true;
+
   if (
     saveTimerRef.current !==
     null
@@ -3483,29 +3401,216 @@ return () => {
     saveTimerRef.current =
       null;
   }
-};
+
+  let retryAttempt = 0;
+
+  const maximumRetryAttempts =
+    3;
+
+  const scheduleSave = (
+    delay: number
+  ) => {
+    if (
+      saveTimerRef.current !==
+      null
+    ) {
+      window.clearTimeout(
+        saveTimerRef.current
+      );
+    }
+
+    saveTimerRef.current =
+      window.setTimeout(
+        () => {
+          saveTimerRef.current =
+            null;
+
+          void persistState();
+        },
+        delay
+      );
+  };
+
+  const persistState =
+    async () => {
+      /*
+       * Preserve save order.
+       *
+       * If another save is still running,
+       * wait and try again instead of sending
+       * overlapping revisions.
+       */
+      if (
+        saveInFlightRef.current
+      ) {
+        scheduleSave(250);
+        return;
+      }
+
+      saveInFlightRef.current =
+        true;
+
+      try {
+        const saveResult =
+          await (saveState as any)(
+            user.id,
+            stateToPersist as any,
+            serverRevisionRef.current
+          );
+
+        serverRevisionRef.current =
+          Number.isFinite(
+            Number(
+              saveResult?.revision
+            )
+          )
+            ? Number(
+                saveResult.revision
+              )
+            : serverRevisionRef.current;
+
+        revisionConflictRef.current =
+          false;
+
+        retryAttempt = 0;
+
+        /*
+         * Only the newest local version may
+         * declare the browser fully synchronized.
+         */
+        if (
+          localChangeVersionRef.current ===
+          changeVersion
+        ) {
+          localChangesPendingRef.current =
+            false;
+
+          lastSuccessfulSaveRef.current =
+            new Date().toISOString();
+        }
+      } catch (error) {
+        console.error(
+          "Failed to save Momentuhm state:",
+          error
+        );
+
+        localChangesPendingRef.current =
+          true;
+
+        const isRevisionConflict =
+          error instanceof Error &&
+          error.message ===
+            "STATE_REVISION_CONFLICT";
+
+        if (
+          isRevisionConflict
+        ) {
+          revisionConflictRef.current =
+            true;
+
+          /*
+           * IMPORTANT:
+           *
+           * The local state has NOT been saved.
+           * Keep it marked pending.
+           *
+           * Silent refreshes remain blocked until
+           * the user decides how to resolve the
+           * conflict.
+           */
+          localChangesPendingRef.current =
+            true;
+
+          if (
+            saveTimerRef.current !==
+            null
+          ) {
+            window.clearTimeout(
+              saveTimerRef.current
+            );
+
+            saveTimerRef.current =
+              null;
+          }
+
+          setShowRevisionConflictModal(
+            true
+          );
+
+          return;
+        }
+
+        retryAttempt += 1;
+
+        if (
+          retryAttempt <=
+          maximumRetryAttempts
+        ) {
+          const retryDelay =
+            retryAttempt * 2000;
+
+          scheduleSave(
+            retryDelay
+          );
+
+          setArchiveToast(
+            "Sync interrupted. Retrying..."
+          );
+        } else {
+          setArchiveToast(
+            "Changes could not be synced"
+          );
+        }
+
+        window.setTimeout(
+          () => {
+            setArchiveToast("");
+          },
+          3500
+        );
+      } finally {
+        saveInFlightRef.current =
+          false;
+      }
+    };
+
+  scheduleSave(700);
+
+  return () => {
+    if (
+      saveTimerRef.current !==
+      null
+    ) {
+      window.clearTimeout(
+        saveTimerRef.current
+      );
+
+      saveTimerRef.current =
+        null;
+    }
+  };
 }, [
-categories,
-darkMode,
-themeColor,
-todayTaskSortMode,
-todayTaskGroupMode,
-priorityViewMode,
-upcomingViewMode,
-enableAppSuggestions,
-enableAutoPriority,
-enableClipboardAssist,
-archive,
-insightsHistory,
-completedToday,
-dayEndTime,
-userRole,
-manualFocusTaskIds,
-planningEvents,
-userPlanningProfile,
-hasCompletedTutorial,
-isLoaded,
-user?.id,
+  categories,
+  darkMode,
+  themeColor,
+  todayTaskSortMode,
+  todayTaskGroupMode,
+  priorityViewMode,
+  upcomingViewMode,
+  enableAppSuggestions,
+  enableAutoPriority,
+  enableClipboardAssist,
+  archive,
+  insightsHistory,
+  completedToday,
+  dayEndTime,
+  userRole,
+  manualFocusTaskIds,
+  planningEvents,
+  userPlanningProfile,
+  hasCompletedTutorial,
+  isLoaded,
+  user?.id,
 ]);
 
   /* ------------------------------------------------ */
@@ -3576,7 +3681,6 @@ const dueSoonCount = activeTasks.filter(
 ).length;
 
 /*
- /*
  * Dashboard metrics must use only tasks currently
  * stored in the Tasks tab.
  *
@@ -3737,15 +3841,30 @@ if (!enableClipboardAssist) return;
 
       if (!isUsefulClipboardText(normalizedText)) return;
 
+     
       const lastHandledClipboardText =
-  localStorage.getItem(CLIPBOARD_HANDLED_KEY) || lastClipboardTextRef.current;
+  localStorage.getItem(
+    CLIPBOARD_HANDLED_KEY
+  ) ||
+  lastClipboardTextRef.current;
 
-if (normalizedText === lastHandledClipboardText) return;
+if (
+  normalizedText ===
+  lastHandledClipboardText
+) {
+  return;
+}
 
-lastClipboardTextRef.current = normalizedText;
-localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
-
-      const preparedText = prepareClipboardTextForExtraction(clipboardText);
+/*
+ * Do NOT mark this clipboard value as handled yet.
+ *
+ * It becomes handled only after extraction succeeds
+ * or the user explicitly acts on/dismisses it.
+ */
+const preparedText =
+  prepareClipboardTextForExtraction(
+    clipboardText
+  );
       
       setClipboardCandidate(preparedText);
       setShowClipboardPrompt(true);
@@ -3795,7 +3914,19 @@ localStorage.setItem(CLIPBOARD_HANDLED_KEY, normalizedText);
           })
         );
       
-        setClipboardExtractedTasks(normalizedTasks);
+        setClipboardExtractedTasks(
+          normalizedTasks
+        );
+        
+        lastClipboardTextRef.current =
+          normalizedText;
+        
+        localStorage.setItem(
+          CLIPBOARD_HANDLED_KEY,
+          normalizedText
+        );
+
+
       } catch (error) {
         console.error(error);
         setClipboardExtractError("Momentuhm could not extract tasks from this text.");
@@ -4554,8 +4685,19 @@ boostCacheKey,
   /* Add Task */
   /* ------------------------------------------------ */
   
-  const addTask = async () => {
-    const title = newTask.trim();
+  const addTask = async (
+    titleOverride?: string
+  ) => {
+    /*
+     * titleOverride is used by the capture input so a paste
+     * followed immediately by Enter cannot lose the pasted
+     * value because React state has not rendered yet.
+     */
+    const title =
+      String(
+        titleOverride ??
+        newTask
+      ).trim();
   
     if (!title) {
       return;
@@ -9300,18 +9442,34 @@ useEffect(() => {
   return () => window.clearTimeout(focusTimer);
 }, []);
 
-  const submitNewTask = () => {
-    if (!newTask.trim()) {
+const submitNewTask = () => {
+  /*
+   * Read directly from the DOM input.
+   *
+   * This matters when the user pastes text and
+   * immediately presses Enter. React's controlled-state
+   * update may not have completed before the Enter event.
+   */
+  const currentInputValue =
+    taskInputRef.current?.value ??
+    newTask;
+
+  const title =
+    currentInputValue.trim();
+
+  if (!title) {
+    taskInputRef.current?.focus();
+    return;
+  }
+
+  void addTask(title);
+
+  window.requestAnimationFrame(
+    () => {
       taskInputRef.current?.focus();
-      return;
     }
-
-    void addTask();
-
-    window.requestAnimationFrame(() => {
-      taskInputRef.current?.focus();
-    });
-  };
+  );
+};
 
 
 
@@ -19487,11 +19645,15 @@ newTask,
     setIsEditModalOpen(true);
   };
 
+  
   const submitTask = () => {
-    if (!newTask.trim()) return;
+    const title =
+      newTask.trim();
+  
+    if (!title) return;
   
     setIsCaptureOpen(false);
-    void addTask();
+    void addTask(title);
   };
 
   const getStatusMeta = (task: any) => {
