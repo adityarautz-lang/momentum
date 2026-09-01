@@ -1761,6 +1761,17 @@ useRef(false);
 const localChangeVersionRef =
 useRef(0);
 
+
+/*
+ * Changes every time the user mutates persisted local state.
+ *
+ * A server refresh captures this value before loading.
+ * If the value changes while that request is in flight,
+ * the returned server snapshot is no longer safe to apply.
+ */
+const localMutationVersionRef =
+  useRef(0);
+
 /*
 * Stores the current debounce timer so refresh logic can
 * determine whether a local save is still pending.
@@ -1801,7 +1812,13 @@ const revisionConflictRef =
 * runs and restore older server state.
 */
 const markLocalChangesPending = () => {
-localChangesPendingRef.current = true;
+  localChangesPendingRef.current = true;
+
+  /*
+   * Invalidate any remote refresh that may already
+   * be running when this local change happens.
+   */
+  localMutationVersionRef.current += 1;
 };
 
 /*
@@ -3021,6 +3038,7 @@ if (
 * important because loading older server data at that point
 * could erase the user's newest local task.
 */
+
 const refreshLatestStatus =
 async (
   showConfirmation = true
@@ -3030,14 +3048,7 @@ async (
   ) {
     return;
   }
-  
-  /*
-   * After a revision conflict, do not silently replace
-   * the user's local changes.
-   *
-   * A manual refresh uses showConfirmation = true and
-   * is allowed to continue.
-   */
+
   if (
     revisionConflictRef.current &&
     !showConfirmation
@@ -3046,7 +3057,8 @@ async (
   }
 
   /*
-   * Never replace local state while it is waiting to save.
+   * Do not even start a remote refresh while
+   * local work is waiting to be persisted.
    */
   if (
     localChangesPendingRef.current ||
@@ -3066,6 +3078,20 @@ async (
     return;
   }
 
+  /*
+   * Remember the exact local mutation version
+   * at the moment this refresh begins.
+   *
+   * This is the important protection for:
+   *
+   * return to app
+   * -> refresh starts
+   * -> user completes task
+   * -> refresh response arrives
+   */
+  const mutationVersionAtStart =
+    localMutationVersionRef.current;
+
   refreshInFlightRef.current =
     true;
 
@@ -3080,19 +3106,46 @@ async (
 
     if (user?.id) {
       const saved =
-  await loadState(
-    user.id
-  );
+        await loadState(
+          user.id
+        );
 
-const loadedState =
-  normalizeLoadedState(saved);
+      const loadedState =
+        normalizeLoadedState(
+          saved
+        );
 
-if (loadedState?.state) {
-  applyLatestSavedState(
-    loadedState.state,
-    loadedState.revision
-  );
-}
+      /*
+       * CRITICAL:
+       *
+       * A local mutation may have happened while
+       * loadState() was waiting on the network.
+       *
+       * Never apply the returned snapshot in that case,
+       * because it may contain the state from BEFORE
+       * the user's newest action.
+       */
+      const localStateChangedWhileRefreshing =
+        localChangesPendingRef.current ||
+        saveInFlightRef.current ||
+        saveTimerRef.current !== null ||
+        localMutationVersionRef.current !==
+          mutationVersionAtStart;
+
+      if (
+        localStateChangedWhileRefreshing
+      ) {
+        return;
+      }
+
+      if (
+        loadedState?.state
+      ) {
+        applyLatestSavedState(
+          loadedState.state,
+          loadedState.revision
+        );
+      }
     }
 
     if (showConfirmation) {
@@ -9260,29 +9313,7 @@ useEffect(() => {
     });
   };
 
-  const handleTaskInputPaste = (
-    event: React.ClipboardEvent<HTMLInputElement>
-  ) => {
-    /*
-     * When Clipboard Assist is disabled, allow the browser
-     * to paste normally without opening the extraction modal.
-     */
-    if (!enableClipboardAssist) return;
-  
-    const pastedText = event.clipboardData
-      .getData("text")
-      .trim();
-  
-    const shouldExtract =
-      pastedText.includes("\n") ||
-      pastedText.length >= 120;
-  
-    if (!shouldExtract) return;
-  
-    event.preventDefault();
-    setExtractInput(pastedText);
-    setIsExtractModalOpen(true);
-  };
+
 
   const [morningBrief, setMorningBrief] = useState({
     quote: "Small steps still move the day forward.",
@@ -9598,18 +9629,17 @@ className="relative mb-5"
                   </button>
 
                   <input
-                    ref={taskInputRef}
-                    data-testid="desktop-task-input"
-                    autoFocus
-                    value={newTask}
-                    onChange={(event) => setNewTask(event.target.value)}
-                    onPaste={handleTaskInputPaste}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        void submitNewTask();
-                      }
-                    }}
+  ref={taskInputRef}
+  data-testid="desktop-task-input"
+  autoFocus
+  value={newTask}
+  onChange={(event) => setNewTask(event.target.value)}
+  onKeyDown={(event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void submitNewTask();
+    }
+  }}
                     placeholder="Drop the first thing on your mind..."
                     aria-label="Add a new task"
                     className={`task-capture-input h-[56px] min-w-0 flex-1 border-0 bg-transparent px-0 text-[13px] font-[500] outline-none ring-0 ${
