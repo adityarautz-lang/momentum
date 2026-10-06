@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Inter } from "next/font/google";
+// import localFont from "next/font/local";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";
 import MomentuhmLogo from "@/components/MomentuhmLogo";
@@ -749,11 +749,7 @@ const QUICK_TUTORIAL_STEPS:
 /* Font */
 /* ------------------------------------------------ */
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  display: "swap",
-});
+
 
 const textStyles = {
   pageTitle: "text-[22px] leading-[28px] font-[800]",
@@ -4130,7 +4126,7 @@ boostCacheKey,
     ? "bg-[#202020] text-white border border-white/[0.35]"
     : "bg-white text-[#181818] border border-[#868681]";
 
-    const fontClass = inter.className;
+    // const fontClass = futura.className;
 
   /* ------------------------------------------------ */
   /* Firecracker */
@@ -8562,7 +8558,7 @@ return [
       "--focus-outer": darkMode ? "#FFFFFF" : "#0B6EFF",
     } as React.CSSProperties
   }
-  className={`${fontClass} min-h-screen w-full overflow-x-hidden transition-colors duration-500 ${
+  className={`min-h-screen w-full overflow-x-hidden transition-colors duration-500 ${
     darkMode
       ? "bg-[#111111] text-white"
       : "bg-[#F8FAFD] text-[#181818]"
